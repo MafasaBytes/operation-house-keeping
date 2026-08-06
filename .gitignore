@@ -13,3 +13,6 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .ipynb_checkpoints/
+
+# Raw store working data (DS-001 local runs)
+/var/

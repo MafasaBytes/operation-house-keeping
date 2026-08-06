@@ -1,0 +1,2 @@
+# Runtime dependencies of backend/ (see ADR-0001).
+pydantic>=2.7

@@ -1,0 +1,11 @@
+[project]
+name = "operation-house-keeping"
+version = "0.0.1"
+description = "Backend foundation for a living, constraint-aware representation of an engineered system"
+requires-python = ">=3.13"
+dependencies = ["pydantic>=2.7"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"
