@@ -237,6 +237,26 @@ Deterministic platform ids: `definition_id`/`instance_id` derive from
 `(raw_record_id, extractor version, extractor_path_id)` so the same payload
 and toolchain always yield the same ids.
 
+### Spike results (2026-08-06, Task 0 — gate PASSED)
+
+Environment: WSL2 Ubuntu x86_64, CPython 3.13.11, `cadquery-ocp==7.9.3.1.1`
+(manylinux_2_31 wheel). Findings:
+
+- `STEPCAFControl_Writer/Reader` round-trips a two-level assembly with a
+  shared part definition (`bolt-m6` referenced by two component instances)
+  and preserves names and designed translations exactly.
+- Renaming XCAF component labels before export is honored by
+  `RWGltf_CafWriter`: glb node names carry the synthetic instance ids, and
+  the glb JSON chunk yields a clean node-index scan for the sidecar map.
+- Two independent read→rename→mesh(0.1/0.5)→export runs produced
+  **byte-identical glb** (sha256 `ec2a9460…`) on this platform.
+- `FILE_SCHEMA` is regex-parseable from the Part 21 header
+  (`AUTOMOTIVE_DESIGN { 1 0 10303 214 1 1 1 1 }` for the AP214IS writer
+  configuration).
+- STEP output itself embeds a `FILE_NAME` timestamp, confirming the frozen-
+  fixture strategy (the generator cannot be re-run to reproduce identical
+  bytes; the frozen file is canonical).
+
 ## Extraction outcomes (amended)
 
 ```text
