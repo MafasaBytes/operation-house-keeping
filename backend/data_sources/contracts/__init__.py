@@ -1,5 +1,28 @@
 """Public contract surface of the data_sources module."""
 
+from backend.data_sources.contracts.cad import (
+    ComponentInstance,
+    CoordinateConversion,
+    DerivativeRecord,
+    ExtractionEnvironment,
+    PartDefinition,
+    PropertyValue,
+    StepExtractionManifest,
+    TessellationParameters,
+    TransformSpec,
+    UnitContext,
+)
+from backend.data_sources.contracts.extraction import (
+    CsvTableResult,
+    ExtractionOutcome,
+    ExtractionResult,
+    StepManifestResult,
+)
+from backend.data_sources.contracts.identity import ExtractorIdentity
+from backend.data_sources.contracts.profile import (
+    SourceProfile,
+    SourceProfileEntry,
+)
 from backend.data_sources.contracts.errors import (
     AcquisitionError,
     DataSourceError,
@@ -25,6 +48,23 @@ from backend.data_sources.contracts.models import (
 )
 
 __all__ = [
+    "ComponentInstance",
+    "CoordinateConversion",
+    "CsvTableResult",
+    "DerivativeRecord",
+    "ExtractionEnvironment",
+    "ExtractionOutcome",
+    "ExtractionResult",
+    "ExtractorIdentity",
+    "PartDefinition",
+    "PropertyValue",
+    "SourceProfile",
+    "SourceProfileEntry",
+    "StepExtractionManifest",
+    "StepManifestResult",
+    "TessellationParameters",
+    "TransformSpec",
+    "UnitContext",
     "AcquisitionError",
     "AcquisitionMode",
     "ConnectorManifest",

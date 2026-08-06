@@ -20,6 +20,15 @@ def derive_record_id(source_id: str, checksum: str, position: int) -> str:
     return hashlib.sha256(material.encode("utf-8")).hexdigest()[:32]
 
 
+def derive_entity_id(raw_record_id: str, extractor_version: str, path_id: str) -> str:
+    """Deterministic id for an extracted entity: same raw payload, extractor
+    version, and toolchain path ⇒ same id."""
+    material = "|".join(
+        f"{len(part)}:{part}" for part in (raw_record_id, extractor_version, path_id)
+    )
+    return hashlib.sha256(material.encode("utf-8")).hexdigest()[:32]
+
+
 _ABS_PATH = re.compile(
     r"""
     (?<![\w.\-])                       # not inside a relative path or word

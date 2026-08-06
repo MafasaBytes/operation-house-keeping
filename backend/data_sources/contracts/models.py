@@ -137,6 +137,7 @@ class IngestionRun(_FrozenModel):
     records_accepted: int = Field(ge=0)
     records_duplicate: int = Field(ge=0)
     records_quarantined: int = Field(ge=0)
+    records_partial: int = Field(default=0, ge=0)
     error_summary: str | None = None
 
     @field_validator("started_at", "finished_at")
@@ -164,7 +165,7 @@ class SourceHealth(_FrozenModel):
 
 class QuarantineRecord(_FrozenModel):
     record_id: RecordId
-    stage: Literal["extraction"]
+    stage: Literal["format_detection", "extraction"]
     error_code: str
     redacted_message: str
     quarantined_at: datetime
