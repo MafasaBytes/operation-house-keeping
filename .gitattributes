@@ -1,0 +1,31 @@
+# Line-ending policy: LF in the repository and working tree.
+* text=auto eol=lf
+*.ipynb text eol=lf
+
+# Binary evidence fixtures and derivatives — never normalize.
+# Raw-store checksums depend on exact bytes; several of these formats
+# (STEP, DXF, IFC, glTF-JSON) are textual but are deliberately marked
+# binary so text normalization can never corrupt fixture provenance.
+*.pdf binary
+*.xls binary
+*.xlsx binary
+*.xlsm binary
+*.step binary
+*.stp binary
+*.iges binary
+*.igs binary
+*.jt binary
+*.ifc binary
+*.dxf binary
+*.dwg binary
+*.stl binary
+*.obj binary
+*.gltf binary
+*.glb binary
+*.bin binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.tiff binary
+*.bmp binary
