@@ -1,5 +1,15 @@
-# virtual env
-venv
+# Virtual environments
+venv/
+.venv/
 
-# Superpowers repo
-superpowers
+# Superpowers repo (cloned locally, not vendored)
+superpowers/
+
+# Claude project skills (symlinks into superpowers/, machine-local)
+.claude/skills/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ipynb_checkpoints/
