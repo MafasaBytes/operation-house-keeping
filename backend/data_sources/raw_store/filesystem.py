@@ -18,7 +18,10 @@ from pathlib import Path
 from pydantic import BaseModel
 
 from backend.data_sources.contracts import (
+    CsvTableResult,
     ExtractedTable,
+    ExtractionResult,
+    ExtractorIdentity,
     IngestionRun,
     QuarantineRecord,
     RawRecord,
@@ -37,12 +40,14 @@ class FilesystemRawStore:
         self._runs = self.base_dir / "runs"
         self._quarantine = self.base_dir / "quarantine"
         self._extracted = self.base_dir / "extracted"
+        self._derivatives = self.base_dir / "derivatives"
         for directory in (
             self._payloads,
             self._envelopes,
             self._runs,
             self._quarantine,
             self._extracted,
+            self._derivatives,
         ):
             directory.mkdir(parents=True, exist_ok=True)
 
@@ -124,17 +129,88 @@ class FilesystemRawStore:
             )
         )
 
-    def put_extracted(self, table: ExtractedTable) -> bool:
+    def put_extraction(self, result: ExtractionResult) -> bool:
         return self._put_json_once(
-            self._extracted / f"{table.raw_record_id}.json", table, "extracted table"
+            self._extracted / f"{result.raw_record_id}.json", result, "extraction result"
         )
 
-    def get_extracted(self, record_id: str) -> ExtractedTable:
-        return ExtractedTable.model_validate_json(
-            self._read_required(
-                self._extracted / f"{record_id}.json", f"extraction {record_id}"
-            )
+    def get_extraction(self, record_id: str) -> ExtractionResult:
+        raw = self._read_required(
+            self._extracted / f"{record_id}.json", f"extraction {record_id}"
         )
+        if '"schema_version"' in raw:
+            return ExtractionResult.model_validate_json(raw)
+        # Legacy DS-001 record: a bare ExtractedTable with no envelope.
+        table = ExtractedTable.model_validate_json(raw)
+        return ExtractionResult(
+            schema_version=1,
+            raw_record_id=table.raw_record_id,
+            extractor=ExtractorIdentity(
+                name="csv_extractor",
+                version="legacy",
+                toolchain="python-stdlib-csv",
+                config_fingerprint="legacy",
+            ),
+            outcome="succeeded",
+            warnings=["wrapped from a legacy DS-001 extraction record on read"],
+            result=CsvTableResult(table=table),
+        )
+
+    # -- derivatives ------------------------------------------------------
+
+    def put_derivative_payload(self, data: bytes) -> str:
+        reference = payload_checksum(data)
+        target = self._derivatives / reference.removeprefix(_CHECKSUM_PREFIX)
+        if not target.exists():
+            self._write_once(target, data)
+        return reference
+
+    def get_derivative_payload(self, reference: str) -> bytes:
+        target = self._derivatives / reference.removeprefix(_CHECKSUM_PREFIX)
+        if not target.exists():
+            raise StoreIntegrityError(
+                "STORE_MISSING_DERIVATIVE", f"no derivative stored for {reference}"
+            )
+        data = target.read_bytes()
+        if payload_checksum(data) != reference:
+            raise StoreIntegrityError(
+                "STORE_CHECKSUM_MISMATCH",
+                f"stored derivative no longer matches checksum {reference}",
+            )
+        return data
+
+    def find_orphan_derivatives(self) -> list[str]:
+        """Derivative payloads referenced by no stored extraction result.
+
+        Orphans arise only from a failure between derivative publication and
+        the envelope write (the envelope is always written last).
+        """
+        referenced: set[str] = set()
+        for path in self._extracted.glob("*.json"):
+            result = self.get_extraction(path.stem)
+            if result.result.kind == "step_manifest":
+                for derivative in result.result.manifest.derivatives:
+                    referenced.add(derivative.payload_reference)
+        orphans = []
+        for target in sorted(self._derivatives.iterdir()):
+            reference = _CHECKSUM_PREFIX + target.name
+            if reference not in referenced:
+                orphans.append(reference)
+        return orphans
+
+    def purge_orphan_derivatives(self) -> list[str]:
+        """Delete orphaned derivative payloads (they are recomputable).
+
+        Raw payloads, envelopes, runs, and quarantine records are never
+        garbage-collected.
+        """
+        purged = []
+        for reference in self.find_orphan_derivatives():
+            target = self._derivatives / reference.removeprefix(_CHECKSUM_PREFIX)
+            target.chmod(0o644)
+            target.unlink()
+            purged.append(reference)
+        return purged
 
     # -- internals --------------------------------------------------------
 

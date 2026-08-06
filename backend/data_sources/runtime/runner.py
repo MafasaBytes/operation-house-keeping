@@ -13,16 +13,21 @@ from backend.data_sources.catalog import InMemorySourceCatalog
 from backend.data_sources.connectors import LocalFileConnector
 from backend.data_sources.contracts import (
     AcquisitionError,
+    CsvTableResult,
     DataSourceError,
-    ExtractedTable,
     ExtractionError,
+    ExtractionResult,
     IngestionRun,
     QuarantineRecord,
     RawRecord,
     SourceDefinition,
     SourceHealth,
 )
-from backend.data_sources.extractors import CsvExtractionConfig, extract_csv
+from backend.data_sources.extractors import (
+    CsvExtractionConfig,
+    csv_extractor_identity,
+    extract_csv,
+)
 from backend.data_sources.provenance import (
     derive_record_id,
     payload_checksum,
@@ -93,7 +98,7 @@ class IngestionRunner:
                 self.store.put_envelope(envelope)
                 accepted = 1
                 try:
-                    self.store.put_extracted(self._extract(envelope, acquisition.payload))
+                    self.store.put_extraction(self._extract(envelope, acquisition.payload))
                 except ExtractionError as error:
                     quarantined = 1
                     errors.append(f"{error.error_code}: 1 record")
@@ -138,14 +143,14 @@ class IngestionRunner:
         self.store.put_run(run)
         return run
 
-    def replay(self, source_id: str) -> list[ExtractedTable]:
+    def replay(self, source_id: str) -> list[ExtractionResult]:
         """Re-extract accepted raw records from the store, without touching
         the external source."""
-        tables: list[ExtractedTable] = []
+        results: list[ExtractionResult] = []
         for envelope in self.store.iter_accepted_envelopes(source_id):
             payload = self.store.get_payload(envelope.immutable_payload_reference)
-            tables.append(self._extract(envelope, payload))
-        return tables
+            results.append(self._extract(envelope, payload))
+        return results
 
     def health(self, source_id: str) -> SourceHealth:
         runs = sorted(self.store.iter_runs(source_id), key=lambda r: r.finished_at)
@@ -191,13 +196,22 @@ class IngestionRunner:
                 "catalog declares it but this runtime does not provide it",
             ) from None
 
-    def _extract(self, envelope: RawRecord, payload: bytes) -> ExtractedTable:
+    def _extract(self, envelope: RawRecord, payload: bytes) -> ExtractionResult:
         if envelope.content_type != "text/csv":
             raise ExtractionError(
                 "EXTRACT_UNSUPPORTED_FORMAT",
                 f"no extractor available for content type {envelope.content_type!r}",
             )
-        return extract_csv(payload, envelope.record_id, CsvExtractionConfig())
+        config = CsvExtractionConfig()
+        table = extract_csv(payload, envelope.record_id, config)
+        return ExtractionResult(
+            schema_version=1,
+            raw_record_id=envelope.record_id,
+            extractor=csv_extractor_identity(config),
+            outcome="succeeded",
+            warnings=[],
+            result=CsvTableResult(table=table),
+        )
 
     @staticmethod
     def _content_type(source: SourceDefinition) -> str:

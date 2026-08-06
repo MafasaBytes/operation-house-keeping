@@ -89,7 +89,10 @@ class TestValidIngestion:
         assert envelope.source_observed_at != envelope.captured_at
         assert envelope.provenance["observed_at_meaning"] == "file_mtime"
 
-        table = store.get_extracted(envelope.record_id)
+        extraction = store.get_extraction(envelope.record_id)
+        assert extraction.outcome == "succeeded"
+        assert extraction.extractor.name == "csv_extractor"
+        table = extraction.result.table
         assert table.columns[0] == "item_no"
         first_cell = table.rows[0].cells[0]
         assert first_cell.raw_record_id == envelope.record_id
@@ -167,11 +170,11 @@ class TestReplay:
         runner, store, valid_path = env
         runner.run("bom-valid")
         [envelope] = store.iter_accepted_envelopes("bom-valid")
-        original_table = store.get_extracted(envelope.record_id)
+        original = store.get_extraction(envelope.record_id)
 
         valid_path.unlink()  # the external source is gone; replay must not need it
         [replayed] = runner.replay("bom-valid")
-        assert replayed == original_table
+        assert replayed == original
 
 
 class TestFailureHonesty:

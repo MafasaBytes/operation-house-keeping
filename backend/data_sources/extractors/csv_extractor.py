@@ -6,6 +6,7 @@ lossy or surprising structure becomes warnings — never silent repair.
 """
 
 import csv
+import hashlib
 import io
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -15,7 +16,10 @@ from backend.data_sources.contracts import (
     ExtractedRow,
     ExtractedTable,
     ExtractionError,
+    ExtractorIdentity,
 )
+
+CSV_EXTRACTOR_VERSION = "1.1.0"
 
 
 class CsvExtractionConfig(BaseModel):
@@ -24,6 +28,16 @@ class CsvExtractionConfig(BaseModel):
     encoding: str = "utf-8"
     delimiter: str = ","
     header_row_index: int = Field(default=0, ge=0)
+
+
+def csv_extractor_identity(config: CsvExtractionConfig) -> ExtractorIdentity:
+    fingerprint = hashlib.sha256(config.model_dump_json().encode()).hexdigest()[:16]
+    return ExtractorIdentity(
+        name="csv_extractor",
+        version=CSV_EXTRACTOR_VERSION,
+        toolchain="python-stdlib-csv",
+        config_fingerprint=fingerprint,
+    )
 
 
 def extract_csv(

@@ -118,7 +118,9 @@ class TestRunsQuarantineExtracted:
         store.put_quarantine(q)
         assert store.get_quarantine(record.record_id) == q
 
-    def test_extracted_table_round_trip(self, store):
+    def test_extraction_envelope_round_trip(self, store):
+        from backend.data_sources.contracts import ExtractionResult, ExtractorIdentity
+
         record = make_record()
         table = ExtractedTable(
             raw_record_id=record.record_id,
@@ -127,8 +129,19 @@ class TestRunsQuarantineExtracted:
             rows=[],
             warnings=[],
         )
-        store.put_extracted(table)
-        assert store.get_extracted(record.record_id) == table
+        result = ExtractionResult(
+            schema_version=1,
+            raw_record_id=record.record_id,
+            extractor=ExtractorIdentity(
+                name="csv_extractor", version="1.1.0",
+                toolchain="python-stdlib-csv", config_fingerprint="test",
+            ),
+            outcome="succeeded",
+            warnings=[],
+            result={"kind": "csv_table", "table": table},
+        )
+        store.put_extraction(result)
+        assert store.get_extraction(record.record_id) == result
 
     def test_quarantined_records_are_excluded_from_accepted(self, store):
         record = make_record()
