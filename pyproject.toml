@@ -9,3 +9,6 @@ dependencies = ["pydantic>=2.7"]
 testpaths = ["tests"]
 pythonpath = ["."]
 addopts = "-q"
+markers = [
+    "cad: requires the CAD extra (cadquery-ocp) from requirements-cad.txt",
+]

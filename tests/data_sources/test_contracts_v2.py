@@ -62,6 +62,7 @@ def make_definition(**overrides) -> PartDefinition:
         source_native_id_basis=None,
         raw_locator=None,
         name="bolt-m6",
+        is_assembly=False,
         properties=[],
         unit_context_ref="uc-config",
     )
@@ -73,7 +74,7 @@ def make_instance(**overrides) -> ComponentInstance:
     base = dict(
         instance_id="e" * 32,
         definition_ref="d" * 32,
-        parent_instance_ref=None,
+        parent_definition_ref=None,
         occurrence_name="bolt-front",
         extractor_path_id="0:1:1:3:2",
         source_native_id=None,

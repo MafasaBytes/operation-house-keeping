@@ -84,14 +84,20 @@ class _SourceIdentified(_FrozenModel):
 class PartDefinition(_SourceIdentified):
     definition_id: EntityId
     name: str | None
+    is_assembly: bool
     properties: list[PropertyValue] = Field(default_factory=list)
     unit_context_ref: str
 
 
 class ComponentInstance(_SourceIdentified):
+    """A usage occurrence: this definition is installed inside that parent
+    definition (STEP NAUO semantics). A flattened per-path instance tree is
+    a downstream view, not this contract. ``parent_definition_ref`` is None
+    only for the synthesized root occurrence."""
+
     instance_id: EntityId
     definition_ref: EntityId
-    parent_instance_ref: EntityId | None
+    parent_definition_ref: EntityId | None
     occurrence_name: str | None
     transform: TransformSpec
 

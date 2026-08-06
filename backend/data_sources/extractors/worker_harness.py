@@ -85,6 +85,7 @@ def invoke_worker(
     limits: WorkerLimits,
     scratch_root: Path | None = None,
     payload_filename: str = "payload.bin",
+    extra_env: dict[str, str] | None = None,
 ) -> WorkerOutcome:
     if len(payload) > limits.max_payload_bytes:
         raise ExtractionError(
@@ -109,10 +110,13 @@ def invoke_worker(
         output_dir.mkdir()
 
         argv = build_argv(input_path, output_dir)
+        env = _minimal_env(scratch)
+        if extra_env:
+            env.update(extra_env)  # explicit allowlist chosen by the caller
         popen_kwargs: dict = dict(
             args=argv,
             cwd=scratch,
-            env=_minimal_env(scratch),
+            env=env,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             shell=False,

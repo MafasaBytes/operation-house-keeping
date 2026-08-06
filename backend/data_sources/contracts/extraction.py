@@ -41,3 +41,13 @@ class ExtractionResult(_FrozenModel):
     outcome: ExtractionOutcome
     warnings: list[str] = Field(default_factory=list)
     result: Union[CsvTableResult, StepManifestResult] = Field(discriminator="kind")
+
+    def manifest_view(self) -> StepExtractionManifest:
+        if self.result.kind != "step_manifest":
+            raise ValueError(f"result kind is {self.result.kind!r}, not a STEP manifest")
+        return self.result.manifest
+
+    def table_view(self) -> ExtractedTable:
+        if self.result.kind != "csv_table":
+            raise ValueError(f"result kind is {self.result.kind!r}, not a CSV table")
+        return self.result.table
