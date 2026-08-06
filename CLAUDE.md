@@ -1,0 +1,684 @@
+# Project Guidance for Claude
+
+## Mission
+
+We are building the backend foundation for a system that can maintain a living,
+hierarchical, stateful, and constraint-aware representation of an engineered
+system.
+
+The intended product is not a document chatbot, a conventional digital twin, or
+an information library. It should eventually be able to answer questions such
+as:
+
+- What exists in this system, and how is it connected?
+- What is the current state of this particular system?
+- Why might the system be behaving this way?
+- What is the next best measurement or test?
+- What would be affected if this component, parameter, or software version changed?
+- What is the smallest valid set of changes needed to reach a desired state?
+- Which conclusions are observed, calculated, inferred, assumed, or unknown?
+
+The architecture is **model-centric, not LLM-centric**. An LLM may help extract,
+query, explain, and propose changes, but it is never the source of engineering
+truth. Deterministic code, explicit models, constraints, evidence, and provenance
+must remain authoritative.
+
+## Current Phase
+
+Start with the backend. Do not build the 3D interface, conversational interface,
+reasoning engine, or a device-specific showcase yet.
+
+The first backend module is:
+
+```text
+data_sources
+```
+
+We will validate each module before expanding the architecture. Work in small,
+demonstrable vertical slices. Avoid scaffolding the entire future platform in
+advance.
+
+## Superpowers Skills
+
+The project owner has Superpowers skills available for Claude. At the beginning
+of a work session, inspect the available project and Superpowers skills and use
+the relevant ones.
+
+In particular, use the installed equivalents of:
+
+- brainstorming before making a new architectural or product decision;
+- writing plans before multi-step implementation;
+- test-driven development while implementing behavior;
+- systematic debugging when behavior differs from expectations;
+- verification before claiming that work is complete.
+
+If the installed skill names differ, use the closest available equivalents. Do
+not invoke every skill mechanically; use the smallest set that materially helps
+the current task. Follow skill instructions faithfully.
+
+Project-local skills or supporting guidance may be created when genuinely
+useful. Do not modify global Claude configuration, install machine-wide tools, or
+change the user's global skills without explicit approval.
+
+## Conceptual Architecture
+
+The intended information flow is:
+
+```text
+Source systems
+    -> data_sources
+    -> normalization and identity resolution
+    -> model kernel
+       - typed system graph
+       - configuration and version model
+       - live state model
+       - evidence and artifact references
+    -> reasoning engines
+       - constraint validation
+       - diagnosis and causal reasoning
+       - change-impact analysis
+       - desired-state planning
+    -> stable application API
+    -> engineering UI, 3D UI, and conversational interface
+```
+
+Only `data_sources` is currently in scope. The downstream boxes explain its
+contracts and boundaries; they are not authorization to implement them now.
+
+## Important Model Distinctions
+
+The future model must not collapse these views into one:
+
+```text
+As-designed
+    -> As-built
+    -> As-configured
+    -> As-operated
+    -> As-maintained
+```
+
+It must also distinguish:
+
+- a reusable system or component type from a particular physical instance;
+- structure from current state;
+- an observation from an inference;
+- connectivity from causality;
+- commanded state from measured state;
+- source time from ingestion time;
+- an absent value from a value known to be zero or false;
+- a current fact from a fact valid only for an older configuration or version.
+
+These distinctions should influence data contracts from the beginning, even
+though the full model kernel will be implemented later.
+
+## The Future Modelling Kernel
+
+Do not implement this kernel during the `data_sources` milestone, but preserve a
+clean path toward these primitives:
+
+- **Entity**: component, subsystem, software module, requirement, process, or
+  environmental object.
+- **Port**: a typed interface through which energy, material, motion, data, or
+  control is exchanged.
+- **Relationship**: a typed, directional, evidence-backed connection between
+  entities or ports.
+- **Variable**: a measurable, calculated, inferred, or configured property.
+- **Behavior**: an equation, rule, state machine, lookup table, or external
+  simulation.
+- **Constraint**: a condition that must remain true.
+- **Observation**: a time-bound measurement or manually reported fact.
+- **Evidence**: the artifact, sensor, source record, or authority supporting a
+  claim.
+- **Goal**: a desired condition or performance outcome.
+- **Action**: a permitted intervention that may change state.
+
+The hierarchy will be one view of the system. Cross-domain reasoning will
+require a typed graph layered over that hierarchy. Do not reduce every
+relationship to a generic `connected_to` edge.
+
+## `data_sources` Purpose
+
+`data_sources` is the controlled boundary between external reality and the
+platform.
+
+Its job is to discover, describe, connect to, and reliably acquire data from
+external sources while preserving the original payload, source context, timing,
+identity, integrity, and provenance.
+
+Candidate source families include:
+
+- tabular and structured files: CSV, Excel, JSON, XML, YAML, BOMs, and
+  configuration files;
+- documents: PDF, Word, scanned manuals, requirements, procedures, reports, and
+  service records;
+- engineering artifacts: native CAD, neutral CAD exchange formats, 2D drawings,
+  3D assemblies, electrical schematics, and simulation exports;
+- enterprise systems: relational databases, time-series databases, PLM, ERP,
+  MES, CMMS, and requirements-management systems;
+- network services: REST, GraphQL, vendor APIs, file stores, and object stores;
+- software sources: repositories, releases, firmware, configuration history;
+- operational sources: WebSockets, MQTT, OPC UA, ROS topics, industrial
+  protocols, serial connections, and device logs;
+- telemetry: sensors, events, alarms, commands, and measured state;
+- human observations: inspections, maintenance notes, and validated manual input;
+- environmental sources: weather, ambient sensors, maps, or test conditions.
+
+The physical showcase has not been selected. Keep the core source contracts
+device-neutral. Device- or vendor-specific behavior belongs in adapters.
+
+## What "Data Source" Means
+
+A data source is any external authority or observation channel that can provide
+evidence about one or more of the following:
+
+- what the system is designed to be;
+- what was actually built or installed;
+- how hardware and software are configured;
+- how the system is expected to behave;
+- what the system is doing now or did historically;
+- what humans observed, decided, changed, or repaired;
+- what environment the system is operating in.
+
+The module is therefore broader than telemetry ingestion. It is an extensible
+**evidence acquisition and format-extraction layer**.
+
+There are two steps at the source boundary:
+
+```text
+Acquire
+    Preserve the original file, response, row set, message, or signal.
+
+Extract
+    Decode source-format structure without yet deciding its canonical
+    engineering meaning.
+```
+
+For example, an Excel extractor may identify workbooks, sheets, cells, formulas,
+cached values, and tables. It must not decide by itself that column `Item No.` is
+the platform's canonical component identity. That decision belongs to the later
+normalization and identity-resolution layer.
+
+## Connector Catalog Versus Active Connectors
+
+The architecture should know about a broad connector landscape, but it must not
+pretend that every connector works.
+
+Keep these concepts distinct:
+
+1. **Declared**: the connector or format is described in the capability catalog.
+2. **Available**: a real implementation and its dependencies are installed.
+3. **Configured**: a source instance has valid, non-secret configuration.
+4. **Connected**: the platform can currently reach and read the source.
+5. **Validated**: representative application data has passed contract and
+   acceptance tests.
+6. **Unsupported**: the source or required extraction level cannot currently be
+   handled.
+
+A planned entry in the catalog is not an implementation. Do not create dummy
+connectors that report success or return empty data. Every connector and
+extractor should publish an honest capability and maturity manifest such as:
+
+```text
+connector_type
+source_families
+supported_formats_or_protocols
+acquisition_modes: snapshot | poll | stream
+supported_extraction_levels
+read_only
+incremental_read_support
+required_dependencies
+licensing_or_runtime_requirements
+maturity: planned | experimental | validated
+known_limitations
+```
+
+The selected application should define a **source profile** containing only its
+required and optional sources. The runtime loads that profile rather than
+initializing every connector in the catalog.
+
+## Source-Family Extraction Boundaries
+
+Different sources require different format-aware extraction while producing the
+same stable raw-record and provenance contracts.
+
+### CSV and Excel
+
+Preserve the original file and extract, as supported:
+
+- file, workbook, sheet, table, row, and cell identity;
+- headers and source-native data types;
+- formulas separately from displayed or cached values;
+- merged cells, hidden sheets, named ranges, and units when explicitly supplied;
+- row and column location so every extracted value can be traced back.
+
+Do not assume the first row is always a header, guess engineering units silently,
+or flatten formulas into unexplained values.
+
+### PDF and Document Sources
+
+Preserve the original document and extract, as supported:
+
+- pages, text blocks, reading order, headings, tables, images, and annotations;
+- document metadata, revision identifiers, and page coordinates;
+- OCR output for scanned pages, clearly marked as OCR-derived;
+- links between extracted content and the exact page or region it came from.
+
+Text extraction, OCR, and table detection are evidence-producing operations, not
+proof that the extracted content is correct. Preserve confidence and extraction
+method.
+
+### APIs and Databases
+
+Preserve request and query provenance without recording secrets. Capture:
+
+- endpoint, operation, or query identity;
+- response schema or database schema information when available;
+- pagination, cursor, transaction, snapshot, and change-token information;
+- source-native primary keys and revision fields;
+- the distinction between full snapshots and incremental changes.
+
+Database access is read-only by default. Queries must be parameterized, bounded,
+timed out, and observable. A BOM may arrive through CSV, Excel, an API, a SQL
+view, PLM, or ERP; its transport does not define its engineering meaning.
+
+### CAD Models and Engineering Drawings
+
+Treat "CAD" as several different source classes:
+
+1. **Native authoring formats** from systems such as CATIA, NX, SolidWorks,
+   Inventor, or AutoCAD. These may require a vendor SDK, licensed installation,
+   or controlled export process.
+2. **Neutral exchange formats** such as STEP, IGES, JT, DXF, or IFC, which may
+   preserve different amounts of product structure, geometry, and metadata.
+3. **Visualization and mesh formats** such as glTF, STL, or OBJ, which are useful
+   for display but usually contain less engineering meaning.
+4. **Rendered engineering drawings** such as drawing PDFs or scanned sheets,
+   which require layout, vector, table, text, symbol, and sometimes OCR
+   extraction.
+
+CAD support must declare extraction levels rather than a single misleading
+`supported` flag:
+
+```text
+Level 0: raw artifact, metadata, checksum, and revision
+Level 1: document or assembly/product structure
+Level 2: parts, instances, coordinate systems, transforms, layers, and properties
+Level 3: geometry/topology or a traceable visualization derivative
+Level 4: dimensions, tolerances, PMI/GD&T, annotations, and drawing tables
+Level 5: native mates, constraints, parameters, and design intent when available
+```
+
+Not every format can preserve every level. A mesh can show shape without proving
+part identity, tolerances, assembly constraints, material, or function.
+
+The CAD pipeline should conceptually be:
+
+```text
+CAD connector
+    -> raw immutable artifact
+    -> format detector
+    -> isolated format-specific extractor
+    -> extraction manifest
+       - assembly tree
+       - parts and instances
+       - transforms and units
+       - properties and annotations
+       - references to geometry/visual derivatives
+       - warnings and unsupported features
+    -> later engineering normalization
+```
+
+Native and untrusted CAD processing may require isolated workers because parsers
+can be large, licensed, platform-specific, or unsafe to run in the main service.
+Never execute embedded macros or acquired code as part of extraction.
+
+Most importantly, CAD can provide evidence of geometry, containment, spatial
+relationships, interfaces, mates, and annotations. It does not automatically
+tell us why a component exists or prove a causal relationship. Functional and
+causal meaning must be supported by additional sources or validated engineering
+rules.
+
+### Sensors and Operational Streams
+
+For live sources, capture:
+
+- sensor or topic identity;
+- message schema and source-native field names;
+- source timestamp, receipt timestamp, sequence, and clock information;
+- supplied units, quality codes, calibration identity, and sampling rate;
+- connection loss, dropped-message, duplicate, and out-of-order behavior;
+- command values separately from measured values.
+
+Streaming is a connector capability, not the default mode for the whole module.
+Only start the streams required by the selected application profile.
+
+## `data_sources` Responsibilities
+
+The module should eventually provide:
+
+1. **Source catalog**
+   - Stable source identity.
+   - Source type and ownership.
+   - Location or connection metadata.
+   - Declared capabilities.
+   - Expected schema or content type when known.
+   - Configuration and credential references.
+   - Lifecycle status and health.
+
+2. **Connector contracts**
+   - A small common interface for snapshot, polling, and streaming sources.
+   - Explicit capability declaration rather than a large interface full of
+     unsupported methods.
+   - Separate acquisition contracts from format-extraction contracts.
+   - Honest maturity and supported-extraction-level declarations.
+   - Clear connection, authentication, timeout, retry, checkpoint, and shutdown
+     behavior.
+   - Read-only behavior in the initial milestone.
+
+3. **Acquisition runtime**
+   - Start, stop, and observe connector runs.
+   - Support bounded snapshots first; introduce continuous execution only when a
+     validated use case requires it.
+   - Backpressure, reconnect, and checkpoint behavior for streaming sources when
+     streaming is introduced.
+
+4. **Raw record envelope**
+   - Wrap every acquired payload in a stable platform-owned envelope.
+   - Preserve the original payload or an immutable reference to it.
+   - Record source identity, timing, integrity, and acquisition context.
+   - Never silently convert an inference into a source fact.
+
+5. **Format-aware extraction**
+   - Decode supported document, table, engineering, API, database, and stream
+     structures into traceable intermediate records.
+   - Produce warnings for unsupported or lossy source features.
+   - Preserve a link from every extracted item to its raw artifact and source
+     location.
+
+6. **Provenance and integrity**
+   - Record where each payload came from and how it was acquired.
+   - Preserve source-native identifiers when available.
+   - Calculate an integrity checksum for persisted raw content.
+   - Make acquisition replayable and auditable.
+
+7. **Failure isolation**
+   - Represent connector and record-level errors explicitly.
+   - Quarantine malformed or unsupported records without losing them.
+   - Never allow one failed source to corrupt or block unrelated sources.
+   - Redact secrets and sensitive connection details from errors and logs.
+
+8. **Observability**
+   - Structured logs and stable error codes.
+   - Run status, source health, record counts, lag, and last successful cursor.
+   - Enough context to diagnose failures without logging raw secrets.
+
+## Suggested Logical Submodules
+
+Use names appropriate to the selected language, but preserve these boundaries:
+
+```text
+backend/
+  data_sources/
+    contracts/       # Source, connector, record, run, and error contracts
+    catalog/         # Source definitions and lifecycle
+    connectors/      # Vendor/protocol/file-specific adapters
+    extractors/      # Format-aware, pre-semantic extraction
+    runtime/         # Execution, retry, cancellation, checkpointing
+    provenance/      # Origin, timestamps, checksums, trace context
+    raw_store/       # Immutable raw payload persistence or references
+    derivatives/     # Traceable CAD/document visual or structural derivatives
+    testing/         # Contract tests, fixtures, and fake sources
+```
+
+This is a logical structure, not a demand to create empty directories. Add a
+submodule only when the current vertical slice needs it.
+
+## Minimum Source Contract
+
+The first implementation should develop a small contract around concepts similar
+to the following. Names may change through design and tests.
+
+### SourceDefinition
+
+```text
+source_id
+display_name
+source_kind
+connector_type
+capabilities
+supported_formats_or_protocols
+supported_extraction_levels
+implementation_maturity
+configuration
+credential_reference (never the credential value)
+declared_content_types
+enabled
+```
+
+### RawRecord
+
+```text
+record_id
+source_id
+source_native_id (optional)
+ingestion_run_id
+captured_at
+source_observed_at (optional)
+content_type
+schema_reference (optional)
+payload OR immutable_payload_reference
+payload_checksum
+cursor_or_sequence (optional)
+provenance
+quality_flags
+```
+
+### IngestionRun
+
+```text
+run_id
+source_id
+started_at
+finished_at
+status
+checkpoint_before
+checkpoint_after
+records_seen
+records_accepted
+records_quarantined
+error_summary
+```
+
+### SourceHealth
+
+```text
+source_id
+status
+checked_at
+last_success_at
+last_record_at
+lag (when meaningful)
+diagnostic_code
+```
+
+Do not turn these sketches into a needlessly elaborate inheritance hierarchy.
+Prefer composition, explicit capabilities, and small interfaces.
+
+## Data Semantics and Provenance Rules
+
+The following rules are non-negotiable:
+
+1. Preserve raw source data before semantic normalization.
+2. Never overwrite a raw record in place.
+3. Distinguish `captured_at`, `source_observed_at`, and any validity interval.
+4. Preserve source-native identifiers and versions.
+5. Every transformed record must be traceable to its raw record or records.
+6. Unknown, missing, invalid, and not-applicable are different states.
+7. Units must be explicit when known; do not silently guess or convert units.
+8. Duplicates must be detectable. Prefer deterministic idempotency keys when the
+   source provides enough information.
+9. Schema drift must be observable. Do not silently ignore new fields or changed
+   meanings.
+10. Correlation, proximity, sequence, and connectivity must not be labelled as
+    causality by the ingestion layer.
+
+## Out of Scope for `data_sources`
+
+This module must not:
+
+- decide the canonical engineering meaning of every source field;
+- build or directly mutate the future system graph;
+- infer physical or causal relationships;
+- diagnose failures;
+- recommend maintenance or engineering actions;
+- calculate the authoritative live state of an asset;
+- contain device-specific logic in the common contracts;
+- use an LLM response as an unqualified source fact;
+- control or command physical hardware during the first milestone;
+- introduce production infrastructure solely because it might be useful later.
+
+Parsing transport-level structures is in scope. Domain normalization and
+identity resolution belong to the next layer. Format-aware extraction of sheets,
+pages, tables, CAD assembly structure, geometry references, and message schemas
+is also in scope, provided that outputs remain traceable and do not claim
+unvalidated engineering semantics.
+
+## First Vertical Slice: DS-001
+
+The first implementation should prove the source boundary without depending on a
+specific physical device.
+
+Build the smallest end-to-end slice that can:
+
+1. Register one local, deterministic source definition.
+2. Read a small BOM-like CSV fixture through a real connector and format
+   extractor.
+3. Emit platform-owned raw record envelopes.
+4. Preserve the original payload and its checksum.
+5. Distinguish source observation time from capture time.
+6. Persist the raw records using a simple local implementation.
+7. Re-run the same acquisition without silently creating uncontrolled duplicates.
+8. Report an ingestion run result and source health.
+9. Quarantine one deliberately malformed fixture with a useful, redacted error.
+10. Demonstrate replay of accepted raw records.
+11. Expose an honest connector manifest that distinguishes declared, available,
+    configured, connected, and validated status.
+12. Trace every extracted BOM row and field back to its raw file location.
+
+Use an in-memory or local development implementation where appropriate. A
+message broker, cloud service, graph database, Kubernetes deployment, and public
+HTTP API are not required for DS-001.
+
+After DS-001 is verified, stop and present the evidence. Do not automatically
+continue into Excel, PDF, CAD, databases, APIs, or a live device connector. The
+next source family should be selected from the intended application's source
+profile and based on what DS-001 teaches us.
+
+Potential future validation slices, selected only when the application needs
+them, are:
+
+```text
+Tabular:     Excel workbook and formula-preserving extraction
+Document:    Native and scanned PDF with page-level provenance
+Engineering: STEP assembly plus a related 2D drawing
+Enterprise:  Read-only API or bounded SQL snapshot
+Operational: One live sensor or telemetry stream
+```
+
+These are a capability roadmap, not a requirement to implement every connector.
+
+## DS-001 Acceptance Criteria
+
+DS-001 is complete only when:
+
+- contracts and module boundaries are documented;
+- behavior is covered by focused unit and contract tests;
+- an end-to-end test ingests the valid fixture;
+- an end-to-end test quarantines the invalid fixture;
+- replay and duplicate behavior are tested;
+- raw records retain provenance and verifiable checksums;
+- extracted BOM fields trace back to exact raw rows and columns;
+- connector availability and validation status cannot be confused;
+- cancellation and resource cleanup are handled where applicable;
+- no secrets or local absolute paths are embedded in committed fixtures;
+- the documented verification commands pass from a clean checkout;
+- known limitations and the next validation question are recorded.
+
+## Engineering Workflow
+
+For every backend module or meaningful change:
+
+1. Restate the decision or capability being validated.
+2. Inspect the repository and existing decisions before designing.
+3. Use the relevant Superpowers brainstorming skill.
+4. Write a bounded implementation plan for non-trivial work.
+5. Define acceptance tests before or alongside implementation.
+6. Implement the smallest coherent vertical slice.
+7. Run focused tests, then the broader relevant suite.
+8. Inspect the final diff and verify behavior from the user's perspective.
+9. Report evidence, limitations, assumptions, and the next open question.
+10. Pause for validation before expanding to the next backend module.
+
+Prefer test-driven development. A test should describe observable behavior, not
+mirror private implementation details.
+
+## Technology Decisions
+
+The repository currently may not have an established language or backend stack.
+Do not make a large framework choice implicitly.
+
+If no stack exists when implementation begins:
+
+1. Identify the minimum capabilities DS-001 requires.
+2. Compare a small number of appropriate options.
+3. Recommend one option with explicit trade-offs.
+4. Record the accepted decision in a short architecture decision record.
+5. Keep the first implementation portable at the contract boundary.
+
+Do not add distributed infrastructure before tests demonstrate a need. Prefer
+boring, inspectable local components for the first slice.
+
+## Security and Safety
+
+- Connectors are read-only by default.
+- Physical control requires a later, explicit safety design and user approval.
+- Credentials must come from an approved secret mechanism and must never be
+  serialized into source definitions, raw records, fixtures, logs, or errors.
+- Treat source payloads as untrusted input.
+- Apply size, timeout, path, and parsing limits.
+- Avoid executing content acquired from a source.
+- Preserve access-control and licensing metadata where supplied.
+
+## Design Principles
+
+- **Evidence before explanation.** Every future conclusion must be traceable to
+  relationships, state, observations, and sources.
+- **Unknown is a valid result.** Never manufacture completeness.
+- **Interfaces before integrations.** Prove the contract with one source before
+  adding many connectors.
+- **Thin kernel, extensible domains.** Keep universal primitives small and add
+  domain semantics through packages or adapters.
+- **Configuration and time matter.** Facts and relationships may be valid only
+  for a particular version, instance, or interval.
+- **Replayability is foundational.** We must be able to reproduce how data entered
+  the platform.
+- **Validation over volume.** One trustworthy vertical slice is more valuable
+  than ten partially working integrations.
+- **No information-library drift.** Model only what is needed to support concrete
+  decisions and validations.
+
+## Communication With the Project Owner
+
+Lead with the decision or verified outcome. Explain trade-offs plainly. Surface
+assumptions and uncertainty instead of hiding them.
+
+Ask for direction before:
+
+- materially expanding the current milestone;
+- selecting a physical showcase that commits significant time or money;
+- adding a cloud dependency or externally hosted service;
+- enabling writes or commands against a real device;
+- changing an accepted architectural boundary.
+
+Reasonable, reversible implementation details inside an accepted milestone do
+not require repeated confirmation.

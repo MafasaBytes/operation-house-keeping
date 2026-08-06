@@ -1,0 +1,6 @@
+# Minimal development toolset for the data_sources milestone.
+# Runtime dependencies will be decided deliberately per CLAUDE.md
+# (Technology Decisions) when DS-001 implementation begins.
+pytest
+pandas
+ipykernel
