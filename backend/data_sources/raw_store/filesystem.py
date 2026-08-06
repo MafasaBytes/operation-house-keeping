@@ -98,6 +98,12 @@ class FilesystemRawStore:
     def put_run(self, run: IngestionRun) -> bool:
         return self._put_json_once(self._runs / f"{run.run_id}.json", run, "run")
 
+    def iter_runs(self, source_id: str) -> Iterator[IngestionRun]:
+        for path in sorted(self._runs.glob("*.json")):
+            run = IngestionRun.model_validate_json(path.read_text("utf-8"))
+            if run.source_id == source_id:
+                yield run
+
     def get_run(self, run_id: str) -> IngestionRun:
         return IngestionRun.model_validate_json(
             self._read_required(self._runs / f"{run_id}.json", f"run {run_id}")
