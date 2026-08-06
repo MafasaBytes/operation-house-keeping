@@ -1,13 +1,17 @@
 """Ingestion orchestration for snapshot sources.
 
 The runner is the only place where acquisition, enveloping, persistence,
-extraction, quarantine, run reporting, and health derivation meet. Failures
-are isolated per source and per record; raw payloads are always persisted
-before extraction is attempted.
+format detection, extraction, staged publication, quarantine, run
+reporting, and health derivation meet. Failures are isolated per source and
+per record; raw payloads are always persisted before extraction is
+attempted; derivatives are published before the extraction envelope, which
+is written last as the commit record.
 """
 
 from collections.abc import Callable
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from pathlib import Path
 
 from backend.data_sources.catalog import InMemorySourceCatalog
 from backend.data_sources.connectors import LocalFileConnector
@@ -22,12 +26,19 @@ from backend.data_sources.contracts import (
     RawRecord,
     SourceDefinition,
     SourceHealth,
+    SourceProfile,
 )
 from backend.data_sources.extractors import (
     CsvExtractionConfig,
     csv_extractor_identity,
+    detect_format,
     extract_csv,
 )
+from backend.data_sources.extractors.step import (
+    StepExtractionConfig,
+    extract_step,
+)
+from backend.data_sources.extractors.worker_harness import WorkerLimits
 from backend.data_sources.provenance import (
     derive_record_id,
     payload_checksum,
@@ -42,6 +53,25 @@ def _utc_now() -> datetime:
     return datetime.now(tz=UTC)
 
 
+@dataclass
+class ExtractionProduct:
+    result: ExtractionResult
+    derivative_payloads: dict[str, bytes] = field(default_factory=dict)
+
+
+Extractor = Callable[[bytes, RawRecord], ExtractionProduct]
+
+# Which application-profile source family a declared content type belongs to.
+FAMILY_BY_CONTENT_TYPE = {
+    "text/csv": "csv_bom",
+    "model/step": "step_assembly",
+}
+
+_FORMAT_DETECTION_CODES = frozenset(
+    {"EXTRACT_UNSUPPORTED_NATIVE_CAD_FORMAT", "EXTRACT_UNSUPPORTED_OR_UNKNOWN_FORMAT"}
+)
+
+
 class IngestionRunner:
     def __init__(
         self,
@@ -49,11 +79,26 @@ class IngestionRunner:
         store: FilesystemRawStore,
         connectors: dict[str, LocalFileConnector],
         clock: Clock = _utc_now,
+        extractors: dict[str, Extractor] | None = None,
+        profile: SourceProfile | None = None,
+        step_config: StepExtractionConfig | None = None,
+        worker_limits: WorkerLimits | None = None,
+        scratch_root: Path | None = None,
     ) -> None:
         self.catalog = catalog
         self.store = store
         self.connectors = connectors
         self.clock = clock
+        self.profile = profile
+        self.step_config = step_config or StepExtractionConfig()
+        self.worker_limits = worker_limits or WorkerLimits()
+        self.scratch_root = scratch_root
+        self.extractors: dict[str, Extractor] = (
+            extractors if extractors is not None else self._default_extractors()
+        )
+
+    def _default_extractors(self) -> dict[str, Extractor]:
+        return {"text/csv": self._extract_csv, "model/step": self._extract_step}
 
     # -- public API -------------------------------------------------------
 
@@ -62,7 +107,7 @@ class IngestionRunner:
         run_id = self._next_run_id(source_id)
         started_at = self.clock()
 
-        seen = accepted = duplicate = quarantined = 0
+        seen = accepted = duplicate = quarantined = partial = 0
         errors: list[str] = []
 
         try:
@@ -72,6 +117,7 @@ class IngestionRunner:
                     "ACQUIRE_SOURCE_DISABLED",
                     f"source {source_id!r} is disabled in the catalog",
                 )
+            self._check_profile(source)
             acquisition = connector.acquire(source)
             seen = 1
 
@@ -98,14 +144,25 @@ class IngestionRunner:
                 self.store.put_envelope(envelope)
                 accepted = 1
                 try:
-                    self.store.put_extraction(self._extract(envelope, acquisition.payload))
-                except ExtractionError as error:
+                    product = self._extract_product(envelope, acquisition.payload)
+                    # Staged publication: derivatives first, envelope last as
+                    # the commit record.
+                    for data in product.derivative_payloads.values():
+                        self.store.put_derivative_payload(data)
+                    self.store.put_extraction(product.result)
+                    if product.result.outcome == "partial":
+                        partial = 1
+                except DataSourceError as error:
                     quarantined = 1
                     errors.append(f"{error.error_code}: 1 record")
                     self.store.put_quarantine(
                         QuarantineRecord(
                             record_id=record_id,
-                            stage="extraction",
+                            stage=(
+                                "format_detection"
+                                if error.error_code in _FORMAT_DETECTION_CODES
+                                else "extraction"
+                            ),
                             error_code=error.error_code,
                             redacted_message=self._redact(error.message),
                             quarantined_at=self.clock(),
@@ -123,6 +180,7 @@ class IngestionRunner:
                 records_accepted=accepted,
                 records_duplicate=duplicate,
                 records_quarantined=quarantined,
+                records_partial=partial,
                 error_summary="; ".join(errors),
             )
             self.store.put_run(run)
@@ -138,19 +196,20 @@ class IngestionRunner:
             records_accepted=accepted,
             records_duplicate=duplicate,
             records_quarantined=quarantined,
+            records_partial=partial,
             error_summary="; ".join(errors) or None,
         )
         self.store.put_run(run)
         return run
 
-    def replay(self, source_id: str) -> list[ExtractionResult]:
+    def replay(self, source_id: str) -> list[ExtractionProduct]:
         """Re-extract accepted raw records from the store, without touching
         the external source."""
-        results: list[ExtractionResult] = []
+        products: list[ExtractionProduct] = []
         for envelope in self.store.iter_accepted_envelopes(source_id):
             payload = self.store.get_payload(envelope.immutable_payload_reference)
-            results.append(self._extract(envelope, payload))
-        return results
+            products.append(self._extract_product(envelope, payload))
+        return products
 
     def health(self, source_id: str) -> SourceHealth:
         runs = sorted(self.store.iter_runs(source_id), key=lambda r: r.finished_at)
@@ -184,7 +243,69 @@ class IngestionRunner:
             diagnostic_code=diagnostic,
         )
 
+    # -- extraction dispatch ---------------------------------------------
+
+    def _extract_product(self, envelope: RawRecord, payload: bytes) -> ExtractionProduct:
+        extractor = self.extractors.get(envelope.content_type)
+        if extractor is None:
+            raise ExtractionError(
+                "EXTRACT_UNSUPPORTED_FORMAT",
+                f"no extractor available for content type {envelope.content_type!r}",
+            )
+        return extractor(payload, envelope)
+
+    def _extract_csv(self, payload: bytes, envelope: RawRecord) -> ExtractionProduct:
+        config = CsvExtractionConfig()
+        table = extract_csv(payload, envelope.record_id, config)
+        result = ExtractionResult(
+            schema_version=1,
+            raw_record_id=envelope.record_id,
+            extractor=csv_extractor_identity(config),
+            outcome="succeeded",
+            warnings=[],
+            result=CsvTableResult(table=table),
+        )
+        return ExtractionProduct(result=result)
+
+    def _extract_step(self, payload: bytes, envelope: RawRecord) -> ExtractionProduct:
+        detection = detect_format(payload, declared_content_type=envelope.content_type)
+        if detection.status == "unsupported_native_cad":
+            raise ExtractionError(
+                "EXTRACT_UNSUPPORTED_NATIVE_CAD_FORMAT",
+                f"payload is an {detection.detected_container}, not STEP; "
+                "native CAD formats require a vendor extraction pipeline",
+            )
+        if detection.status != "confirmed_step":
+            raise ExtractionError(
+                "EXTRACT_UNSUPPORTED_OR_UNKNOWN_FORMAT", detection.evidence
+            )
+        product = extract_step(
+            payload=payload,
+            raw_record_id=envelope.record_id,
+            config=self.step_config,
+            limits=self.worker_limits,
+            scratch_root=self.scratch_root,
+        )
+        return ExtractionProduct(
+            result=product.result, derivative_payloads=product.derivative_payloads
+        )
+
     # -- internals --------------------------------------------------------
+
+    def _check_profile(self, source: SourceDefinition) -> None:
+        if self.profile is None:
+            return
+        content_type = self._content_type(source)
+        family = FAMILY_BY_CONTENT_TYPE.get(content_type)
+        entry = next(
+            (e for e in self.profile.entries if e.source_family == family), None
+        )
+        if entry is None or not entry.enabled_for_profile:
+            raise AcquisitionError(
+                "ACQUIRE_NOT_IN_PROFILE",
+                f"content type {content_type!r} (family {family!r}) is not "
+                f"enabled in profile {self.profile.profile_id!r}",
+            )
 
     def _connector_for(self, source: SourceDefinition) -> LocalFileConnector:
         try:
@@ -195,23 +316,6 @@ class IngestionRunner:
                 f"no active connector of type {source.connector_type!r}; the "
                 "catalog declares it but this runtime does not provide it",
             ) from None
-
-    def _extract(self, envelope: RawRecord, payload: bytes) -> ExtractionResult:
-        if envelope.content_type != "text/csv":
-            raise ExtractionError(
-                "EXTRACT_UNSUPPORTED_FORMAT",
-                f"no extractor available for content type {envelope.content_type!r}",
-            )
-        config = CsvExtractionConfig()
-        table = extract_csv(payload, envelope.record_id, config)
-        return ExtractionResult(
-            schema_version=1,
-            raw_record_id=envelope.record_id,
-            extractor=csv_extractor_identity(config),
-            outcome="succeeded",
-            warnings=[],
-            result=CsvTableResult(table=table),
-        )
 
     @staticmethod
     def _content_type(source: SourceDefinition) -> str:

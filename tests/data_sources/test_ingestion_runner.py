@@ -174,7 +174,7 @@ class TestReplay:
 
         valid_path.unlink()  # the external source is gone; replay must not need it
         [replayed] = runner.replay("bom-valid")
-        assert replayed == original
+        assert replayed.result == original
 
 
 class TestFailureHonesty:
