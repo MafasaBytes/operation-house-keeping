@@ -82,6 +82,9 @@ class FilesystemRawStore:
             self._envelopes / f"{record.record_id}.json", record, "envelope"
         )
 
+    def has_envelope(self, record_id: str) -> bool:
+        return (self._envelopes / f"{record_id}.json").exists()
+
     def iter_accepted_envelopes(self, source_id: str) -> Iterator[RawRecord]:
         """Yield stored envelopes for a source, excluding quarantined records,
         in deterministic (record_id) order."""

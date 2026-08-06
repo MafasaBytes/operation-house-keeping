@@ -1,0 +1,7 @@
+item_no,name,quantity,unit,parent
+100-001,"Frame, welded",1,piece,
+100-002,Bolt M6,8,piece,100-001
+100-003,Nut M6,8,piece,100-001
+100-004,Side panel,2,piece,100-001
+100-005,Controller board,1,piece,100-001
+100-006,Wiring harness,1,piece,100-005
