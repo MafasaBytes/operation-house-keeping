@@ -52,9 +52,10 @@ class TestDependencyAwareAvailability:
             enabled=True,
         )
 
+    @pytest.mark.pdf
     def test_pdf_dependencies_checked_and_reported(self, tmp_path):
         passed, evidence = check_extraction_dependencies("application/pdf")
-        assert passed is True  # this environment has the PDF closure
+        assert passed is True  # the pdf marker guarantees the closure
         assert "pdfplumber" in evidence
 
     def test_missing_dependency_fails_available_rung(self, tmp_path, monkeypatch):
