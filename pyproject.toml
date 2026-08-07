@@ -11,4 +11,5 @@ pythonpath = ["."]
 addopts = "-q"
 markers = [
     "cad: requires the CAD extra (cadquery-ocp) from requirements-cad.txt",
+    "pdf: requires the PDF extra (pdfplumber/pypdf) from requirements-pdf.txt",
 ]
