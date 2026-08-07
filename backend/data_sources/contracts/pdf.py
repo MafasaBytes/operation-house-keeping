@@ -254,6 +254,68 @@ class PdfExtractionManifest(_FrozenModel):
     warnings: list[str] = Field(default_factory=list)
 
     @model_validator(mode="after")
+    def _reference_consistency(self) -> "PdfExtractionManifest":
+        """A block or table cell may not persist references that contradict
+        its own page or bbox. Tolerances: 0.01 pt for block enclosure (both
+        sides carry 3-decimal rounding); the candidate's declared linking
+        tolerance (+0.01) for cell centers."""
+        spans_by_id = {span.span_id: span for span in self.spans}
+        enclosure_tol = 0.01
+        for block in self.blocks:
+            bb = block.locator.bbox
+            for span_id in block.span_ids:
+                span = spans_by_id.get(span_id)
+                if span is None:
+                    raise ValueError(
+                        f"block {block.block_id} references unknown span {span_id}"
+                    )
+                if span.locator.page_index != block.locator.page_index:
+                    raise ValueError(
+                        f"block {block.block_id} references a span on another page"
+                    )
+                sb = span.locator.bbox
+                if not (
+                    bb[0] <= sb[0] + enclosure_tol
+                    and bb[1] <= sb[1] + enclosure_tol
+                    and sb[2] <= bb[2] + enclosure_tol
+                    and sb[3] <= bb[3] + enclosure_tol
+                ):
+                    raise ValueError(
+                        f"block {block.block_id} bbox {bb} does not enclose "
+                        f"referenced span bbox {sb}"
+                    )
+        for candidate in self.table_candidates:
+            link_tol = candidate.cell_span_link_tolerance_points + 0.01
+            for cell in candidate.cells:
+                if cell.locator.page_index != candidate.locator.page_index:
+                    raise ValueError(
+                        f"table {candidate.candidate_id} has a cell on another page"
+                    )
+                cb = cell.locator.bbox
+                for span_id in cell.span_refs:
+                    span = spans_by_id.get(span_id)
+                    if span is None:
+                        raise ValueError(
+                            f"table cell references unknown span {span_id}"
+                        )
+                    if span.locator.page_index != cell.locator.page_index:
+                        raise ValueError(
+                            "table cell references a span on another page"
+                        )
+                    center_x = (span.locator.bbox[0] + span.locator.bbox[2]) / 2
+                    center_y = (span.locator.bbox[1] + span.locator.bbox[3]) / 2
+                    if not (
+                        cb[0] - link_tol <= center_x <= cb[2] + link_tol
+                        and cb[1] - link_tol <= center_y <= cb[3] + link_tol
+                    ):
+                        raise ValueError(
+                            f"table cell bbox {cb} references span {span_id} "
+                            f"whose canonical center ({center_x}, {center_y}) "
+                            "lies outside the declared linking tolerance"
+                        )
+        return self
+
+    @model_validator(mode="after")
     def _levels_honest(self) -> "PdfExtractionManifest":
         extra = set(self.levels_achieved) - set(self.levels_supported)
         if extra:

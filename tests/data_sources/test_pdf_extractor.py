@@ -543,3 +543,105 @@ class TestActiveContentInventoryScope:
         assert "/AA" in joined
         # narrow claim: nothing pretends other action types were inspected
         assert "never executed or inspected in detail" in joined
+
+
+@pytest.mark.pdf
+class TestFrameConsistency:
+    """Follow-up repair evidence: no mixed-frame comparisons remain —
+    block and table geometry live in the canonical frame with correct
+    forward/inverse provenance on normal, rotated, and offset-CropBox
+    pages."""
+
+    FIXTURE_SET = ("manual_multipage.pdf", "rotated_cropbox.pdf",
+                   "rotated_cropbox_table.pdf")
+
+    def _frame_matrices(self, manifest, page_index):
+        from backend.data_sources.extractors.pdf.coordinates import (
+            forward_matrix, inverse_matrix,
+        )
+        page = manifest.pages[page_index]
+        box = tuple(page.boxes[page.coordinate_frame.source_box])
+        return (forward_matrix(page.rotation_degrees, box),
+                inverse_matrix(page.rotation_degrees, box))
+
+    def test_block_invariants_on_all_fixture_geometries(self, tmp_path):
+        from backend.data_sources.extractors.pdf.coordinates import transform_bbox
+        tol = 0.01
+        for name in self.FIXTURE_SET:
+            manifest = run_fixture(name, tmp_path / name).result.manifest_view()
+            spans_by_id = {s.span_id: s for s in manifest.spans}
+            assert manifest.blocks, name
+            for block in manifest.blocks:
+                forward, inverse = self._frame_matrices(
+                    manifest, block.locator.page_index
+                )
+                bb = block.locator.bbox
+                assert all(v >= -tol for v in bb), (name, bb)  # never negative
+                for span_id in block.span_ids:
+                    span = spans_by_id[span_id]  # exists
+                    assert span.locator.page_index == block.locator.page_index
+                    sb = span.locator.bbox
+                    assert bb[0] <= sb[0] + tol and bb[1] <= sb[1] + tol
+                    assert sb[2] <= bb[2] + tol and sb[3] <= bb[3] + tol
+                assert transform_bbox(forward, block.locator.source_bbox) == (
+                    pytest.approx(bb, abs=0.002)
+                ), (name, "forward")
+                assert transform_bbox(inverse, bb) == pytest.approx(
+                    block.locator.source_bbox, abs=0.002
+                ), (name, "inverse")
+
+    def test_cropped_span_contained_by_its_block(self, tmp_path):
+        manifest = run_fixture("rotated_cropbox.pdf", tmp_path).result.manifest_view()
+        span = find_word(manifest, 0, "CROPPED")
+        assert span.locator.bbox == pytest.approx(
+            [657.516, 22.0, 669.516, 81.34], abs=0.002
+        )
+        [block] = [b for b in manifest.blocks if span.span_id in b.span_ids]
+        bb = block.locator.bbox
+        # a doubly-transformed (shifted/negative) block bbox fails this
+        assert bb[0] <= 657.516 + 0.01 and bb[1] <= 22.0 + 0.01
+        assert bb[2] >= 669.516 - 0.01 and bb[3] >= 81.34 - 0.01
+        assert all(v >= 0 for v in bb)
+
+    def test_rotated_cropbox_table_links_in_canonical_frame(self, tmp_path):
+        from backend.data_sources.extractors.pdf.coordinates import transform_bbox
+        manifest = run_fixture(
+            "rotated_cropbox_table.pdf", tmp_path
+        ).result.manifest_view()
+        expected = golden.ROTATED_CROPBOX_TABLE
+
+        page = manifest.pages[0]
+        assert tuple(page.boxes["MediaBox"]) == expected["raw_mediabox"]
+        assert tuple(page.boxes["CropBox"]) == expected["raw_cropbox"]
+        # linking must not depend on the boxes sharing an origin:
+        assert page.boxes["CropBox"][:2] != page.boxes["MediaBox"][:2]
+
+        [candidate] = manifest.table_candidates
+        assert candidate.row_count == expected["row_count"]
+        assert candidate.column_count == expected["column_count"]
+        assert candidate.locator.bbox == pytest.approx(
+            list(expected["table_bbox_canonical"]), abs=golden.TOLERANCE_PT
+        )
+        forward, inverse = self._frame_matrices(manifest, 0)
+        for item in [candidate, *candidate.cells]:
+            assert transform_bbox(forward, item.locator.source_bbox) == (
+                pytest.approx(item.locator.bbox, abs=0.002)
+            )
+            assert transform_bbox(inverse, item.locator.bbox) == pytest.approx(
+                item.locator.source_bbox, abs=0.002
+            )
+
+        spans_by_id = {s.span_id: s for s in manifest.spans}
+        linked_texts = set()
+        tol = candidate.cell_span_link_tolerance_points
+        for cell in candidate.cells:
+            assert cell.span_refs, (cell.row_index, cell.column_index)
+            cb = cell.locator.bbox
+            for span_id in cell.span_refs:
+                span = spans_by_id[span_id]
+                linked_texts.add(span.text)
+                cx = (span.locator.bbox[0] + span.locator.bbox[2]) / 2
+                cy = (span.locator.bbox[1] + span.locator.bbox[3]) / 2
+                assert cb[0] - tol <= cx <= cb[2] + tol
+                assert cb[1] - tol <= cy <= cb[3] + tol
+        assert linked_texts == expected["cell_texts"]

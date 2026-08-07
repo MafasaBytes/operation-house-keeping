@@ -111,3 +111,15 @@ the designed raw content and the expected canonical mapping). sha256:
 ```
 993ffdc637acc9f4c14c523785f57a5e52d46e84e56e6414c44c420158e8b332  rotated_cropbox.pdf
 ```
+
+### `rotated_cropbox_table.pdf` (follow-up repair, 2026-08-07)
+
+A ruled 2x2 table on the same rotated, offset-CropBox page geometry (see
+`generate_rotated_cropbox_table` docstring for designed raw coordinates
+and expected canonical mapping). Proves cell/span linking operates in the
+canonical frame and does not depend on MediaBox and CropBox sharing an
+origin. sha256:
+
+```
+cbee2a33e791898f693615b48a32327d0c4672969514393b266146e0e2074249  rotated_cropbox_table.pdf
+```

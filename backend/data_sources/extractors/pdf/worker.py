@@ -12,9 +12,13 @@ pages within per-page/aggregate limits and writes ``render_results.json``
 plus ``page_<n>.png`` files. Handled failures exit 0 and are reported as
 data; a non-zero exit is an unhandled crash.
 
-Security: JavaScript, actions, links, and embedded files are inventoried
-read-only and never executed, followed, or extracted; all diagnostic
-strings are length-bounded and contain no filesystem paths.
+Security — the active-content inventory covers exactly: JavaScript
+name-tree entries (count), URI link annotations, embedded-file
+declarations (names only), and the presence of a document OpenAction or
+additional-action (/AA) entries. Launch, GoToR, SubmitForm, and other
+action types are NOT inspected. Nothing is ever executed, followed, or
+extracted; all diagnostic strings are length-bounded and contain no
+filesystem paths.
 """
 
 import hashlib

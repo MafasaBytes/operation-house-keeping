@@ -227,6 +227,38 @@ def generate_rotated_cropbox() -> bytes:
     ])
 
 
+def generate_rotated_cropbox_table() -> bytes:
+    """A ruled 2x2 table on a rotated page with an offset CropBox.
+
+    Designed raw (unrotated user-space) content:
+      MediaBox [0 0 612 792], CropBox [50 40 562 742], /Rotate 90
+      grid: verticals x = 100, 250, 400; horizontals y = 500, 550, 600
+      cell texts (Helv 10, raw baselines):
+        ALPHA (110, 570)   BETA  (260, 570)
+        GAMMA (110, 520)   DELTA (260, 520)
+    Expected canonical (CropBox-relative, /Rotate 90): x' = y_raw - 40,
+    y' = x_raw - 50; table bbox raw [100,500,400,600] -> canonical
+    [460, 50, 560, 350].
+    """
+    content = bytearray()
+    for x in (100, 250, 400):
+        content += f"{x} 500 m {x} 600 l S\n".encode()
+    for y in (500, 550, 600):
+        content += f"100 {y} m 400 {y} l S\n".encode()
+    for x, y, value in ((110, 570, "ALPHA"), (260, 570, "BETA"),
+                        (110, 520, "GAMMA"), (260, 520, "DELTA")):
+        content += text(x, y, 10, value)
+    return build_pdf([
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
+        b"/CropBox [50 40 562 742] /Rotate 90 "
+        b"/Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
+        HELVETICA,
+        content_obj(bytes(content)),
+    ])
+
+
 def generate_encrypted(source: bytes, path: Path) -> None:
     import io
 

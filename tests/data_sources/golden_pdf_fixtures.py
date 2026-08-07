@@ -102,3 +102,17 @@ ROTATED_CROPBOX = {
     "annotation_canonical_bbox": (560.0, 50.0, 600.0, 150.0),
     "annotation_uri": "http://example.invalid/detail",
 }
+
+
+# rotated_cropbox_table.pdf — designed raw 2x2 ruled grid (see generator):
+# verticals x=100/250/400, horizontals y=500/550/600 on the same rotated
+# offset-CropBox page as ROTATED_CROPBOX. Canonical: x'=y-40, y'=x-50.
+ROTATED_CROPBOX_TABLE = {
+    "row_count": 2,
+    "column_count": 2,
+    "cell_texts": {"ALPHA", "BETA", "GAMMA", "DELTA"},
+    # raw table bbox [100,500,400,600] -> canonical
+    "table_bbox_canonical": (460.0, 50.0, 560.0, 350.0),
+    "raw_mediabox": (0.0, 0.0, 612.0, 792.0),
+    "raw_cropbox": (50.0, 40.0, 562.0, 742.0),
+}

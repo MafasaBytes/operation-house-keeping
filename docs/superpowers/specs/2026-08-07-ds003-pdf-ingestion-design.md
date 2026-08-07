@@ -165,12 +165,16 @@ Empty-user-password documents decrypt and proceed with warning
 `encrypted_openable`; the manifest records
 `encryption: {present, method, authentication_outcome}`. Password-required
 → quarantine `EXTRACT_PDF_PASSWORD_REQUIRED` (credentialed decryption is a
-future capability tied to `credential_reference`). JavaScript, actions,
-launch instructions, links, and embedded files are inventoried via a
-read-only catalog scan and **never executed/opened/followed**; URI targets,
-attachment names, metadata, and diagnostics are length-bounded and
-redacted. A dedicated active-content fixture proves inventory-without-
-execution.
+future capability tied to `credential_reference`). The active-content
+inventory covers exactly: JavaScript name-tree entries (count), URI link
+annotations, embedded-file declarations (names only), and the presence of
+a document OpenAction or additional-action (/AA) entries — via a
+read-only catalog scan, **never executed/opened/followed**. Launch,
+GoToR, SubmitForm, and other action types are NOT inspected, and the
+manifest never claims otherwise. URI targets, attachment names, metadata,
+and diagnostics are sanitized (secrets, credentials, and absolute paths
+removed; scheme/host/safe basename kept) and length-bounded. A dedicated
+active-content fixture proves inventory-without-execution.
 
 ## Resource limits (amendment 7, all configurable)
 

@@ -359,23 +359,44 @@ def _assemble(
             rounding_decimals=3,
         )
 
-        def locator(bbox, method, source_bbox=None, confidence=None,
-                    label=page["page_label"], _to_canonical=to_canonical,
-                    _displayed_to_raw=displayed_to_raw, _index=index):
-            """Build a locator. ``bbox`` is a pdfplumber displayed bbox
-            unless ``source_bbox`` (raw user space) is given, in which case
-            the canonical bbox is derived from it via the forward
-            transform."""
-            if source_bbox is None:
-                source_bbox = transform_bbox(_displayed_to_raw, list(bbox))
-            canonical = transform_bbox(_to_canonical, list(source_bbox))
+        canonical_to_raw = inverse_matrix(rotation, canonical_box)
+
+        def _build_locator(canonical, source, method, confidence,
+                           _index=index, _label=page["page_label"]):
             return PageRegionLocator(
-                page_index=_index, page_label=label,
+                page_index=_index, page_label=_label,
                 bbox=[round(v, 3) for v in canonical],
-                source_bbox=[round(v, 3) for v in source_bbox],
+                source_bbox=[round(v, 3) for v in source],
                 source_coordinate_system=SOURCE_COORDINATE_SYSTEM,
                 method=method, confidence=confidence,
             )
+
+        # Frame-explicit locator constructors. Each names the coordinate
+        # system of its input; a canonical bbox must never pass through the
+        # pdfplumber-display conversion path.
+        def locator_from_pdfplumber_displayed(
+            bbox, method, confidence=None,
+            _displayed_to_raw=displayed_to_raw, _to_canonical=to_canonical,
+        ):
+            """Input: pdfplumber displayed coords (rotated MediaBox frame)."""
+            source = transform_bbox(_displayed_to_raw, list(bbox))
+            canonical = transform_bbox(_to_canonical, source)
+            return _build_locator(canonical, source, method, confidence)
+
+        def locator_from_source_user_space(
+            rect, method, confidence=None, _to_canonical=to_canonical,
+        ):
+            """Input: raw unrotated PDF user space (e.g. pypdf /Rect)."""
+            canonical = transform_bbox(_to_canonical, list(rect))
+            return _build_locator(canonical, list(rect), method, confidence)
+
+        def locator_from_canonical(
+            bbox, method, confidence=None, _canonical_to_raw=canonical_to_raw,
+        ):
+            """Input: canonical CropBox-relative displayed coords (e.g. a
+            bbox derived from other canonical locators)."""
+            source = transform_bbox(_canonical_to_raw, list(bbox))
+            return _build_locator(list(bbox), source, method, confidence)
 
         char_count = page["char_count"]
         image_count = len(page["images"])
@@ -400,7 +421,7 @@ def _assemble(
         for order, word in enumerate(page["words"]):
             span = PdfTextSpan(
                 span_id=eid("span", index, order),
-                locator=locator(
+                locator=locator_from_pdfplumber_displayed(
                     [word["x0"], word["top"], word["x1"], word["bottom"]],
                     method="pdfplumber.extract_words",
                 ),
@@ -430,7 +451,9 @@ def _assemble(
             blocks.append(
                 PdfTextBlock(
                     block_id=eid("block", index, order),
-                    locator=locator(bbox, method=BLOCK_METHOD),
+                    # the union bbox is already canonical (built from span
+                    # locators); it must NOT re-enter the displayed path
+                    locator=locator_from_canonical(bbox, method=BLOCK_METHOD),
                     span_ids=[s.span_id for s in line],
                     reading_order_index=order,
                     reading_order_basis="geometric_top_left",
@@ -444,7 +467,7 @@ def _assemble(
             images.append(
                 PdfImage(
                     image_id=eid("image", index, i_index),
-                    locator=locator(
+                    locator=locator_from_pdfplumber_displayed(
                         [image["x0"], image["top"], image["x1"], image["bottom"]],
                         method="pdfplumber.page.images",
                     ),
@@ -460,9 +483,8 @@ def _assemble(
             annotations.append(
                 PdfAnnotation(
                     annotation_id=eid("annot", index, a_index),
-                    locator=locator(
-                        None, method="pypdf.page.annotations",
-                        source_bbox=rect,
+                    locator=locator_from_source_user_space(
+                        rect, method="pypdf.page.annotations",
                     ),
                     subtype=annotation["subtype"],
                     contents=sanitize_source_text(annotation["contents"]),
@@ -492,7 +514,13 @@ def _assemble(
         for t_index, table in enumerate(page["tables"]):
             cells = []
             for cell in table["cells"]:
-                cx0, ctop, cx1, cbottom = cell["bbox"]
+                # Build the cell locator FIRST; the center-within heuristic
+                # then compares canonical against canonical — never the
+                # worker's displayed cell bbox against canonical spans.
+                cell_locator = locator_from_pdfplumber_displayed(
+                    cell["bbox"], method="pdfplumber.table.cells"
+                )
+                cx0, ctop, cx1, cbottom = cell_locator.bbox
                 linked = [
                     s for s in page_spans
                     if cx0 - CELL_LINK_TOLERANCE
@@ -504,7 +532,7 @@ def _assemble(
                 ]
                 cells.append(
                     PdfTableCell(
-                        locator=locator(cell["bbox"], method="pdfplumber.table.cells"),
+                        locator=cell_locator,
                         row_index=cell["row"],
                         column_index=cell["col"],
                         span_refs=[s.span_id for s in linked],
@@ -515,7 +543,7 @@ def _assemble(
             tables.append(
                 PdfTableCandidate(
                     candidate_id=eid("table", index, t_index),
-                    locator=locator(
+                    locator=locator_from_pdfplumber_displayed(
                         table["bbox"], method="pdfplumber.find_tables",
                         confidence=0.7,
                     ),

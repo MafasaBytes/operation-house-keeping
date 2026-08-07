@@ -313,3 +313,80 @@ class TestManifestResultUnion:
         assert restored == result
         assert restored.result.kind == "pdf_manifest"
         assert restored.manifest_view().raw_record_id == RID
+
+
+class TestManifestReferenceConsistency:
+    """Manifest-level validation: blocks and table cells cannot persist
+    references that contradict their own page or bbox."""
+
+    def _block_for_span(self, span, **overrides):
+        base = dict(
+            block_id="c" * 32,
+            locator=span.locator.model_copy(
+                update={"method": "geometric_line_grouping(top_tolerance=2.0)"}
+            ),
+            span_ids=[span.span_id],
+            reading_order_index=0,
+            reading_order_basis="geometric_top_left",
+            reading_order_method="geometric_line_grouping(top_tolerance=2.0)",
+            reading_order_calibration="uncalibrated_heuristic",
+            reading_order_confidence=None,
+        )
+        base.update(overrides)
+        return PdfTextBlock(**base)
+
+    def test_valid_block_reference_accepted(self):
+        span = make_span()
+        manifest = make_manifest(blocks=[self._block_for_span(span)], spans=[span])
+        assert manifest.blocks[0].span_ids == [span.span_id]
+
+    def test_unknown_span_reference_rejected(self):
+        span = make_span()
+        block = self._block_for_span(span, span_ids=["f" * 32])
+        with pytest.raises(ValidationError) as excinfo:
+            make_manifest(blocks=[block], spans=[span])
+        assert "unknown span" in str(excinfo.value)
+
+    def test_block_not_enclosing_span_rejected(self):
+        span = make_span()
+        shifted = span.locator.model_copy(
+            update={"bbox": [500.0, 500.0, 520.0, 510.0]}
+        )
+        block = self._block_for_span(span, locator=shifted)
+        with pytest.raises(ValidationError) as excinfo:
+            make_manifest(blocks=[block], spans=[span])
+        assert "does not enclose" in str(excinfo.value)
+
+    def test_block_span_on_other_page_rejected(self):
+        span = make_span()
+        other_page = span.locator.model_copy(update={"page_index": 1})
+        block = self._block_for_span(span, locator=other_page)
+        with pytest.raises(ValidationError) as excinfo:
+            make_manifest(
+                blocks=[block], spans=[span],
+                pages=[make_page(), make_page(page_index=1)],
+                page_outcomes=[make_outcome(), make_outcome(page_index=1)],
+            )
+        assert "another page" in str(excinfo.value)
+
+    def test_cell_center_outside_tolerance_rejected(self):
+        span = make_span()  # bbox around x 72..176, y 62..74
+        far_cell = PdfTableCell(
+            locator=make_locator(
+                bbox=[400.0, 400.0, 450.0, 430.0], method="pdfplumber.table.cells"
+            ),
+            row_index=0, column_index=0,
+            span_refs=[span.span_id], text=span.text, ambiguous=False,
+        )
+        candidate = PdfTableCandidate(
+            candidate_id="d" * 32,
+            locator=make_locator(method="pdfplumber.find_tables"),
+            method="pdfplumber.find_tables(default lines strategy)",
+            settings={}, confidence=0.7, warnings=[],
+            row_count=1, column_count=1, cells=[far_cell],
+            cell_span_link_method="span_bbox_center_within_cell_bbox",
+            cell_span_link_tolerance_points=2.0,
+        )
+        with pytest.raises(ValidationError) as excinfo:
+            make_manifest(table_candidates=[candidate], spans=[span])
+        assert "outside the declared linking tolerance" in str(excinfo.value)
