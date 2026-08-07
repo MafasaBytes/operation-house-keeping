@@ -9,6 +9,7 @@ six-dimension subject+property pair. ``recorded_at`` is audit information
 everywhere: it never picks winners.
 """
 
+import re
 from datetime import UTC
 from typing import Annotated, Literal, Union
 
@@ -33,6 +34,11 @@ from backend.temporal_state.contracts import SourcePropertyRef, SourceSubjectRef
 UtcDatetime = Annotated[AwareDatetime, AfterValidator(lambda v: v.astimezone(UTC))]
 
 BINDING_SET_ID_PATTERN = r"^[a-z0-9-]+$"
+LEDGER_RECORD_ID_PATTERN = r"^(anc|iba|ibr|ibc|ibj)_[0-9a-f]{64}$"
+
+
+def _sorted_unique(values) -> bool:
+    return list(values) == sorted(set(values))
 
 
 # ---------------------------------------------------------------- errors
@@ -150,8 +156,6 @@ class BindingAssertion(_Frozen):
 
     @model_validator(mode="after")
     def _shape_matches_kind(self):
-        import re
-
         if self.binding_kind == "subject":
             if self.property is not None:
                 raise ValueError("a subject binding carries no property locator")
@@ -205,6 +209,17 @@ class BindingRejection(_Frozen):
     authority: AuthorityRef
     note: str = ""
 
+    @model_validator(mode="after")
+    def _target_matches_level(self):
+        # subject/property decisions stay coherent: a subject-level
+        # rejection refuses an entity, a property-level one a variable
+        expected = (ENTITY_ANCHOR_ID_PATTERN if self.property is None
+                    else VARIABLE_ANCHOR_ID_PATTERN)
+        if not re.fullmatch(expected, self.rejected_anchor_id):
+            raise ValueError(
+                "rejected_anchor_id kind does not match the rejection level")
+        return self
+
 
 LedgerRecord = Union[
     AnchorDeclaration, BindingAssertion, BindingRetraction,
@@ -226,6 +241,9 @@ class BindingRevision(_Frozen):
     @model_validator(mode="after")
     def _membership_consistent(self):
         ids = self.record_ids
+        for record_id in ids:
+            if not re.fullmatch(LEDGER_RECORD_ID_PATTERN, record_id):
+                raise ValueError(f"{record_id!r} is not a ledger record id")
         if list(ids) != sorted(set(ids)):
             raise ValueError("record_ids must be unique and sorted")
         if self.record_count != len(ids):
@@ -261,6 +279,24 @@ class AssertionSummary(_Frozen):
     membership_at: Membership
     recorded_at: UtcDatetime
 
+    @model_validator(mode="after")
+    def _lifecycle_consistent(self):
+        if self.active != (not self.superseded_by and not self.retracted_by):
+            raise ValueError(
+                "active is equivalent to having no supersession or "
+                "retraction links")
+        if len(self.closure_records) > 1:
+            raise ValueError("a valid result carries at most one closure")
+        for values, prefix in ((self.superseded_by, "iba"),
+                               (self.retracted_by, "ibr"),
+                               (self.closure_records, "ibc")):
+            if not _sorted_unique(values):
+                raise ValueError("lifecycle record ids must be unique/sorted")
+            for record_id in values:
+                if not re.fullmatch(rf"^{prefix}_[0-9a-f]{{64}}$", record_id):
+                    raise ValueError(f"{record_id!r} is not a {prefix} id")
+        return self
+
 
 class SubjectResolutionContext(_Frozen):
     """Non-recursive subject context on property results: statuses,
@@ -270,6 +306,21 @@ class SubjectResolutionContext(_Frozen):
     resolved_entity: EntityAnchor | None = None
     candidate_entities: tuple[EntityAnchor, ...] = ()
     via_assertion_ids: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def _context_consistent(self):
+        if (self.status == "bound") != (self.resolved_entity is not None):
+            raise ValueError("resolved_entity is set exactly when bound")
+        if self.status == "bound" and self.candidate_entities:
+            raise ValueError("a bound context carries no candidates")
+        if not _sorted_unique([a.anchor_id for a in self.candidate_entities]):
+            raise ValueError("candidate entities must be unique/ordered")
+        if not _sorted_unique(self.via_assertion_ids):
+            raise ValueError("assertion ids must be unique/ordered")
+        for record_id in self.via_assertion_ids:
+            if not re.fullmatch(r"^iba_[0-9a-f]{64}$", record_id):
+                raise ValueError(f"{record_id!r} is not an assertion id")
+        return self
 
 
 class ResolutionResult(_Frozen):
@@ -286,9 +337,28 @@ class ResolutionResult(_Frozen):
     detail: str = ""
 
     @model_validator(mode="after")
-    def _bound_iff_resolved(self):
-        if (self.status == "bound") != (self.resolved_target is not None):
+    def _result_consistent(self):
+        bound = self.status == "bound"
+        if bound != (self.resolved_target is not None):
             raise ValueError("resolved_target is set exactly when bound")
-        if self.status != "bound" and self.applicability_basis is not None:
-            raise ValueError("applicability_basis applies to bound results only")
+        if bound != (self.applicability_basis is not None):
+            raise ValueError("applicability_basis exists exactly when bound")
+        if bound and self.candidate_targets:
+            raise ValueError("a bound result carries no candidates")
+        if (self.status not in ("applicability_unknown", "ambiguous",
+                                "conflicted") and self.candidate_targets):
+            raise ValueError(f"{self.status} results cannot carry candidates")
+        if (self.locator_property is not None) != (
+                self.subject_context is not None):
+            raise ValueError(
+                "subject_context exists exactly for property resolution")
+        expected = (VariableAnchor if self.locator_property is not None
+                    else EntityAnchor)
+        for anchor in (self.resolved_target, *self.candidate_targets):
+            if anchor is not None and not isinstance(anchor, expected):
+                raise ValueError(
+                    "subject results carry entity anchors; property results "
+                    "carry variable anchors")
+        if not _sorted_unique([a.anchor_id for a in self.candidate_targets]):
+            raise ValueError("candidates must be unique/canonically ordered")
         return self

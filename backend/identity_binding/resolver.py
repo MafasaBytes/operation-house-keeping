@@ -51,10 +51,14 @@ def membership(scope: AppliesScope, at: datetime) -> Membership:
     return "unknown"
 
 
-def _require_aware(at: datetime) -> datetime:
-    if at.tzinfo is None or at.tzinfo.utcoffset(at) is None:
+def _require_aware(at: datetime | None) -> datetime:
+    """Missing, None, non-datetime, and naive resolution times all fail
+    through the same typed contract — never TypeError/AttributeError."""
+    if (not isinstance(at, datetime) or at.tzinfo is None
+            or at.tzinfo.utcoffset(at) is None):
         raise BindingResolutionError(
-            "BINDING_NAIVE_AT", "resolution time must be timezone-aware")
+            "BINDING_NAIVE_AT",
+            "resolution time must be a timezone-aware datetime")
     return at.astimezone(UTC)
 
 
@@ -159,14 +163,16 @@ class BindingResolver:
     # -- public ------------------------------------------------------------
 
     def resolve_subject(self, subject: SourceSubjectRef,
-                        at: datetime) -> ResolutionResult:
+                        at: datetime | None = None) -> ResolutionResult:
+        # `at` defaults to None solely so missing input is rejected
+        # through the typed contract; there is no implicit clock.
         at = _require_aware(at)
         assessment = self._assess("subject", subject, None, at)
         return self._result(assessment, subject, None, subject_context=None)
 
     def resolve_property(self, subject: SourceSubjectRef,
                          prop: SourcePropertyRef,
-                         at: datetime) -> ResolutionResult:
+                         at: datetime | None = None) -> ResolutionResult:
         at = _require_aware(at)
         assessment = self._assess("property", subject, prop, at)
         subject_assessment = self._assess("subject", subject, None, at)
