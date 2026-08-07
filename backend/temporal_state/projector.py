@@ -14,6 +14,7 @@ silently repaired. Extraction incompleteness halts the source and
 persists nothing.
 """
 
+from datetime import datetime
 from decimal import Decimal
 
 from backend.data_sources.contracts import AcquisitionAttempt
@@ -38,7 +39,12 @@ from backend.temporal_state.store import (
 
 
 class _DeferIncomplete(Exception):
-    pass
+    """Internal control flow only — never escapes the projector's public
+    methods."""
+
+    def __init__(self, attempt_id: str) -> None:
+        super().__init__(attempt_id)
+        self.attempt_id = attempt_id
 
 
 def order_key_of(attempt: AcquisitionAttempt) -> AttemptOrderKey:
@@ -74,25 +80,55 @@ class TemporalProjector:
                 key = order_key_of(attempt).sort_tuple()
                 if watermark is not None and key <= watermark:
                     if not self.store.has_attempt(conn, attempt.attempt_id):
-                        report.halted = HaltInfo(
-                            source_id=source_id,
-                            reason="TEMPORAL_REBUILD_REQUIRED",
-                            at_attempt_id=attempt.attempt_id,
-                            detail="unprocessed attempt orders at or before "
-                            "the processed watermark; inserting it would "
-                            "rewrite existing change chains",
-                        )
+                        report.halted = self._late_attempt_halt(
+                            source_id, attempt.attempt_id)
                         return report
                     continue
                 try:
                     with self.store.attempt_txn(conn):
+                        # Authoritative state lives inside the write
+                        # transaction: another projector may have advanced
+                        # this source since our pre-loop validation.
+                        checkpoint = self.store.load_checkpoint(
+                            conn, source_id)
+                        ledger_max = self.store.ledger_max_order_key(
+                            conn, source_id)
+                        checkpoint_key = (checkpoint.order_key().sort_tuple()
+                                          if checkpoint is not None else None)
+                        if checkpoint_key is not None and (
+                                ledger_max is None
+                                or tuple(ledger_max) != checkpoint_key):
+                            report.halted = HaltInfo(
+                                source_id=source_id,
+                                reason="TEMPORAL_REBUILD_REQUIRED",
+                                detail="checkpoint became inconsistent with "
+                                "the attempt ledger inside the write "
+                                "transaction",
+                            )
+                            return report
+                        txn_watermark = (tuple(ledger_max)
+                                         if ledger_max is not None else None)
                         if self.store.has_attempt(conn, attempt.attempt_id):
-                            pass  # processed concurrently; commit empty txn
+                            # Processed concurrently, or we hold a stale
+                            # attempt snapshot: never move the checkpoint
+                            # back to this attempt's older key — leave the
+                            # consistent checkpoint alone, or reconcile a
+                            # missing one to the verified ledger maximum.
+                            if checkpoint_key is None:
+                                self.store.upsert_checkpoint(
+                                    conn, self._checkpoint_from_ledger_key(
+                                        source_id, ledger_max))
+                        elif (txn_watermark is not None
+                                and key <= txn_watermark):
+                            report.halted = self._late_attempt_halt(
+                                source_id, attempt.attempt_id)
+                            return report
                         else:
-                            self._process_attempt(conn, attempt, report, caches)
-                        self.store.upsert_checkpoint(
-                            conn, self._checkpoint_for(source_id, attempt)
-                        )
+                            self._process_attempt(conn, attempt, report,
+                                                  caches)
+                            self.store.upsert_checkpoint(
+                                conn, self._checkpoint_for(source_id, attempt)
+                            )
                 except _DeferIncomplete:
                     report.deferred_incomplete.append(attempt.attempt_id)
                     report.halted = HaltInfo(
@@ -109,32 +145,52 @@ class TemporalProjector:
     def rebuild(self, source_id: str) -> ProjectionReport:
         """Per-source rebuild in ONE write transaction: readers see the old
         projection or the complete rebuilt one, never a partial source.
-        Other sources are untouched."""
+        Other sources are untouched.
+
+        Source-local checkpoint/ledger inconsistency is exactly what this
+        repairs; a GLOBAL schema/projector version mismatch is not — rows
+        must never be stamped with a projector version the database
+        metadata does not name, so that repair is offline ``rebuild_all``.
+        Extraction incompleteness rolls the whole transaction back and
+        returns a public report; counters from the discarded transaction
+        are never published."""
         report = ProjectionReport(source_id=source_id)
         with self.store.writer() as conn:
-            with self.store.attempt_txn(conn):
-                self.store.delete_source_rows(conn, source_id)
-                caches = {"mono": {}, "wall": {}, "open_ordinal": {}}
-                last_attempt = None
-                for attempt in self._ordered_attempts(source_id):
-                    try:
-                        self._process_attempt(conn, attempt, report, caches)
-                    except _DeferIncomplete:
-                        report.deferred_incomplete.append(attempt.attempt_id)
-                        report.halted = HaltInfo(
-                            source_id=source_id,
-                            reason="extraction_incomplete",
-                            at_attempt_id=attempt.attempt_id,
-                            detail="rebuild halted at incomplete extraction; "
-                            "transaction rolled back",
+            meta = dict(conn.execute("SELECT key, value FROM meta"))
+            if (meta.get("schema_version") != SCHEMA_VERSION
+                    or meta.get("projector_version") != self.projector_version):
+                report.halted = HaltInfo(
+                    source_id=source_id,
+                    reason="TEMPORAL_REBUILD_REQUIRED",
+                    detail="global schema/projector version mismatch; "
+                    "per-source rebuild refused — run offline rebuild_all() "
+                    "with the intended projector",
+                )
+                return report
+            working = ProjectionReport(source_id=source_id)
+            try:
+                with self.store.attempt_txn(conn):
+                    self.store.delete_source_rows(conn, source_id)
+                    caches = {"mono": {}, "wall": {}, "open_ordinal": {}}
+                    last_attempt = None
+                    for attempt in self._ordered_attempts(source_id):
+                        self._process_attempt(conn, attempt, working, caches)
+                        last_attempt = attempt
+                    if last_attempt is not None:
+                        self.store.upsert_checkpoint(
+                            conn, self._checkpoint_for(source_id, last_attempt)
                         )
-                        raise
-                    last_attempt = attempt
-                if last_attempt is not None:
-                    self.store.upsert_checkpoint(
-                        conn, self._checkpoint_for(source_id, last_attempt)
-                    )
-        return report
+            except _DeferIncomplete as defer:
+                report.deferred_incomplete.append(defer.attempt_id)
+                report.halted = HaltInfo(
+                    source_id=source_id,
+                    reason="extraction_incomplete",
+                    at_attempt_id=defer.attempt_id,
+                    detail="rebuild halted at incomplete extraction; "
+                    "transaction rolled back, previous projection preserved",
+                )
+                return report
+        return working
 
     def rebuild_all(self, source_ids: list[str]) -> dict[str, ProjectionReport]:
         """Explicit OFFLINE maintenance: requires closed readers/writers.
@@ -153,6 +209,26 @@ class TemporalProjector:
         attempts = list(self.evidence.iter_attempts(source_id))
         attempts.sort(key=lambda a: order_key_of(a).sort_tuple())
         return attempts
+
+    def _late_attempt_halt(self, source_id: str, attempt_id: str) -> HaltInfo:
+        return HaltInfo(
+            source_id=source_id,
+            reason="TEMPORAL_REBUILD_REQUIRED",
+            at_attempt_id=attempt_id,
+            detail="unprocessed attempt orders at or before the processed "
+            "watermark; inserting it would rewrite existing change chains",
+        )
+
+    def _checkpoint_from_ledger_key(self, source_id, key) -> ProjectionCheckpoint:
+        return ProjectionCheckpoint(
+            source_id=source_id,
+            last_attempt_started_at=datetime.fromisoformat(key[0]),
+            last_ingestion_run_id=key[1],
+            last_sweep_position=key[2],
+            last_attempt_id=key[3],
+            projector_version=self.projector_version,
+            schema_version=SCHEMA_VERSION,
+        )
 
     def _checkpoint_for(self, source_id, attempt) -> ProjectionCheckpoint:
         return ProjectionCheckpoint(
@@ -247,7 +323,7 @@ class TemporalProjector:
             report.attempts_processed += 1
             return
         if not self.evidence.has_extraction(attempt.raw_record_id):
-            raise _DeferIncomplete()
+            raise _DeferIncomplete(attempt.attempt_id)
 
         manifest = self.evidence.get_extraction(attempt.raw_record_id).manifest_view()
         observations = sorted(manifest.observations, key=lambda o: o.json_pointer)

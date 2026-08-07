@@ -142,6 +142,101 @@ class TestAdapterScopedCoverage:
             "acquisition_failed")
 
 
+class TestCheckpointNonRegression:
+    def test_stale_projector_does_not_regress_checkpoint(self, tmp_path):
+        runner, ds_store, _, temporal, projector_a, _ = build(tmp_path)
+        runner.run("printer-1")
+
+        projector_b = TemporalProjector(ds_store, temporal)
+        # B validates an EMPTY watermark and pauses (stale local state)...
+        import unittest.mock as mock
+
+        stale_attempts = projector_b._ordered_attempts("printer-1")[:1]
+        with mock.patch.object(projector_b, "_validate_state",
+                               return_value=None), \
+             mock.patch.object(projector_b, "_ordered_attempts",
+                               return_value=stale_attempts):
+            # ...A projects everything and advances the checkpoint...
+            projector_a.project("printer-1")
+            with temporal.reader() as conn:
+                expected_max = temporal.ledger_max_order_key(conn, "printer-1")
+            control = temporal.ordered_logical_dump()
+            # ...then B resumes, sees only attempt 1 (already in the
+            # ledger), and must NOT write the checkpoint back to it.
+            report_b = projector_b.project("printer-1")
+
+        assert report_b.halted is None
+        with temporal.writer() as conn:
+            checkpoint = temporal.load_checkpoint(conn, "printer-1")
+            ledger_max = temporal.ledger_max_order_key(conn, "printer-1")
+        assert checkpoint.order_key().sort_tuple() == tuple(ledger_max)
+        assert tuple(ledger_max) == tuple(expected_max)  # never regressed
+        assert temporal.ordered_logical_dump() == control  # no duplicates
+
+        # the next projection is idempotent and does NOT request rebuild
+        report_next = TemporalProjector(ds_store, temporal).project("printer-1")
+        assert report_next.halted is None
+        assert temporal.ordered_logical_dump() == control
+
+
+class TestIncompleteRebuildReport:
+    def _make_incomplete_evidence(self, runner, ds_store, transport,
+                                  monkeypatch):
+        """Crash the run after acquisition commits but before extraction
+        persists — the DS-004 crash shape that leaves committed attempts
+        with incomplete extraction. Trailing whitespace gives each sweep
+        genuinely NEW payload bytes (identical payloads are checksum-
+        reused and already extracted, so put_extraction is never
+        reached)."""
+        from backend.data_sources.connectors.http_api import TransportResponse
+
+        for path, response in list(transport.script.items()):
+            transport.script[path] = TransportResponse(
+                status=response.status, headers=dict(response.headers),
+                body=response.body + b" ")
+        original = ds_store.put_extraction
+        monkeypatch.setattr(
+            ds_store, "put_extraction",
+            lambda r: (_ for _ in ()).throw(RuntimeError("upstream crash")))
+        with pytest.raises(RuntimeError):
+            runner.run("printer-1")
+        monkeypatch.setattr(ds_store, "put_extraction", original)
+
+    def test_rebuild_from_incomplete_evidence_returns_public_report(
+        self, tmp_path, monkeypatch
+    ):
+        runner, ds_store, transport, temporal, projector, _ = build(tmp_path)
+        self._make_incomplete_evidence(runner, ds_store, transport,
+                                       monkeypatch)
+        report = projector.rebuild("printer-1")  # must NOT raise
+        assert report.halted is not None
+        assert report.halted.reason == "extraction_incomplete"
+        assert report.deferred_incomplete
+        assert report.attempts_processed == 0     # rolled back == zero committed
+        assert report.occurrences_created == 0
+        dump = temporal.ordered_logical_dump()
+        assert dump["temporal_attempts"] == []    # nothing persisted
+        assert dump["temporal_occurrences"] == []
+
+    def test_rebuild_rollback_preserves_previous_projection_exactly(
+        self, tmp_path, monkeypatch
+    ):
+        runner, ds_store, transport, temporal, projector, _ = build(tmp_path)
+        runner.run("printer-1")
+        projector.project("printer-1")
+        before = temporal.ordered_logical_dump()
+
+        # a later incomplete attempt appears in the evidence
+        self._make_incomplete_evidence(runner, ds_store, transport,
+                                       monkeypatch)
+        report = projector.rebuild("printer-1")
+        assert report.halted is not None
+        assert report.halted.reason == "extraction_incomplete"
+        assert report.attempts_processed == 0
+        # previous temporal projection byte-for-byte preserved
+        assert temporal.ordered_logical_dump() == before
+
+
 class TestCutoffValidation:
     def test_naive_cutoffs_rejected_with_typed_error(self, tmp_path):
         runner, _, _, _, projector, queries = build(tmp_path)
@@ -165,3 +260,44 @@ class TestCutoffValidation:
         result = queries.latest_observed(
             SUBJECT, PROP, datetime(2026, 8, 8, 1, 0, 0, tzinfo=offset))
         assert result is not None  # 01:00+02:00 == 23:00Z
+
+
+class TestVersionMismatchRebuildGuard:
+    def test_source_local_inconsistency_allows_rebuild(self, tmp_path):
+        runner, _, _, temporal, projector, _ = build(tmp_path)
+        runner.run("printer-1")
+        projector.project("printer-1")
+        with temporal.writer() as conn:
+            with temporal.attempt_txn(conn):
+                conn.execute("UPDATE checkpoints SET last_attempt_id="
+                             "'f' || substr(last_attempt_id, 2)")
+        assert projector.project("printer-1").halted is not None
+        report = projector.rebuild("printer-1")   # local repair allowed
+        assert report.halted is None
+        assert projector.project("printer-1").halted is None
+
+    def test_global_version_mismatch_refuses_per_source_rebuild(self, tmp_path):
+        runner, _, _, temporal, projector, _ = build(tmp_path)
+        runner.run("printer-1")
+        projector.project("printer-1")
+        before = temporal.ordered_logical_dump()
+        with temporal.writer() as conn:
+            with temporal.attempt_txn(conn):
+                conn.execute("UPDATE meta SET value='0.0.1' "
+                             "WHERE key='projector_version'")
+        report = projector.rebuild("printer-1")
+        assert report.halted is not None
+        assert report.halted.reason == "TEMPORAL_REBUILD_REQUIRED"
+        assert "rebuild_all" in report.halted.detail
+        assert temporal.ordered_logical_dump() == before  # nothing written
+
+    def test_rebuild_all_metadata_matches_row_stamps(self, tmp_path):
+        runner, _, _, temporal, projector, _ = build(tmp_path)
+        runner.run("printer-1")
+        projector.project("printer-1")
+        projector.rebuild_all(["printer-1"])
+        schema, proj = projector.store.meta_versions()
+        with projector.store.reader() as conn:
+            stamps = {row[0] for row in conn.execute(
+                "SELECT DISTINCT projector_version FROM temporal_attempts")}
+        assert stamps == {proj}
