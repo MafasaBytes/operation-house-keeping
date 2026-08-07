@@ -124,6 +124,7 @@ class TemporalStore:
                 "immutable evidence-store root",
             )
         self.db_path = candidate
+        self.evidence_root = root
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         with self.writer() as conn:
             conn.executescript(_SCHEMA)
