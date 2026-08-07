@@ -1,0 +1,33 @@
+{
+  "applies": {
+    "axis": "ingestion_received_at",
+    "end_boundary": {
+      "at": "2026-08-07T21:00:00+00:00",
+      "kind": "declared"
+    },
+    "interval_semantics": "half_open",
+    "start_boundary": {
+      "at": "2026-08-07T20:00:00+00:00",
+      "kind": "declared"
+    }
+  },
+  "authority": {
+    "agent": "ib001_demo_fixture",
+    "kind": "test_fixture",
+    "method": "manual_declaration"
+  },
+  "binding_kind": "subject",
+  "note": "This interval is asserted solely for the committed validation scenario and makes no claim about a real printer outside the fixture.",
+  "property": null,
+  "record_id": "iba_ba80b9e561b564a465b19109e2576d79d93b10e5b87e9917bf7ed45558c3a90a",
+  "record_kind": "binding_assertion",
+  "recorded_at": "2026-08-07T21:05:00+00:00",
+  "schema_version": "1",
+  "subject": {
+    "adapter_id": "moonraker",
+    "source_id": "printer-1",
+    "subject_identifier": "extruder"
+  },
+  "supersedes": null,
+  "target_anchor_id": "ent_a3f1c2d4e5b6478899aa0b1c2d3e4f50"
+}

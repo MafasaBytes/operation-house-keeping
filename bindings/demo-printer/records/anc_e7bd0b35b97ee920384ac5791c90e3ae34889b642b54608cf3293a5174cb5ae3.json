@@ -1,0 +1,20 @@
+{
+  "anchor": {
+    "anchor_id": "ent_a3f1c2d4e5b6478899aa0b1c2d3e4f50",
+    "display_name": "Extruder unit (demo printer)",
+    "namespace": "demo-printer",
+    "referent_kind": "physical_instance",
+    "role_name": "extruder-unit"
+  },
+  "anchor_kind": "entity",
+  "authority": {
+    "agent": "ib001_demo_fixture",
+    "kind": "test_fixture",
+    "method": "manual_declaration"
+  },
+  "note": "Synthetic physical-instance anchor in the demo model: the extruder unit the committed validation scenario models.",
+  "record_id": "anc_e7bd0b35b97ee920384ac5791c90e3ae34889b642b54608cf3293a5174cb5ae3",
+  "record_kind": "anchor_declaration",
+  "recorded_at": "2026-08-07T21:00:00+00:00",
+  "schema_version": "1"
+}

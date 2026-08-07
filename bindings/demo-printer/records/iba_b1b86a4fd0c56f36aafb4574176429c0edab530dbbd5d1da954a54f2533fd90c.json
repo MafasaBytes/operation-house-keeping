@@ -1,0 +1,37 @@
+{
+  "applies": {
+    "axis": "ingestion_received_at",
+    "end_boundary": {
+      "at": "2026-08-07T21:00:00+00:00",
+      "kind": "declared"
+    },
+    "interval_semantics": "half_open",
+    "start_boundary": {
+      "at": "2026-08-07T20:00:00+00:00",
+      "kind": "declared"
+    }
+  },
+  "authority": {
+    "agent": "ib001_demo_fixture",
+    "kind": "test_fixture",
+    "method": "manual_declaration"
+  },
+  "binding_kind": "property",
+  "note": "This interval is asserted solely for the committed validation scenario and makes no claim about a real printer outside the fixture.",
+  "property": {
+    "extraction_route": "api:moonraker:v1",
+    "item_key": "printer_objects",
+    "json_pointer": "/result/status/extruder/temperature"
+  },
+  "record_id": "iba_b1b86a4fd0c56f36aafb4574176429c0edab530dbbd5d1da954a54f2533fd90c",
+  "record_kind": "binding_assertion",
+  "recorded_at": "2026-08-07T21:06:00+00:00",
+  "schema_version": "1",
+  "subject": {
+    "adapter_id": "moonraker",
+    "source_id": "printer-1",
+    "subject_identifier": "extruder"
+  },
+  "supersedes": null,
+  "target_anchor_id": "var_b7e2d3c4f5a6172839405a6b7c8d9e0f"
+}
