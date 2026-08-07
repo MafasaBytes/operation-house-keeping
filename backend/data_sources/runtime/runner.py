@@ -34,6 +34,10 @@ from backend.data_sources.extractors import (
     detect_format,
     extract_csv,
 )
+from backend.data_sources.extractors.pdf import (
+    PdfExtractionConfig,
+    extract_pdf,
+)
 from backend.data_sources.extractors.step import (
     StepExtractionConfig,
     extract_step,
@@ -65,6 +69,7 @@ Extractor = Callable[[bytes, RawRecord], ExtractionProduct]
 FAMILY_BY_CONTENT_TYPE = {
     "text/csv": "csv_bom",
     "model/step": "step_assembly",
+    "application/pdf": "pdf_drawing_manual",
 }
 
 _FORMAT_DETECTION_CODES = frozenset(
@@ -82,6 +87,7 @@ class IngestionRunner:
         extractors: dict[str, Extractor] | None = None,
         profile: SourceProfile | None = None,
         step_config: StepExtractionConfig | None = None,
+        pdf_config: PdfExtractionConfig | None = None,
         worker_limits: WorkerLimits | None = None,
         scratch_root: Path | None = None,
     ) -> None:
@@ -91,6 +97,7 @@ class IngestionRunner:
         self.clock = clock
         self.profile = profile
         self.step_config = step_config or StepExtractionConfig()
+        self.pdf_config = pdf_config or PdfExtractionConfig()
         self.worker_limits = worker_limits or WorkerLimits()
         self.scratch_root = scratch_root
         self.extractors: dict[str, Extractor] = (
@@ -98,7 +105,11 @@ class IngestionRunner:
         )
 
     def _default_extractors(self) -> dict[str, Extractor]:
-        return {"text/csv": self._extract_csv, "model/step": self._extract_step}
+        return {
+            "text/csv": self._extract_csv,
+            "model/step": self._extract_step,
+            "application/pdf": self._extract_pdf,
+        }
 
     # -- public API -------------------------------------------------------
 
@@ -282,6 +293,23 @@ class IngestionRunner:
             payload=payload,
             raw_record_id=envelope.record_id,
             config=self.step_config,
+            limits=self.worker_limits,
+            scratch_root=self.scratch_root,
+        )
+        return ExtractionProduct(
+            result=product.result, derivative_payloads=product.derivative_payloads
+        )
+
+    def _extract_pdf(self, payload: bytes, envelope: RawRecord) -> ExtractionProduct:
+        detection = detect_format(payload, declared_content_type=envelope.content_type)
+        if detection.status != "confirmed_pdf":
+            raise ExtractionError(
+                "EXTRACT_UNSUPPORTED_OR_UNKNOWN_FORMAT", detection.evidence
+            )
+        product = extract_pdf(
+            payload=payload,
+            raw_record_id=envelope.record_id,
+            config=self.pdf_config,
             limits=self.worker_limits,
             scratch_root=self.scratch_root,
         )
