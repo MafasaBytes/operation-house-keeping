@@ -140,7 +140,7 @@ class TestProfileV1:
         entries = {e.source_family: e for e in APPLICATION_PROFILE_V1.entries}
         assert entries["csv_bom"].roadmap_stage == "validated"
         assert entries["step_assembly"].roadmap_stage == "validated"
-        assert entries["pdf_drawing_manual"].roadmap_stage == "next"
+        assert entries["pdf_drawing_manual"].roadmap_stage == "validated"
         assert entries["pdf_drawing_manual"].enabled_for_profile is True
         assert entries["operational_api_or_telemetry"].roadmap_stage == "later"
 

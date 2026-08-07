@@ -28,9 +28,10 @@ APPLICATION_PROFILE_V1 = SourceProfile(
         SourceProfileEntry(
             source_family="pdf_drawing_manual",
             requirement="required",
-            roadmap_stage="next",
+            roadmap_stage="validated",
             enabled_for_profile=True,
-            justification="DS-003: page/region-provenance document evidence",
+            justification="DS-003 + repair slice: page/region-provenance "
+            "document evidence (runtime validation stays evidence-driven)",
         ),
         SourceProfileEntry(
             source_family="operational_api_or_telemetry",
