@@ -281,3 +281,89 @@ class TestRealLoopbackTransport:
                 max_response_bytes=1_000_000,
             ))
         assert excinfo.value.kind == "redirect"
+
+
+class FakeMonotonic:
+    def __init__(self) -> None:
+        self.now = 1000.0
+
+    def __call__(self) -> float:
+        return self.now
+
+
+class ClockedTransport:
+    """Advances an injected monotonic clock per call and records the
+    timeout each request was given."""
+
+    def __init__(self, clock: FakeMonotonic, outcomes):
+        self.clock = clock
+        self.outcomes = list(outcomes)  # (advance_seconds, response-or-exc)
+        self.timeouts: list[float] = []
+
+    def __call__(self, request: TransportRequest) -> TransportResponse:
+        self.timeouts.append(request.timeout)
+        advance, outcome = self.outcomes.pop(0)
+        self.clock.now += advance
+        if isinstance(outcome, Exception):
+            raise outcome
+        return outcome
+
+
+class TestSweepDeadlineAcrossRetries:
+    """Repair: the total sweep budget is recomputed before every transport
+    call, before every retry, and after every return."""
+
+    def _connector(self, transport, clock):
+        return HttpApiConnector(
+            adapters={"moonraker": FakeAdapter()},
+            transport=transport,
+            credential_resolver=StaticCredentialResolver({}),
+            monotonic=clock,
+            request_timeout_seconds=10.0,
+            sweep_deadline_seconds=5.0,
+            max_retries=1,
+        )
+
+    def test_retry_timeout_capped_by_remaining_budget(self):
+        clock = FakeMonotonic()
+        transport = ClockedTransport(clock, [
+            (4.9, TransportError("timeout", "slow")),   # first call eats 4.9s
+            (0.2, TransportError("timeout", "slow")),   # retry crosses deadline
+        ])
+        events = list(self._connector(transport, clock).acquire_events(make_source()))
+        # first call got (close to) the full budget; the retry got <= 0.1s
+        assert transport.timeouts[0] == pytest.approx(5.0, abs=0.01)
+        assert transport.timeouts[1] <= 0.1 + 1e-6
+        assert isinstance(events[0], AcquisitionFailed)
+        assert events[0].error_code == "ACQUIRE_SWEEP_DEADLINE"
+        assert events[0].api.retries_used == 1
+        assert events[0].api.received_at is None
+        # the second planned item is represented honestly, never attempted
+        assert events[1].error_code == "ACQUIRE_SWEEP_DEADLINE"
+        assert events[1].api.request_canonical.startswith("GET /printer/objects")
+        assert len(transport.timeouts) == 2  # no transport call for item two
+
+    def test_exhausted_budget_prevents_retry_entirely(self):
+        clock = FakeMonotonic()
+        transport = ClockedTransport(clock, [
+            (5.1, TransportError("timeout", "slow")),   # eats the whole budget
+        ])
+        events = list(self._connector(transport, clock).acquire_events(make_source()))
+        assert events[0].error_code == "ACQUIRE_SWEEP_DEADLINE"
+        assert events[0].api.retries_used == 0  # no retry once exhausted
+        assert len(transport.timeouts) == 1
+
+    def test_late_response_after_deadline_is_not_accepted(self):
+        clock = FakeMonotonic()
+        late = TransportResponse(
+            status=200, headers={"Content-Type": "application/json"},
+            body=b'{"result": {}}',
+        )
+        transport = ClockedTransport(clock, [(6.0, late)])
+        events = list(self._connector(transport, clock).acquire_events(make_source()))
+        first = events[0]
+        assert isinstance(first, AcquisitionFailed)
+        assert first.error_code == "ACQUIRE_SWEEP_DEADLINE"
+        assert first.api.received_at is not None  # a response DID arrive...
+        assert first.api.status_code == 200       # ...and is recorded honestly
+        assert not any(isinstance(e, AcquisitionSucceeded) for e in events)

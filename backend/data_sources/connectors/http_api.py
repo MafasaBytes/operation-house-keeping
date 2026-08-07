@@ -350,8 +350,7 @@ class HttpApiConnector:
                 status_code=None,
                 extraction_route=adapter.extraction_route,
             )
-            remaining = deadline - self.monotonic()
-            if remaining <= 0:
+            if deadline - self.monotonic() <= 0:
                 evidence.finished_at = self.clock()
                 yield AcquisitionFailed(
                     item_key=item.item_key,
@@ -366,17 +365,26 @@ class HttpApiConnector:
                 validate_target_address(address, scheme, allow_plaintext, scope)
 
             response = None
+            late_response = None
             failure: tuple[str, str] | None = None
             retries = 0
             while True:
+                # the remaining sweep budget is recomputed before EVERY
+                # transport call — the per-call timeout is capped by it
+                remaining = deadline - self.monotonic()
+                if remaining <= 0:
+                    failure = (
+                        "ACQUIRE_SWEEP_DEADLINE",
+                        "total sweep deadline exhausted during acquisition",
+                    )
+                    break
                 try:
                     response = self.transport(TransportRequest(
                         url=origin + item.path_and_query,
                         headers=dict(auth_headers),
-                        timeout=min(self.request_timeout_seconds, max(remaining, 0.1)),
+                        timeout=min(self.request_timeout_seconds, remaining),
                         max_response_bytes=self.max_response_bytes,
                     ))
-                    break
                 except TransportError as error:
                     code = {
                         "timeout": "ACQUIRE_TIMEOUT",
@@ -385,15 +393,43 @@ class HttpApiConnector:
                         "oversize": "ACQUIRE_RESPONSE_TOO_LARGE",
                         "connection": "ACQUIRE_SOURCE_UNREACHABLE",
                     }.get(error.kind, "ACQUIRE_SOURCE_UNREACHABLE")
-                    if error.kind in ("timeout", "connection") and retries < self.max_retries:
+                    after = deadline - self.monotonic()
+                    if (error.kind in ("timeout", "connection")
+                            and retries < self.max_retries and after > 0):
                         retries += 1
                         continue
-                    failure = (code, str(error))
+                    if after <= 0:
+                        failure = (
+                            "ACQUIRE_SWEEP_DEADLINE",
+                            "total sweep deadline exhausted during acquisition",
+                        )
+                    else:
+                        failure = (code, str(error))
                     break
+                # recompute after the transport returns: a late response is
+                # never accepted, though its arrival is recorded honestly
+                if deadline - self.monotonic() <= 0:
+                    late_response = response
+                    response = None
+                    failure = (
+                        "ACQUIRE_SWEEP_DEADLINE",
+                        "response arrived after the total sweep deadline and "
+                        "was not accepted",
+                    )
+                break
             evidence.retries_used = retries
             evidence.finished_at = self.clock()
 
             if failure is not None:
+                if late_response is not None:
+                    evidence.received_at = evidence.finished_at
+                    evidence.status_code = late_response.status
+                    evidence.allowlisted_headers = {
+                        name: sanitize_source_value(str(late_response.headers[name]))
+                        for name in _HEADER_ALLOWLIST
+                        if name in late_response.headers
+                    }
+                    evidence.response_size_bytes = len(late_response.body)
                 yield AcquisitionFailed(
                     item_key=item.item_key, error_code=failure[0],
                     redacted_message=failure[1], api=evidence,
