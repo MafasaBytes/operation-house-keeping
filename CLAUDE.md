@@ -23,6 +23,20 @@ query, explain, and propose changes, but it is never the source of engineering
 truth. Deterministic code, explicit models, constraints, evidence, and provenance
 must remain authoritative.
 
+## Status (added 2026-08-07 — historical guidance below is preserved)
+
+The "Current Phase" and DS-001 sections below are the original milestone
+record, retained as written. Accepted since then: DS-001 (CSV/BOM),
+DS-002 (STEP Levels 0–3), DS-003 (PDF), DS-004 (read-only operational
+API; Moonraker validation source), and TS-001 (rebuildable temporal
+evidence projection), each with owner-mandated repair slices where
+independent validation found violations. `backend/data_sources/` and
+`backend/temporal_state/` are accepted and change only through
+owner-approved repair slices. The current milestone is IB-001 (explicit
+identity binding and canonical anchors); see docs/superpowers/specs/ and
+docs/adr/ for accepted designs. All other sections of this document
+remain binding for new modules.
+
 ## Current Phase
 
 Start with the backend. Do not build the 3D interface, conversational interface,
