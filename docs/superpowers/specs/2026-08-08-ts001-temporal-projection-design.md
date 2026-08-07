@@ -212,6 +212,22 @@ unaffected); foreign-key enforcement; logical-dump determinism (bytes
 may differ); per-source transactional rebuild reader visibility; exact
 sidecar handling; path-containment rejection.
 
+### Task 0 spike results (2026-08-08 — gate PASSED, 16/16)
+
+WSL2 Ubuntu x86_64, CPython 3.13.11, stdlib sqlite3 (SQLite bundled with
+CPython): WAL active; mid-attempt rollback leaves zero rows across both
+tables; second `BEGIN IMMEDIATE` writer receives the lock error mapped to
+the typed busy error while a concurrent WAL reader is unaffected and sees
+commits afterwards; foreign keys reject orphan occurrences; two databases
+loaded in different insert orders produce identical ordered logical dumps
+with differing file bytes (logical-only determinism confirmed);
+delete+replay of one source inside a single transaction shows a
+snapshot reader the OLD rows mid-rebuild, a fresh reader the COMPLETE
+rebuilt rows, and the other source untouched; the exact db/-wal/-shm
+sidecars are individually removable; canonical path-containment logic
+rejects the evidence root and children while accepting siblings and
+dot-dot paths that resolve outside.
+
 ## Acceptance scenarios
 
 First sweep (`first_seen`); byte-identical re-poll (new occurrences, all
