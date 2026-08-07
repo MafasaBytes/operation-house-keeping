@@ -294,3 +294,22 @@ class TestCommitOrderRecovery:
         for record_id in ids_a:
             assert (store_a.get_extraction(record_id).model_dump_json()
                     == store_b.get_extraction(record_id).model_dump_json())
+
+
+class TestProfileV2:
+    def test_v2_all_required_families_validated(self):
+        from backend.data_sources.catalog import APPLICATION_PROFILE_V2
+
+        entries = {e.source_family: e for e in APPLICATION_PROFILE_V2.entries}
+        for family in ("csv_bom", "step_assembly", "pdf_drawing_manual",
+                       "operational_api_or_telemetry"):
+            assert entries[family].requirement == "required"
+            assert entries[family].roadmap_stage == "validated"
+            assert entries[family].enabled_for_profile is True
+
+    def test_v2_admits_api_sources(self, tmp_path):
+        from backend.data_sources.catalog import APPLICATION_PROFILE_V2
+
+        runner, store, _ = make_runner(tmp_path, happy_script())
+        runner.profile = APPLICATION_PROFILE_V2
+        assert runner.run("printer-1").status == "succeeded"

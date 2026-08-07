@@ -8,7 +8,10 @@ normalization and identity-resolution layer.
 
 Status: **DS-001 complete** (CSV snapshot slice, owner-accepted),
 **DS-002 complete** (neutral CAD / STEP slice, owner-accepted), and
-**DS-003 complete** (PDF drawing/manual slice). Designs:
+**DS-003 complete** (PDF drawing/manual slice, owner-accepted incl. two
+repair slices), and **DS-004 complete** (bounded read-only operational
+API/telemetry — Moonraker showcase, validated against real Moonraker
+software on a digest-pinned virtual Klipper stack). Designs:
 `docs/superpowers/specs/` (DS-001/DS-002/DS-003); stack decisions:
 `docs/adr/` (ADR-0001 Python+Pydantic, ADR-0002 OCP/STEP, ADR-0003 PDF
 toolchain).
@@ -23,7 +26,8 @@ toolchain).
 | `catalog/` | stable source identities, definitions, Application Source Profile v0 |
 | `connectors/` | acquisition only; `LocalFileConnector` (read-only snapshot) |
 | `extractors/` | format detector; CSV extractor; STEP extractor (parent + isolated OCP worker); worker harness |
-| `runtime/` | `IngestionRunner`: registry dispatch, staged publication, quarantine, replay, health |
+| `adapters/` | product-specific API adapters (Moonraker) over vendor-neutral contracts |
+| `runtime/` | `IngestionRunner`: incremental persist-before-next-pull loop, registry/route dispatch, staged publication, attempt accounting, quarantine, replay, health |
 | `testing/fixtures/` | committed frozen fixtures (see `testing/fixtures/FIXTURES.md`) |
 
 ## Verification (from a clean checkout)
@@ -166,3 +170,42 @@ Per Application Source Profile v0, which required family follows —
 PDF drawing/manual (page-level provenance) or the operational
 API/telemetry source — and how the DS-002 worker-isolation pattern
 transfers to those parsers. To be decided with the project owner.
+
+
+## Operational API semantics (DS-004)
+
+- **Occurrence vs payload**: every polling attempt persists an
+  `AcquisitionAttempt` (successes, failures, byte-identical repeats);
+  payloads stay content-addressed, so a repeated response reuses its raw
+  record from a new attempt. API record identity is
+  `(source_id, item_key, payload_checksum)`; sweep position is ordering
+  evidence only. The future temporal layer joins
+  `attempt.raw_record_id -> observations(raw_record_id)`.
+- **Incremental sweeps**: the runtime persists payload -> envelope ->
+  attempt -> extraction before pulling the next item; a failure at
+  endpoint two never discards endpoint one; crashes before the attempt
+  commit are detectable via `find_uncommitted_api_artifacts()`.
+- **Honest time**: Moonraker's `eventtime` is a monotonic Klipper host
+  clock — recorded as a discriminated monotonic marker with the verbatim
+  number lexeme, never converted to a fabricated wall clock.
+- **Canonical values**: observations carry `value_json` (numbers stay
+  JSON numbers — `[1.0, 2.0]` is never `["1.0", "2.0"]`) with a JSON
+  Pointer into the immutable payload as source truth; units are `None`
+  because Moonraker declares none.
+- **Security**: GET-only; HTTPS always verified (unverified HTTPS does
+  not exist); plaintext HTTP only by explicit configuration to loopback/
+  private-LAN targets with recorded evidence; per-request address
+  screening (link-local/metadata/multicast/unspecified rejected, IPv6 ULA
+  explicit); redirects refused; proxy environment ignored; credentials
+  via an injected resolver, in memory only. Known limitation: a stdlib
+  DNS-rebinding window between validation and connection (documented in
+  ADR-0004).
+- **Run accounting**: `attempts_planned/succeeded/failed` plus status
+  precedence `failed > completed_with_quarantine >
+  completed_with_acquisition_failures > succeeded` — counters always
+  expose combined cases. Typed `ApiHealthEvidence` on health.
+- **Validated**: accepted runs against real Moonraker software (virtual
+  Klipper stack, image `ghcr.io/mainsail-crew/virtual-klipper-printer@
+  sha256:96859fed...`, Klipper d865997, Moonraker API 1.5.0); the
+  deterministic transport stub and frozen fixtures remain the test
+  oracle. Profile v2 marks all four required families validated.

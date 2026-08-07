@@ -261,6 +261,28 @@ rejection, strict UTF-8, depth bound ✓; canonical number preservation
 (`[1.0,2.0,0.3]` vs `["1.0"]`, `1e3 → 1E+3`, int vs non-int) ✓.
 The no-worker decision stands.
 
+### Virtual-Moonraker validation evidence (2026-08-07)
+
+Executed under the mandated safety conditions: image pinned by digest
+(`ghcr.io/mainsail-crew/virtual-klipper-printer@sha256:96859fedc5adb4ca41
+157853cc200fb60ecd94526cd65e983e316025e59f98e4`), unprivileged container,
+bridge networking with loopback-only publish (`127.0.0.1:7125`), no
+device passthrough, container-internal data only, torn down and image
+removed afterwards. (The image's init requires sudo internally, so the
+optional `no-new-privileges` hardening flag — not among the mandated
+conditions — was not applied.) Stack versions: Klipper source commit
+`d865997`; Moonraker API version 1.5.0 (the container build reports its
+`moonraker_version` string as "?" — recorded verbatim).
+
+Two production-stack runs (real UrllibTransport): run 1 `succeeded`, 2/2
+attempts, 2 records, 13 observations (11 printer_objects + 2 server_info,
+zero warnings); run 2 demonstrated occurrence-vs-payload against real
+software — `server_info` byte-identical => payload reused with a new
+attempt, `printer_objects` changed (eventtime 68907.681… -> 68907.932…)
+=> new keyed record. Probe, typed health evidence (clock skew −1.2 s from
+the real Date header, plaintext flag), and clean integrity audits all
+verified. The operational family is therefore `validated` in Profile v2.
+
 ## Exclusions
 
 No write/command verbs; no WebSocket/MQTT/OPC UA; no polling daemon

@@ -123,3 +123,32 @@ origin. sha256:
 ```
 cbee2a33e791898f693615b48a32327d0c4672969514393b266146e0e2074249  rotated_cropbox_table.pdf
 ```
+
+## Operational API — Moonraker (DS-004)
+
+Hand-authored on 2026-08-07 from the public Moonraker API documentation's
+response shapes (never captured from a live system — nothing to
+sanitize); byte-frozen; golden expectations hand-written independently in
+`tests/data_sources/golden_moonraker.py`. Covers: server info, the
+canonical object-query snapshot (eventtime 3721.845), a changed
+measurement, requested-but-omitted objects/attributes, schema drift
+(unrequested object/attribute), hostile object names for pointer
+escaping, missing eventtime, duplicate keys, NaN, invalid UTF-8, a depth
+bomb, and a truncated document.
+
+sha256 checksums at freeze time:
+
+```
+601d01b773bb656608902858f7de74f6c1feada2950a465aa3eb20831e922e15  moonraker_server_info.json
+3fc2be2f5bb8876c5466ca3b22e879731fb3dbe9fff65c7c788fe982b8822475  moonraker_printer_objects.json
+6771710d0a97db795a53192e1c6d463937deaa8c11e6fce3d35285d69114caf2  moonraker_printer_objects_changed.json
+370d3bb8cabd6da2629958a635cf27aac2422ffa4bc2b93083764081a70350ad  moonraker_objects_omitted.json
+1598090f2509dab1a99355fa198e5bd6394a5f2b2bad9490370a7a05bb9127d0  moonraker_drift.json
+02cbd0d5d457dccd6ed93963d7d614a9d69e4e69a3b8c6e675efdd3f075e1e82  moonraker_hostile_names.json
+28503e92268b8919a9a1ba4a1d4c2db53680d49b313a75ef947bc5cf41a62d36  moonraker_no_eventtime.json
+b20248ef3041cef5bfba699158843d6c61f3e1d72e42bf25fe4c886ebef7c7f9  moonraker_dup_key.json
+40aa0a6baf9972a68ff2492ab56ac96e938f7970b41ab96d05c8d96af7140ad2  moonraker_nan.json
+ccb6b28082b4c16a5a33ecde8161c337068e334330baccbfc212908c4f951286  moonraker_bad_utf8.bin
+2872594260d2ae97a6c263fc2ede7cf55c811d48d7714541a520d425ef8e3bec  moonraker_depth_bomb.json
+f2b4fae11ae192eea89678aa7de2b443f159e146dd6d7713e637443dd5ec2f2e  moonraker_malformed.json
+```
