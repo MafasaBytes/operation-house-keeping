@@ -6,12 +6,12 @@ preserving the original payload, timing, identity, integrity, and provenance.
 No engineering semantics are decided here — that belongs to the later
 normalization and identity-resolution layer.
 
-Status: **DS-001 complete** (CSV snapshot slice, owner-accepted) and
-**DS-002 complete** (neutral CAD / STEP slice). Designs:
-`docs/superpowers/specs/2026-08-06-ds001-data-sources-design.md` and
-`docs/superpowers/specs/2026-08-06-ds002-step-ingestion-design.md`; stack
-decisions: `docs/adr/0001-ds001-python-pydantic-stack.md` and
-`docs/adr/0002-step-toolchain-ocp.md`.
+Status: **DS-001 complete** (CSV snapshot slice, owner-accepted),
+**DS-002 complete** (neutral CAD / STEP slice, owner-accepted), and
+**DS-003 complete** (PDF drawing/manual slice). Designs:
+`docs/superpowers/specs/` (DS-001/DS-002/DS-003); stack decisions:
+`docs/adr/` (ADR-0001 Python+Pydantic, ADR-0002 OCP/STEP, ADR-0003 PDF
+toolchain).
 
 ## Layout
 
@@ -32,12 +32,46 @@ decisions: `docs/adr/0001-ds001-python-pydantic-stack.md` and
 python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt -r requirements-dev.txt
 .venv/bin/python -m pip install --require-hashes -r requirements-cad.txt
-.venv/bin/python -m pytest    # full suite incl. cad-marked STEP e2e tests
+.venv/bin/python -m pip install --require-hashes -r requirements-pdf.txt
+.venv/bin/python -m pytest    # full suite incl. cad- and pdf-marked e2e
 ```
 
-Without the CAD extra, `cad`-marked tests skip loudly and everything else
-still runs — an install without a matching `cadquery-ocp` wheel fails the
-connector `available` check honestly rather than faking capability.
+Without an extra installed, its marked tests skip loudly and everything
+else still runs; the connector `available` rung checks the extraction
+dependency closure for each source's declared content type instead of
+faking capability.
+
+## PDF extraction semantics (DS-003)
+
+- **Two-phase worker**: Phase A (structural) publishes an atomic
+  completion checkpoint (schema version, record id, extractor identity +
+  config fingerprint, manifest sha256) that the parent validates before
+  Phase B (rendering) starts; an invalid or missing checkpoint quarantines
+  the record, and a Phase B crash/timeout/limit yields an honest partial
+  with only the page derivatives that actually completed. One final
+  envelope, published derivatives-first.
+- **Page/region provenance**: every item carries a canonical locator
+  (CropBox-based frame, top-left origin, y-down, pdf points, 3-decimal
+  rounding, source→canonical matrix) plus preserved source-native
+  coordinates; identifiers are extractor-derived, never claimed as
+  source-native; geometry tests are tolerance-based.
+- **Honesty**: page_kind is a declared heuristic; eof_marker_count is a
+  byte scan; inferred reading order carries basis/method/confidence and is
+  never source truth; table candidates declare strategy and cell→span
+  linking tolerance with optional row/column spans; document metadata is
+  `declared_*`; drawing-region candidates are unsupported (vector
+  inventory instead); image-only pages report `ocr_required` with no
+  fabricated text (OCR/Level 4 deferred).
+- **Hostile content**: JavaScript/actions/links/embedded files are
+  inventoried read-only, bounded, and never executed, followed, or
+  extracted; empty-password documents proceed with a warning;
+  password-required documents quarantine
+  (`EXTRACT_PDF_PASSWORD_REQUIRED`); structural limits quarantine, render
+  limits produce partials with per-page `skipped_limit` coverage.
+- **Determinism**: manifest JSON byte-stable (double-run tested); page
+  render PNG byte-stability proven on the pinned platform/toolchain with
+  dpi/colorspace/pdfium/pillow versions recorded per derivative;
+  cross-platform claims are semantic only.
 
 The end-to-end tests (`tests/data_sources/test_ingestion_runner.py`) cover:
 valid ingestion with checksum + cell-level traceability; quarantine of the
