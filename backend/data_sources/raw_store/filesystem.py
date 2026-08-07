@@ -150,15 +150,63 @@ class FilesystemRawStore:
     def has_envelope(self, record_id: str) -> bool:
         return (self._envelopes / f"{record_id}.json").exists()
 
+    def get_envelope(self, record_id: str) -> RawRecord:
+        return RawRecord.model_validate_json(
+            self._read_required(
+                self._envelopes / f"{record_id}.json", f"envelope {record_id}"
+            )
+        )
+
+    def has_extraction(self, record_id: str) -> bool:
+        return (self._extracted / f"{record_id}.json").exists()
+
+    def has_quarantine(self, record_id: str) -> bool:
+        return (self._quarantine / f"{record_id}.json").exists()
+
+    def committed_api_record_ids(self) -> set[str]:
+        """Record ids referenced by a committed successful attempt. An API
+        envelope outside this set is NOT completed acquisition evidence."""
+        committed: set[str] = set()
+        for path in self._attempts.glob("*.json"):
+            attempt = AcquisitionAttempt.model_validate_json(path.read_text("utf-8"))
+            if attempt.raw_record_id:
+                committed.add(attempt.raw_record_id)
+        return committed
+
+    def find_unextracted_api_records(self) -> list[str]:
+        """Committed API records (successful attempt exists) that have
+        neither an extraction result nor a quarantine decision — the
+        second crash window (after the attempt commit, before extraction
+        persistence)."""
+        committed = self.committed_api_record_ids()
+        pending: list[str] = []
+        for path in sorted(self._envelopes.glob("*.json")):
+            record = RawRecord.model_validate_json(path.read_text("utf-8"))
+            if record.api_locator is None or record.record_id not in committed:
+                continue
+            if not self.has_extraction(record.record_id) and not self.has_quarantine(
+                record.record_id
+            ):
+                pending.append(record.record_id)
+        return pending
+
     def iter_accepted_envelopes(self, source_id: str) -> Iterator[RawRecord]:
-        """Yield stored envelopes for a source, excluding quarantined records,
-        in deterministic (record_id) order."""
+        """Yield stored envelopes for a source, excluding quarantined
+        records AND API envelopes lacking a committed successful attempt
+        (which are crash residue, not completed acquisition evidence), in
+        deterministic (record_id) order."""
+        committed: set[str] | None = None
         for path in sorted(self._envelopes.glob("*.json")):
             record = RawRecord.model_validate_json(path.read_text("utf-8"))
             if record.source_id != source_id:
                 continue
             if (self._quarantine / f"{record.record_id}.json").exists():
                 continue
+            if record.api_locator is not None:
+                if committed is None:
+                    committed = self.committed_api_record_ids()
+                if record.record_id not in committed:
+                    continue
             yield record
 
     # -- runs, quarantine, extracted 

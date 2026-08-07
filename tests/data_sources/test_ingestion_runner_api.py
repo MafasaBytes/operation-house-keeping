@@ -365,3 +365,96 @@ class TestZeroProgressPrecedence:
         assert "ACQUIRE_CREDENTIAL_UNRESOLVED" in (run.error_summary or "")
         assert (run.attempts_succeeded, run.attempts_failed) == (0, 0)
         assert list(store.iter_attempts("printer-1")) == []
+
+
+class TestCrashRecoveryCompleteness:
+    """Repair: both crash windows must be reproducible, detectable, and
+    fully repaired by a later identical poll — asserting actual artifacts
+    and replay behavior, not just an empty audit."""
+
+    def test_window_a_envelope_without_attempt(self, tmp_path, monkeypatch):
+        runner, store, _ = make_runner(tmp_path, happy_script())
+        original_put_attempt = store.put_attempt
+        monkeypatch.setattr(
+            store, "put_attempt",
+            lambda a: (_ for _ in ()).throw(RuntimeError("crash before commit")),
+        )
+        with pytest.raises(RuntimeError):
+            runner.run("printer-1")
+
+        # the uncommitted envelope is NOT accepted evidence
+        [uncommitted] = store.find_uncommitted_api_artifacts()[
+            "uncommitted_api_envelopes"]
+        assert list(store.iter_accepted_envelopes("printer-1")) == []
+        assert runner.replay("printer-1") == []
+        with pytest.raises(Exception):
+            store.get_extraction(uncommitted)
+
+        monkeypatch.setattr(store, "put_attempt", original_put_attempt)
+        run = runner.run("printer-1")
+        assert run.status == "succeeded"
+        accepted = list(store.iter_accepted_envelopes("printer-1"))
+        assert len(accepted) == 2
+        # extraction reconstructed from stored raw bytes
+        recovered = store.get_extraction(uncommitted)
+        assert recovered.manifest_view().observations
+        assert len(runner.replay("printer-1")) == 2
+        assert store.find_uncommitted_api_artifacts() == {
+            "uncommitted_api_envelopes": [], "unreferenced_payloads": []}
+        assert store.find_unextracted_api_records() == []
+
+    def test_window_b_attempt_without_extraction(self, tmp_path, monkeypatch):
+        runner, store, _ = make_runner(tmp_path, happy_script())
+        original_put_extraction = store.put_extraction
+        monkeypatch.setattr(
+            store, "put_extraction",
+            lambda r: (_ for _ in ()).throw(RuntimeError("crash after commit")),
+        )
+        with pytest.raises(RuntimeError):
+            runner.run("printer-1")
+
+        [pending] = store.find_unextracted_api_records()
+        with pytest.raises(Exception):
+            store.get_extraction(pending)
+
+        monkeypatch.setattr(store, "put_extraction", original_put_extraction)
+        run = runner.run("printer-1")
+        assert run.status == "succeeded"
+        recovered = store.get_extraction(pending)
+        assert recovered.manifest_view().observations
+        assert store.find_unextracted_api_records() == []
+        # the run may not claim recovery while get_extraction fails:
+        for envelope in store.iter_accepted_envelopes("printer-1"):
+            assert store.get_extraction(envelope.record_id)
+
+    def test_reconstruction_can_quarantine(self, tmp_path, monkeypatch):
+        # window B over a payload whose extraction legitimately quarantines
+        from backend.data_sources.connectors.http_api import TransportResponse
+
+        script = happy_script()
+        script["/printer/objects/query"] = TransportResponse(
+            status=200, headers={"Content-Type": "application/json"},
+            body=(FIXTURES / "moonraker_dup_key.json").read_bytes(),
+        )
+        runner, store, _ = make_runner(tmp_path, script)
+        original = store.put_quarantine
+        monkeypatch.setattr(
+            store, "put_quarantine",
+            lambda q: (_ for _ in ()).throw(RuntimeError("crash")),
+        )
+        with pytest.raises(RuntimeError):
+            runner.run("printer-1")
+        monkeypatch.setattr(store, "put_quarantine", original)
+        run = runner.run("printer-1")
+        assert run.status == "completed_with_quarantine"
+        assert run.records_quarantined == 1
+        assert store.find_unextracted_api_records() == []
+
+    def test_normal_rerun_never_recomputes_extractions(self, tmp_path):
+        runner, store, _ = make_runner(tmp_path, happy_script())
+        runner.run("printer-1")
+        extracted_dir = store.base_dir / "extracted"
+        before = {p.name: p.read_bytes() for p in extracted_dir.glob("*.json")}
+        runner.run("printer-1")
+        after = {p.name: p.read_bytes() for p in extracted_dir.glob("*.json")}
+        assert before == after  # write-once, not recomputed

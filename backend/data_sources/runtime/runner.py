@@ -223,10 +223,27 @@ class IngestionRunner:
                         checksum=checksum, payload_reused=reused,
                     ))
 
-                if reused or envelope is None:
+                # Extraction/quarantine target: the new envelope, or — on
+                # reuse — the stored record when a prior crash left it
+                # without an extraction decision (recovery reconstructs it
+                # from stored raw bytes; completed records are write-once
+                # and never recomputed).
+                if envelope is not None:
+                    extraction_target = envelope
+                    extraction_payload = event.payload
+                elif not self.store.has_extraction(record_id) and not (
+                    self.store.has_quarantine(record_id)
+                ):
+                    extraction_target = self.store.get_envelope(record_id)
+                    extraction_payload = self.store.get_payload(
+                        extraction_target.immutable_payload_reference
+                    )
+                else:
                     continue
                 try:
-                    product = self._extract_product(envelope, event.payload)
+                    product = self._extract_product(
+                        extraction_target, extraction_payload
+                    )
                     # Staged publication: derivatives first, envelope last as
                     # the commit record.
                     for data in product.derivative_payloads.values():
@@ -549,8 +566,23 @@ class IngestionRunner:
         return "application/octet-stream"
 
     def _next_run_id(self, source_id: str) -> str:
-        count = sum(1 for _ in self.store.iter_runs(source_id))
-        return f"run-{source_id}-{count + 1:04d}"
+        """Allocate a run id that is unique even after a crashed run: a
+        crash may leave attempt records under a run id that never produced
+        a run report, so both sources of evidence are consulted."""
+        prefix = f"run-{source_id}-"
+        highest = 0
+        seen_ids = {run.run_id for run in self.store.iter_runs(source_id)}
+        seen_ids.update(
+            attempt.ingestion_run_id
+            for attempt in self.store.iter_attempts(source_id)
+        )
+        for run_id in seen_ids:
+            if run_id.startswith(prefix):
+                try:
+                    highest = max(highest, int(run_id.removeprefix(prefix)))
+                except ValueError:
+                    continue
+        return f"{prefix}{highest + 1:04d}"
 
     def _redact(self, text: str) -> str:
         return redact_text(scrub_secrets(text), base_dir=str(self.store.base_dir))
