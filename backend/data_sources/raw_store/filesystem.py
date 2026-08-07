@@ -54,7 +54,7 @@ class FilesystemRawStore:
         ):
             directory.mkdir(parents=True, exist_ok=True)
 
-    # -- payloads ---------------------------------------------------------
+    # -- payloads
 
     def put_payload(self, data: bytes) -> str:
         reference = payload_checksum(data)
@@ -77,7 +77,7 @@ class FilesystemRawStore:
             )
         return data
 
-    # -- envelopes --------------------------------------------------------
+    # -- envelopes 
 
     def put_envelope(self, record: RawRecord) -> bool:
         """Persist a raw record envelope.
@@ -90,7 +90,7 @@ class FilesystemRawStore:
             self._envelopes / f"{record.record_id}.json", record, "envelope"
         )
 
-    # -- acquisition attempts (DS-004) ------------------------------------
+    # -- acquisition attempts (DS-004) 
 
     def put_attempt(self, attempt: AcquisitionAttempt) -> bool:
         return self._put_json_once(
@@ -161,7 +161,7 @@ class FilesystemRawStore:
                 continue
             yield record
 
-    # -- runs, quarantine, extracted --------------------------------------
+    # -- runs, quarantine, extracted 
 
     def put_run(self, run: IngestionRun) -> bool:
         return self._put_json_once(self._runs / f"{run.run_id}.json", run, "run")
@@ -216,7 +216,7 @@ class FilesystemRawStore:
             result=CsvTableResult(table=table),
         )
 
-    # -- derivatives ------------------------------------------------------
+    # -- derivatives 
 
     def put_derivative_payload(self, data: bytes) -> str:
         reference = payload_checksum(data)
@@ -272,7 +272,7 @@ class FilesystemRawStore:
             purged.append(reference)
         return purged
 
-    # -- internals --------------------------------------------------------
+    # -- internals 
 
     def _put_json_once(self, target: Path, model: BaseModel, kind: str) -> bool:
         serialized = model.model_dump_json(indent=2)
