@@ -1,0 +1,1 @@
+{"result": {"eventtime": 3721.845, "status": {"extruder": {"temperature": 60.1, "target": 60.0}, "toolhead": {"homed_axes": "xyz"}, "print_stats": {"state": "standby", "print_duration": 0, "total_duration": 0}}}}

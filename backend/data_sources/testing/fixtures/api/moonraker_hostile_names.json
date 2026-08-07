@@ -1,0 +1,1 @@
+{"result": {"eventtime": 1.5, "status": {"extruder": {"temperature": 60.1, "target": 60.0}, "fan~1": {"speed": 0.5}, "probe/z": {"value": 0.02}}}}

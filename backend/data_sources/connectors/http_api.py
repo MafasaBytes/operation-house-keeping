@@ -38,7 +38,7 @@ _HEADER_ALLOWLIST = ("Content-Type", "Date", "Retry-After", "X-Request-Id")
 _HEADER_VALUE_BOUND = 200
 
 
-# ------------------------------------------------------------ transport
+# transport
 @dataclass
 class TransportRequest:
     url: str
@@ -123,7 +123,7 @@ class UrllibTransport:
                                      body=raw)
 
 
-# ----------------------------------------------------------- credentials
+# credentials
 class CredentialResolver(Protocol):
     def resolve(self, reference: str) -> str: ...
 
@@ -157,7 +157,7 @@ class EnvironmentCredentialResolver:
         return value
 
 
-# --------------------------------------------------------- network policy
+# network policy
 def _classify(ip: ipaddress.IPv4Address | ipaddress.IPv6Address) -> str:
     if ip.is_loopback:
         return "loopback"
@@ -207,7 +207,7 @@ def validate_target_address(
     return kind
 
 
-# -------------------------------------------------------------- connector
+# connector
 class HttpApiConnector:
     MANIFEST = ConnectorManifest(
         connector_type="http_api",

@@ -1,0 +1,1 @@
+{"result": {"eventtime": 3721.845, "status": {"extruder": {"temperature": 60.1, "target": 60.0}, "heater_bed": {"temperature": 45.2, "target": 45.0}, "toolhead": {"homed_axes": "xyz", "position": [1.0, 2.0, 0.3, 0.0]}, "print_stats": {"state": "printing", "print_duration": 512.4, "total_duration": 640.9}, "virtual_sdcard": {"progress": 0.42, "is_active": true}}}}

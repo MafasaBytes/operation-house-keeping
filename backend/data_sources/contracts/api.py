@@ -30,7 +30,7 @@ from backend.data_sources.contracts.models import (
 FullTaggedSha256 = Annotated[str, StringConstraints(pattern=r"^sha256:[0-9a-f]{64}$")]
 
 
-# ---------------------------------------------------------------- time
+# time
 class WallClockTimeMarker(_FrozenModel):
     kind: Literal["wall_clock"] = "wall_clock"
     value: AwareDatetime
@@ -60,7 +60,7 @@ SourceTimeMarker = Annotated[
 ]
 
 
-# ---------------------------------------------------------- acquisition
+# acquisition
 class AttemptFailure(_FrozenModel):
     error_code: str = Field(min_length=1)
     redacted_message: str
@@ -130,7 +130,7 @@ class ApiSourceLocator(_FrozenModel):
     extraction_route: str = Field(min_length=1)  # e.g. "api:moonraker:v1"
 
 
-# ---------------------------------------------------------- observation
+# observation
 JsonType = Literal["object", "array", "string", "number", "boolean", "null"]
 
 
@@ -173,7 +173,7 @@ class ApiExtractionManifest(_FrozenModel):
         return self
 
 
-# --------------------------------------------------------------- health
+# health
 class ApiHealthEvidence(_FrozenModel):
     """Typed API health evidence — booleans, numbers, and timestamps are
     never encoded as strings."""
@@ -187,7 +187,7 @@ class ApiHealthEvidence(_FrozenModel):
     last_successful_attempt_at: datetime | None
 
 
-# -------------------------------------------------------- run precedence
+# run precedence
 def resolve_completed_run_status(
     records_quarantined: int, attempts_failed: int
 ) -> Literal["succeeded", "completed_with_quarantine",

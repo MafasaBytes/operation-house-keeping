@@ -7,7 +7,92 @@ semantics.
 """
 
 import json
+from dataclasses import dataclass
 from decimal import Decimal
+
+from backend.data_sources.contracts import ExtractionError
+
+
+# ---------------------------------------------------------- hard parsing
+@dataclass(frozen=True)
+class JsonLimits:
+    max_depth: int = 64
+    max_nodes: int = 100_000
+    max_string_length: int = 64 * 1024
+
+
+def _reject_constant(name: str):
+    raise ValueError(f"non-finite JSON constant {name!r} rejected")
+
+
+def parse_bounded_json(data: bytes, limits: JsonLimits):
+    """Hardened, bounded JSON parsing for untrusted API responses.
+
+    Strict UTF-8; duplicate object keys rejected (silent last-wins collapse
+    would make field-level provenance ambiguous); NaN/Infinity rejected;
+    numbers parsed losslessly (int / Decimal number tokens); iterative
+    post-parse audit enforces depth, node-count, and string-length limits.
+    """
+
+    def strict_pairs(pairs):
+        keys = [key for key, _ in pairs]
+        if len(set(keys)) != len(keys):
+            raise ValueError("duplicate object keys")
+        return dict(pairs)
+
+    try:
+        text = data.decode("utf-8")
+    except UnicodeDecodeError as error:
+        raise ExtractionError(
+            "EXTRACT_API_MALFORMED_JSON",
+            "payload is not decodable as strict UTF-8",
+        ) from error
+    try:
+        value = json.loads(
+            text,
+            object_pairs_hook=strict_pairs,
+            parse_int=int,
+            parse_float=Decimal,
+            parse_constant=_reject_constant,
+        )
+    except ValueError as error:
+        raise ExtractionError(
+            "EXTRACT_API_MALFORMED_JSON",
+            f"payload is not acceptable JSON ({error})"[:300],
+        ) from error
+
+    nodes = 0
+    stack = [(value, 1)]
+    while stack:
+        node, depth = stack.pop()
+        nodes += 1
+        if depth > limits.max_depth:
+            raise ExtractionError(
+                "EXTRACT_API_LIMIT_EXCEEDED",
+                f"JSON nesting depth exceeds the limit of {limits.max_depth}",
+            )
+        if nodes > limits.max_nodes:
+            raise ExtractionError(
+                "EXTRACT_API_LIMIT_EXCEEDED",
+                f"JSON node count exceeds the limit of {limits.max_nodes}",
+            )
+        if isinstance(node, str) and len(node) > limits.max_string_length:
+            raise ExtractionError(
+                "EXTRACT_API_LIMIT_EXCEEDED",
+                "a JSON string exceeds the configured length limit",
+            )
+        if isinstance(node, list):
+            stack.extend((item, depth + 1) for item in node)
+        elif isinstance(node, dict):
+            for key, item in node.items():
+                if len(key) > limits.max_string_length:
+                    raise ExtractionError(
+                        "EXTRACT_API_LIMIT_EXCEEDED",
+                        "a JSON object key exceeds the configured length limit",
+                    )
+                stack.append((item, depth + 1))
+    return value
+
 
 # ------------------------------------------------------------ canonical
 def canonical_json(value) -> str:

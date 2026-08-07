@@ -1,0 +1,1 @@
+{"result": {"klippy_connected": true, "klippy_state": "ready", "components": ["server", "file_manager", "machine", "history"], "failed_components": [], "registered_directories": ["config", "gcodes"], "warnings": [], "websocket_count": 2, "moonraker_version": "v0.9.3-0-gd1f4d5a", "api_version": [1, 5, 0]}}
