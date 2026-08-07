@@ -11,10 +11,13 @@ records after later appends.
 """
 
 import json
+import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
+from types import MappingProxyType
 from typing import Iterable, Mapping
+from uuid import uuid4
 
 from pydantic import TypeAdapter, ValidationError
 
@@ -40,25 +43,37 @@ from backend.identity_binding.contracts import (
 from backend.system_identity import EntityAnchor, VariableAnchor
 
 _RECORD_ADAPTER: TypeAdapter = TypeAdapter(LedgerRecord)
+_RECORD_ID = re.compile(r"^(anc|iba|ibr|ibc|ibj)_[0-9a-f]{64}$")
 _FILENAME = re.compile(r"^(anc|iba|ibr|ibc|ibj)_[0-9a-f]{64}\.json$")
+
+_EMPTY: Mapping = MappingProxyType({})
+
+
+def _frozen_mapping(mapping: Mapping) -> Mapping:
+    """A COPIED read-only mapping: neither later mutation of the input nor
+    attempted mutation of the returned view can alter a validated
+    revision."""
+    return MappingProxyType(dict(mapping))
 
 
 @dataclass(frozen=True)
 class LoadedBindingSet:
-    """A validated revision plus derived in-memory indexes."""
+    """A validated revision plus derived in-memory indexes. Every mapping
+    is a copied read-only view — a loaded revision is genuinely
+    immutable."""
 
     revision: BindingRevision
-    records: dict[str, LedgerRecord]
-    anchors_by_id: dict[str, EntityAnchor | VariableAnchor]
-    declarations: dict[str, AnchorDeclaration]
-    assertions: dict[str, BindingAssertion]
-    retractions: dict[str, BindingRetraction]
-    closures: dict[str, ApplicabilityClosure]
-    rejections: dict[str, BindingRejection]
-    superseded_by: dict[str, tuple[str, ...]] = field(default_factory=dict)
-    retracted_by: dict[str, tuple[str, ...]] = field(default_factory=dict)
-    closure_records: dict[str, tuple[str, ...]] = field(default_factory=dict)
-    effective_applies: dict[str, AppliesScope] = field(default_factory=dict)
+    records: Mapping[str, LedgerRecord]
+    anchors_by_id: Mapping[str, EntityAnchor | VariableAnchor]
+    declarations: Mapping[str, AnchorDeclaration]
+    assertions: Mapping[str, BindingAssertion]
+    retractions: Mapping[str, BindingRetraction]
+    closures: Mapping[str, ApplicabilityClosure]
+    rejections: Mapping[str, BindingRejection]
+    superseded_by: Mapping[str, tuple[str, ...]] = _EMPTY
+    retracted_by: Mapping[str, tuple[str, ...]] = _EMPTY
+    closure_records: Mapping[str, tuple[str, ...]] = _EMPTY
+    effective_applies: Mapping[str, AppliesScope] = _EMPTY
 
 
 def _fail(code: str, message: str) -> None:
@@ -84,6 +99,10 @@ def validate_record_collection(
     rejections: dict[str, BindingRejection] = {}
 
     for record_id, record in records.items():
+        if record_id != record.record_id:
+            _fail("BINDING_RECORD_KEY_MISMATCH",
+                  f"collection key {record_id!r} does not match the record's "
+                  f"own id {record.record_id}")
         if verify_hashes and not verify_record_id(record):
             _fail("BINDING_RECORD_HASH_MISMATCH",
                   f"content of {record_id} does not match its id")
@@ -198,12 +217,17 @@ def validate_record_collection(
         record_ids=record_ids, record_count=len(record_ids),
         binding_set_id=binding_set_id)
     return LoadedBindingSet(
-        revision=revision, records=dict(records),
-        anchors_by_id=anchors_by_id, declarations=declarations,
-        assertions=assertions, retractions=retractions, closures=closures,
-        rejections=rejections, superseded_by=superseded_by,
-        retracted_by=retracted_by, closure_records=closure_records,
-        effective_applies=effective_applies)
+        revision=revision, records=_frozen_mapping(records),
+        anchors_by_id=_frozen_mapping(anchors_by_id),
+        declarations=_frozen_mapping(declarations),
+        assertions=_frozen_mapping(assertions),
+        retractions=_frozen_mapping(retractions),
+        closures=_frozen_mapping(closures),
+        rejections=_frozen_mapping(rejections),
+        superseded_by=_frozen_mapping(superseded_by),
+        retracted_by=_frozen_mapping(retracted_by),
+        closure_records=_frozen_mapping(closure_records),
+        effective_applies=_frozen_mapping(effective_applies))
 
 
 class BindingStore:
@@ -216,24 +240,44 @@ class BindingStore:
                 f"{BINDING_SET_ID_PATTERN}")
         self.binding_set_id = set_dir.name
         self.records_dir = set_dir / "records"
+        self.staging_dir = set_dir / ".staging"
         self.records_dir.mkdir(parents=True, exist_ok=True)
 
     # -- append (write-once, atomic, single-writer) -----------------------
 
     def append(self, record: LedgerRecord) -> str:
+        """Write one record. Staging happens OUTSIDE the scanned ledger
+        directory and promotion is a single atomic rename, so a reader
+        sees either the old complete set or the new complete record —
+        never a partial member. An existing file is validated, never
+        silently overwritten: identical validated content is a no-op;
+        anything malformed, tampered, or inconsistent raises. Honest
+        single-writer assumption; no lock and no stronger crash-durability
+        guarantee than the rename itself."""
         if not verify_record_id(record):
             raise BindingIntegrityError(
                 "BINDING_RECORD_HASH_MISMATCH",
                 "record content does not match its record_id")
+        final = self.records_dir / f"{record.record_id}.json"
+        if final.exists():
+            existing = self._read_record(final)  # raises on tampered content
+            if existing != record:
+                raise BindingIntegrityError(
+                    "BINDING_RECORD_HASH_MISMATCH",
+                    f"existing {final.name} validates but does not equal "
+                    "the record being appended")
+            return record.record_id  # identical validated content: no-op
         payload = {**canonical_payload(record), "record_id": record.record_id}
         text = json.dumps(payload, sort_keys=True, indent=2,
                           ensure_ascii=False) + "\n"
-        final = self.records_dir / f"{record.record_id}.json"
-        if final.exists():
-            return record.record_id  # identical content by construction
-        temp = final.with_suffix(".json.tmp")
+        self.staging_dir.mkdir(parents=True, exist_ok=True)
+        temp = self.staging_dir / f"{record.record_id}.{uuid4().hex}.tmp"
         temp.write_text(text, encoding="utf-8")
-        temp.replace(final)
+        try:
+            os.replace(temp, final)
+        except OSError:
+            temp.unlink(missing_ok=True)
+            raise
         return record.record_id
 
     # -- load --------------------------------------------------------------
@@ -266,9 +310,22 @@ class BindingStore:
 
     def load_revision(self, record_ids: Iterable[str]) -> LoadedBindingSet:
         """Replay an explicitly supplied membership from the still-present
-        append-only records. The subset must be reference-closed."""
+        append-only records. The subset must be reference-closed. Every
+        supplied id is validated against the ledger-record ID pattern
+        BEFORE any filesystem path is constructed; duplicates are
+        rejected."""
+        supplied = list(record_ids)
+        for record_id in supplied:
+            if not _RECORD_ID.fullmatch(record_id):
+                raise BindingIntegrityError(
+                    "BINDING_REVISION_INVALID",
+                    f"{record_id!r} is not a valid ledger record id")
+        if len(set(supplied)) != len(supplied):
+            raise BindingIntegrityError(
+                "BINDING_REVISION_INVALID",
+                "revision membership contains duplicates")
         records: dict[str, LedgerRecord] = {}
-        for record_id in record_ids:
+        for record_id in supplied:
             path = self.records_dir / f"{record_id}.json"
             if not path.exists():
                 raise BindingIntegrityError(
