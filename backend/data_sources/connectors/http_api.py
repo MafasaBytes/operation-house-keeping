@@ -33,6 +33,7 @@ from backend.data_sources.contracts import (
     SourceDefinition,
     StatusCheck,
 )
+from backend.data_sources.provenance import sanitize_source_text
 
 _HEADER_ALLOWLIST = ("Content-Type", "Date", "Retry-After", "X-Request-Id")
 _HEADER_VALUE_BOUND = 200
@@ -310,6 +311,20 @@ class HttpApiConnector:
         auth_headers = adapter.auth_headers(
             self.credential_resolver, source.credential_reference
         )
+        # Every nonempty in-memory authorization value the adapter produced:
+        # exact occurrences are stripped from any source-derived value
+        # before an event (and therefore any persisted artifact) is built.
+        secret_values = sorted(
+            {value for value in auth_headers.values() if value},
+            key=len, reverse=True,
+        )
+
+        def sanitize_source_value(value: str | None) -> str | None:
+            if value is None:
+                return None
+            for secret in secret_values:
+                value = value.replace(secret, "<redacted-credential>")
+            return sanitize_source_text(value, max_len=_HEADER_VALUE_BOUND)
         for address in self.resolve_addresses(host):
             validate_target_address(address, scheme, allow_plaintext, scope)
         transport_security = (
@@ -388,11 +403,27 @@ class HttpApiConnector:
             evidence.received_at = evidence.finished_at
             evidence.status_code = response.status
             evidence.allowlisted_headers = {
-                name: str(response.headers[name])[:_HEADER_VALUE_BOUND]
+                name: sanitize_source_value(str(response.headers[name]))
                 for name in _HEADER_ALLOWLIST if name in response.headers
             }
             evidence.response_size_bytes = len(response.body)
-            evidence.source_content_type = response.headers.get("Content-Type")
+            evidence.source_content_type = sanitize_source_value(
+                response.headers.get("Content-Type")
+            )
+
+            if response.status == 200 and any(
+                secret.encode("utf-8") in response.body for secret in secret_values
+            ):
+                # Raw evidence is never silently modified: a payload that
+                # echoes a resolved credential is refused, not rewritten.
+                yield AcquisitionFailed(
+                    item_key=item.item_key,
+                    error_code="ACQUIRE_SECRET_ECHOED",
+                    redacted_message="response body echoes a resolved "
+                    "credential value; the payload was not persisted",
+                    api=evidence,
+                )
+                continue
 
             if response.status == 200:
                 if len(response.body) > self.max_response_bytes:

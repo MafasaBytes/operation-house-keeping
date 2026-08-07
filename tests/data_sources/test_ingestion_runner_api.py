@@ -458,3 +458,97 @@ class TestCrashRecoveryCompleteness:
         runner.run("printer-1")
         after = {p.name: p.read_bytes() for p in extracted_dir.glob("*.json")}
         assert before == after  # write-once, not recomputed
+
+
+class TestCredentialEchoPrevention:
+    """Repair: response-echoed credentials must never be persisted below
+    the store root; body echoes refuse persistence with a typed failure."""
+
+    TOKEN = "hunter2-echoed-token"
+
+    def _run_with(self, tmp_path, script):
+        runner, store, transport = make_runner(
+            tmp_path, script,
+            credential_values={"moonraker-key": self.TOKEN},
+            credential="moonraker-key",
+        )
+        run = runner.run("printer-1")
+        leaks = [
+            path for path in store.base_dir.rglob("*")
+            if path.is_file() and self.TOKEN.encode() in path.read_bytes()
+        ]
+        return run, store, leaks
+
+    def test_echo_in_x_request_id_header(self, tmp_path):
+        from backend.data_sources.connectors.http_api import TransportResponse
+
+        script = happy_script()
+        script["/server/info"] = TransportResponse(
+            status=200,
+            headers={"Content-Type": "application/json",
+                     "X-Request-Id": self.TOKEN},
+            body=(FIXTURES / "moonraker_server_info.json").read_bytes(),
+        )
+        run, store, leaks = self._run_with(tmp_path, script)
+        assert leaks == []
+        attempt = next(a for a in store.iter_attempts("printer-1")
+                       if a.item_key == "server_info")
+        assert "<redacted-credential>" in attempt.allowlisted_headers["X-Request-Id"]
+        assert run.status == "succeeded"  # header echo sanitized, not fatal
+
+    def test_echo_in_content_type_parameter(self, tmp_path):
+        from backend.data_sources.connectors.http_api import TransportResponse
+
+        script = happy_script()
+        script["/server/info"] = TransportResponse(
+            status=200,
+            headers={"Content-Type": f"application/json; profile={self.TOKEN}"},
+            body=(FIXTURES / "moonraker_server_info.json").read_bytes(),
+        )
+        run, store, leaks = self._run_with(tmp_path, script)
+        assert leaks == []
+        envelope = next(e for e in store.iter_accepted_envelopes("printer-1")
+                        if e.api_locator.item_key == "server_info")
+        assert self.TOKEN not in (envelope.api_locator.source_content_type or "")
+
+    def test_echo_on_auth_failure_response(self, tmp_path):
+        from backend.data_sources.connectors.http_api import TransportResponse
+
+        script = happy_script()
+        script["/server/info"] = TransportResponse(
+            status=401,
+            headers={"Content-Type": "text/plain",
+                     "X-Request-Id": f"denied-{self.TOKEN}"},
+            body=f"bad key {self.TOKEN}".encode(),
+        )
+        run, store, leaks = self._run_with(tmp_path, script)
+        assert leaks == []
+        failed = next(a for a in store.iter_attempts("printer-1")
+                      if a.outcome == "failed")
+        assert failed.failure.error_code == "ACQUIRE_AUTH_FAILED"
+
+    def test_echo_in_successful_body_refuses_persistence(self, tmp_path):
+        from backend.data_sources.connectors.http_api import TransportResponse
+
+        script = happy_script()
+        script["/server/info"] = TransportResponse(
+            status=200,
+            headers={"Content-Type": "application/json"},
+            body=json.dumps({"result": {"klippy_state": "ready",
+                                        "api_key": self.TOKEN}}).encode(),
+        )
+        run, store, leaks = self._run_with(tmp_path, script)
+        assert leaks == []
+        echoed = [a for a in store.iter_attempts("printer-1")
+                  if a.failure and a.failure.error_code == "ACQUIRE_SECRET_ECHOED"]
+        assert len(echoed) == 1
+        assert self.TOKEN not in echoed[0].failure.redacted_message
+        # the other endpoint proceeded normally
+        assert run.attempts_succeeded == 1
+        assert run.status == "completed_with_acquisition_failures"
+
+    def test_normal_authenticated_sweep_unchanged(self, tmp_path):
+        run, store, leaks = self._run_with(tmp_path, happy_script())
+        assert leaks == []
+        assert run.status == "succeeded"
+        assert run.attempts_succeeded == 2
