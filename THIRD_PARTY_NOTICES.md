@@ -36,6 +36,31 @@ parties, or vendored artifact), the distributor must:
   linking; do not switch to static linking without revisiting this
   notice.
 
+## PDF extraction closure (optional, `requirements-pdf.txt`)
+
+All permissive; obligations are notice preservation on redistribution.
+
+- **pdfplumber** — MIT. https://github.com/jsvine/pdfplumber
+- **pdfminer.six** — MIT. https://github.com/pdfminer/pdfminer.six
+- **pypdf** — BSD-3-Clause. https://github.com/py-pdf/pypdf
+- **pypdfium2** — bindings BSD-3-Clause OR Apache-2.0. The wheel bundles
+  the compiled PDFium library and ships its license inventory in-wheel at
+  `pypdfium2-*.dist-info/licenses/`: `LICENSES/` (Apache-2.0,
+  BSD-3-Clause, CC-BY-4.0) and per-platform `BUILD_LICENSES/` for PDFium's
+  bundled components (verified for the pinned 5.12.1 linux_x64 wheel:
+  abseil, agg23, fast_float, freetype, icu, and further entries in that
+  directory). If the wheel is ever redistributed, preserve that directory.
+  https://github.com/pypdfium2-team/pypdfium2
+- **Pillow** — MIT-CMU. Bundles native imaging libraries; license file
+  shipped in-wheel. https://python-pillow.github.io/
+- **cryptography** — Apache-2.0 OR BSD-3-Clause (ships both texts
+  in-wheel). https://github.com/pyca/cryptography
+- **charset-normalizer** — MIT. **typing_extensions** — PSF-2.0.
+
+Note: PDFium, Pillow, and cryptography contain native compiled
+components; the PDF toolchain is not pure Python and runs only inside the
+isolated extraction worker.
+
 ## pydantic (core runtime dependency)
 
 MIT License. Copyright the pydantic contributors.

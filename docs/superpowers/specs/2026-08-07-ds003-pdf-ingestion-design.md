@@ -51,6 +51,37 @@ table candidates, vector + image + annotation inventory; pypdfium2 + Pillow —
 Phase B page rendering and PNG encoding; pypdf — declared metadata, page
 labels, encryption state, and the read-only active-content catalog scan.
 
+### Spike results (2026-08-07, Task 0 — gate PASSED)
+
+Environment: WSL2 Ubuntu x86_64, CPython 3.13.11, resolved closure
+pdfplumber 0.11.10 / pdfminer.six 20260107 / pypdfium2 5.12.1 /
+Pillow 12.3.0 / pypdf 6.15.0 / cryptography 50.0.0. Findings:
+
+- A stdlib-generated PDF (self-computed xref) parses in pdfplumber with
+  the exact designed coordinates (word x0 = 72.0 for text placed at
+  Td 72 720; top = 792 − 720 − ascent, consistent with Helvetica metrics)
+  — the fixture-generator approach is viable and oracle-friendly.
+- Extraction output (words, bboxes rounded to 3 decimals, counts) is
+  identical across repeated runs in-process and **across separate
+  processes**.
+- pypdfium2 (scale 150/72) + Pillow PNG (RGB, optimize=False,
+  compress_level=9) produced **byte-identical renders across separate
+  processes** on this platform (sha256 791ea72e…, 1275×1651 px).
+- pypdf surfaces page labels, `is_encrypted`, and a read-only catalog
+  scan that inventories JavaScript name-tree entries, embedded-file
+  declarations, and URI link annotations without executing anything.
+- Encrypted (AES-256, non-empty user password): pypdf detects;
+  pdfplumber raises `PdfminerException` without the password.
+  Malformed (50% truncation): `PdfminerException` / `PdfStreamError`.
+- The pypdfium2 wheel ships its license inventory in-wheel
+  (`dist-info/licenses/LICENSES/`: Apache-2.0, BSD-3-Clause, CC-BY-4.0,
+  plus `BUILD_LICENSES` for bundled PDFium components — abseil, agg23,
+  fast_float, freetype, icu, and others) — recorded in
+  THIRD_PARTY_NOTICES.md.
+- Resolved closure is 8 packages (adds charset-normalizer and
+  typing_extensions; cryptography 50 needs no cffi on CPython 3.13),
+  hash-pinned in `requirements-pdf.txt`.
+
 ## Two-phase worker (amendment 2)
 
 ```
