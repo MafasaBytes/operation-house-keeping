@@ -72,10 +72,18 @@ behavior and identifiers unchanged.
 4. extraction + extraction envelope / quarantine
 ```
 
-A crash before step 3 may leave an uncommitted payload or API envelope;
-the store's integrity audit (`find_uncommitted_api_artifacts`) detects
-API-keyed envelopes with no committed successful attempt so they are
-never mistaken for completed acquisition evidence.
+A crash before step 3 may leave an uncommitted payload or API envelope.
+Repair-slice semantics (the original claim was too weak): an API envelope
+without a committed successful attempt is **excluded from accepted
+evidence and ordinary replay** (explicit store queries, never envelope
+existence alone); `find_uncommitted_api_artifacts` detects that window
+and `find_unextracted_api_records` detects the second window (attempt
+committed, extraction/quarantine missing). A later identical poll
+completes recovery: the new occurrence is persisted, content reuse stays
+truthful, and any missing extraction or quarantine decision is
+reconstructed from the stored raw bytes — completed extraction artifacts
+remain write-once and are never recomputed. Run-id allocation consults
+attempt evidence so a crashed run cannot cause attempt-id collisions.
 
 ## Endpoint plan (fixed, bounded, no pagination/cursors)
 
@@ -177,7 +185,13 @@ acquisition failure overloads nothing. `RunStatus` gains
 `completed_with_acquisition_failures`. Precedence (documented + tested):
 
 ```
-1. failed                                (no meaningful acquisition progress)
+1. failed                                (no meaningful acquisition progress —
+                                          concretely: an attempted sweep that
+                                          retrieved nothing, records_seen == 0
+                                          with attempts_failed > 0, or a
+                                          source-level config/credential/
+                                          policy failure; counters and
+                                          per-attempt evidence preserved)
 2. completed_with_quarantine             (≥1 retrieved record quarantined,
                                           even if attempts also failed)
 3. completed_with_acquisition_failures   (≥1 attempt failed, no quarantine)
@@ -225,9 +239,17 @@ Credentials via an injected `CredentialResolver` protocol; resolved
 values exist only in memory during request construction and all
 persisted strings pass the existing scrub/sanitize policy. Rate limits:
 no documented client quota identified for Moonraker; 429/`Retry-After`
-handled conservatively with typed evidence. Bounds: per-request timeout,
-total sweep deadline, response-size cap, bounded gzip expansion
-(spike-proven), retry limit with `retries_used`.
+handled conservatively with typed evidence. Credential-echo defense
+(repair slice): every source-derived persisted value (allowlisted
+headers, `source_content_type`) is sanitized and stripped of exact
+in-memory authorization values; a 200 body echoing a resolved credential
+is refused with `ACQUIRE_SECRET_ECHOED` — raw evidence is never silently
+modified. Bounds: per-request timeout; the **total sweep deadline is
+recomputed before every transport call, before every retry, and after
+every return** — per-call timeouts are capped by the remaining budget,
+exhaustion prevents retries, and a late response is refused (arrival
+recorded honestly) with `ACQUIRE_SWEEP_DEADLINE`; response-size cap;
+bounded gzip expansion (spike-proven); retry limit with `retries_used`.
 
 ## Validation semantics (amendments 7, 11)
 

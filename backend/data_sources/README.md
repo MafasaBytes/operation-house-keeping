@@ -183,8 +183,13 @@ transfers to those parsers. To be decided with the project owner.
   `attempt.raw_record_id -> observations(raw_record_id)`.
 - **Incremental sweeps**: the runtime persists payload -> envelope ->
   attempt -> extraction before pulling the next item; a failure at
-  endpoint two never discards endpoint one; crashes before the attempt
-  commit are detectable via `find_uncommitted_api_artifacts()`.
+  endpoint two never discards endpoint one. Crash windows are both
+  detectable (`find_uncommitted_api_artifacts()`,
+  `find_unextracted_api_records()`) and **recoverable**: uncommitted
+  envelopes are excluded from accepted evidence and replay, and a later
+  identical poll reconstructs any missing extraction/quarantine decision
+  from stored raw bytes without recomputing completed artifacts. An
+  attempted sweep that retrieves nothing reports `failed`.
 - **Honest time**: Moonraker's `eventtime` is a monotonic Klipper host
   clock — recorded as a discriminated monotonic marker with the verbatim
   number lexeme, never converted to a fabricated wall clock.
@@ -197,7 +202,11 @@ transfers to those parsers. To be decided with the project owner.
   private-LAN targets with recorded evidence; per-request address
   screening (link-local/metadata/multicast/unspecified rejected, IPv6 ULA
   explicit); redirects refused; proxy environment ignored; credentials
-  via an injected resolver, in memory only. Known limitation: a stdlib
+  via an injected resolver, in memory only; source-derived persisted
+  values are stripped of exact credential values, and a response body
+  echoing a credential is refused (`ACQUIRE_SECRET_ECHOED`) rather than
+  persisted; the sweep deadline is enforced across retries and refuses
+  late responses. Known limitation: a stdlib
   DNS-rebinding window between validation and connection (documented in
   ADR-0004).
 - **Run accounting**: `attempts_planned/succeeded/failed` plus status
