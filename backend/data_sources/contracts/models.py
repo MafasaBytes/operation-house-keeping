@@ -117,6 +117,8 @@ class RawRecord(_FrozenModel):
     immutable_payload_reference: str
     provenance: dict[str, str] = Field(default_factory=dict)
     quality_flags: list[str] = Field(default_factory=list)
+    # stable API source-locator facts (DS-004); None for file sources
+    api_locator: "ApiSourceLocator | None" = None
 
     @field_validator("captured_at", "source_observed_at")
     @classmethod
@@ -124,7 +126,12 @@ class RawRecord(_FrozenModel):
         return None if value is None else _require_aware(value)
 
 
-RunStatus = Literal["succeeded", "completed_with_quarantine", "failed"]
+RunStatus = Literal[
+    "succeeded",
+    "completed_with_quarantine",
+    "completed_with_acquisition_failures",
+    "failed",
+]
 
 
 class IngestionRun(_FrozenModel):
@@ -138,6 +145,9 @@ class IngestionRun(_FrozenModel):
     records_duplicate: int = Field(ge=0)
     records_quarantined: int = Field(ge=0)
     records_partial: int = Field(default=0, ge=0)
+    attempts_planned: int = Field(default=0, ge=0)
+    attempts_succeeded: int = Field(default=0, ge=0)
+    attempts_failed: int = Field(default=0, ge=0)
     error_summary: str | None = None
 
     @field_validator("started_at", "finished_at")
@@ -156,6 +166,8 @@ class SourceHealth(_FrozenModel):
     last_success_at: datetime | None = None
     last_record_at: datetime | None = None
     diagnostic_code: str | None = None
+    # typed API evidence (DS-004); None for non-API sources and old JSON
+    api_evidence: "ApiHealthEvidence | None" = None
 
     @field_validator("checked_at", "last_success_at", "last_record_at")
     @classmethod

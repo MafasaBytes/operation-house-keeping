@@ -1,5 +1,19 @@
 """Public contract surface of the data_sources module."""
 
+from backend.data_sources.contracts.api import (
+    AcquisitionAttempt,
+    ApiExtractionManifest,
+    ApiHealthEvidence,
+    ApiItemSummary,
+    ApiSourceLocator,
+    AttemptFailure,
+    MonotonicTimeMarker,
+    OperationalObservation,
+    SourceTimeMarker,
+    UnavailableTimeMarker,
+    WallClockTimeMarker,
+    resolve_completed_run_status,
+)
 from backend.data_sources.contracts.cad import (
     ComponentInstance,
     CoordinateConversion,
@@ -16,6 +30,7 @@ from backend.data_sources.contracts.cad import (
     UnitContext,
 )
 from backend.data_sources.contracts.extraction import (
+    ApiObservationsResult,
     CsvTableResult,
     ExtractionOutcome,
     ExtractionResult,
@@ -68,6 +83,19 @@ from backend.data_sources.contracts.models import (
 )
 
 __all__ = [
+    "AcquisitionAttempt",
+    "ApiExtractionManifest",
+    "ApiHealthEvidence",
+    "ApiItemSummary",
+    "ApiObservationsResult",
+    "ApiSourceLocator",
+    "AttemptFailure",
+    "MonotonicTimeMarker",
+    "OperationalObservation",
+    "SourceTimeMarker",
+    "UnavailableTimeMarker",
+    "WallClockTimeMarker",
+    "resolve_completed_run_status",
     "PageRegionLocator",
     "PdfAnnotation",
     "PdfCoordinateFrame",
@@ -123,3 +151,12 @@ __all__ = [
     "StatusCheck",
     "StoreIntegrityError",
 ]
+
+
+# Resolve forward references: models.py cannot import api.py (circular).
+from backend.data_sources.contracts import models as _models
+
+_models.ApiHealthEvidence = ApiHealthEvidence
+_models.ApiSourceLocator = ApiSourceLocator
+SourceHealth.model_rebuild()
+RawRecord.model_rebuild()

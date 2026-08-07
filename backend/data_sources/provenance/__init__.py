@@ -2,6 +2,7 @@
 
 from backend.data_sources.provenance.core import (
     derive_entity_id,
+    derive_keyed_record_id,
     derive_record_id,
     payload_checksum,
     redact_text,
@@ -13,6 +14,7 @@ from backend.data_sources.provenance.core import (
 
 __all__ = [
     "derive_entity_id",
+    "derive_keyed_record_id",
     "derive_record_id",
     "payload_checksum",
     "redact_text",

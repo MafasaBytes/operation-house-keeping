@@ -17,6 +17,7 @@ from backend.data_sources.contracts.models import (
     RecordId,
     _FrozenModel,
 )
+from backend.data_sources.contracts.api import ApiExtractionManifest
 from backend.data_sources.contracts.pdf import PdfExtractionManifest
 
 
@@ -35,6 +36,11 @@ class PdfManifestResult(_FrozenModel):
     manifest: PdfExtractionManifest
 
 
+class ApiObservationsResult(_FrozenModel):
+    kind: Literal["api_observations"] = "api_observations"
+    manifest: ApiExtractionManifest
+
+
 ExtractionOutcome = Literal["succeeded", "partial"]
 
 
@@ -47,11 +53,13 @@ class ExtractionResult(_FrozenModel):
     extractor: ExtractorIdentity
     outcome: ExtractionOutcome
     warnings: list[str] = Field(default_factory=list)
-    result: Union[CsvTableResult, StepManifestResult, PdfManifestResult] = Field(
-        discriminator="kind"
-    )
+    result: Union[
+        CsvTableResult, StepManifestResult, PdfManifestResult, ApiObservationsResult
+    ] = Field(discriminator="kind")
 
-    def manifest_view(self) -> StepExtractionManifest | PdfExtractionManifest:
+    def manifest_view(
+        self,
+    ) -> StepExtractionManifest | PdfExtractionManifest | ApiExtractionManifest:
         manifest = getattr(self.result, "manifest", None)
         if manifest is None:
             raise ValueError(f"result kind is {self.result.kind!r}, not a manifest")
