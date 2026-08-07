@@ -86,6 +86,28 @@ class LocalFileConnector:
             f"{source.source_id!r} ({path.stat().st_size} bytes)",
         )
 
+    def acquire_events(self, source: SourceDefinition):
+        """Incremental-event form of acquisition: one successful event with
+        positional identity and no attempt evidence — DS-001–003 behavior
+        and record identifiers unchanged. Acquisition errors propagate
+        (source-level failure), as before."""
+        from backend.data_sources.connectors.events import AcquisitionSucceeded
+
+        acquisition = self.acquire(source)
+        yield AcquisitionSucceeded(
+            item_key="file",
+            payload=acquisition.payload,
+            identity_mode="positional",
+            content_type=None,
+            source_native_id=acquisition.source_native_id,
+            source_observed_at=acquisition.source_observed_at,
+            provenance=acquisition.provenance,
+            api=None,
+        )
+
+    def planned_items(self, source: SourceDefinition) -> int:
+        return 1
+
     def acquire(self, source: SourceDefinition) -> Acquisition:
         path = self._configured_path(source)
         try:
