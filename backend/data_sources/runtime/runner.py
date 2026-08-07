@@ -15,8 +15,14 @@ from pathlib import Path
 
 from backend.data_sources.catalog import InMemorySourceCatalog
 from backend.data_sources.connectors import LocalFileConnector
+from backend.data_sources.adapters.moonraker import MoonrakerAdapter
 from backend.data_sources.contracts import (
+    AcquisitionAttempt,
     AcquisitionError,
+    ApiHealthEvidence,
+    ApiObservationsResult,
+    ApiSourceLocator,
+    AttemptFailure,
     CsvTableResult,
     DataSourceError,
     ExtractionError,
@@ -27,7 +33,9 @@ from backend.data_sources.contracts import (
     SourceDefinition,
     SourceHealth,
     SourceProfile,
+    resolve_completed_run_status,
 )
+from backend.data_sources.connectors.events import AcquisitionFailed
 from backend.data_sources.extractors import (
     CsvExtractionConfig,
     csv_extractor_identity,
@@ -44,6 +52,8 @@ from backend.data_sources.extractors.step import (
 )
 from backend.data_sources.extractors.worker_harness import WorkerLimits
 from backend.data_sources.provenance import (
+    derive_entity_id,
+    derive_keyed_record_id,
     derive_record_id,
     payload_checksum,
     redact_text,
@@ -71,6 +81,7 @@ FAMILY_BY_CONTENT_TYPE = {
     "text/csv": "csv_bom",
     "model/step": "step_assembly",
     "application/pdf": "pdf_drawing_manual",
+    "application/json": "operational_api_or_telemetry",
 }
 
 _FORMAT_DETECTION_CODES = frozenset(
@@ -110,7 +121,22 @@ class IngestionRunner:
             "text/csv": self._extract_csv,
             "model/step": self._extract_step,
             "application/pdf": self._extract_pdf,
+            "api:moonraker:v1": self._extract_moonraker,
         }
+
+    def _extract_moonraker(self, payload: bytes, envelope: RawRecord) -> ExtractionProduct:
+        adapter = MoonrakerAdapter()
+        manifest = adapter.extract(
+            payload, envelope.record_id, envelope.api_locator.item_key
+        )
+        result = ExtractionResult(
+            raw_record_id=envelope.record_id,
+            extractor=manifest.extractor,
+            outcome="succeeded",
+            warnings=[],
+            result=ApiObservationsResult(manifest=manifest),
+        )
+        return ExtractionProduct(result=result)
 
     # -- public API -------------------------------------------------------
 
@@ -120,7 +146,14 @@ class IngestionRunner:
         started_at = self.clock()
 
         seen = accepted = duplicate = quarantined = partial = 0
+        attempts_planned = attempts_succeeded = attempts_failed = 0
+        item_ordinals: dict[str, int] = {}
         errors: list[str] = []
+
+        def next_attempt_id(item_key: str) -> str:
+            ordinal = item_ordinals.get(item_key, 0)
+            item_ordinals[item_key] = ordinal + 1
+            return derive_entity_id(run_id, "attempt", f"{item_key}:{ordinal}")
 
         try:
             connector = self._connector_for(source)
@@ -130,42 +163,79 @@ class IngestionRunner:
                     f"source {source_id!r} is disabled in the catalog",
                 )
             self._check_profile(source)
-            acquisition = connector.acquire(source)
-            seen = 1
+            if source.connector_type == "http_api":
+                attempts_planned = connector.planned_items(source)
 
-            checksum = payload_checksum(acquisition.payload)
-            record_id = derive_record_id(source_id, checksum, 0)
+            # Incremental pull loop: each successful payload plus its
+            # acquisition attempt is persisted BEFORE the next event is
+            # requested — a later failure never discards earlier evidence.
+            for position, event in enumerate(connector.acquire_events(source)):
+                if isinstance(event, AcquisitionFailed):
+                    attempts_failed += 1
+                    errors.append(f"{event.error_code}: item {event.item_key}")
+                    if event.api is not None:
+                        self.store.put_attempt(self._attempt_from_event(
+                            event, next_attempt_id(event.item_key), run_id,
+                            source_id, position, raw_record_id=None,
+                            checksum=None, payload_reused=False,
+                        ))
+                    continue
 
-            if self.store.has_envelope(record_id):
-                duplicate = 1
-            else:
-                reference = self.store.put_payload(acquisition.payload)
-                envelope = RawRecord(
-                    record_id=record_id,
-                    source_id=source_id,
-                    source_native_id=acquisition.source_native_id,
-                    ingestion_run_id=run_id,
-                    captured_at=self.clock(),
-                    source_observed_at=acquisition.source_observed_at,
-                    content_type=self._content_type(source),
-                    payload_checksum=checksum,
-                    immutable_payload_reference=reference,
-                    provenance=acquisition.provenance,
-                    quality_flags=[],
-                )
-                self.store.put_envelope(envelope)
-                accepted = 1
+                seen += 1
+                checksum = payload_checksum(event.payload)
+                if event.identity_mode == "keyed":
+                    record_id = derive_keyed_record_id(
+                        source_id, event.item_key, checksum
+                    )
+                else:
+                    record_id = derive_record_id(source_id, checksum, 0)
+
+                reused = self.store.has_envelope(record_id)
+                envelope = None
+                if reused:
+                    duplicate += 1
+                else:
+                    # commit order: payload -> envelope -> attempt -> extraction
+                    reference = self.store.put_payload(event.payload)
+                    envelope = RawRecord(
+                        record_id=record_id,
+                        source_id=source_id,
+                        source_native_id=event.source_native_id,
+                        ingestion_run_id=run_id,
+                        captured_at=self.clock(),
+                        source_observed_at=event.source_observed_at,
+                        content_type=event.content_type
+                        or self._content_type(source),
+                        payload_checksum=checksum,
+                        immutable_payload_reference=reference,
+                        provenance=event.provenance,
+                        quality_flags=[],
+                        api_locator=self._locator_from_event(event),
+                    )
+                    self.store.put_envelope(envelope)
+                    accepted += 1
+
+                if event.api is not None:
+                    attempts_succeeded += 1
+                    self.store.put_attempt(self._attempt_from_event(
+                        event, next_attempt_id(event.item_key), run_id,
+                        source_id, position, raw_record_id=record_id,
+                        checksum=checksum, payload_reused=reused,
+                    ))
+
+                if reused or envelope is None:
+                    continue
                 try:
-                    product = self._extract_product(envelope, acquisition.payload)
+                    product = self._extract_product(envelope, event.payload)
                     # Staged publication: derivatives first, envelope last as
                     # the commit record.
                     for data in product.derivative_payloads.values():
                         self.store.put_derivative_payload(data)
                     self.store.put_extraction(product.result)
                     if product.result.outcome == "partial":
-                        partial = 1
+                        partial += 1
                 except DataSourceError as error:
-                    quarantined = 1
+                    quarantined += 1
                     errors.append(f"{error.error_code}: 1 record")
                     self.store.put_quarantine(
                         QuarantineRecord(
@@ -193,6 +263,9 @@ class IngestionRunner:
                 records_duplicate=duplicate,
                 records_quarantined=quarantined,
                 records_partial=partial,
+                attempts_planned=attempts_planned,
+                attempts_succeeded=attempts_succeeded,
+                attempts_failed=attempts_failed,
                 error_summary="; ".join(errors),
             )
             self.store.put_run(run)
@@ -203,12 +276,17 @@ class IngestionRunner:
             source_id=source_id,
             started_at=started_at,
             finished_at=self.clock(),
-            status="completed_with_quarantine" if quarantined else "succeeded",
+            status=resolve_completed_run_status(
+                records_quarantined=quarantined, attempts_failed=attempts_failed
+            ),
             records_seen=seen,
             records_accepted=accepted,
             records_duplicate=duplicate,
             records_quarantined=quarantined,
             records_partial=partial,
+            attempts_planned=attempts_planned,
+            attempts_succeeded=attempts_succeeded,
+            attempts_failed=attempts_failed,
             error_summary="; ".join(errors) or None,
         )
         self.store.put_run(run)
@@ -239,6 +317,7 @@ class IngestionRunner:
         status = {
             "succeeded": "ok",
             "completed_with_quarantine": "degraded",
+            "completed_with_acquisition_failures": "degraded",
             "failed": "failed",
         }[latest.status]
         successes = [r for r in runs if r.status == "succeeded"]
@@ -253,11 +332,122 @@ class IngestionRunner:
             last_success_at=successes[-1].finished_at if successes else None,
             last_record_at=accepting[-1].finished_at if accepting else None,
             diagnostic_code=diagnostic,
+            api_evidence=self._api_health_evidence(source_id),
+        )
+
+    # -- acquisition helpers (DS-004) -------------------------------------
+
+    @staticmethod
+    def _locator_from_event(event) -> "ApiSourceLocator | None":
+        if event.api is None:
+            return None
+        return ApiSourceLocator(
+            adapter_id=event.api.adapter_id,
+            endpoint_id=event.api.endpoint_id,
+            item_key=event.item_key,
+            request_fingerprint=event.api.request_fingerprint,
+            request_canonical=event.api.request_canonical,
+            source_content_type=event.api.source_content_type,
+            extraction_route=event.api.extraction_route,
+        )
+
+    def _attempt_from_event(
+        self, event, attempt_id, run_id, source_id, position,
+        raw_record_id, checksum, payload_reused,
+    ) -> AcquisitionAttempt:
+        evidence = event.api
+        succeeded = raw_record_id is not None
+        return AcquisitionAttempt(
+            attempt_id=attempt_id,
+            ingestion_run_id=run_id,
+            source_id=source_id,
+            item_key=event.item_key,
+            adapter_id=evidence.adapter_id,
+            endpoint_id=evidence.endpoint_id,
+            sweep_position=position,
+            started_at=evidence.started_at,
+            finished_at=evidence.finished_at,
+            received_at=evidence.received_at,
+            outcome="succeeded" if succeeded else "failed",
+            request_fingerprint=evidence.request_fingerprint,
+            request_canonical=evidence.request_canonical,
+            target_origin=evidence.target_origin,
+            status_code=evidence.status_code,
+            allowlisted_headers=evidence.allowlisted_headers,
+            transport_security=evidence.transport_security,
+            response_size_bytes=evidence.response_size_bytes,
+            retries_used=evidence.retries_used,
+            payload_checksum=checksum,
+            raw_record_id=raw_record_id,
+            payload_reused=payload_reused,
+            failure=None if succeeded else AttemptFailure(
+                error_code=event.error_code,
+                redacted_message=self._redact(event.redacted_message),
+            ),
+        )
+
+    def _api_health_evidence(self, source_id: str) -> "ApiHealthEvidence | None":
+        attempts = list(self.store.iter_attempts(source_id))
+        if not attempts:
+            return None
+        consecutive = 0
+        for attempt in reversed(attempts):
+            if attempt.outcome == "failed":
+                consecutive += 1
+            else:
+                break
+        last = attempts[-1]
+        last_success = next(
+            (a for a in reversed(attempts) if a.outcome == "succeeded"), None
+        )
+        retry_after = None
+        raw_retry = last.allowlisted_headers.get("Retry-After")
+        if raw_retry is not None:
+            try:
+                retry_after = float(raw_retry)
+            except ValueError:
+                retry_after = None
+        skew = None
+        date_header = last.allowlisted_headers.get("Date")
+        if date_header and last.received_at is not None:
+            try:
+                from email.utils import parsedate_to_datetime
+
+                server_time = parsedate_to_datetime(date_header)
+                skew = (server_time - last.received_at).total_seconds()
+            except (ValueError, TypeError):
+                skew = None
+        return ApiHealthEvidence(
+            consecutive_attempt_failures=consecutive,
+            last_attempt_error_code=(
+                last.failure.error_code if last.failure else None
+            ),
+            last_status_code=last.status_code,
+            last_retry_after_seconds=retry_after,
+            clock_skew_seconds=skew,
+            plaintext_http_explicit=(
+                last.transport_security == "plaintext_http_explicit"
+            ),
+            last_successful_attempt_at=(
+                last_success.received_at if last_success else None
+            ),
         )
 
     # -- extraction dispatch ---------------------------------------------
 
     def _extract_product(self, envelope: RawRecord, payload: bytes) -> ExtractionProduct:
+        # Vendor-aware routing: an explicit extraction route stored with the
+        # raw record wins; the source-reported media type is never enough to
+        # give arbitrary JSON vendor semantics.
+        if envelope.api_locator is not None:
+            extractor = self.extractors.get(envelope.api_locator.extraction_route)
+            if extractor is None:
+                raise ExtractionError(
+                    "EXTRACT_UNSUPPORTED_FORMAT",
+                    f"no extractor registered for route "
+                    f"{envelope.api_locator.extraction_route!r}",
+                )
+            return extractor(payload, envelope)
         extractor = self.extractors.get(envelope.content_type)
         if extractor is None:
             raise ExtractionError(
