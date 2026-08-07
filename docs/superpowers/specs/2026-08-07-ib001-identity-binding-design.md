@@ -253,9 +253,17 @@ boundary instant belongs to the successor.
 ## Resolution algorithm (eight non-overlapping cases)
 
 Deterministic total function of `(revision, locator, at)`. `at` is a
-required timezone-aware datetime (naive or missing →
-`BindingResolutionError("BINDING_NAIVE_AT")`); there is no implicit
-`datetime.now()` anywhere in the resolver.
+required timezone-aware datetime; missing, `None`, non-datetime, and
+naive values all fail through the same typed
+`BindingResolutionError("BINDING_NAIVE_AT")` (the parameter defaults to
+`None` solely so missing input reaches the typed contract); there is no
+implicit `datetime.now()` anywhere in the resolver. The public result
+contracts themselves reject impossible states — targets/basis exactly
+when bound, candidate-bearing statuses only, entity-vs-variable anchor
+kinds by resolution level, subject context exactly on property results,
+lifecycle links consistent with `active`, unique canonically ordered
+collections — rather than relying on the resolver to avoid constructing
+them.
 
 ```text
 matching   = assertions whose locator equals the query locator EXACTLY
@@ -343,15 +351,25 @@ Write-once JSON files, one binding set per directory
 (`<root>/<binding_set_id>/records/<record_id>.json`), single-writer
 assumption, no locks pretended:
 
-- **Append**: validate record → canonical hash → temp-file + atomic
-  rename. Re-appending identical content is a no-op; a filename whose
-  content no longer matches its `record_id` is detected at load.
+- **Append**: validate record → canonical hash → unique temp file staged
+  in `.staging/` OUTSIDE the scanned `records/` directory → one atomic
+  rename (cleaned up on handled failure), so a reader sees the old
+  complete set or the new complete record, never a partial ledger
+  member, and crash residue in staging can never invalidate `load()`.
+  When the final file already exists it is READ AND VALIDATED first:
+  identical validated content is an idempotent no-op; malformed,
+  tampered, or inconsistent existing content raises
+  `BindingIntegrityError` and is never silently overwritten.
 - **Load (current revision)**: read every `records/*.json`; verify each
   `record_id` against the recomputed content hash; run whole-set
   validation; membership = all records; `record_ids` sorted
   lexicographically; `revision_id` per the formula above. Filesystem
   enumeration order never matters.
-- **Load (explicit revision)**: caller supplies `record_ids`; the store
+- **Load (explicit revision)**: caller supplies `record_ids`; every
+  supplied id is validated against the ledger-record ID pattern BEFORE
+  any filesystem path is constructed (traversal-shaped or malformed
+  members fail with the typed revision error) and duplicate membership
+  is rejected; the store then
   verifies every id exists as a still-present file with matching content,
   requires the subset to be reference-closed (an assertion's anchor
   declaration, a closure's assertion, a supersession's predecessor, a
@@ -365,6 +383,15 @@ assumption, no locks pretended:
   membership.
 - Files are pretty-printed for review; the hash is computed over the
   canonical serialization of the validated model, not raw file bytes.
+- A **loaded revision is genuinely immutable**: `LoadedBindingSet`
+  exposes copied read-only mappings, so neither mutation of the caller's
+  input mapping after validation nor attempted mutation of any exposed
+  mapping can alter a validated revision — the same revision, locator,
+  and time always produce the same result. Validation also binds every
+  collection key to its record's own identity
+  (`BINDING_RECORD_KEY_MISMATCH`): a forged key can never become
+  revision membership, and `BindingRevision` itself rejects members that
+  do not match the ledger-record ID pattern.
 - The demo binding set is committed to the repository; runtime sets for
   real deployments live under a configured non-repo root in the same
   format. Derived indexes are in-memory only (no SQLite in IB-001).

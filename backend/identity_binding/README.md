@@ -26,10 +26,15 @@ mode.
 ## Semantics worth knowing
 
 - **Ledger, not database**: one write-once JSON file per record
-  (`records/<record_id>.json`), atomic rename, honest single-writer
-  assumption, all-or-nothing set validation. `record_id` is the full
-  SHA-256 of the validated record's canonical UTC-normalized
-  serialization — tamper-evident and idempotent.
+  (`records/<record_id>.json`), staged outside the scanned directory and
+  promoted by one atomic rename, honest single-writer assumption,
+  all-or-nothing set validation. `record_id` is the full SHA-256 of the
+  validated record's canonical UTC-normalized serialization —
+  tamper-evident and idempotent; an existing file is validated on
+  re-append and never silently overwritten. Loaded revisions are
+  immutable read-only views, collection keys are bound to record
+  identity, and revision members are pattern-validated before any path
+  is touched.
 - **Correction vs replacement**: superseding an assertion means *the old
   decision was wrong*; hardware replacement is an applicability closure
   plus a **new** anchor. Retraction withdraws; rejection documents a
