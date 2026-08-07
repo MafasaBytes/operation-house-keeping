@@ -154,3 +154,55 @@ class TestProfileV1:
         run = runner.run("sql-early")
         assert run.status == "failed"
         assert "ACQUIRE_NOT_IN_PROFILE" in (run.error_summary or "")
+
+
+class TestCheckpointQuarantineThroughRunner:
+    def test_invalid_phase_a_manifest_is_quarantined(self, env, monkeypatch):
+        from backend.data_sources.extractors.worker_harness import WorkerOutcome
+        import hashlib as _hashlib
+        import json as _json
+        from backend.data_sources.extractors.pdf.pdf_extractor import (
+            PdfExtractionConfig as _Cfg, pdf_extractor_identity,
+        )
+
+        runner, store, _ = env
+        manifest_bytes = b'{"totally": "wrong shape"}'
+        checkpoint = {
+            "checkpoint_schema_version": 1,
+            # matched dynamically below via a record-id-agnostic stub: the
+            # parent checks the checkpoint rid first, so mirror it lazily.
+        }
+
+        def stub(build_argv, payload, expected_checksum, limits, **kwargs):
+            # Recover the raw_record_id the parent passed to the worker via
+            # the argv context (last argument).
+            argv = build_argv(__import__("pathlib").Path("in"),
+                              __import__("pathlib").Path("out"))
+            context = _json.loads(argv[-1])
+            cp = {
+                "checkpoint_schema_version": 1,
+                "raw_record_id": context["raw_record_id"],
+                "extractor": pdf_extractor_identity(_Cfg(), {}).model_dump(),
+                "manifest_sha256": _hashlib.sha256(manifest_bytes).hexdigest(),
+                "state": "phase_a_complete",
+            }
+            return WorkerOutcome(
+                status="ok", returncode=0, stdout_tail="", stderr_tail="",
+                outputs={
+                    "phase_a_status.json": _json.dumps(
+                        {"status": "ok", "error": None}).encode(),
+                    "manifest_a.json": manifest_bytes,
+                    "checkpoint.json": _json.dumps(cp).encode(),
+                },
+            )
+
+        monkeypatch.setattr(
+            "backend.data_sources.extractors.pdf.pdf_extractor.invoke_worker", stub
+        )
+        run = runner.run("pdf-manual")
+        assert run.status == "completed_with_quarantine"
+        assert run.records_accepted == 1  # raw payload preserved
+        [q_path] = (store.base_dir / "quarantine").glob("*.json")
+        quarantine = store.get_quarantine(q_path.stem)
+        assert quarantine.error_code == "EXTRACT_PDF_CHECKPOINT_INVALID"
+        assert quarantine.stage == "extraction"

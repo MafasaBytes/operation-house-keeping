@@ -239,7 +239,16 @@ def phase_a(input_path: Path, output_dir: Path, config: dict, context: dict) -> 
                 "char_count": len(page.chars),
             })
 
+    open_action_present = root.get("/OpenAction") is not None
+    additional_actions_present = root.get("/AA") is not None or any(
+        page.get("/AA") is not None for page in reader.pages
+    )
     manifest_a = {
+        "phase_a_schema_version": 1,
+        "raw_record_id": context["raw_record_id"],
+        "extractor_name": context["extractor"]["name"],
+        "extractor_version": context["extractor"]["version"],
+        "config_fingerprint": context["extractor"]["config_fingerprint"],
         "metadata": {
             "declared_title": _b(meta.get("/Title")),
             "declared_author": _b(meta.get("/Author")),
@@ -256,6 +265,8 @@ def phase_a(input_path: Path, output_dir: Path, config: dict, context: dict) -> 
             "javascript_count": javascript_count,
             "embedded_file_names": embedded_file_names,
             "ocg_names": ocg_names,
+            "open_action_present": open_action_present,
+            "additional_actions_present": additional_actions_present,
         },
         "toolchain": {
             name: md.version(name)

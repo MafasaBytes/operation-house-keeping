@@ -36,6 +36,7 @@ from backend.data_sources.contracts import (
     PdfTextSpan,
     PdfVectorSummary,
 )
+from backend.data_sources.extractors.pdf.phase_a_schema import PhaseAResult
 from backend.data_sources.extractors.pdf.coordinates import (
     canonical_page_size,
     forward_matrix,
@@ -119,7 +120,7 @@ def extract_pdf(
     manifest_bytes = outcome_a.outputs.get("manifest_a.json")
     checkpoint_bytes = outcome_a.outputs.get("checkpoint.json")
     _validate_checkpoint(checkpoint_bytes, manifest_bytes, raw_record_id, expected_identity)
-    worker_a = json.loads(manifest_bytes)
+    worker_a = _validate_phase_a(manifest_bytes, raw_record_id, expected_identity)
 
     identity = pdf_extractor_identity(config, worker_a.get("toolchain", {}))
 
@@ -260,6 +261,42 @@ def _validate_checkpoint(
     digest = hashlib.sha256(manifest_bytes).hexdigest()
     if checkpoint.get("manifest_sha256") != digest:
         fail("structural manifest checksum mismatch")
+
+
+def _validate_phase_a(
+    manifest_bytes: bytes, raw_record_id: str, expected_identity: ExtractorIdentity
+) -> dict:
+    """Validate the structural manifest against the versioned Phase A
+    contract. Every failure — malformed JSON, structurally invalid or
+    unknown-version content, identity/record mismatches — maps to
+    EXTRACT_PDF_CHECKPOINT_INVALID, never an unhandled exception."""
+    from pydantic import ValidationError
+
+    def fail(reason: str):
+        raise ExtractionError(
+            "EXTRACT_PDF_CHECKPOINT_INVALID",
+            f"phase A structural manifest rejected: {reason}",
+        )
+
+    try:
+        phase_a = PhaseAResult.model_validate_json(manifest_bytes)
+    except ValidationError as error:
+        first = error.errors()[0]
+        location = ".".join(str(part) for part in first.get("loc", ())) or "<root>"
+        fail(f"schema violation at {location} ({first.get('type', 'invalid')})")
+    except Exception:
+        fail("manifest is not parseable JSON")
+
+    if phase_a.raw_record_id != raw_record_id:
+        fail("raw_record_id mismatch between manifest and expectation")
+    expected = expected_identity.model_dump()
+    if (
+        phase_a.extractor_name != expected["name"]
+        or phase_a.extractor_version != expected["version"]
+        or phase_a.config_fingerprint != expected["config_fingerprint"]
+    ):
+        fail("extractor identity or configuration fingerprint mismatch")
+    return phase_a.model_dump()
 
 
 def _assemble(

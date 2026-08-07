@@ -202,7 +202,16 @@ STUB_PDF = b"%PDF-1.4\nstub"
 
 
 def stub_manifest_a() -> dict:
+    from backend.data_sources.extractors.pdf.pdf_extractor import (
+        pdf_extractor_identity,
+    )
+    identity = pdf_extractor_identity(PdfExtractionConfig(), {}).model_dump()
     return {
+        "phase_a_schema_version": 1,
+        "raw_record_id": RID,
+        "extractor_name": identity["name"],
+        "extractor_version": identity["version"],
+        "config_fingerprint": identity["config_fingerprint"],
         "metadata": {
             "declared_title": None, "declared_author": None,
             "declared_subject": None, "declared_producer": None,
@@ -212,7 +221,9 @@ def stub_manifest_a() -> dict:
             "encryption": {"present": False, "method": None,
                            "authentication_outcome": "not_required"},
         },
-        "catalog": {"javascript_count": 0, "embedded_file_names": [], "ocg_names": []},
+        "catalog": {"javascript_count": 0, "embedded_file_names": [],
+                    "ocg_names": [], "open_action_present": False,
+                    "additional_actions_present": False},
         "toolchain": {"pdfplumber": "0.11.10", "pdfminer.six": "20260107",
                       "pypdf": "6.15.0"},
         "pages": [{
@@ -431,3 +442,75 @@ class TestRotationProvenance:
         )
         assert annotation.uri_target == expected["annotation_uri"]
         self._round_trip(manifest, annotation)
+
+
+class TestPhaseASchemaValidation:
+    """Repair-slice evidence: every invalid Phase A manifest maps to
+    EXTRACT_PDF_CHECKPOINT_INVALID, never an unhandled exception."""
+
+    def _identity(self):
+        from backend.data_sources.extractors.pdf.pdf_extractor import (
+            pdf_extractor_identity,
+        )
+        return pdf_extractor_identity(PdfExtractionConfig(), {}).model_dump()
+
+    def _outputs_for_bytes(self, manifest_bytes: bytes) -> dict[str, bytes]:
+        checkpoint = {
+            "checkpoint_schema_version": 1,
+            "raw_record_id": RID,
+            "extractor": self._identity(),
+            "manifest_sha256": hashlib.sha256(manifest_bytes).hexdigest(),
+            "state": "phase_a_complete",
+        }
+        return {
+            "phase_a_status.json": json.dumps({"status": "ok", "error": None}).encode(),
+            "manifest_a.json": manifest_bytes,
+            "checkpoint.json": json.dumps(checkpoint).encode(),
+        }
+
+    def _expect_invalid(self, monkeypatch, manifest_bytes: bytes):
+        outcome = ok_outcome(self._outputs_for_bytes(manifest_bytes))
+        monkeypatch.setattr(
+            "backend.data_sources.extractors.pdf.pdf_extractor.invoke_worker",
+            StubHarness([outcome]),
+        )
+        with pytest.raises(ExtractionError) as excinfo:
+            extract_pdf(payload=STUB_PDF, raw_record_id=RID,
+                        config=PdfExtractionConfig(), limits=LIMITS)
+        assert excinfo.value.error_code == "EXTRACT_PDF_CHECKPOINT_INVALID"
+
+    def test_malformed_manifest_json(self, monkeypatch):
+        self._expect_invalid(monkeypatch, b"{not json at all")
+
+    def test_checksum_correct_but_structurally_invalid(self, monkeypatch):
+        manifest = stub_manifest_a()
+        del manifest["pages"][0]["mediabox_raw"]  # required section field gone
+        self._expect_invalid(monkeypatch, json.dumps(manifest).encode())
+
+    def test_unknown_schema_version(self, monkeypatch):
+        manifest = stub_manifest_a()
+        manifest["phase_a_schema_version"] = 2
+        self._expect_invalid(monkeypatch, json.dumps(manifest).encode())
+
+    def test_raw_record_id_mismatch(self, monkeypatch):
+        manifest = stub_manifest_a()
+        manifest["raw_record_id"] = "f" * 32
+        self._expect_invalid(monkeypatch, json.dumps(manifest).encode())
+
+    def test_extractor_configuration_mismatch(self, monkeypatch):
+        manifest = stub_manifest_a()
+        manifest["config_fingerprint"] = "tampered"
+        self._expect_invalid(monkeypatch, json.dumps(manifest).encode())
+
+    def test_missing_section_and_wrong_types(self, monkeypatch):
+        manifest = stub_manifest_a()
+        del manifest["counts"]
+        self._expect_invalid(monkeypatch, json.dumps(manifest).encode())
+        manifest = stub_manifest_a()
+        manifest["pages"][0]["char_count"] = "five"
+        self._expect_invalid(monkeypatch, json.dumps(manifest).encode())
+
+    def test_extra_unknown_fields_forbidden(self, monkeypatch):
+        manifest = stub_manifest_a()
+        manifest["surprise_section"] = {"x": 1}
+        self._expect_invalid(monkeypatch, json.dumps(manifest).encode())
