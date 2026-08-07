@@ -16,6 +16,9 @@ from backend.data_sources.contracts import (
     SourceDefinition,
     StatusCheck,
 )
+from backend.data_sources.extractors.dependencies import (
+    check_extraction_dependencies,
+)
 from backend.data_sources.raw_store import FilesystemRawStore
 
 
@@ -112,10 +115,13 @@ class LocalFileConnector:
             passed=True,
             evidence="local_file is declared in the connector manifest",
         )
-        available = StatusCheck(
-            passed=True,
-            evidence="implementation is importable and has no external dependencies",
+        content_type = (
+            source.declared_content_types[0]
+            if source.declared_content_types
+            else "application/octet-stream"
         )
+        deps_ok, deps_evidence = check_extraction_dependencies(content_type)
+        available = StatusCheck(passed=deps_ok, evidence=deps_evidence)
         try:
             self._configured_path(source)
             configured = StatusCheck(

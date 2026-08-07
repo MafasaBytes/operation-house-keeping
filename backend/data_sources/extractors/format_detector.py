@@ -15,7 +15,10 @@ from pydantic import ConfigDict
 from backend.data_sources.contracts.models import _FrozenModel
 
 DetectionStatus = Literal[
-    "confirmed_step", "unsupported_native_cad", "unsupported_or_unknown_format"
+    "confirmed_step",
+    "confirmed_pdf",
+    "unsupported_native_cad",
+    "unsupported_or_unknown_format",
 ]
 
 _OLE_CFB_MAGIC = bytes.fromhex("d0cf11e0a1b11ae1")
@@ -47,6 +50,16 @@ def detect_format(payload: bytes, declared_content_type: str) -> FormatDetection
             detected_container="dwg",
             evidence="payload begins with a DWG version signature; native CAD "
             "formats require a vendor extraction pipeline and are not supported",
+        )
+
+    # PDF: the spec permits a preamble; the signature must appear within
+    # the first 1024 bytes.
+    if b"%PDF-" in payload[:1024]:
+        return FormatDetection(
+            status="confirmed_pdf",
+            detected_container=None,
+            evidence=f"%PDF- signature within the first 1024 bytes; declared "
+            f"content type {declared_content_type!r}",
         )
 
     stripped = head
