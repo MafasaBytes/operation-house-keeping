@@ -47,7 +47,13 @@ from backend.data_sources.extractors.worker_harness import (
     WorkerLimits,
     invoke_worker,
 )
-from backend.data_sources.provenance import derive_entity_id, payload_checksum
+from backend.data_sources.provenance import (
+    derive_entity_id,
+    payload_checksum,
+    safe_basename,
+    sanitize_source_text,
+    sanitize_uri,
+)
 
 PDF_EXTRACTOR_VERSION = "1.0.0"
 LEVELS_SUPPORTED = [0, 1, 2, 3]
@@ -458,8 +464,10 @@ def _assemble(
                         source_bbox=rect,
                     ),
                     subtype=annotation["subtype"],
-                    contents=annotation["contents"],
-                    uri_target=annotation["uri"],
+                    contents=sanitize_source_text(annotation["contents"]),
+                    uri_target=(
+                        sanitize_uri(annotation["uri"]) if annotation["uri"] else None
+                    ),
                 )
             )
 
@@ -615,15 +623,17 @@ def _assemble(
             "(inventoried, never executed)"
         )
     if catalog["embedded_file_names"]:
+        names = ", ".join(safe_basename(n) for n in catalog["embedded_file_names"])
         unsupported.append(
-            "embedded files present: "
-            f"{', '.join(catalog['embedded_file_names'])} "
-            "(names recorded, bytes not extracted)"
+            f"embedded files present: {names} (names recorded as safe "
+            "basenames, bytes not extracted)"
         )
     if catalog["ocg_names"]:
-        unsupported.append(
-            f"optional content groups: names only ({', '.join(catalog['ocg_names'])})"
+        ocg = ", ".join(
+            sanitize_source_text(n, max_len=80) or "<unnamed>"
+            for n in catalog["ocg_names"]
         )
+        unsupported.append(f"optional content groups: names only ({ocg})")
 
     ocr_pages = [o.page_index for o in outcomes if o.ocr_required]
     if ocr_pages:
@@ -634,7 +644,10 @@ def _assemble(
     fully_rendered = all(o.render_status == "rendered" for o in outcomes)
     outcome_value = "succeeded" if fully_rendered and not ocr_pages else "partial"
 
-    metadata_raw = worker_a["metadata"]
+    metadata_raw = dict(worker_a["metadata"])
+    for key, value in metadata_raw.items():
+        if key.startswith("declared_"):
+            metadata_raw[key] = sanitize_source_text(value)
     manifest = PdfExtractionManifest(
         raw_record_id=raw_record_id,
         extractor=identity,

@@ -47,6 +47,7 @@ from backend.data_sources.provenance import (
     derive_record_id,
     payload_checksum,
     redact_text,
+    scrub_secrets,
 )
 from backend.data_sources.raw_store import FilesystemRawStore
 
@@ -355,4 +356,4 @@ class IngestionRunner:
         return f"run-{source_id}-{count + 1:04d}"
 
     def _redact(self, text: str) -> str:
-        return redact_text(text, base_dir=str(self.store.base_dir))
+        return redact_text(scrub_secrets(text), base_dir=str(self.store.base_dir))

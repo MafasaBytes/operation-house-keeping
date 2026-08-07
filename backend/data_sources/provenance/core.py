@@ -41,6 +41,58 @@ _ABS_PATH = re.compile(
 )
 
 
+_SECRET_KV = re.compile(
+    r"(?i)\b(password|passwd|pwd|token|secret|api[_-]?key|apikey|auth|credential)"
+    r"\s*[=:]\s*[^\s&\"';,]+"
+)
+_URL_USERINFO = re.compile(r"://[^/@\s]+@")
+_SAFE_NAME = re.compile(r"[^A-Za-z0-9._-]")
+
+
+def scrub_secrets(text: str) -> str:
+    """Remove credential-shaped substrings: key=value secrets and URL
+    userinfo. Complements redact_text (paths); both run before anything is
+    persisted."""
+    text = _SECRET_KV.sub(lambda m: f"{m.group(1)}=<redacted>", text)
+    return _URL_USERINFO.sub("://<redacted>@", text)
+
+
+def sanitize_uri(uri: str, max_len: int = 200) -> str:
+    """Reduce a URI to non-sensitive evidence: scheme, host[:port], and a
+    safe basename. Userinfo, query values, and fragments never survive."""
+    from urllib.parse import urlsplit
+
+    try:
+        parts = urlsplit(str(uri)[:1000])
+        host = parts.hostname or ""
+        port = f":{parts.port}" if parts.port else ""
+    except ValueError:
+        return "<unparseable-uri>"
+    scheme = parts.scheme or "uri"
+    basename = _SAFE_NAME.sub("_", parts.path.rsplit("/", 1)[-1])[:80]
+    path = f"/{basename}" if basename else ""
+    query = "?<redacted-query>" if parts.query else ""
+    fragment = "#<redacted-fragment>" if parts.fragment else ""
+    return f"{scheme}://{host}{port}{path}{query}{fragment}"[:max_len]
+
+
+def sanitize_source_text(text, max_len: int = 500) -> str | None:
+    """Bound, secret-scrub, and path-redact an untrusted source-derived
+    string before it may appear in any persisted artifact."""
+    if text is None:
+        return None
+    bounded = str(text)[:max_len]
+    return redact_text(scrub_secrets(bounded), base_dir="")
+
+
+def safe_basename(name) -> str:
+    """A filesystem-path-free, safe rendering of an untrusted filename."""
+    if name is None:
+        return "<unnamed>"
+    tail = str(name).replace("\\", "/").rsplit("/", 1)[-1]
+    return _SAFE_NAME.sub("_", tail)[:120] or "<unnamed>"
+
+
 def redact_text(text: str, base_dir: str) -> str:
     """Replace the store base dir with <store> and any other absolute path
     with <abs>, so persisted messages never leak local filesystem layout."""
