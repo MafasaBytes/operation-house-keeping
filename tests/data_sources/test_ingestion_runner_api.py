@@ -313,3 +313,55 @@ class TestProfileV2:
         runner, store, _ = make_runner(tmp_path, happy_script())
         runner.profile = APPLICATION_PROFILE_V2
         assert runner.run("printer-1").status == "succeeded"
+
+
+class TestZeroProgressPrecedence:
+    """Repair: precedence rule 1 — `failed` when the run made no meaningful
+    acquisition progress, with counters and evidence preserved."""
+
+    def test_every_endpoint_failing_is_a_failed_run(self, tmp_path):
+        from backend.data_sources.connectors.http_api import TransportError
+
+        script = {
+            "/server/info": TransportError("connection", "unreachable"),
+            "/printer/objects/query": TransportError("timeout", "deadline"),
+        }
+        runner, store, _ = make_runner(tmp_path, script)
+        run = runner.run("printer-1")
+        assert run.status == "failed"  # zero progress: nothing was retrieved
+        assert (run.records_seen, run.attempts_succeeded, run.attempts_failed) == (0, 0, 2)
+        assert "ACQUIRE_SOURCE_UNREACHABLE" in (run.error_summary or "")
+        assert "ACQUIRE_TIMEOUT" in (run.error_summary or "")
+        # every occurrence still persisted as evidence
+        attempts = list(store.iter_attempts("printer-1"))
+        assert len(attempts) == 2
+        assert all(a.outcome == "failed" for a in attempts)
+        assert runner.health("printer-1").status == "failed"
+
+    def test_one_success_one_failure_is_acquisition_failures(self, tmp_path):
+        from backend.data_sources.connectors.http_api import TransportError
+
+        script = happy_script()
+        script["/printer/objects/query"] = TransportError("timeout", "deadline")
+        runner, _, _ = make_runner(tmp_path, script)
+        assert runner.run("printer-1").status == "completed_with_acquisition_failures"
+
+    def test_duplicate_only_progress_still_counts_as_progress(self, tmp_path):
+        from backend.data_sources.connectors.http_api import TransportError
+
+        runner, _, transport = make_runner(tmp_path, happy_script())
+        runner.run("printer-1")
+        transport.script["/printer/objects/query"] = TransportError("timeout", "x")
+        run = runner.run("printer-1")  # server_info reused = progress
+        assert run.status == "completed_with_acquisition_failures"
+        assert run.records_duplicate == 1
+
+    def test_source_level_failure_is_failed_with_zero_attempts(self, tmp_path):
+        runner, store, _ = make_runner(
+            tmp_path, happy_script(), credential="missing-ref"
+        )
+        run = runner.run("printer-1")
+        assert run.status == "failed"
+        assert "ACQUIRE_CREDENTIAL_UNRESOLVED" in (run.error_summary or "")
+        assert (run.attempts_succeeded, run.attempts_failed) == (0, 0)
+        assert list(store.iter_attempts("printer-1")) == []

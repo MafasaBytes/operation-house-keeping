@@ -271,14 +271,21 @@ class IngestionRunner:
             self.store.put_run(run)
             return run
 
+        # Precedence rule 1: a run with attempted acquisition and ZERO
+        # progress (nothing retrieved, not even a reused payload) is
+        # `failed` — counters and per-attempt evidence are preserved.
+        if seen == 0 and attempts_failed > 0:
+            status = "failed"
+        else:
+            status = resolve_completed_run_status(
+                records_quarantined=quarantined, attempts_failed=attempts_failed
+            )
         run = IngestionRun(
             run_id=run_id,
             source_id=source_id,
             started_at=started_at,
             finished_at=self.clock(),
-            status=resolve_completed_run_status(
-                records_quarantined=quarantined, attempts_failed=attempts_failed
-            ),
+            status=status,
             records_seen=seen,
             records_accepted=accepted,
             records_duplicate=duplicate,
