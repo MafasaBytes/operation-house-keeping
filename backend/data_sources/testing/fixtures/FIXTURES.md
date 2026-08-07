@@ -71,3 +71,33 @@ Manual Part 21 inspection at freeze time confirmed the intended structure:
 - `native_cad_masquerade.step` — 8-byte OLE compound-file signature plus
   zero padding under a `.step` name. Expected: conservative rejection as
   `ole_compound_container` (no vendor guess), `format_detection` quarantine.
+
+## PDF (DS-003)
+
+Generated **once** on 2026-08-07 by `generators/generate_pdf_fixtures.py`
+(WSL2 Ubuntu x86_64, CPython 3.13.11; stdlib builder with self-computed
+classic xref tables — see the generator docstring for the exact designed
+content and coordinates; pypdf 6.15.0 used only for `encrypted.pdf`
+(AES-256, user password `fixture-password-2026` — a published test vector,
+not a credential) and `active_content.pdf` (JavaScript name-tree entry,
+/URI link annotation, embedded file — declarations only, never executed)).
+Frozen; regeneration of the encrypted fixture is byte-different (AES
+salts), so the frozen files are canonical. Golden expectations are
+hand-authored from the designed coordinates in
+`tests/data_sources/golden_pdf_fixtures.py`, independent of any extractor.
+Manual inspection at freeze time confirmed: labels i/1/2; 3x3 ruled table;
+rotated page displayed as 792x612; image-only page has zero text objects.
+
+sha256 checksums at freeze time:
+
+```
+3e14f0f8b27bef11154b4f4edd4d53752f6d45bae9b2b5294cfa4d5b57df8c0a  manual_multipage.pdf
+c6e2fd67581aaff48e3c8e39662f895b26642a83c2fcb17eb218b7590977c72d  table_page.pdf
+607779bb072c72a5f5157b7d7ae9ad40d01b0b4ebee51f2643f545b7cb3a8276  drawing_callouts.pdf
+de2cabc990f0413eea9b8977ae8918498f6b7238c1614ec25054c9681782efa9  scanned_only.pdf
+dbfbe8982e1198ce6908040e6e6769372f191e2985ce74d2341e7064a30165e1  mixed_text_image.pdf
+6d0e5101348e805a314c36ec94f483ad248b8de40d39950af71b084c33049365  rotated_page.pdf
+cb28f8fd4876e4e206c5caffdd5d39d1ac1446465d9a74b94ebb3a815aea864e  malformed.pdf
+5594e734fd2bbb07243ba9528a0847339d9a4ba93f0ad866aec5805487c94cfc  encrypted.pdf
+f421724ecfb2e0c9782dc3181da32d32dd3e197d8ea28ccd44ccd8f04392a0f0  active_content.pdf
+```
