@@ -435,6 +435,7 @@ def _assemble(
                     reading_order_index=order,
                     reading_order_basis="geometric_top_left",
                     reading_order_method=BLOCK_METHOD,
+                    reading_order_calibration="uncalibrated_heuristic",
                     reading_order_confidence=None,
                 )
             )
@@ -617,10 +618,25 @@ def _assemble(
 
     catalog = worker_a["catalog"]
     unsupported = ["drawing-region candidates unsupported in DS-003"]
+    # Active-content inventory covers exactly: JavaScript name-tree
+    # entries, URI link annotations, embedded-file declarations, and
+    # OpenAction//AA *presence*. Other action types (Launch, GoToR,
+    # SubmitForm, ...) are not inspected — see the module README.
     if catalog["javascript_count"]:
         unsupported.append(
-            f"JavaScript actions present: {catalog['javascript_count']} "
-            "(inventoried, never executed)"
+            f"JavaScript name-tree entries present: "
+            f"{catalog['javascript_count']} (declarations recorded, never "
+            "executed)"
+        )
+    if catalog.get("open_action_present"):
+        unsupported.append(
+            "document OpenAction present (presence recorded, never executed "
+            "or inspected in detail)"
+        )
+    if catalog.get("additional_actions_present"):
+        unsupported.append(
+            "additional-action (/AA) entries present (presence recorded, "
+            "never executed or inspected in detail)"
         )
     if catalog["embedded_file_names"]:
         names = ", ".join(safe_basename(n) for n in catalog["embedded_file_names"])

@@ -180,36 +180,67 @@ class TestLocator:
 
 
 class TestReadingOrderHonesty:
-    def test_inferred_basis_requires_method_and_confidence(self):
-        with pytest.raises(ValidationError):
-            PdfTextBlock(
-                block_id="c" * 32,
-                locator=make_locator(),
-                span_ids=["b" * 32],
-                reading_order_index=0,
-                reading_order_basis="extractor_inferred",
-                reading_order_method="",
-                reading_order_confidence=None,
-            )
-        ok = PdfTextBlock(
+    def _block(self, **overrides):
+        base = dict(
             block_id="c" * 32,
             locator=make_locator(),
             span_ids=["b" * 32],
             reading_order_index=0,
             reading_order_basis="extractor_inferred",
             reading_order_method="pdfminer_laparams(line_margin=0.5)",
+            reading_order_calibration="calibrated_confidence",
             reading_order_confidence=0.7,
         )
-        assert ok.reading_order_basis == "extractor_inferred"
+        base.update(overrides)
+        return PdfTextBlock(**base)
+
+    def test_inferred_basis_requires_method(self):
+        with pytest.raises(ValidationError):
+            self._block(reading_order_method="")
+        assert self._block().reading_order_basis == "extractor_inferred"
+
+    def test_geometric_basis_is_also_inferred_and_must_declare_itself(self):
+        with pytest.raises(ValidationError):
+            self._block(
+                reading_order_basis="geometric_top_left",
+                reading_order_calibration="not_applicable",
+                reading_order_confidence=None,
+            )
+        ok = self._block(
+            reading_order_basis="geometric_top_left",
+            reading_order_calibration="uncalibrated_heuristic",
+            reading_order_confidence=None,
+        )
+        assert ok.reading_order_calibration == "uncalibrated_heuristic"
+
+    def test_uncalibrated_heuristic_must_not_carry_a_confidence_number(self):
+        with pytest.raises(ValidationError):
+            self._block(
+                reading_order_calibration="uncalibrated_heuristic",
+                reading_order_confidence=0.7,
+            )
+
+    def test_calibrated_confidence_requires_a_value(self):
+        with pytest.raises(ValidationError):
+            self._block(reading_order_confidence=None)
+
+    def test_source_order_needs_no_calibration(self):
+        ok = self._block(
+            reading_order_basis="source_object_order",
+            reading_order_calibration="not_applicable",
+            reading_order_confidence=None,
+        )
+        assert ok.reading_order_calibration == "not_applicable"
+        with pytest.raises(ValidationError):
+            self._block(
+                reading_order_basis="source_object_order",
+                reading_order_calibration="calibrated_confidence",
+                reading_order_confidence=0.5,
+            )
 
     def test_source_native_basis_is_not_available_for_inferred_order(self):
         with pytest.raises(ValidationError):
-            PdfTextBlock(
-                block_id="c" * 32, locator=make_locator(), span_ids=[],
-                reading_order_index=0,
-                reading_order_basis="source_native_truth",  # not a literal
-                reading_order_method="x", reading_order_confidence=0.5,
-            )
+            self._block(reading_order_basis="source_native_truth")
 
 
 class TestTableHonesty:

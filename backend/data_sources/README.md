@@ -62,9 +62,15 @@ faking capability.
   `declared_*`; drawing-region candidates are unsupported (vector
   inventory instead); image-only pages report `ocr_required` with no
   fabricated text (OCR/Level 4 deferred).
-- **Hostile content**: JavaScript/actions/links/embedded files are
-  inventoried read-only, bounded, and never executed, followed, or
-  extracted; empty-password documents proceed with a warning;
+- **Hostile content**: the active-content inventory covers exactly —
+  JavaScript name-tree entries (count), URI link annotations (sanitized
+  targets), embedded-file declarations (safe basenames), and the
+  *presence* of a document OpenAction or additional-action (/AA) entries.
+  Other action types (Launch, GoToR, SubmitForm, …) are **not inspected**.
+  Nothing is ever executed, followed, or extracted; persisted strings are
+  sanitized (secrets, credentials, and absolute paths removed; URI
+  scheme/host/basename kept as evidence). Empty-password documents proceed
+  with a warning;
   password-required documents quarantine
   (`EXTRACT_PDF_PASSWORD_REQUIRED`); structural limits quarantine, render
   limits produce partials with per-page `skipped_limit` coverage.

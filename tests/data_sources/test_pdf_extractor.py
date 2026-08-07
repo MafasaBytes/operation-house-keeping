@@ -514,3 +514,28 @@ class TestPhaseASchemaValidation:
         manifest = stub_manifest_a()
         manifest["surprise_section"] = {"x": 1}
         self._expect_invalid(monkeypatch, json.dumps(manifest).encode())
+
+
+class TestActiveContentInventoryScope:
+    def test_open_action_and_aa_presence_reported(self, monkeypatch):
+        from backend.data_sources.extractors.pdf.pdf_extractor import (
+            pdf_extractor_identity,
+        )
+        manifest = stub_manifest_a()
+        manifest["catalog"]["open_action_present"] = True
+        manifest["catalog"]["additional_actions_present"] = True
+        identity = pdf_extractor_identity(PdfExtractionConfig(), {}).model_dump()
+        outputs = phase_a_outputs(manifest, RID, identity)
+        crash_b = WorkerOutcome(status="crashed", returncode=-9, stdout_tail="",
+                                stderr_tail="", outputs={})
+        monkeypatch.setattr(
+            "backend.data_sources.extractors.pdf.pdf_extractor.invoke_worker",
+            StubHarness([ok_outcome(outputs), crash_b]),
+        )
+        product = extract_pdf(payload=STUB_PDF, raw_record_id=RID,
+                              config=PdfExtractionConfig(), limits=LIMITS)
+        joined = " ".join(product.result.manifest_view().unsupported_features)
+        assert "OpenAction present" in joined
+        assert "/AA" in joined
+        # narrow claim: nothing pretends other action types were inspected
+        assert "never executed or inspected in detail" in joined

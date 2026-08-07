@@ -110,24 +110,58 @@ ReadingOrderBasis = Literal[
 ]
 
 
+ReadingOrderCalibration = Literal[
+    "not_applicable", "calibrated_confidence", "uncalibrated_heuristic"
+]
+
+
 class PdfTextBlock(_FrozenModel):
+    """Reading-order honesty: every basis except raw source object order is
+    an inference and must declare its method plus either a calibrated
+    confidence or an explicit uncalibrated-heuristic marking. Inferred
+    order is never source-native truth."""
+
     block_id: EntityId
     locator: PageRegionLocator
     span_ids: list[EntityId]
     reading_order_index: int = Field(ge=0)
     reading_order_basis: ReadingOrderBasis
     reading_order_method: str
+    reading_order_calibration: ReadingOrderCalibration
     reading_order_confidence: float | None = Field(default=None, ge=0, le=1)
 
     @model_validator(mode="after")
-    def _inferred_needs_method_and_confidence(self) -> "PdfTextBlock":
-        if self.reading_order_basis == "extractor_inferred" and (
-            not self.reading_order_method.strip()
-            or self.reading_order_confidence is None
-        ):
+    def _inferred_declares_itself(self) -> "PdfTextBlock":
+        inferred = self.reading_order_basis != "source_object_order"
+        if inferred:
+            if not self.reading_order_method.strip():
+                raise ValueError(
+                    f"inferred reading order (basis "
+                    f"{self.reading_order_basis!r}) must declare its method"
+                )
+            if self.reading_order_calibration == "not_applicable":
+                raise ValueError(
+                    "inferred reading order must be marked either "
+                    "calibrated_confidence or uncalibrated_heuristic"
+                )
+            if (
+                self.reading_order_calibration == "calibrated_confidence"
+                and self.reading_order_confidence is None
+            ):
+                raise ValueError(
+                    "calibrated_confidence requires a confidence value"
+                )
+            if (
+                self.reading_order_calibration == "uncalibrated_heuristic"
+                and self.reading_order_confidence is not None
+            ):
+                raise ValueError(
+                    "an uncalibrated heuristic must not carry a numeric "
+                    "confidence; the number would have no documented meaning"
+                )
+        elif self.reading_order_calibration != "not_applicable":
             raise ValueError(
-                "extractor_inferred reading order must declare its method "
-                "and confidence; it is never source-native truth"
+                "source_object_order carries no inference to calibrate"
             )
         return self
 
