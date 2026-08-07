@@ -113,10 +113,14 @@ def phase_a(input_path: Path, output_dir: Path, config: dict, context: dict) -> 
                 "error": f"page {index} declares /Rotate {rotation}, which is "
                 "not a multiple of 90",
             }
+        # NOTE: pypdf's .cropbox property materializes a fallback /CropBox
+        # entry into the page dict on access — presence must be checked
+        # BEFORE reading the property, or every page looks crop-declared.
+        crop_declared = page.get("/CropBox") is not None
         raw_geometry[index] = {
             "mediabox_raw": [float(v) for v in page.mediabox],
             "cropbox_raw": [float(v) for v in page.cropbox],
-            "crop_declared": page.get("/CropBox") is not None,
+            "crop_declared": crop_declared,
             "rotation_raw": rotation % 360,
         }
 

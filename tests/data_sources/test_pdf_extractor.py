@@ -388,6 +388,10 @@ class TestRotationProvenance:
 
     def test_rotated_fixture_source_bboxes_in_raw_mediabox(self, tmp_path):
         manifest = run_fixture("rotated_page.pdf", tmp_path).result.manifest_view()
+        # no /CropBox is declared: the basis must say so honestly
+        assert manifest.pages[0].coordinate_frame.canonical_basis == "mediabox_fallback"
+        assert manifest.pages[0].coordinate_frame.source_box == "MediaBox"
+        assert "CropBox" not in manifest.pages[0].boxes
         mx0, my0, mx1, my1 = manifest.pages[0].boxes["MediaBox"]
         assert (mx0, my0, mx1, my1) == (0.0, 0.0, 612.0, 792.0)  # raw, unrotated
         for span in manifest.spans:
