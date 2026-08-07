@@ -18,6 +18,7 @@ from pathlib import Path
 from pydantic import BaseModel
 
 from backend.data_sources.contracts import (
+    AcquisitionAttempt,
     CsvTableResult,
     ExtractedTable,
     ExtractionResult,
@@ -41,6 +42,7 @@ class FilesystemRawStore:
         self._quarantine = self.base_dir / "quarantine"
         self._extracted = self.base_dir / "extracted"
         self._derivatives = self.base_dir / "derivatives"
+        self._attempts = self.base_dir / "attempts"
         for directory in (
             self._payloads,
             self._envelopes,
@@ -48,6 +50,7 @@ class FilesystemRawStore:
             self._quarantine,
             self._extracted,
             self._derivatives,
+            self._attempts,
         ):
             directory.mkdir(parents=True, exist_ok=True)
 
@@ -86,6 +89,63 @@ class FilesystemRawStore:
         return self._put_json_once(
             self._envelopes / f"{record.record_id}.json", record, "envelope"
         )
+
+    # -- acquisition attempts (DS-004) ------------------------------------
+
+    def put_attempt(self, attempt: AcquisitionAttempt) -> bool:
+        return self._put_json_once(
+            self._attempts / f"{attempt.attempt_id}.json", attempt,
+            "acquisition attempt",
+        )
+
+    def get_attempt(self, attempt_id: str) -> AcquisitionAttempt:
+        return AcquisitionAttempt.model_validate_json(
+            self._read_required(
+                self._attempts / f"{attempt_id}.json", f"attempt {attempt_id}"
+            )
+        )
+
+    def iter_attempts(self, source_id: str) -> Iterator[AcquisitionAttempt]:
+        """Attempts for a source, ordered by (started_at, attempt_id)."""
+        attempts = [
+            AcquisitionAttempt.model_validate_json(path.read_text("utf-8"))
+            for path in self._attempts.glob("*.json")
+        ]
+        attempts = [a for a in attempts if a.source_id == source_id]
+        attempts.sort(key=lambda a: (a.started_at, a.attempt_id))
+        yield from attempts
+
+    def find_uncommitted_api_artifacts(self) -> dict[str, list[str]]:
+        """Detect artifacts left by a crash before the attempt commit.
+
+        An API-keyed envelope (api_locator set) with no committed attempt
+        referencing it, or a payload referenced by no envelope, is NOT
+        completed acquisition evidence. Read-only audit — raw evidence is
+        never garbage-collected automatically.
+        """
+        committed_records: set[str] = set()
+        for path in self._attempts.glob("*.json"):
+            attempt = AcquisitionAttempt.model_validate_json(path.read_text("utf-8"))
+            if attempt.raw_record_id:
+                committed_records.add(attempt.raw_record_id)
+
+        uncommitted_envelopes: list[str] = []
+        referenced_payloads: set[str] = set()
+        for path in sorted(self._envelopes.glob("*.json")):
+            record = RawRecord.model_validate_json(path.read_text("utf-8"))
+            referenced_payloads.add(record.immutable_payload_reference)
+            if record.api_locator is not None and record.record_id not in committed_records:
+                uncommitted_envelopes.append(record.record_id)
+
+        unreferenced_payloads = [
+            _CHECKSUM_PREFIX + target.name
+            for target in sorted(self._payloads.iterdir())
+            if _CHECKSUM_PREFIX + target.name not in referenced_payloads
+        ]
+        return {
+            "uncommitted_api_envelopes": uncommitted_envelopes,
+            "unreferenced_payloads": unreferenced_payloads,
+        }
 
     def has_envelope(self, record_id: str) -> bool:
         return (self._envelopes / f"{record_id}.json").exists()
