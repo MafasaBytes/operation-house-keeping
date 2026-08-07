@@ -19,6 +19,7 @@ from backend.temporal_state.contracts import (
     SourceSubjectRef,
     TemporalAttemptEvent,
     TemporalOccurrence,
+    TemporalQueryError,
 )
 from backend.temporal_state.store import TemporalStore, _dt, _iso, marker_from_json
 
@@ -109,6 +110,15 @@ def _attempt_from_row(row) -> TemporalAttemptEvent:
     )
 
 
+def _require_aware(as_of: datetime) -> datetime:
+    """Validate a caller-supplied cutoff at the public boundary, before any
+    SQLite work; aware cutoffs are normalized to UTC for comparisons."""
+    if as_of.tzinfo is None or as_of.tzinfo.utcoffset(as_of) is None:
+        raise TemporalQueryError(
+            "TEMPORAL_NAIVE_CUTOFF", "as_of must be timezone-aware")
+    return as_of
+
+
 class TemporalQueries:
     def __init__(self, store: TemporalStore) -> None:
         self.store = store
@@ -137,6 +147,7 @@ class TemporalQueries:
     # -- latest observed (single query, required cutoff, closed) ----------
 
     def latest_observed(self, subject, prop, as_of: datetime):
+        as_of = _require_aware(as_of)
         cutoff = _iso(as_of)
         with self.store.reader() as conn:
             row = conn.execute(
@@ -154,13 +165,19 @@ class TemporalQueries:
                           occurrence.sweep_position, occurrence.attempt_id)
             # "intervening/later" = effective time strictly after the
             # occurrence (row-value tie-break) and at or before the cutoff.
+            # Attempt-level coverage uses the honest available scope
+            # (source_id, adapter_id, item_key): failed attempts expose no
+            # extraction_route/subject/property identity, and a different
+            # adapter's attempts are not evidence about this one.
             window = (
-                "source_id=? AND item_key=? AND effective_wall_time <= ? AND "
+                "source_id=? AND adapter_id=? AND item_key=? AND "
+                "effective_wall_time <= ? AND "
                 "(effective_wall_time > ? OR (effective_wall_time = ? AND "
                 "(attempt_started_at, ingestion_run_id, sweep_position, "
                 "attempt_id) > (?,?,?,?)))"
             )
-            window_params = (subject.source_id, prop.item_key, cutoff,
+            window_params = (subject.source_id, subject.adapter_id,
+                             prop.item_key, cutoff,
                              occ_window[0], occ_window[0], occ_window[1],
                              occ_window[2], occ_window[3], occ_window[4])
 
@@ -186,9 +203,9 @@ class TemporalQueries:
             )
             latest_attempt = conn.execute(
                 "SELECT outcome FROM temporal_attempts WHERE source_id=? AND "
-                "item_key=? AND effective_wall_time <= ? ORDER BY "
-                f"effective_wall_time DESC, {_ORDER_DESC} LIMIT 1",
-                (subject.source_id, prop.item_key, cutoff),
+                "adapter_id=? AND item_key=? AND effective_wall_time <= ? "
+                f"ORDER BY effective_wall_time DESC, {_ORDER_DESC} LIMIT 1",
+                (subject.source_id, subject.adapter_id, prop.item_key, cutoff),
             ).fetchone()
 
         quality = EvidenceQuality(
@@ -222,6 +239,7 @@ class TemporalQueries:
             return [_attempt_from_row(r) for r in conn.execute(sql, params)]
 
     def freshness(self, source_id: str, as_of: datetime):
+        as_of = _require_aware(as_of)
         cutoff = _iso(as_of)
         entries = []
         with self.store.reader() as conn:

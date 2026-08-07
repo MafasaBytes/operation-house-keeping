@@ -41,6 +41,10 @@ class TemporalStoreError(TemporalError):
     """Integrity or consistency failure in the temporal store."""
 
 
+class TemporalQueryError(TemporalError):
+    """Invalid input to a public temporal query (e.g. a naive cutoff)."""
+
+
 # ------------------------------------------------------------- identity
 class SourceSubjectRef(_Frozen):
     """Unresolved source-native subject identity — NOT a system entity."""

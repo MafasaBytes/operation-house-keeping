@@ -48,8 +48,8 @@ CREATE TABLE IF NOT EXISTS temporal_attempts(
   projector_version TEXT NOT NULL);
 CREATE INDEX IF NOT EXISTS idx_attempts_order ON temporal_attempts(
   source_id, attempt_started_at, ingestion_run_id, sweep_position, attempt_id);
-CREATE INDEX IF NOT EXISTS idx_attempts_item ON temporal_attempts(
-  source_id, item_key, effective_wall_time);
+CREATE INDEX IF NOT EXISTS idx_attempts_scope ON temporal_attempts(
+  source_id, adapter_id, item_key, effective_wall_time);
 
 CREATE TABLE IF NOT EXISTS clock_segment_openings(
   segment_id TEXT PRIMARY KEY,
