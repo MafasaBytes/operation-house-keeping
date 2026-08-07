@@ -116,23 +116,47 @@ class CoordinateConversion(_FrozenModel):
 
 
 class ExtractionEnvironment(_FrozenModel):
+    """Where/with-what a derivative was produced.
+
+    ``component_versions`` names each output-affecting component (e.g.
+    occt, pdfium, pillow). DS-002-era JSON carried a flat ``occt_version``
+    field; it is converted on read and never rewritten on disk.
+    """
+
     platform: str
     architecture: str
-    occt_version: str
+    component_versions: dict[str, str]
+
+    @model_validator(mode="before")
+    @classmethod
+    def _legacy_occt_version(cls, data):
+        if (
+            isinstance(data, dict)
+            and "occt_version" in data
+            and "component_versions" not in data
+        ):
+            data = dict(data)
+            data["component_versions"] = {"occt": data.pop("occt_version")}
+        return data
 
 
-class DerivativeRecord(_FrozenModel):
+class DerivativeCore(_FrozenModel):
+    """Shared identity/integrity core of every derivative record."""
+
     derivative_id: EntityId
     raw_record_id: RecordId
-    kind: Literal["visualization_gltf"]
-    media_type: Literal["model/gltf-binary"]
     payload_reference: Sha256Checksum
     checksum: Sha256Checksum
     generator: ExtractorIdentity
+    environment: ExtractionEnvironment
+
+
+class GltfDerivativeRecord(DerivativeCore):
+    kind: Literal["visualization_gltf"] = "visualization_gltf"
+    media_type: Literal["model/gltf-binary"]
     tessellation: TessellationParameters
     coordinate_conversion: CoordinateConversion
     node_map: dict[str, EntityId] = Field(default_factory=dict)
-    environment: ExtractionEnvironment
 
     @field_validator("node_map")
     @classmethod
@@ -146,6 +170,20 @@ class DerivativeRecord(_FrozenModel):
         return value
 
 
+class PageRenderDerivativeRecord(DerivativeCore):
+    kind: Literal["page_render_png"] = "page_render_png"
+    media_type: Literal["image/png"]
+    page_index: int = Field(ge=0)
+    dpi: int = Field(gt=0)
+    colorspace: str
+    pixel_width: int = Field(gt=0)
+    pixel_height: int = Field(gt=0)
+
+
+# DS-002-era name, kept as an alias for readability in STEP code paths.
+DerivativeRecord = GltfDerivativeRecord
+
+
 class StepExtractionManifest(_FrozenModel):
     raw_record_id: RecordId
     extractor: ExtractorIdentity
@@ -154,7 +192,7 @@ class StepExtractionManifest(_FrozenModel):
     definitions: list[PartDefinition]
     instances: list[ComponentInstance]
     root_instance_ids: list[EntityId]
-    derivatives: list[DerivativeRecord] = Field(default_factory=list)
+    derivatives: list[GltfDerivativeRecord] = Field(default_factory=list)
     levels_supported: list[int]
     levels_achieved: list[int]
     unsupported_features: list[str] = Field(default_factory=list)

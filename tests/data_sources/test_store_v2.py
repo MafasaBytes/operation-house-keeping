@@ -63,7 +63,7 @@ def make_step_result(store, glb: bytes, record_id: str = RID) -> ExtractionResul
         ),
         node_map={},
         environment=ExtractionEnvironment(
-            platform="linux", architecture="x86_64", occt_version="7.9.3"
+            platform="linux", architecture="x86_64", component_versions={"occt": "7.9.3"}
         ),
     )
     manifest = StepExtractionManifest(

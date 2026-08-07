@@ -35,7 +35,8 @@ ExtractionOutcome = Literal["succeeded", "partial"]
 class ExtractionResult(_FrozenModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    schema_version: Literal[1] = 1
+    # 1 = DS-002-era artifacts (readable, never rewritten); 2 = current.
+    schema_version: Literal[1, 2] = 2
     raw_record_id: RecordId
     extractor: ExtractorIdentity
     outcome: ExtractionOutcome

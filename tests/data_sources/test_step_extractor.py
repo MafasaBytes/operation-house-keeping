@@ -120,7 +120,7 @@ class TestGoldenAssembly:
             1 for i in manifest.instances if i.instance_id in mapped
         )
         assert mesh_count >= golden.EXPECTED_MESH_NODE_COUNT
-        assert derivative.environment.occt_version
+        assert derivative.environment.component_versions["occt"]
         assert derivative.tessellation.linear_deflection == 0.1
         # renaming for traceability is declared as a lossy conversion
         assert any("node name" in note.lower() for note in manifest.lossy_conversions)

@@ -258,7 +258,6 @@ class IngestionRunner:
         config = CsvExtractionConfig()
         table = extract_csv(payload, envelope.record_id, config)
         result = ExtractionResult(
-            schema_version=1,
             raw_record_id=envelope.record_id,
             extractor=csv_extractor_identity(config),
             outcome="succeeded",

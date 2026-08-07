@@ -242,7 +242,7 @@ def extract_step(
                 environment=ExtractionEnvironment(
                     platform=platform.system().lower(),
                     architecture=platform.machine(),
-                    occt_version=worker["occt_version"],
+                    component_versions={"occt": worker["occt_version"]},
                 ),
             )
         )
@@ -271,7 +271,6 @@ def extract_step(
         warnings=warnings,
     )
     result = ExtractionResult(
-        schema_version=1,
         raw_record_id=raw_record_id,
         extractor=identity,
         outcome=outcome_value,

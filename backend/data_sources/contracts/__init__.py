@@ -3,7 +3,10 @@
 from backend.data_sources.contracts.cad import (
     ComponentInstance,
     CoordinateConversion,
+    DerivativeCore,
     DerivativeRecord,
+    GltfDerivativeRecord,
+    PageRenderDerivativeRecord,
     ExtractionEnvironment,
     PartDefinition,
     PropertyValue,
@@ -50,6 +53,9 @@ from backend.data_sources.contracts.models import (
 __all__ = [
     "ComponentInstance",
     "CoordinateConversion",
+    "DerivativeCore",
+    "GltfDerivativeRecord",
+    "PageRenderDerivativeRecord",
     "CsvTableResult",
     "DerivativeRecord",
     "ExtractionEnvironment",
