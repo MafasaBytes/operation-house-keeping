@@ -17,6 +17,7 @@ from backend.data_sources.contracts.models import (
     RecordId,
     _FrozenModel,
 )
+from backend.data_sources.contracts.pdf import PdfExtractionManifest
 
 
 class CsvTableResult(_FrozenModel):
@@ -27,6 +28,11 @@ class CsvTableResult(_FrozenModel):
 class StepManifestResult(_FrozenModel):
     kind: Literal["step_manifest"] = "step_manifest"
     manifest: StepExtractionManifest
+
+
+class PdfManifestResult(_FrozenModel):
+    kind: Literal["pdf_manifest"] = "pdf_manifest"
+    manifest: PdfExtractionManifest
 
 
 ExtractionOutcome = Literal["succeeded", "partial"]
@@ -41,12 +47,15 @@ class ExtractionResult(_FrozenModel):
     extractor: ExtractorIdentity
     outcome: ExtractionOutcome
     warnings: list[str] = Field(default_factory=list)
-    result: Union[CsvTableResult, StepManifestResult] = Field(discriminator="kind")
+    result: Union[CsvTableResult, StepManifestResult, PdfManifestResult] = Field(
+        discriminator="kind"
+    )
 
-    def manifest_view(self) -> StepExtractionManifest:
-        if self.result.kind != "step_manifest":
-            raise ValueError(f"result kind is {self.result.kind!r}, not a STEP manifest")
-        return self.result.manifest
+    def manifest_view(self) -> StepExtractionManifest | PdfExtractionManifest:
+        manifest = getattr(self.result, "manifest", None)
+        if manifest is None:
+            raise ValueError(f"result kind is {self.result.kind!r}, not a manifest")
+        return manifest
 
     def table_view(self) -> ExtractedTable:
         if self.result.kind != "csv_table":

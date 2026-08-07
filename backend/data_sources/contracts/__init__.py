@@ -19,7 +19,24 @@ from backend.data_sources.contracts.extraction import (
     CsvTableResult,
     ExtractionOutcome,
     ExtractionResult,
+    PdfManifestResult,
     StepManifestResult,
+)
+from backend.data_sources.contracts.pdf import (
+    PageRegionLocator,
+    PdfAnnotation,
+    PdfCoordinateFrame,
+    PdfDocumentMetadata,
+    PdfEncryption,
+    PdfExtractionManifest,
+    PdfImage,
+    PdfPage,
+    PdfPageOutcome,
+    PdfTableCandidate,
+    PdfTableCell,
+    PdfTextBlock,
+    PdfTextSpan,
+    PdfVectorSummary,
 )
 from backend.data_sources.contracts.identity import ExtractorIdentity
 from backend.data_sources.contracts.profile import (
@@ -51,6 +68,21 @@ from backend.data_sources.contracts.models import (
 )
 
 __all__ = [
+    "PageRegionLocator",
+    "PdfAnnotation",
+    "PdfCoordinateFrame",
+    "PdfDocumentMetadata",
+    "PdfEncryption",
+    "PdfExtractionManifest",
+    "PdfImage",
+    "PdfManifestResult",
+    "PdfPage",
+    "PdfPageOutcome",
+    "PdfTableCandidate",
+    "PdfTableCell",
+    "PdfTextBlock",
+    "PdfTextSpan",
+    "PdfVectorSummary",
     "ComponentInstance",
     "CoordinateConversion",
     "DerivativeCore",

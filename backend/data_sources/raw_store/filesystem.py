@@ -188,9 +188,9 @@ class FilesystemRawStore:
         referenced: set[str] = set()
         for path in self._extracted.glob("*.json"):
             result = self.get_extraction(path.stem)
-            if result.result.kind == "step_manifest":
-                for derivative in result.result.manifest.derivatives:
-                    referenced.add(derivative.payload_reference)
+            manifest = getattr(result.result, "manifest", None)
+            for derivative in getattr(manifest, "derivatives", []) or []:
+                referenced.add(derivative.payload_reference)
         orphans = []
         for target in sorted(self._derivatives.iterdir()):
             reference = _CHECKSUM_PREFIX + target.name
