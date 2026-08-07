@@ -14,8 +14,11 @@ store/boundary decisions: `docs/adr/0005-temporal-state-sqlite-projection.md`.
 nothing imports back. Attempt-bearing operational evidence only. No
 hierarchy, identity binding, domain labels, validity intervals, or unit
 inference — those are future sibling layers. `SourceSubjectRef` +
-`SourcePropertyRef` (six identity dimensions, used in every chain,
-constraint, and index) stay explicitly unresolved source identity.
+`SourcePropertyRef` (six identity dimensions, used in every occurrence
+chain, uniqueness constraint, and property query) stay explicitly
+unresolved source identity. Attempt-level coverage is honestly coarser:
+failed attempts expose no extraction route, subject, or property
+identity, so it scopes by `(source_id, adapter_id, item_key)` only.
 
 ## Semantics worth knowing
 
@@ -40,15 +43,31 @@ constraint, and index) stay explicitly unresolved source identity.
 - **Checkpoints are optimizations**: the ledger is ground truth;
   inconsistency, version mismatch, or a late attempt behind the
   watermark yields `TEMPORAL_REBUILD_REQUIRED` — never silent repair.
-- **Queries** take caller-supplied cutoffs and are historically closed
-  at them; `latest_observed` distinguishes intervening failures,
+  Checkpoint and ledger maximum are re-read and re-validated inside
+  every write transaction, and the checkpoint never moves backward: an
+  attempt already present in the ledger leaves a consistent checkpoint
+  unchanged (a missing one reconciles only to the verified ledger
+  maximum), so interleaved projectors cannot regress it.
+- **Queries** take caller-supplied timezone-aware cutoffs (a naive
+  cutoff is rejected at the public boundary with
+  `TemporalQueryError("TEMPORAL_NAIVE_CUTOFF")`) and are historically
+  closed at them; `latest_observed` distinguishes intervening failures,
   quarantines, later snapshots without the property, and later empty
-  snapshots.
+  snapshots — all attempt-level components scoped by
+  `(source_id, adapter_id, item_key)`, so another adapter's attempts
+  are never evidence about this one.
 - **Rebuildable**: `rebuild(source_id)` is one transaction (readers see
-  old or complete); `rebuild_all` is documented offline maintenance over
-  the exact database + `-wal`/`-shm` files. Logical dumps are
-  deterministic; SQLite file bytes are not claimed. The database path is
-  rejected at or inside the evidence-store root.
+  old or complete); it repairs source-local checkpoint/ledger
+  inconsistency but refuses under a global schema/projector version
+  mismatch (offline `rebuild_all` is that repair, and a rebuilt-all
+  database's metadata always matches the projector that produced its
+  rows). Rebuild over incomplete extraction evidence rolls the whole
+  transaction back, preserves the previous projection exactly, and
+  returns a public report (`halted.reason="extraction_incomplete"`,
+  zero committed counters). `rebuild_all` is documented offline
+  maintenance over the exact database + `-wal`/`-shm` files. Logical
+  dumps are deterministic; SQLite file bytes are not claimed. The
+  database path is rejected at or inside the evidence-store root.
 
 ## Verification
 

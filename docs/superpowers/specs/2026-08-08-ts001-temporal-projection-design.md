@@ -29,9 +29,16 @@ SourcePropertyRef  { extraction_route, item_key, json_pointer }
 ```
 
 The temporal property key is the **complete six-dimension pair**; every
-previous-occurrence lookup, change chain, uniqueness rule, query, and
-index uses all six dimensions — two adapters or routes with identical
-subject names and pointers can never contaminate each other.
+previous-occurrence lookup, change chain, uniqueness rule, property
+query, and occurrence index uses all six dimensions — two adapters or
+routes with identical subject names and pointers can never contaminate
+each other's chains. **Attempt-level coverage is honestly coarser**:
+failed attempts expose no extraction_route, subject, or property
+identity, so intervening-attempt evidence (failure/quarantine counts,
+later empty or non-observing snapshots, latest applicable attempt
+outcome, freshness-derived evidence, and their supporting index) scopes
+by `(source_id, adapter_id, item_key)` — never by fabricated missing
+dimensions, and never across adapters.
 
 ```
 AttemptOrderKey = (attempt_started_at, ingestion_run_id,
@@ -159,6 +166,16 @@ project(source_id):
       COMMIT
 ```
 
+Inside every `BEGIN IMMEDIATE` transaction the checkpoint and ledger
+maximum are re-read and validated (another projector may have advanced
+the source since pre-loop validation). The checkpoint never moves
+backward: an attempt already present in the ledger leaves a consistent
+checkpoint unchanged (a missing checkpoint reconciles only to the
+verified ledger maximum); an absent attempt ordering at or before the
+transactional watermark halts as a genuine late attempt; the checkpoint
+advances only when the transaction commits a newly processed attempt
+later than the current watermark.
+
 ## SQLite store
 
 Derived, rebuildable; single file (configurable path, guarded), WAL,
@@ -179,19 +196,35 @@ not** — determinism is asserted on ordered logical dumps.
   (that source's occurrences, segment openings, ledger rows, checkpoint)
   and full deterministic replay — readers see the old projection or the
   complete rebuilt one, never a committed empty/partial source. Other
-  sources untouched.
+  sources untouched. Source-local checkpoint/ledger inconsistency is
+  exactly what per-source rebuild repairs; a **global schema/projector
+  version mismatch is not** — `rebuild(source_id)` refuses (halt
+  `TEMPORAL_REBUILD_REQUIRED`, directing to offline `rebuild_all()`)
+  rather than stamp rows with a projector version the database metadata
+  does not name. Extraction incompleteness rolls the entire per-source
+  rebuild back, preserves the previous projection exactly, and returns a
+  public `ProjectionReport` (`halted.reason="extraction_incomplete"`,
+  the deferred attempt recorded, zero committed counters) — the internal
+  deferral exception never escapes the projector.
 - `rebuild_all(source_ids)`: explicit **offline** maintenance requiring
   closed readers/writers; deletes exactly the configured database file
   and its exact `-wal`/`-shm` sidecars — never a directory or computed
-  broad path — then recreates and replays. No whole-file byte-determinism
-  or online-replacement claims.
+  broad path — then recreates and replays. The rebuilt database's global
+  metadata always matches the projector that produced its rows. No
+  whole-file byte-determinism or online-replacement claims.
 
 ## Queries (all take an explicit caller-supplied cutoff where time-relative)
+
+Time-relative queries require a **timezone-aware** cutoff, validated at
+the public boundary before any SQLite work: a naive `as_of` raises
+`TemporalQueryError("TEMPORAL_NAIVE_CUTOFF")`; aware cutoffs are
+normalized to UTC for storage comparisons and staleness calculations.
 
 1. `history(subject, property)`; 2. `latest_observed(subject, property,
 as_of)` — single query, required cutoff, **historically closed**: every
 component (occurrence choice, staleness = as_of − received_at,
-intervening failed/quarantined attempt counts for the item,
+intervening failed/quarantined attempt counts scoped by
+`(source_id, adapter_id, item_key)`,
 `later_snapshots_without_property` (observations present, this property
 absent), `later_empty_snapshots` (observation_count == 0), latest
 applicable attempt outcome, source-time basis + segment flags) computed
