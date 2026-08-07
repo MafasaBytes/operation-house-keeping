@@ -101,3 +101,13 @@ cb28f8fd4876e4e206c5caffdd5d39d1ac1446465d9a74b94ebb3a815aea864e  malformed.pdf
 5594e734fd2bbb07243ba9528a0847339d9a4ba93f0ad866aec5805487c94cfc  encrypted.pdf
 f421724ecfb2e0c9782dc3181da32d32dd3e197d8ea28ccd44ccd8f04392a0f0  active_content.pdf
 ```
+
+### `rotated_cropbox.pdf` (repair slice, 2026-08-07)
+
+Rotation combined with an offset CropBox plus a link annotation, generated
+by the same stdlib builder (see `generate_rotated_cropbox` docstring for
+the designed raw content and the expected canonical mapping). sha256:
+
+```
+993ffdc637acc9f4c14c523785f57a5e52d46e84e56e6414c44c420158e8b332  rotated_cropbox.pdf
+```

@@ -203,6 +203,30 @@ def generate_rotated() -> bytes:
     return one_page_pdf(text(72, 720, 12, "ROTATED DRAWING"), page_extra=b"/Rotate 90 ")
 
 
+def generate_rotated_cropbox() -> bytes:
+    """Rotation combined with an offset CropBox, plus a link annotation.
+
+    Designed raw (unrotated user-space) content:
+      MediaBox [0 0 612 792], CropBox [50 40 562 742], /Rotate 90
+      text "CROPPED ROTATED" Helv 12 at raw baseline (72, 700)
+      Link annotation /Rect [100 600 200 640] -> http://example.invalid/detail
+    Expected canonical (CropBox-relative, displayed): page 702 x 512;
+      x' = y_raw - 40, y' = x_raw - 50 for /Rotate 90.
+    """
+    return build_pdf([
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
+        b"/CropBox [50 40 562 742] /Rotate 90 "
+        b"/Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R "
+        b"/Annots [6 0 R] >>",
+        HELVETICA,
+        content_obj(text(72, 700, 12, "CROPPED ROTATED")),
+        b"<< /Type /Annot /Subtype /Link /Rect [100 600 200 640] "
+        b"/A << /S /URI /URI (http://example.invalid/detail) >> >>",
+    ])
+
+
 def generate_encrypted(source: bytes, path: Path) -> None:
     import io
 

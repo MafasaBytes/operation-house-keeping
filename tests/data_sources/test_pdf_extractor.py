@@ -216,8 +216,11 @@ def stub_manifest_a() -> dict:
         "toolchain": {"pdfplumber": "0.11.10", "pdfminer.six": "20260107",
                       "pypdf": "6.15.0"},
         "pages": [{
-            "page_index": 0, "page_label": None, "width": 612.0, "height": 792.0,
-            "rotation": 0, "mediabox": [0, 0, 612, 792], "cropbox": None,
+            "page_index": 0, "page_label": None,
+            "displayed_width": 612.0, "displayed_height": 792.0,
+            "mediabox_raw": [0.0, 0.0, 612.0, 792.0],
+            "cropbox_raw": [0.0, 0.0, 612.0, 792.0],
+            "crop_declared": False, "rotation_raw": 0,
             "words": [{"text": "HELLO", "x0": 72.0, "top": 62.5, "x1": 110.0,
                         "bottom": 74.5, "fontname": "Helvetica", "size": 12.0,
                         "upright": True}],
@@ -334,8 +337,9 @@ class TestParentPhaseLogic:
 
     def test_oversized_page_precheck_skips_render(self, monkeypatch):
         manifest_a = stub_manifest_a()
-        manifest_a["pages"][0]["width"] = 10000.0
-        manifest_a["pages"][0]["height"] = 10000.0  # 150dpi -> ~434 MP > 40 MP cap
+        manifest_a["pages"][0]["mediabox_raw"] = [0.0, 0.0, 10000.0, 10000.0]
+        manifest_a["pages"][0]["cropbox_raw"] = [0.0, 0.0, 10000.0, 10000.0]
+        # 150 dpi -> ~434 MP > 40 MP per-page cap
         outputs = phase_a_outputs(manifest_a, RID, self._identity_dict())
         harness = StubHarness([ok_outcome(outputs)])
         self._patch(monkeypatch, harness)
@@ -345,3 +349,85 @@ class TestParentPhaseLogic:
         [outcome] = product.result.manifest_view().page_outcomes
         assert outcome.render_status == "skipped_limit"
         assert product.result.outcome == "partial"
+
+
+@pytest.mark.pdf
+class TestRotationProvenance:
+    """Repair-slice evidence: transforms are correct under rotation and
+    offset CropBoxes, in both directions, within the declared tolerance."""
+
+    def _round_trip(self, manifest, span):
+        from backend.data_sources.extractors.pdf.coordinates import (
+            forward_matrix, inverse_matrix, transform_bbox,
+        )
+        page = manifest.pages[span.locator.page_index]
+        box_name = page.coordinate_frame.source_box
+        box = tuple(page.boxes[box_name])
+        rotation = page.rotation_degrees
+        forward = forward_matrix(rotation, box)
+        inverse = inverse_matrix(rotation, box)
+        # source -> canonical reproduces the stored canonical bbox
+        assert transform_bbox(forward, span.locator.source_bbox) == pytest.approx(
+            span.locator.bbox, abs=0.002
+        )
+        # canonical -> source round-trips within the 3-decimal tolerance
+        assert transform_bbox(inverse, span.locator.bbox) == pytest.approx(
+            span.locator.source_bbox, abs=0.002
+        )
+
+    def test_rotated_fixture_source_bboxes_in_raw_mediabox(self, tmp_path):
+        manifest = run_fixture("rotated_page.pdf", tmp_path).result.manifest_view()
+        mx0, my0, mx1, my1 = manifest.pages[0].boxes["MediaBox"]
+        assert (mx0, my0, mx1, my1) == (0.0, 0.0, 612.0, 792.0)  # raw, unrotated
+        for span in manifest.spans:
+            sx0, sy0, sx1, sy1 = span.locator.source_bbox
+            assert mx0 <= sx0 <= sx1 <= mx1
+            assert my0 <= sy0 <= sy1 <= my1
+
+    def test_rotated_fixture_raw_placement_recovered(self, tmp_path):
+        manifest = run_fixture("rotated_page.pdf", tmp_path).result.manifest_view()
+        span = find_word(manifest, 0, "ROTATED")
+        # designed raw baseline (72, 720) at 12pt
+        assert span.locator.source_bbox[0] == pytest.approx(72.0, abs=1.0)
+        assert 716.0 <= span.locator.source_bbox[1] <= span.locator.source_bbox[3] <= 731.0
+        self._round_trip(manifest, span)
+
+    def test_rotated_cropbox_fixture_full_chain(self, tmp_path):
+        product = run_fixture("rotated_cropbox.pdf", tmp_path)
+        manifest = product.result.manifest_view()
+        expected = golden.ROTATED_CROPBOX
+        page = manifest.pages[0]
+
+        assert tuple(page.boxes["MediaBox"]) == expected["raw_mediabox"]
+        assert tuple(page.boxes["CropBox"]) == expected["raw_cropbox"]
+        assert page.coordinate_frame.canonical_basis == "cropbox"
+        assert page.coordinate_frame.source_box == "CropBox"
+        assert page.rotation_degrees == expected["rotation_degrees"]
+        assert (page.width, page.height) == expected["canonical_size"]
+
+        span = find_word(manifest, 0, expected["word"])
+        assert span.locator.source_bbox[0] == pytest.approx(
+            expected["word_source_x0"], abs=1.0
+        )
+        low, high = expected["word_source_y_range"]
+        assert low <= span.locator.source_bbox[1] <= span.locator.source_bbox[3] <= high
+        assert span.locator.bbox[0] == pytest.approx(
+            expected["word_canonical_x0"], abs=golden.TOLERANCE_PT
+        )
+        assert span.locator.bbox[1] == pytest.approx(
+            expected["word_canonical_y0"], abs=golden.TOLERANCE_PT
+        )
+        mx0, my0, mx1, my1 = expected["raw_mediabox"]
+        for item in manifest.spans:
+            sx0, sy0, sx1, sy1 = item.locator.source_bbox
+            assert mx0 <= sx0 <= sx1 <= mx1 and my0 <= sy0 <= sy1 <= my1
+        self._round_trip(manifest, span)
+
+        # annotation: raw /Rect preserved, forward transform to canonical
+        [annotation] = manifest.annotations
+        assert tuple(annotation.locator.source_bbox) == expected["annotation_raw_rect"]
+        assert annotation.locator.bbox == pytest.approx(
+            list(expected["annotation_canonical_bbox"]), abs=0.002
+        )
+        assert annotation.uri_target == expected["annotation_uri"]
+        self._round_trip(manifest, annotation)

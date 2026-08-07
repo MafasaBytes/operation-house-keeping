@@ -81,3 +81,24 @@ ACTIVE_CONTENT = {
 
 ENCRYPTED_ERROR_CODE = "EXTRACT_PDF_PASSWORD_REQUIRED"
 MALFORMED_ERROR_CODE = "EXTRACT_PDF_PARSE_FAILED"
+
+
+# rotated_cropbox.pdf — designed raw content (see generator docstring):
+# MediaBox [0 0 612 792], CropBox [50 40 562 742], /Rotate 90;
+# text baseline raw (72, 700) 12pt; Link /Rect [100 600 200 640].
+ROTATED_CROPBOX = {
+    "raw_mediabox": (0.0, 0.0, 612.0, 792.0),
+    "raw_cropbox": (50.0, 40.0, 562.0, 742.0),
+    "rotation_degrees": 90,
+    "canonical_size": (702.0, 512.0),          # (cy1-cy0, cx1-cx0)
+    "word": "CROPPED",
+    # raw glyph box for baseline (72, 700) at 12pt: x0=72, y in ~[697.5, 709.5]
+    "word_source_x0": 72.0,
+    "word_source_y_range": (696.0, 711.0),
+    # canonical: x' = y_raw - 40, y' = x_raw - 50
+    "word_canonical_x0": 657.5,
+    "word_canonical_y0": 22.0,
+    "annotation_raw_rect": (100.0, 600.0, 200.0, 640.0),
+    "annotation_canonical_bbox": (560.0, 50.0, 600.0, 150.0),
+    "annotation_uri": "http://example.invalid/detail",
+}

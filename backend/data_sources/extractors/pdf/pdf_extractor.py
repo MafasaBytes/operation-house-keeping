@@ -36,6 +36,12 @@ from backend.data_sources.contracts import (
     PdfTextSpan,
     PdfVectorSummary,
 )
+from backend.data_sources.extractors.pdf.coordinates import (
+    canonical_page_size,
+    forward_matrix,
+    inverse_matrix,
+    transform_bbox,
+)
 from backend.data_sources.extractors.worker_harness import (
     WorkerLimits,
     invoke_worker,
@@ -122,9 +128,10 @@ def extract_pdf(
     precheck_status: dict[int, tuple[str, str | None]] = {}
     total_pixels = 0
     for page in worker_a["pages"]:
-        pixels = int(page["width"] * config.dpi / 72) * int(
-            page["height"] * config.dpi / 72
+        display_w, display_h = canonical_page_size(
+            page["rotation_raw"], tuple(page["cropbox_raw"])
         )
+        pixels = int(display_w * config.dpi / 72) * int(display_h * config.dpi / 72)
         if pixels > config.max_page_pixels:
             precheck_status[page["page_index"]] = (
                 "skipped_limit",
@@ -180,6 +187,7 @@ _CODE_BY_STATUS = {
     "parse_failed": "EXTRACT_PDF_PARSE_FAILED",
     "password_required": "EXTRACT_PDF_PASSWORD_REQUIRED",
     "limit_exceeded": "EXTRACT_PDF_LIMIT_EXCEEDED",
+    "unsupported_rotation": "EXTRACT_PDF_UNSUPPORTED_ROTATION",
 }
 
 
@@ -283,16 +291,24 @@ def _assemble(
 
     for page in worker_a["pages"]:
         index = page["page_index"]
-        height = page["height"]
-        source_box = "CropBox" if page["cropbox"] else "MediaBox"
+        rotation = page["rotation_raw"]
+        media_box = tuple(page["mediabox_raw"])
+        crop_box = tuple(page["cropbox_raw"])
+        crop_declared = page["crop_declared"]
+        canonical_box = crop_box  # pypdf's cropbox falls back to mediabox
+        canonical_w, canonical_h = canonical_page_size(rotation, canonical_box)
+        # pdfplumber's displayed coordinates use the rotated-MediaBox frame;
+        # invert that to recover raw user space, then map forward into the
+        # canonical (CropBox-relative, displayed, top-left) frame.
+        to_canonical = forward_matrix(rotation, canonical_box)
+        displayed_to_raw = inverse_matrix(rotation, media_box)
         frame = PdfCoordinateFrame(
-            canonical_basis="cropbox" if page["cropbox"] else "mediabox_fallback",
-            canonical_width=page["width"],
-            canonical_height=height,
-            source_box=source_box,
-            # y' = H - y : reflect the upward axis; x unchanged.
-            source_to_canonical_matrix=[1.0, 0.0, 0.0, -1.0, 0.0, height],
-            rotation_degrees=page["rotation"],
+            canonical_basis="cropbox" if crop_declared else "mediabox_fallback",
+            canonical_width=canonical_w,
+            canonical_height=canonical_h,
+            source_box="CropBox" if crop_declared else "MediaBox",
+            source_to_canonical_matrix=to_canonical,
+            rotation_degrees=rotation,
             rotation_normalized=True,
             origin="top_left",
             y_axis="downward",
@@ -300,15 +316,19 @@ def _assemble(
             rounding_decimals=3,
         )
 
-        def locator(bbox, method, source_bbox=None, confidence=None, label=page["page_label"]):
+        def locator(bbox, method, source_bbox=None, confidence=None,
+                    label=page["page_label"], _to_canonical=to_canonical,
+                    _displayed_to_raw=displayed_to_raw, _index=index):
+            """Build a locator. ``bbox`` is a pdfplumber displayed bbox
+            unless ``source_bbox`` (raw user space) is given, in which case
+            the canonical bbox is derived from it via the forward
+            transform."""
             if source_bbox is None:
-                source_bbox = [
-                    round(bbox[0], 3), round(height - bbox[3], 3),
-                    round(bbox[2], 3), round(height - bbox[1], 3),
-                ]
+                source_bbox = transform_bbox(_displayed_to_raw, list(bbox))
+            canonical = transform_bbox(_to_canonical, list(source_bbox))
             return PageRegionLocator(
-                page_index=index, page_label=label,
-                bbox=[round(v, 3) for v in bbox],
+                page_index=_index, page_label=label,
+                bbox=[round(v, 3) for v in canonical],
                 source_bbox=[round(v, 3) for v in source_bbox],
                 source_coordinate_system=SOURCE_COORDINATE_SYSTEM,
                 method=method, confidence=confidence,
@@ -392,13 +412,12 @@ def _assemble(
             )
 
         for a_index, annotation in enumerate(page["annotations"]):
-            rect = annotation["rect"]  # source (bottom-left) coordinates
-            canonical = [rect[0], height - rect[3], rect[2], height - rect[1]]
+            rect = annotation["rect"]  # raw user-space /Rect from pypdf
             annotations.append(
                 PdfAnnotation(
                     annotation_id=eid("annot", index, a_index),
                     locator=locator(
-                        canonical, method="pypdf.page.annotations",
+                        None, method="pypdf.page.annotations",
                         source_bbox=rect,
                     ),
                     subtype=annotation["subtype"],
@@ -414,7 +433,13 @@ def _assemble(
                     line_count=page["lines_n"],
                     curve_count=page["curves_n"],
                     rect_count=page["rects_n"],
-                    ink_bbox=page["ink_bbox"],
+                    ink_bbox=(
+                        [round(v, 3) for v in transform_bbox(
+                            to_canonical,
+                            transform_bbox(displayed_to_raw, page["ink_bbox"]),
+                        )]
+                        if page["ink_bbox"] else None
+                    ),
                 )
             )
 
@@ -511,13 +536,14 @@ def _assemble(
             PdfPage(
                 page_index=index,
                 page_label=page["page_label"],
-                width=page["width"],
-                height=height,
-                rotation_degrees=page["rotation"],
+                width=round(canonical_w, 3),
+                height=round(canonical_h, 3),
+                rotation_degrees=rotation,
                 coordinate_frame=frame,
                 boxes={
-                    "MediaBox": page["mediabox"],
-                    **({"CropBox": page["cropbox"]} if page["cropbox"] else {}),
+                    # raw (unrotated user-space) box values, stored verbatim
+                    "MediaBox": page["mediabox_raw"],
+                    **({"CropBox": page["cropbox_raw"]} if crop_declared else {}),
                 },
                 page_kind=kind,
                 page_kind_method=PAGE_KIND_METHOD,

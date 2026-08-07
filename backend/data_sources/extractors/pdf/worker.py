@@ -101,6 +101,25 @@ def phase_a(input_path: Path, output_dir: Path, config: dict, context: dict) -> 
     except Exception:
         labels = None
 
+    # Raw (unrotated user-space) geometry comes from pypdf: pdfplumber
+    # reports rotated, MediaBox-normalized values and mangles offset
+    # CropBoxes, so it must not be trusted for the source frame.
+    raw_geometry: dict[int, dict] = {}
+    for index, page in enumerate(reader.pages):
+        rotation = int(page.get("/Rotate") or getattr(page, "rotation", 0) or 0)
+        if rotation % 90 != 0:
+            return {
+                "status": "unsupported_rotation",
+                "error": f"page {index} declares /Rotate {rotation}, which is "
+                "not a multiple of 90",
+            }
+        raw_geometry[index] = {
+            "mediabox_raw": [float(v) for v in page.mediabox],
+            "cropbox_raw": [float(v) for v in page.cropbox],
+            "crop_declared": page.get("/CropBox") is not None,
+            "rotation_raw": rotation % 360,
+        }
+
     annotations_by_page: dict[int, list[dict]] = {}
     for index, page in enumerate(reader.pages):
         entries = []
@@ -181,17 +200,16 @@ def phase_a(input_path: Path, output_dir: Path, config: dict, context: dict) -> 
                     "cols_n": max((len(r.cells) for r in rows), default=0),
                     "cells": cells,
                 })
+            geometry = raw_geometry[index]
             pages_out.append({
                 "page_index": index,
                 "page_label": labels[index] if labels else None,
-                "width": _round(page.width),
-                "height": _round(page.height),
-                "rotation": int(page.rotation or 0) % 360,
-                "mediabox": [_round(v) for v in page.mediabox],
-                "cropbox": (
-                    [_round(v) for v in page.cropbox]
-                    if tuple(page.cropbox) != tuple(page.mediabox) else None
-                ),
+                "displayed_width": _round(page.width),
+                "displayed_height": _round(page.height),
+                "mediabox_raw": geometry["mediabox_raw"],
+                "cropbox_raw": geometry["cropbox_raw"],
+                "crop_declared": geometry["crop_declared"],
+                "rotation_raw": geometry["rotation_raw"],
                 "words": [
                     {
                         "text": w["text"],
