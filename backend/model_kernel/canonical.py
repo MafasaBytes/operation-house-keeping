@@ -15,6 +15,8 @@ import hashlib
 import json
 from datetime import UTC, datetime
 
+from backend.model_kernel.errors import ModelIntegrityError
+
 _PREFIX_BY_KIND = {
     "entity_registration": "reg",
     "relationship_type_definition": "rtd",
@@ -39,14 +41,27 @@ def canonical_payload(record) -> dict:
 
 
 def canonical_bytes(record) -> bytes:
-    return json.dumps(
-        canonical_payload(record), sort_keys=True, separators=(",", ":"),
-        ensure_ascii=False,
-    ).encode("utf-8")
+    """Canonical bytes of a record. Content that cannot be serialized or
+    UTF-8 encoded — a lone surrogate from hand-deserialized JSON, for
+    instance — is a structural defect, not an escape hatch."""
+    try:
+        return json.dumps(
+            canonical_payload(record), sort_keys=True, separators=(",", ":"),
+            ensure_ascii=False,
+        ).encode("utf-8")
+    except (UnicodeError, TypeError, ValueError) as error:
+        raise ModelIntegrityError(
+            "MODEL_RECORD_INVALID",
+            "record content is not canonically serializable") from error
 
 
 def compute_record_id(record) -> str:
-    prefix = _PREFIX_BY_KIND[record.record_kind]
+    try:
+        prefix = _PREFIX_BY_KIND[record.record_kind]
+    except (KeyError, AttributeError, TypeError) as error:
+        raise ModelIntegrityError(
+            "MODEL_RECORD_INVALID",
+            "record does not declare a known model record kind") from error
     digest = hashlib.sha256(canonical_bytes(record)).hexdigest()
     return f"{prefix}_{digest}"
 

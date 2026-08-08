@@ -17,18 +17,20 @@ F4  the package exported nothing, so callers had to reach into modules.
 """
 
 import hashlib
+import json
 import warnings
 
 import pytest
 
 from backend.model_kernel.canonical import compute_record_id
 from backend.model_kernel.contracts import (
+    EntityRegistration,
     ModelIntegrityError,
     ModelKernelError,
     ModelQueryError,
 )
 from backend.model_kernel.queries import ModelQueries
-from backend.model_kernel.store import validate_record_collection
+from backend.model_kernel.store import ModelStore, validate_record_collection
 
 from tests.model_kernel.builders import (
     AS_BUILT,
@@ -36,7 +38,9 @@ from tests.model_kernel.builders import (
     ENT_B,
     ENT_C,
     ENT_D,
+    T0,
     VIEW_FREE,
+    anchor as anchor_value,
     assertion,
     contains_type,
     containment_world,
@@ -420,3 +424,109 @@ class TestPublicPackageSurface:
         leaked = [name for name in INTERNAL_NAMES
                   if name in declared or hasattr(kernel, name)]
         assert leaked == [], f"internal names on the public surface: {leaked}"
+
+
+class TestNoUntypedLeakAnywhereInThePublicKernel:
+    """Adversarial-review findings: the typed error contract covers the
+    WHOLE public kernel, not only the seven query methods — hashing,
+    construction, replay, load, store construction, collection validation,
+    and query construction included."""
+
+    def test_lone_surrogate_note_is_typed_not_unicode_error(self, tmp_path):
+        """A record hand-deserialized from untrusted JSON can carry a lone
+        surrogate in an unconstrained str; it survives revalidation and used
+        to explode in the UTF-8 encode during hashing."""
+        store = containment_world(tmp_path)
+        hostile = json.loads('"note \\ud800 from untrusted json"')
+        forged = corrupt(registration(ENT_C), note=hostile, rehash=False)
+        before = snapshot(store)
+        with pytest.raises(ModelKernelError) as excinfo:
+            store.append(forged)
+        assert excinfo.value.error_code == "MODEL_RECORD_INVALID"
+        assert snapshot(store) == before
+        assert store.load().revision.record_count == len(before)
+
+    def test_build_record_rejects_unencodable_content_typed(self):
+        from backend.model_kernel import AuthorityRef, build_record
+
+        with pytest.raises(ModelKernelError) as excinfo:
+            build_record(
+                EntityRegistration,
+                anchor=anchor_value(ENT_C), recorded_at=T0,
+                authority=AuthorityRef(kind="test_fixture", agent="probe",
+                                       method="manual_declaration"),
+                note=json.loads('"\\ud800"'))
+        assert excinfo.value.error_code == "MODEL_RECORD_INVALID"
+
+    @pytest.mark.parametrize("members", [
+        pytest.param(None, id="none"),
+        pytest.param(5, id="int"),
+        pytest.param([None], id="none_member"),
+        pytest.param([1], id="int_member"),
+        pytest.param([b"reg_" + b"a" * 64], id="bytes_member"),
+    ], )
+    def test_replay_rejects_non_iterable_and_non_string_members(
+        self, tmp_path, members
+    ):
+        store = containment_world(tmp_path)
+        with pytest.raises(ModelKernelError) as excinfo:
+            store.replay(members)
+        assert excinfo.value.error_code == "MODEL_REVISION_INVALID"
+
+    def test_missing_records_directory_is_typed(self, tmp_path):
+        import shutil
+
+        store = containment_world(tmp_path)
+        shutil.rmtree(store.records_dir)
+        for call in (lambda: store.load(),
+                     lambda: store.append(registration(ENT_C))):
+            with pytest.raises(ModelKernelError) as excinfo:
+                call()
+            assert excinfo.value.error_code == "MODEL_STORAGE_FAILURE"
+            assert str(tmp_path) not in str(excinfo.value)
+
+    @pytest.mark.parametrize("bad_dir", [
+        pytest.param(None, id="none"), pytest.param(5, id="int"),
+        pytest.param(["a"], id="list"), pytest.param(object(), id="object"),
+    ])
+    def test_store_construction_rejects_non_path_typed(self, bad_dir):
+        with pytest.raises(ModelKernelError) as excinfo:
+            ModelStore(bad_dir)
+        assert excinfo.value.error_code == "MODEL_SET_ID_INVALID"
+
+    def test_store_construction_wraps_environment_failure(self, tmp_path):
+        set_dir = tmp_path / "demo-printer"
+        set_dir.mkdir()
+        (set_dir / "records").write_text("not a directory")
+        with pytest.raises(ModelKernelError) as excinfo:
+            ModelStore(set_dir)
+        assert excinfo.value.error_code == "MODEL_STORAGE_FAILURE"
+        assert str(tmp_path) not in str(excinfo.value)
+
+    @pytest.mark.parametrize("records", [
+        pytest.param(None, id="none"), pytest.param("x", id="str"),
+        pytest.param([], id="list"),
+    ])
+    def test_collection_validator_rejects_non_mapping(self, records):
+        with pytest.raises(ModelKernelError) as excinfo:
+            validate_record_collection("demo-printer", records)
+        assert excinfo.value.error_code == "MODEL_RECORD_INVALID"
+
+    @pytest.mark.parametrize("model_id", [
+        pytest.param("NOT VALID", id="bad_pattern"),
+        pytest.param(None, id="none"),
+        pytest.param(7, id="int"),
+    ])
+    def test_collection_validator_rejects_bad_model_id(self, model_id):
+        with pytest.raises(ModelKernelError) as excinfo:
+            validate_record_collection(model_id, {})
+        assert excinfo.value.error_code == "MODEL_SET_ID_INVALID"
+
+    @pytest.mark.parametrize("loaded", [
+        pytest.param(None, id="none"), pytest.param("model", id="str"),
+        pytest.param(object(), id="object"),
+    ])
+    def test_queries_reject_a_non_loaded_model(self, loaded):
+        with pytest.raises(ModelKernelError) as excinfo:
+            ModelQueries(loaded)
+        assert excinfo.value.error_code == "MODEL_LOADED_MODEL_INVALID"

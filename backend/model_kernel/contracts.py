@@ -39,25 +39,13 @@ LifecycleView = Literal[
 
 
 # ---------------------------------------------------------------- errors
-class ModelKernelError(Exception):
-    def __init__(self, error_code: str, message: str) -> None:
-        super().__init__(f"{error_code}: {message}")
-        self.error_code = error_code
-        self.message = message
-
-
-class ModelConfigurationError(ModelKernelError):
-    """Invalid model-set root or model id."""
-
-
-class ModelIntegrityError(ModelKernelError):
-    """The model set violates an integrity invariant. Validation is
-    all-or-nothing: an invalid set resolves nothing."""
-
-
-class ModelQueryError(ModelKernelError):
-    """Contract misuse at the query boundary. Absence and disagreement are
-    statuses, never exceptions."""
+# defined in `errors` so `canonical` can raise them without an import cycle
+from backend.model_kernel.errors import (  # noqa: E402  (re-export)
+    ModelConfigurationError,
+    ModelIntegrityError,
+    ModelKernelError,
+    ModelQueryError,
+)
 
 
 class _Frozen(BaseModel):

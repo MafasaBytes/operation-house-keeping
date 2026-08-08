@@ -46,6 +46,11 @@ _LIFECYCLE_VIEWS = frozenset(typing.get_args(LifecycleView))
 
 class ModelQueries:
     def __init__(self, loaded: LoadedModel) -> None:
+        if not isinstance(loaded, LoadedModel):
+            raise ModelQueryError(
+                "MODEL_LOADED_MODEL_INVALID",
+                "queries require a LoadedModel from ModelStore.load() or "
+                "ModelStore.replay()")
         self.loaded = loaded
 
     # -- boundary checks ---------------------------------------------------

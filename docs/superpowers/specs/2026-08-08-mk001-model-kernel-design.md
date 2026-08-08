@@ -368,10 +368,22 @@ before key binding, hashing, or semantic checks, and use the revalidated
 instances as the authoritative values in the normalized collection and in
 `LoadedModel`. Shape failures, including any serializer warning they would
 raise, surface as typed, path-free
-`ModelIntegrityError("MODEL_RECORD_INVALID", …)`; raw `ValidationError`,
-`KeyError`, `AttributeError`, serializer errors, and warnings never escape
-as the public outcome. This is what makes "every successful append leaves
-an immediately loadable valid revision" true rather than aspirational.
+`ModelIntegrityError("MODEL_RECORD_INVALID", …)`. This is what makes "every
+successful append leaves an immediately loadable valid revision" true
+rather than aspirational.
+
+**Typed failure is kernel-wide, not query-only.** Every public entry point
+— `ModelStore` construction, `append`, `load`, `replay`,
+`validate_record_collection`, `build_record`, `ModelQueries` construction,
+and every query method — fails through the `ModelKernelError` tree.
+Nothing outside that tree escapes as the public outcome: not
+`ValidationError`, `KeyError`, `AttributeError`, `TypeError`,
+`UnicodeError` (content that validates but cannot be canonically
+serialized, such as a lone surrogate from hand-deserialized JSON, is a
+structural defect → `MODEL_RECORD_INVALID`), `OSError` (missing or
+unusable store directories → `MODEL_STORAGE_FAILURE`), serializer errors,
+or warnings. The error tree lives in `errors.py` so `canonical` can raise
+it without an import cycle.
 
 **`append(record)` — validating append (deliberate, owner-approved
 divergence from IB-001's record-local append; kernel records form a
@@ -500,7 +512,7 @@ claimed name).
 
 ## Acceptance criteria
 
-All `tests/model_kernel/` tests pass (167 as implemented, including the
+All `tests/model_kernel/` tests pass (189 as implemented, including the
 owner-validation repair suite), including: structural revalidation at both
 public store boundaries (rehashed `model_copy` and `model_construct`
 corruption of all four record kinds and an unknown `record_kind` rejected

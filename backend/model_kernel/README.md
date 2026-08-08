@@ -43,11 +43,18 @@ runtime model sets use the documented external verification procedure.
   absent filesystem tampering, the on-disk ledger is a valid revision after
   every successful append. Identical re-append is a validated no-op that
   still fails if any sibling is corrupted. Single-writer, honestly stated.
-- **Public query inputs are validated before evaluation**: anchor id, type
-  name, direction, lifecycle view (`MODEL_VIEW_INVALID`), and assertion
-  context (mappings normalized; `MODEL_CONTEXT_INVALID` when malformed).
-  Malformed input is never a silently empty answer, and no query leaks a
-  `ValidationError`, `AttributeError`, or `TypeError`.
+- **Public inputs are validated at every entry point**: query arguments
+  (anchor id, type name, direction, lifecycle view →
+  `MODEL_VIEW_INVALID`, assertion context → normalized mappings or
+  `MODEL_CONTEXT_INVALID`) and store arguments (set directory, record
+  collection, model id, replay membership) alike. Malformed input is never
+  a silently empty answer, and **every public entry point of the kernel —
+  queries, `ModelStore` construction, `append`, `load`, `replay`,
+  `validate_record_collection`, `build_record`, and `ModelQueries`
+  construction — fails through the `ModelKernelError` tree**: no
+  `ValidationError`, `AttributeError`, `TypeError`, `KeyError`,
+  `UnicodeError`, `OSError`, serializer error, or warning escapes as the
+  public outcome.
 - **Absence is structured**: `RelationshipsResult.status` distinguishes a
   registered entity with no matching edge from an anchor unknown to the
   revision.

@@ -91,12 +91,12 @@ def revalidate(record) -> ModelRecord:
     they would raise) surface as a typed, path-free
     ``MODEL_RECORD_INVALID``."""
     try:
-        with warnings.catch_warnings():
-            warnings.simplefilter("error")  # serializer warnings are failures
-            payload = record.model_dump(mode="python")
+        # warnings=False keeps pydantic's serializer warnings from escaping
+        # as the public outcome without mutating global warning filters
+        payload = record.model_dump(mode="python", warnings=False)
         return _RECORD_ADAPTER.validate_python(payload)
     except (ValidationError, ValueError, TypeError, AttributeError,
-            KeyError, Warning) as error:
+            KeyError, UnicodeError, Warning) as error:
         record_id = getattr(record, "record_id", None)
         subject = record_id if isinstance(record_id, str) else "<unidentified>"
         raise ModelIntegrityError(
@@ -118,6 +118,14 @@ def validate_record_collection(
     types: dict[str, RelationshipTypeDefinition] = {}
     assertions: dict[str, RelationshipAssertion] = {}
     withdrawals: dict[str, RelationshipWithdrawal] = {}
+
+    if not isinstance(model_id, str) or not re.fullmatch(MODEL_ID_PATTERN,
+                                                         model_id):
+        raise ModelConfigurationError(
+            "MODEL_SET_ID_INVALID", f"{model_id!r} is not a valid model id")
+    if not isinstance(records, Mapping):
+        _fail("MODEL_RECORD_INVALID",
+              "a record collection must be a mapping of record id to record")
 
     # This is itself a public boundary: revalidate structurally BEFORE any
     # key binding, hashing, or semantic check, and keep the revalidated
@@ -281,6 +289,10 @@ def validate_record_collection(
 
 class ModelStore:
     def __init__(self, set_dir: Path | str) -> None:
+        if not isinstance(set_dir, (str, os.PathLike)):
+            raise ModelConfigurationError(
+                "MODEL_SET_ID_INVALID",
+                "a model set directory must be a path or path-like value")
         set_dir = Path(set_dir)
         if not re.fullmatch(MODEL_ID_PATTERN, set_dir.name):
             raise ModelConfigurationError(
@@ -290,7 +302,13 @@ class ModelStore:
         self.model_id = set_dir.name
         self.records_dir = set_dir / "records"
         self.staging_dir = set_dir / ".staging"
-        self.records_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            self.records_dir.mkdir(parents=True, exist_ok=True)
+        except OSError as error:
+            raise ModelIntegrityError(
+                "MODEL_STORAGE_FAILURE",
+                f"could not open the records directory of model "
+                f"{self.model_id}") from error
 
     # -- append (VALIDATING; single-writer; atomic promote) ----------------
 
@@ -299,6 +317,8 @@ class ModelStore:
         # bypassed field validation and been rehashed, so its hash is not
         # trustworthy until the shape is proven from data.
         record = revalidate(record)
+        # hashing itself can fail on content that validates but cannot be
+        # canonically serialized (a lone surrogate, say) — typed, not raw
         if not verify_record_id(record):
             raise ModelIntegrityError(
                 "MODEL_RECORD_HASH_MISMATCH",
@@ -357,7 +377,14 @@ class ModelStore:
 
     def load(self) -> LoadedModel:
         records: dict[str, ModelRecord] = {}
-        for path in self.records_dir.iterdir():
+        try:
+            entries = sorted(self.records_dir.iterdir())
+        except OSError as error:
+            raise ModelIntegrityError(
+                "MODEL_STORAGE_FAILURE",
+                f"could not read the records directory of model "
+                f"{self.model_id}") from error
+        for path in entries:
             if not _FILENAME.fullmatch(path.name):
                 raise ModelIntegrityError(
                     "MODEL_RECORD_INVALID",
@@ -372,9 +399,16 @@ class ModelStore:
         Every supplied id is pattern-checked BEFORE any filesystem path is
         constructed; duplicates rejected; the subset must be
         reference-closed."""
-        supplied = list(record_ids)
+        try:
+            supplied = list(record_ids)
+        except TypeError as error:
+            raise ModelIntegrityError(
+                "MODEL_REVISION_INVALID",
+                "a revision membership must be an iterable of record ids",
+            ) from error
         for record_id in supplied:
-            if not _RECORD_ID.fullmatch(record_id):
+            if not isinstance(record_id, str) or not _RECORD_ID.fullmatch(
+                    record_id):
                 raise ModelIntegrityError(
                     "MODEL_REVISION_INVALID",
                     f"{record_id!r} is not a valid model record id")
