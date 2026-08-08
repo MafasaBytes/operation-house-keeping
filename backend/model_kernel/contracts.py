@@ -22,7 +22,7 @@ from pydantic import (
     model_validator,
 )
 
-from backend.model_kernel.canonical import canonical_bytes, compute_revision_id
+from backend.model_kernel.canonical import canonical_sort_key, compute_revision_id
 from backend.system_identity import ENTITY_ANCHOR_ID_PATTERN, EntityAnchor
 
 UtcDatetime = Annotated[AwareDatetime, AfterValidator(lambda v: v.astimezone(UTC))]
@@ -142,9 +142,11 @@ ReferentKindTuple = Annotated[
 
 def _canonical_evidence(value: tuple) -> tuple:
     """Evidence order carries no engineering meaning and repeating identical
-    evidence adds no support: sort by canonical serialized bytes, normalize
-    duplicates away. Min-1 applies after normalization."""
-    by_key = {canonical_bytes(ref): ref for ref in value}
+    evidence adds no support: sort by the FULL canonical serialization of
+    each reference (including cited record ids — distinct citations are
+    distinct evidence), normalize exact duplicates away. Min-1 applies
+    after normalization."""
+    by_key = {canonical_sort_key(ref): ref for ref in value}
     normalized = tuple(by_key[key] for key in sorted(by_key))
     if not normalized:
         raise ValueError("at least one evidence reference is required")

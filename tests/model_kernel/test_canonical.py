@@ -98,12 +98,39 @@ class TestEvidenceCanonicalization:
 
     def test_evidence_stored_in_canonical_order(self):
         record = assertion((OWNER_EV, BINDING_EV))
-        keys = [mk_canonical.canonical_bytes(ref) for ref in record.evidence]
+        keys = [mk_canonical.canonical_sort_key(ref) for ref in record.evidence]
         assert keys == sorted(keys)
 
     def test_min_one_applies_after_normalization(self):
         record = assertion((OWNER_EV, OWNER_EV))
         assert len(record.evidence) == 1
+
+    def test_distinct_same_kind_refs_are_never_collapsed(self):
+        """Adversarial-review regression: two references of the same kind
+        differing only in the cited record_id are DIFFERENT evidence — both
+        preserved, permutation-invariant."""
+        from backend.model_kernel.contracts import ModelRecordEvidence
+
+        ref_a = ModelRecordEvidence(kind="model_record",
+                                    record_id="reg_" + "a" * 64)
+        ref_b = ModelRecordEvidence(kind="model_record",
+                                    record_id="reg_" + "b" * 64)
+        forward = assertion((ref_a, ref_b))
+        reversed_ = assertion((ref_b, ref_a))
+        assert len(forward.evidence) == 2
+        assert forward.record_id == reversed_.record_id
+        cited = {ref.record_id for ref in forward.evidence}
+        assert cited == {ref_a.record_id, ref_b.record_id}
+
+    def test_distinct_binding_refs_same_set_never_collapsed(self):
+        first = IdentityBindingRecordEvidence(
+            kind="identity_binding_record", binding_set_id="demo-printer",
+            record_id="anc_" + "1" * 64)
+        second = IdentityBindingRecordEvidence(
+            kind="identity_binding_record", binding_set_id="demo-printer",
+            record_id="anc_" + "2" * 64)
+        record = assertion((second, first))
+        assert len(record.evidence) == 2
 
 
 class TestRevisionIdentity:

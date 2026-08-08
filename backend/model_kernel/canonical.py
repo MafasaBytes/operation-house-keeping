@@ -65,6 +65,17 @@ def build_record(record_cls, **fields):
     return draft.model_copy(update={"record_id": compute_record_id(draft)})
 
 
+def canonical_sort_key(model) -> bytes:
+    """Full canonical serialization INCLUDING any record_id field. For
+    evidence references, record_id is DATA naming the cited record — not
+    self-identity — so two references differing only in record_id are
+    distinct evidence and must never share an identity key."""
+    return json.dumps(
+        _canonical_value(model.model_dump(mode="python")), sort_keys=True,
+        separators=(",", ":"), ensure_ascii=False,
+    ).encode("utf-8")
+
+
 def compute_revision_id(model_id: str, record_ids) -> str:
     material = "\n".join([model_id, *sorted(record_ids)])
     return "mrv_" + hashlib.sha256(material.encode("utf-8")).hexdigest()
