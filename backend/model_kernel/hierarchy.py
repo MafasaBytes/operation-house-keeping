@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from types import MappingProxyType
 from typing import Mapping
 
+from backend.model_kernel.contracts import ModelQueryError
 from backend.model_kernel.store import LoadedModel
 
 
@@ -89,6 +90,10 @@ def build_projection(loaded: LoadedModel, type_name: str,
     lineage_ids = {record_id for record_id, name
                    in loaded.type_name_by_id.items() if name == type_name}
     current_id = loaded.current_type_by_name.get(type_name)
+    if current_id is None:
+        raise ModelQueryError(
+            "MODEL_UNKNOWN_TYPE",
+            f"no relationship type named {type_name!r} in this revision")
     requirement = loaded.types[current_id].context_requirement
 
     edges: dict[tuple[str, str], list[str]] = {}

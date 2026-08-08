@@ -82,6 +82,25 @@ class TestTypeLineage:
         expect_invalid("MODEL_DUPLICATE_TYPE_NAME",
                        [original, branch_a, branch_b])
 
+    def test_branched_lineage_via_crafted_files_at_load(self, tmp_path):
+        """Crafted files bypass validating append; load() must still refuse
+        a branched lineage."""
+        from backend.model_kernel.canonical import canonical_payload
+        from backend.model_kernel.store import ModelStore
+
+        original = contains_type()
+        branch_a = contains_type(note="a", supersedes=original.record_id)
+        branch_b = contains_type(note="b", supersedes=original.record_id)
+        store = ModelStore(tmp_path / "demo-printer")
+        for record in (original, branch_a, branch_b):
+            text = json.dumps({**canonical_payload(record),
+                               "record_id": record.record_id},
+                              sort_keys=True, indent=2)
+            (store.records_dir / f"{record.record_id}.json").write_text(text)
+        with pytest.raises(ModelIntegrityError) as excinfo:
+            store.load()
+        assert excinfo.value.error_code == "MODEL_DUPLICATE_TYPE_NAME"
+
     @pytest.mark.parametrize("mutation", [
         dict(type_name="holds"),
         dict(hierarchy_semantics="none"),

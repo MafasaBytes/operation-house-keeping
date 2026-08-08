@@ -228,6 +228,49 @@ class TestLineageScopedHierarchy:
         health = queries.hierarchy_health("contains", view="as_built")
         assert health.stale_type_assertions == (edge.record_id,)
 
+    def test_cycle_detection_is_scoped_per_view(self, tmp_path):
+        """Audit finding F3: A→B in as_built and B→A in as_designed form no
+        cycle in either view — cycles exist per (lineage, view) only."""
+        kind = contains_type()
+        store = store_with(
+            tmp_path, kind, registration(ENT_A), registration(ENT_B),
+            assertion(kind, source=ENT_A, target=ENT_B, context=AS_BUILT),
+            assertion(kind, source=ENT_B, target=ENT_A, context=AS_DESIGNED))
+        queries = ModelQueries(store.load())
+        built = queries.parents(ENT_B, "contains", view="as_built")
+        designed = queries.parents(ENT_A, "contains", view="as_designed")
+        assert built.status == designed.status == "resolved"
+        assert queries.hierarchy_health("contains", view="as_built").cycles == ()
+        assert queries.hierarchy_health("contains",
+                                        view="as_designed").cycles == ()
+
+    def test_view_independent_hierarchy_forbids_view(self, tmp_path):
+        """Audit finding F2: a view-independent containment type answers
+        without a view and rejects one with MODEL_VIEW_FORBIDDEN."""
+        structural = contains_type(type_name="structurally_contains",
+                                   context_requirement="view_independent")
+        store = store_with(
+            tmp_path, structural, registration(ENT_A), registration(ENT_B),
+            assertion(structural, source=ENT_A, target=ENT_B,
+                      context=VIEW_FREE))
+        queries = ModelQueries(store.load())
+        result = queries.parents(ENT_B, "structurally_contains")
+        assert result.status == "resolved"
+        assert result.parent.anchor_id == ENT_A
+        with pytest.raises(ModelQueryError) as excinfo:
+            queries.parents(ENT_B, "structurally_contains", view="as_built")
+        assert excinfo.value.error_code == "MODEL_VIEW_FORBIDDEN"
+
+    def test_build_projection_rejects_unknown_type(self, tmp_path):
+        """Reviewer finding: the importable projection builder must raise
+        the typed error, never a raw KeyError."""
+        from backend.model_kernel.hierarchy import build_projection
+
+        store = containment_world(tmp_path)
+        with pytest.raises(ModelQueryError) as excinfo:
+            build_projection(store.load(), "no_such_type", "as_built")
+        assert excinfo.value.error_code == "MODEL_UNKNOWN_TYPE"
+
     def test_health_reports_cycles_and_conflicts(self, tmp_path):
         kind = contains_type()
         store = store_with(

@@ -48,8 +48,13 @@ class TestSupersession:
     ):
         kind = contains_type()
         v1 = assertion(kind, note="v1")
+        from datetime import timedelta
+
+        from tests.model_kernel.builders import T0
+
         v2a = assertion(kind, note="fix a", supersedes=v1.record_id)
-        v2b_late = assertion(kind, note="fix b", supersedes=v1.record_id)
+        v2b_late = assertion(kind, note="fix b", supersedes=v1.record_id,
+                             recorded_at=T0 + timedelta(hours=1))  # truly late
         queries = build(tmp_path, kind, v1, v2a, v2b_late)
         result = relationships(queries)
         assert {s.record_id for s in result.active} == {

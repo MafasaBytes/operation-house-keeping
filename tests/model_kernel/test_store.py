@@ -119,18 +119,24 @@ class TestValidatingAppend:
         (store.staging_dir / "crashed.tmp").write_text("partial")
         assert store.load().revision.record_count == 3
 
-    def test_failed_promotion_leaves_ledger_clean(self, tmp_path, monkeypatch):
+    def test_failed_promotion_typed_clean_and_path_free(self, tmp_path,
+                                                        monkeypatch):
+        """Environment failures surface through the typed error contract
+        with no absolute path in the message, and leave the ledger holding
+        only complete final records."""
         import backend.model_kernel.store as store_module
 
         store = containment_world(tmp_path)
 
         def broken_replace(src, dst):
-            raise OSError("promotion failed")
+            raise OSError(f"promotion failed for {dst}")
 
         monkeypatch.setattr(store_module.os, "replace", broken_replace)
-        with pytest.raises(OSError):
+        with pytest.raises(ModelIntegrityError) as excinfo:
             store.append(registration(ENT_C))
         monkeypatch.undo()
+        assert excinfo.value.error_code == "MODEL_STORAGE_FAILURE"
+        assert str(tmp_path) not in str(excinfo.value)
         assert all(p.suffix == ".json" for p in store.records_dir.iterdir())
         assert list(store.staging_dir.glob("*")) == []
         assert store.load().revision.record_count == 3
@@ -219,7 +225,7 @@ class TestLoadedModelImmutability:
                    assertion(kind)]
         orders = [records, records[::-1],
                   [records[1], records[0], records[2], records[3]]]
-        revisions = []
+        loaded_models = []
         for index, order in enumerate(orders):
             store = ModelStore(tmp_path / f"world-{index}" / "demo-printer")
             for record in sorted(
@@ -227,8 +233,20 @@ class TestLoadedModelImmutability:
                     "entity_registration",
                     "relationship_type_definition") else 1):
                 store.append(record)
-            revisions.append(store.load().revision)
-        assert revisions[0] == revisions[1] == revisions[2]
+            loaded_models.append(store.load())
+        first, second, third = loaded_models
+        assert first.revision == second.revision == third.revision
+        # derived state, not just the (order-free by construction) revision
+        assert (dict(first.records).keys() == dict(second.records).keys()
+                == dict(third.records).keys())
+        assert (dict(first.current_type_by_name)
+                == dict(second.current_type_by_name)
+                == dict(third.current_type_by_name))
+        from backend.model_kernel.queries import ModelQueries
+
+        answers = [ModelQueries(m).parents(ENT_B, "contains", view="as_built")
+                   for m in loaded_models]
+        assert answers[0] == answers[1] == answers[2]
 
 
 class TestPathLeakage:

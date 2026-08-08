@@ -64,9 +64,29 @@ class TestEmbeddedAnchorEquality:
         assert diverged.anchor != declared[diverged.anchor.anchor_id]
 
     def test_seam_has_teeth_never_declared_anchor_detected(self):
+        """Negative control: a registration embedding a never-declared
+        anchor is fully acceptable to the kernel — only the seam sweep can
+        flag it. Build one, confirm the kernel accepts it, and confirm the
+        sweep's membership check rejects it."""
+        from datetime import UTC, datetime
+
+        from backend.model_kernel.canonical import build_record
+        from backend.model_kernel.contracts import (
+            AuthorityRef,
+            EntityRegistration,
+        )
+
+        ghost_anchor = EntityAnchor(
+            anchor_id="ent_" + "9" * 32, namespace="demo-printer",
+            display_name="Declared nowhere", referent_kind="unknown")
+        ghost_registration = build_record(
+            EntityRegistration, anchor=ghost_anchor,
+            recorded_at=datetime(2026, 8, 8, 12, 0, 0, tzinfo=UTC),
+            authority=AuthorityRef(kind="test_fixture", agent="seam-probe",
+                                   method="manual_declaration"))
+        assert ghost_registration.record_id.startswith("reg_")  # kernel-valid
         declared = committed_declarations()
-        ghost = "ent_" + "9" * 32
-        assert ghost not in declared
+        assert ghost_anchor.anchor_id not in declared  # the sweep flags it
 
     def test_cross_set_duplicate_sweep_covers_hex_tails(self):
         tails: dict[str, str] = {}

@@ -24,14 +24,20 @@ from tests.model_kernel.builders import (
     registration,
 )
 
-KERNEL_DIR = Path("backend/model_kernel")
+import backend.model_kernel as kernel_package
+
+# anchored via the package itself, never the cwd (audit finding F4: a
+# relative path from the wrong cwd silently globbed zero files)
+KERNEL_DIR = Path(kernel_package.__file__).parent
 FORBIDDEN_MODULES = ("backend.identity_binding", "backend.temporal_state",
                      "backend.data_sources")
 ALLOWED_ROOTS = ("backend.system_identity", "backend.model_kernel", "pydantic")
 
 
 def _kernel_sources():
-    return sorted(KERNEL_DIR.glob("*.py"))
+    sources = sorted(KERNEL_DIR.glob("*.py"))
+    assert len(sources) >= 6, "kernel sources not found — vacuous scan"
+    return sources
 
 
 class TestImportBoundary:
@@ -69,6 +75,20 @@ class TestImportBoundary:
                            "var/raw", "evidence_root"):
                 assert needle not in text, f"{needle!r} in {source.name}"
 
+    def test_no_dynamic_import_escape_hatches(self):
+        """The AST import scan cannot see importlib.import_module or
+        __import__ — so their mere presence in kernel source is banned."""
+        for source in _kernel_sources():
+            tree = ast.parse(source.read_text(encoding="utf-8"))
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Name):
+                    assert node.id != "__import__", source.name
+                if isinstance(node, (ast.Import, ast.ImportFrom)):
+                    names = ([alias.name for alias in node.names]
+                             if isinstance(node, ast.Import)
+                             else [node.module or ""])
+                    assert "importlib" not in names, source.name
+
 
 class TestStoresAbsent:
     def test_kernel_operates_identically_without_any_upstream_store(
@@ -93,8 +113,10 @@ class TestStoresAbsent:
 def sweep(*roots: Path) -> dict[str, str]:
     hashes = {}
     for root in roots:
+        assert root.exists(), f"sweep root missing: {root.name} (vacuous)"
         for path in sorted(p for p in root.rglob("*") if p.is_file()):
             hashes[str(path)] = hashlib.sha256(path.read_bytes()).hexdigest()
+    assert hashes, "sweep found no files (vacuous)"
     return hashes
 
 

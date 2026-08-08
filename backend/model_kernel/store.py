@@ -282,17 +282,24 @@ class ModelStore:
         payload = {**canonical_payload(record), "record_id": record.record_id}
         text = json.dumps(payload, sort_keys=True, indent=2,
                           ensure_ascii=False) + "\n"
-        self.staging_dir.mkdir(parents=True, exist_ok=True)
         from uuid import uuid4
 
-        temp = self.staging_dir / f"{record.record_id}.{uuid4().hex}.tmp"
-        temp.write_text(text, encoding="utf-8")
-        final = self.records_dir / f"{record.record_id}.json"
+        temp = None
         try:
+            self.staging_dir.mkdir(parents=True, exist_ok=True)
+            temp = self.staging_dir / f"{record.record_id}.{uuid4().hex}.tmp"
+            temp.write_text(text, encoding="utf-8")
+            final = self.records_dir / f"{record.record_id}.json"
             os.replace(temp, final)
-        except OSError:
-            temp.unlink(missing_ok=True)
-            raise
+        except OSError as error:
+            # environment failures surface through the typed contract with
+            # ids only — never an absolute path
+            if temp is not None:
+                temp.unlink(missing_ok=True)
+            raise ModelIntegrityError(
+                "MODEL_STORAGE_FAILURE",
+                f"could not persist {record.record_id} to model "
+                f"{self.model_id}") from error
         return record.record_id
 
     # -- load / replay -----------------------------------------------------

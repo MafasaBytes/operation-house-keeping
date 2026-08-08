@@ -70,11 +70,11 @@ def instance_of_type(**overrides):
 
 
 def assertion(type_record, source=ENT_A, target=ENT_B, context=AS_BUILT,
-              supersedes=None, note="", evidence=EVIDENCE):
+              supersedes=None, note="", evidence=EVIDENCE, recorded_at=T0):
     return build_record(RelationshipAssertion, type_id=type_record.record_id,
                         source_anchor_id=source, target_anchor_id=target,
                         context=context, evidence=evidence,
-                        supersedes=supersedes, recorded_at=T0,
+                        supersedes=supersedes, recorded_at=recorded_at,
                         authority=AUTHORITY, note=note)
 
 
