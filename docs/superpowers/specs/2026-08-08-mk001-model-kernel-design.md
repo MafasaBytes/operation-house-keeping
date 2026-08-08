@@ -331,13 +331,13 @@ of one assertion can never assert different parents.
 
 ## Lineage lifecycle (assertions)
 
-Five disclosure states: one current assertion (in `active`, links
-disclosed); competing current successors (all in `active` AND listed in
+Five disclosure states: one active assertion (in `active`, links
+disclosed); competing active successors (all in `active` AND listed in
 `lineage_conflicts`; recorded time never selects one); withdrawn
 (`inactive`, `withdrawn_by ≠ ()`); superseded (`inactive`,
 `superseded_by ≠ ()`); both (`inactive`, both disclosed — independent facts,
 no precedence). Withdrawing a superseded predecessor does not affect its
-successor; withdrawing a current successor never reactivates its predecessor
+successor; withdrawing an active successor never reactivates its predecessor
 — a lineage may end with **no active assertion** (the claim is gone unless
 re-asserted; disclosed).
 

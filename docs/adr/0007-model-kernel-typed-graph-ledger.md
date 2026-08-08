@@ -79,7 +79,7 @@ mutation, or a graph database.
    any other member is corrupted. `ModelRevision` (`mrv_`) is computed-only,
    never stored, structurally excluded from membership. Evidence tuples are
    canonicalized (sorted by canonical bytes, duplicates normalized away)
-   so permuted or repeated evidence cannot mint distinct record ids.
+   so permuted or repeated evidence cannot produce distinct record ids.
    Rejected: authoritative SQLite graph (binary authority in git; nothing
    gained at this scale); ledger + rebuildable SQLite projection (correct
    future shape, premature now — queries sit behind `ModelQueries` so a

@@ -124,8 +124,9 @@ generated through `identity_binding`'s own store code as fixture tooling),
 
 1. Failing tests — isolation: AST import inspection (only system_identity/
    stdlib/pydantic; reject the three lower modules); no path-based store
-   access in runtime source; kernel operates identically with no `bindings/`
-   present; byte-for-byte sweeps over accepted stores + existing
+   access in runtime source; kernel operates identically with no
+   `bindings/`, temporal, or evidence store roots present; byte-for-byte
+   sweeps over accepted stores + existing
    `bindings/demo-printer/` across all kernel ops including failures.
 2. Failing tests — seam: embedded anchors field-for-field vs declarations
    (both binding sets); negative controls (diverged value, never-declared
