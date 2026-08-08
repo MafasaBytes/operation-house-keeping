@@ -138,7 +138,7 @@ class TemporalStore:
                 (PROJECTOR_VERSION,),
             )
 
-    # -- connections ------------------------------------------------------
+    # -- connections
 
     @contextmanager
     def writer(self):
@@ -181,14 +181,14 @@ class TemporalStore:
         else:
             conn.execute("COMMIT")
 
-    # -- meta -------------------------------------------------------------
+    # -- meta
 
     def meta_versions(self) -> tuple[str, str]:
         with self.reader() as conn:
             rows = dict(conn.execute("SELECT key, value FROM meta"))
         return rows.get("schema_version", ""), rows.get("projector_version", "")
 
-    # -- inserts ----------------------------------------------------------
+    # -- inserts
 
     def insert_attempt_event(self, conn, event: TemporalAttemptEvent) -> None:
         conn.execute(
@@ -235,7 +235,7 @@ class TemporalStore:
              json.dumps(sorted(occ.quality_flags))),
         )
 
-    # -- lookups ----------------------------------------------------------
+    # -- lookups
 
     def has_attempt(self, conn, attempt_id: str) -> bool:
         return conn.execute(
@@ -294,7 +294,7 @@ class TemporalStore:
         ).fetchone()
         return row[0] if row else None
 
-    # -- checkpoints ------------------------------------------------------
+    # -- checkpoints
 
     def upsert_checkpoint(self, conn, checkpoint: ProjectionCheckpoint) -> None:
         conn.execute(
@@ -325,7 +325,7 @@ class TemporalStore:
             schema_version=row[6],
         )
 
-    # -- dump / rebuild helpers ------------------------------------------
+    # -- dump / rebuild helpers
 
     def ordered_logical_dump(self) -> dict[str, list[tuple]]:
         """Deterministic logical content; checkpoints excluded (they are an

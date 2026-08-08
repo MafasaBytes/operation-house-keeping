@@ -4,7 +4,6 @@
 
 # Local repos (cloned locally, not vendored)
 /superpowers/
-# Added by owner (gitignore has no trailing comments — kept on its own line)
 /everything-claude-code/
 
 # Claude project skills (symlinks into superpowers/, machine-local)

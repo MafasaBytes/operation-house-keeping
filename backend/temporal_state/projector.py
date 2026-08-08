@@ -67,7 +67,7 @@ class TemporalProjector:
         self.store = store
         self.projector_version = projector_version
 
-    # -- public -----------------------------------------------------------
+    # -- public
 
     def project(self, source_id: str) -> ProjectionReport:
         report = ProjectionReport(source_id=source_id)
@@ -203,7 +203,7 @@ class TemporalProjector:
         self.store = TemporalStore(db_path, evidence_root=evidence_root)
         return {source_id: self.rebuild(source_id) for source_id in source_ids}
 
-    # -- internals --------------------------------------------------------
+    # -- internals
 
     def _ordered_attempts(self, source_id: str) -> list[AcquisitionAttempt]:
         attempts = list(self.evidence.iter_attempts(source_id))

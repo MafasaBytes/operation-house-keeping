@@ -123,7 +123,7 @@ class TemporalQueries:
     def __init__(self, store: TemporalStore) -> None:
         self.store = store
 
-    # -- histories --------------------------------------------------------
+    # -- histories
 
     def history(self, subject, prop, limit: int | None = None):
         sql = (f"SELECT * FROM temporal_occurrences WHERE {_KEY_WHERE} "
@@ -144,7 +144,7 @@ class TemporalQueries:
             ).fetchall()
         return [_occurrence_from_row(r) for r in rows]
 
-    # -- latest observed (single query, required cutoff, closed) ----------
+    # -- latest observed (single query, required cutoff, closed)
 
     def latest_observed(self, subject, prop, as_of: datetime):
         as_of = _require_aware(as_of)
@@ -226,7 +226,7 @@ class TemporalQueries:
             evidence_quality=quality,
         )
 
-    # -- coverage / freshness / provenance / segments ---------------------
+    # -- coverage / freshness / provenance / segments
 
     def attempt_coverage(self, source_id: str, item_key: str | None = None):
         sql = "SELECT * FROM temporal_attempts WHERE source_id=?"

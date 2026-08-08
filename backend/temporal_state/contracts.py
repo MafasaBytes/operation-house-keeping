@@ -19,7 +19,7 @@ class _Frozen(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
 
-# ---------------------------------------------------------------- errors
+# errors
 class TemporalError(Exception):
     def __init__(self, error_code: str, message: str) -> None:
         super().__init__(f"{error_code}: {message}")
@@ -45,7 +45,7 @@ class TemporalQueryError(TemporalError):
     """Invalid input to a public temporal query (e.g. a naive cutoff)."""
 
 
-# ------------------------------------------------------------- identity
+# identity
 class SourceSubjectRef(_Frozen):
     """Unresolved source-native subject identity — NOT a system entity."""
 
@@ -81,7 +81,7 @@ class AttemptOrderKey(_Frozen):
         )
 
 
-# --------------------------------------------------------------- ledger
+# ledger
 AttemptOutcome = Literal[
     "observations_projected", "acquisition_failed", "quarantined"
 ]
