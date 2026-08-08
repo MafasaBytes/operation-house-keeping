@@ -1,0 +1,19 @@
+{
+  "anchor": {
+    "anchor_id": "ent_1a2b3c4d5e6f708192a3b4c5d6e7f809",
+    "display_name": "Extrusion subsystem (synthetic)",
+    "namespace": "demo-printer",
+    "referent_kind": "logical_instance",
+    "role_name": "extrusion-subsystem"
+  },
+  "authority": {
+    "agent": "mk001_demo_fixture",
+    "kind": "test_fixture",
+    "method": "manual_declaration"
+  },
+  "note": "Membership claim in the synthetic demo model.",
+  "record_id": "reg_5776a541a04b428f35af40203294a34a8a9978f0bdf3572a8745e6febddd5941",
+  "record_kind": "entity_registration",
+  "recorded_at": "2026-08-08T13:03:00+00:00",
+  "schema_version": "1"
+}

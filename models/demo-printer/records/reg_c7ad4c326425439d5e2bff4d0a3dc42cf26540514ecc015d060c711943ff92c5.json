@@ -1,0 +1,19 @@
+{
+  "anchor": {
+    "anchor_id": "ent_0f1e2d3c4b5a69788796a5b4c3d2e1f0",
+    "display_name": "Demo printer (synthetic)",
+    "namespace": "demo-printer",
+    "referent_kind": "physical_instance",
+    "role_name": "demo-printer-root"
+  },
+  "authority": {
+    "agent": "mk001_demo_fixture",
+    "kind": "test_fixture",
+    "method": "manual_declaration"
+  },
+  "note": "Membership claim in the synthetic demo model.",
+  "record_id": "reg_c7ad4c326425439d5e2bff4d0a3dc42cf26540514ecc015d060c711943ff92c5",
+  "record_kind": "entity_registration",
+  "recorded_at": "2026-08-08T13:02:00+00:00",
+  "schema_version": "1"
+}

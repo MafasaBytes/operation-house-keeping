@@ -1,0 +1,20 @@
+{
+  "anchor": {
+    "anchor_id": "ent_2b3c4d5e6f70819a2b3c4d5e6f708192",
+    "display_name": "Extruder unit type (synthetic)",
+    "namespace": "demo-printer",
+    "referent_kind": "type_definition",
+    "role_name": "extruder-unit-type"
+  },
+  "anchor_kind": "entity",
+  "authority": {
+    "agent": "mk001_demo_fixture",
+    "kind": "test_fixture",
+    "method": "manual_declaration"
+  },
+  "note": "Synthetic anchor for the committed MK-001 validation model; no claim about any real printer.",
+  "record_id": "anc_c6aa3f3f3e03cc689a40ecd5d70d04828cbd1143bb107e85c2dd55268c2312d8",
+  "record_kind": "anchor_declaration",
+  "recorded_at": "2026-08-08T12:02:00+00:00",
+  "schema_version": "1"
+}

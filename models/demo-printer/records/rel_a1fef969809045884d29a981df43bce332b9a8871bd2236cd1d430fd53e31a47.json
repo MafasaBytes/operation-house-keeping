@@ -1,0 +1,26 @@
+{
+  "authority": {
+    "agent": "mk001_demo_fixture",
+    "kind": "test_fixture",
+    "method": "manual_declaration"
+  },
+  "context": {
+    "kind": "lifecycle_view",
+    "view": "as_built"
+  },
+  "evidence": [
+    {
+      "kind": "owner_declaration",
+      "statement": "Synthetic structure asserted for the committed validation scenario; models no physical machine."
+    }
+  ],
+  "note": "",
+  "record_id": "rel_a1fef969809045884d29a981df43bce332b9a8871bd2236cd1d430fd53e31a47",
+  "record_kind": "relationship_assertion",
+  "recorded_at": "2026-08-08T13:06:00+00:00",
+  "schema_version": "1",
+  "source_anchor_id": "ent_0f1e2d3c4b5a69788796a5b4c3d2e1f0",
+  "supersedes": null,
+  "target_anchor_id": "ent_1a2b3c4d5e6f708192a3b4c5d6e7f809",
+  "type_id": "rtd_5330e9966910b66a2a64380a39c190e12bc3649e8192f47b2358c6a13331f2f9"
+}

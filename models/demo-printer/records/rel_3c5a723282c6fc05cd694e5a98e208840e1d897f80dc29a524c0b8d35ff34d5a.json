@@ -1,0 +1,31 @@
+{
+  "authority": {
+    "agent": "mk001_demo_fixture",
+    "kind": "test_fixture",
+    "method": "manual_declaration"
+  },
+  "context": {
+    "kind": "lifecycle_view",
+    "view": "as_built"
+  },
+  "evidence": [
+    {
+      "binding_set_id": "demo-printer",
+      "kind": "identity_binding_record",
+      "record_id": "anc_e7bd0b35b97ee920384ac5791c90e3ae34889b642b54608cf3293a5174cb5ae3"
+    },
+    {
+      "kind": "owner_declaration",
+      "statement": "Synthetic structure asserted for the committed validation scenario; models no physical machine."
+    }
+  ],
+  "note": "",
+  "record_id": "rel_3c5a723282c6fc05cd694e5a98e208840e1d897f80dc29a524c0b8d35ff34d5a",
+  "record_kind": "relationship_assertion",
+  "recorded_at": "2026-08-08T13:07:00+00:00",
+  "schema_version": "1",
+  "source_anchor_id": "ent_1a2b3c4d5e6f708192a3b4c5d6e7f809",
+  "supersedes": null,
+  "target_anchor_id": "ent_a3f1c2d4e5b6478899aa0b1c2d3e4f50",
+  "type_id": "rtd_5330e9966910b66a2a64380a39c190e12bc3649e8192f47b2358c6a13331f2f9"
+}

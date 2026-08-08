@@ -1,0 +1,20 @@
+{
+  "anchor": {
+    "anchor_id": "ent_1a2b3c4d5e6f708192a3b4c5d6e7f809",
+    "display_name": "Extrusion subsystem (synthetic)",
+    "namespace": "demo-printer",
+    "referent_kind": "logical_instance",
+    "role_name": "extrusion-subsystem"
+  },
+  "anchor_kind": "entity",
+  "authority": {
+    "agent": "mk001_demo_fixture",
+    "kind": "test_fixture",
+    "method": "manual_declaration"
+  },
+  "note": "Synthetic anchor for the committed MK-001 validation model; no claim about any real printer.",
+  "record_id": "anc_69ebd49c67eb6b5ab775dbf0866efbbdfeaf625005bc50d2848d98a044014a22",
+  "record_kind": "anchor_declaration",
+  "recorded_at": "2026-08-08T12:01:00+00:00",
+  "schema_version": "1"
+}

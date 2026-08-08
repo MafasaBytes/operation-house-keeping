@@ -1,0 +1,27 @@
+{
+  "authority": {
+    "agent": "mk001_demo_fixture",
+    "kind": "test_fixture",
+    "method": "manual_declaration"
+  },
+  "context_requirement": "view_independent",
+  "directionality": "directed",
+  "forward_label": "is an instance of",
+  "hierarchy_semantics": "none",
+  "inverse_label": "has instance",
+  "note": "MK-001 canonical type/instance relation for the synthetic demo model.",
+  "record_id": "rtd_a21999304a0a5458eef47b82cd06a8c055aa83d2aa90bb8b17d93590c3487f06",
+  "record_kind": "relationship_type_definition",
+  "recorded_at": "2026-08-08T13:01:00+00:00",
+  "schema_version": "1",
+  "self_relation_allowed": false,
+  "source_referent_kinds": [
+    "logical_instance",
+    "physical_instance"
+  ],
+  "supersedes": null,
+  "target_referent_kinds": [
+    "type_definition"
+  ],
+  "type_name": "instance_of"
+}

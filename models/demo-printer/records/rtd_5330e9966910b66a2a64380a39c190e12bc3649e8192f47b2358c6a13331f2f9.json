@@ -1,0 +1,28 @@
+{
+  "authority": {
+    "agent": "mk001_demo_fixture",
+    "kind": "test_fixture",
+    "method": "manual_declaration"
+  },
+  "context_requirement": "lifecycle_view",
+  "directionality": "directed",
+  "forward_label": "contains",
+  "hierarchy_semantics": "containment",
+  "inverse_label": "is contained in",
+  "note": "MK-001 canonical containment type for the synthetic demo model.",
+  "record_id": "rtd_5330e9966910b66a2a64380a39c190e12bc3649e8192f47b2358c6a13331f2f9",
+  "record_kind": "relationship_type_definition",
+  "recorded_at": "2026-08-08T13:00:00+00:00",
+  "schema_version": "1",
+  "self_relation_allowed": false,
+  "source_referent_kinds": [
+    "logical_instance",
+    "physical_instance"
+  ],
+  "supersedes": null,
+  "target_referent_kinds": [
+    "logical_instance",
+    "physical_instance"
+  ],
+  "type_name": "contains"
+}

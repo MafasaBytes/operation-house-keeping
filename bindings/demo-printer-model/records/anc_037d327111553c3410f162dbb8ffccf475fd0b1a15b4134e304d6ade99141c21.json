@@ -1,0 +1,20 @@
+{
+  "anchor": {
+    "anchor_id": "ent_0f1e2d3c4b5a69788796a5b4c3d2e1f0",
+    "display_name": "Demo printer (synthetic)",
+    "namespace": "demo-printer",
+    "referent_kind": "physical_instance",
+    "role_name": "demo-printer-root"
+  },
+  "anchor_kind": "entity",
+  "authority": {
+    "agent": "mk001_demo_fixture",
+    "kind": "test_fixture",
+    "method": "manual_declaration"
+  },
+  "note": "Synthetic anchor for the committed MK-001 validation model; no claim about any real printer.",
+  "record_id": "anc_037d327111553c3410f162dbb8ffccf475fd0b1a15b4134e304d6ade99141c21",
+  "record_kind": "anchor_declaration",
+  "recorded_at": "2026-08-08T12:00:00+00:00",
+  "schema_version": "1"
+}

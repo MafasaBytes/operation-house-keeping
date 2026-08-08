@@ -1,0 +1,19 @@
+{
+  "anchor": {
+    "anchor_id": "ent_2b3c4d5e6f70819a2b3c4d5e6f708192",
+    "display_name": "Extruder unit type (synthetic)",
+    "namespace": "demo-printer",
+    "referent_kind": "type_definition",
+    "role_name": "extruder-unit-type"
+  },
+  "authority": {
+    "agent": "mk001_demo_fixture",
+    "kind": "test_fixture",
+    "method": "manual_declaration"
+  },
+  "note": "Membership claim in the synthetic demo model.",
+  "record_id": "reg_a502243be0cb229ab386f20db6803e01329dcdd5a22f8e922f1a92555a7ba0ba",
+  "record_kind": "entity_registration",
+  "recorded_at": "2026-08-08T13:05:00+00:00",
+  "schema_version": "1"
+}

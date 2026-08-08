@@ -1,0 +1,78 @@
+# model_kernel
+
+The MK-001 typed entity/relationship kernel: an append-only ledger of
+explicit model knowledge over canonical `system_identity` anchors, with a
+containment-derived hierarchy view. The bridge target of:
+
+```text
+data_sources → temporal_state → identity_binding → model_kernel
+                        system_identity ────────→ model_kernel
+```
+
+Spec: `docs/superpowers/specs/2026-08-08-mk001-model-kernel-design.md`;
+decisions: `docs/adr/0007-model-kernel-typed-graph-ledger.md`.
+
+## Boundary
+
+Runtime code imports only `system_identity`, the standard library, and
+pydantic (AST-enforced by test); it never reads or writes any binding,
+temporal, or evidence store and operates identically when those stores do
+not exist. The kernel provides no anchor-creation API: demo anchor IDs are
+externally allocated fixture constants declared through `AnchorDeclaration`
+records in an identity-binding ledger, and registrations embed those
+`EntityAnchor` values verbatim. The kernel cannot prove at runtime that an
+embedded anchor was declared — committed fixtures are seam-verified in CI;
+runtime model sets use the documented external verification procedure.
+
+## Semantics worth knowing
+
+- **Registrations have no lifecycle**: no supersession, no withdrawal, no
+  path that alters an embedded anchor field. Two distinct registrations for
+  one anchor invalidate the revision.
+- **All relationship types are data** (`contains` and `instance_of`
+  included). Type identity is a lineage named by `type_name`; supersession
+  preserves `{type_name, directionality, hierarchy_semantics,
+  context_requirement}`; exactly one current definition per name.
+  Assertions are judged by the exact definition they cite and stale-marked
+  when it is superseded — never retro-invalidated.
+- **Validating append**: `append` fully validates the current set, then the
+  prospective set, before an atomic staged promote — absent filesystem
+  tampering, the on-disk ledger is a valid revision after every successful
+  append. Identical re-append is a validated no-op that still fails if any
+  sibling is corrupted. Single-writer, honestly stated.
+- **Contention is surfaced, malformation invalidates**: distinct-parent/
+  same-child conflicts and cycles are structured query results with full
+  candidate/assertion disclosure, never resolved by recency or authority;
+  dangling references, tampering, duplicate registrations/current names,
+  endpoint-kind and context violations invalidate the complete revision.
+- **Traversal is deliberately asymmetric**: parent conflicts block upward
+  queries (`conflicted`/`partial`) but annotate — not block — downward
+  traversal (`multiple_parents`); cycles block both directions.
+- **Strict context equality**: every assertion carries a required
+  lifecycle-view or view-independent context matching its type; queries
+  match one context exactly, never a union; mismatches are typed errors.
+- **Evidence explains every edge**: discriminated typed references,
+  canonicalized (order- and duplication-insensitive); `model_record`
+  references are verified in-revision, all foreign kinds are labeled
+  `declared_reference` and never dereferenced.
+- **Revisions replay**: `mrv_` revisions are computed-only (never stored);
+  `replay(record_ids)` validates pattern-checked, reference-closed subsets
+  against the still-present files, with membership-relative currentness.
+
+## Verification
+
+```bash
+.venv/bin/python -m pytest tests/model_kernel/   # focused suite
+.venv/bin/python -m pytest                       # full repository suite
+```
+
+## Known limitations
+
+No kernel correction path for registrations; registrations and type
+definitions are irrevocable (no withdrawal); a lineage may end with no
+active assertion; disagreement detection exists only for hierarchy types;
+no time-varying structure (`rwd_` never means "stopped being true at T");
+runtime registration↔declaration consistency is procedural; no global
+cross-set anchor uniqueness at runtime; no knowledge-time revision queries;
+single-writer stores; no fsync-grade durability claim. Next milestone
+question: ports/variables/constraints layering over this kernel.
