@@ -231,10 +231,35 @@ class TestResultInvariants:
     def test_relationships_result_tuple_placement_validated(self):
         with pytest.raises(ValidationError):
             RelationshipsResult(
+                status="registered",
                 anchor_id=ENT_A, direction="outgoing", type_name=None,
                 context=AS_BUILT, active=(),
                 inactive=(summary(),),  # an ACTIVE summary in inactive
                 lineage_conflicts=(), revision=revision0())
+
+    def test_not_registered_relationships_result_carries_nothing(self):
+        """MK repair F3: absence gained a status, so "never registered" must
+        not be able to claim edges. Registered-and-empty stays legitimate."""
+        def result(**overrides):
+            fields = dict(status="registered", anchor_id=ENT_A,
+                          direction="outgoing", type_name=None,
+                          context=AS_BUILT, active=(), inactive=(),
+                          lineage_conflicts=(), revision=revision0())
+            fields.update(overrides)
+            return RelationshipsResult(**fields)
+
+        assert result(active=(summary(),)).status == "registered"
+        assert result(status="not_registered").active == ()  # legitimate
+        assert result().status == "registered"  # registered may be empty
+        withdrawn = summary(active=False, withdrawn_by=("rwd_" + "2" * 64,))
+        conflict = LineageConflict(
+            predecessor_id=REL,
+            competing_successor_ids=("rel_" + "2" * 64, "rel_" + "3" * 64))
+        for populated in (dict(active=(summary(),)),
+                          dict(inactive=(withdrawn,)),
+                          dict(lineage_conflicts=(conflict,))):
+            with pytest.raises(ValidationError):
+                result(status="not_registered", **populated)
 
     def test_parent_result_field_coherence(self):
         with pytest.raises(ValidationError):

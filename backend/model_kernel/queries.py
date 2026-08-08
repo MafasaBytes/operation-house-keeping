@@ -10,6 +10,9 @@ children visited in canonical order.
 """
 
 import re
+import typing
+
+from pydantic import TypeAdapter, ValidationError
 
 from backend.model_kernel.contracts import (
     AssertionContext,
@@ -37,6 +40,8 @@ from backend.model_kernel.store import LoadedModel
 from backend.system_identity import ENTITY_ANCHOR_ID_PATTERN
 
 _ANCHOR_ID = re.compile(ENTITY_ANCHOR_ID_PATTERN)
+_CONTEXT_ADAPTER: TypeAdapter = TypeAdapter(AssertionContext)
+_LIFECYCLE_VIEWS = frozenset(typing.get_args(LifecycleView))
 
 
 class ModelQueries:
@@ -52,6 +57,30 @@ class ModelQueries:
                 f"{anchor_id!r} is not a canonical entity anchor id")
         return anchor_id
 
+    def _require_view(self, view):
+        """Validate the lifecycle view BEFORE evaluation — never at result
+        construction, which would leak a raw ValidationError."""
+        if view is None:
+            return None
+        if not isinstance(view, str) or view not in _LIFECYCLE_VIEWS:
+            raise ModelQueryError(
+                "MODEL_VIEW_INVALID",
+                f"{view!r} is not a lifecycle view "
+                f"({', '.join(sorted(_LIFECYCLE_VIEWS))})")
+        return view
+
+    def _require_context(self, context) -> AssertionContext:
+        """Normalize a valid context mapping into the discriminated model so
+        matching never compares against raw input; malformed context is a
+        typed error, never a silently empty answer."""
+        try:
+            return _CONTEXT_ADAPTER.validate_python(context)
+        except ValidationError as error:
+            raise ModelQueryError(
+                "MODEL_CONTEXT_INVALID",
+                "context must be a lifecycle_view or view_independent "
+                "assertion context") from error
+
     def _require_type(self, type_name: str):
         current_id = self.loaded.current_type_by_name.get(type_name)
         if current_id is None:
@@ -61,6 +90,7 @@ class ModelQueries:
         return self.loaded.types[current_id]
 
     def _require_hierarchy_type(self, type_name: str, view):
+        view = self._require_view(view)
         definition = self._require_type(type_name)
         if definition.hierarchy_semantics != "containment":
             raise ModelQueryError(
@@ -137,6 +167,7 @@ class ModelQueries:
         if direction not in ("incoming", "outgoing", "both"):
             raise ModelQueryError("MODEL_DIRECTION_INVALID",
                                   f"{direction!r} is not a query direction")
+        context = self._require_context(context)
         if type_name is not None:
             definition = self._require_type(type_name)
             if definition.context_requirement != context.kind:
@@ -145,6 +176,15 @@ class ModelQueries:
                     f"type {type_name!r} requires "
                     f"{definition.context_requirement} context; a "
                     f"{context.kind} query cannot match it")
+
+        if anchor_id not in self.loaded.registrations_by_anchor:
+            # absence is structured: unknown to this revision is not the
+            # same answer as "registered, no declared edge"
+            return RelationshipsResult(
+                status="not_registered", anchor_id=anchor_id,
+                direction=direction, type_name=type_name, context=context,
+                active=(), inactive=(), lineage_conflicts=(),
+                revision=self.loaded.revision)
 
         matched: list[str] = []
         for record_id in sorted(self.loaded.assertions):
@@ -176,9 +216,10 @@ class ModelQueries:
             for predecessor, successors in sorted(by_predecessor.items())
             if len(successors) >= 2)
         return RelationshipsResult(
-            anchor_id=anchor_id, direction=direction, type_name=type_name,
-            context=context, active=active, inactive=inactive,
-            lineage_conflicts=conflicts, revision=self.loaded.revision)
+            status="registered", anchor_id=anchor_id, direction=direction,
+            type_name=type_name, context=context, active=active,
+            inactive=inactive, lineage_conflicts=conflicts,
+            revision=self.loaded.revision)
 
     # -- hierarchy ---------------------------------------------------------
 

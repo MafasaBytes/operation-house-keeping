@@ -70,6 +70,31 @@ class TestStrictContextEquality:
             assert len(result.active) == 1
             assert result.active[0].context == context
 
+    def test_all_five_lifecycle_views_are_separate_partitions(self, tmp_path):
+        """Acceptance case: the five views are five partitions, not a
+        spectrum — one edge asserted in every view is answered by exactly
+        one assertion per view, with no bleed between them."""
+        from backend.model_kernel.contracts import LifecycleViewContext
+
+        views = ("as_designed", "as_built", "as_configured", "as_operated",
+                 "as_maintained")
+        contexts = [LifecycleViewContext(kind="lifecycle_view", view=view)
+                    for view in views]
+        kind = contains_type()
+        store = containment_world(
+            tmp_path,
+            *[assertion(kind, source=ENT_A, target=ENT_B, context=context)
+              for context in contexts])
+        queries = ModelQueries(store.load())
+        seen = set()
+        for context in contexts:
+            result = queries.relationships(ENT_B, direction="incoming",
+                                           context=context)
+            assert len(result.active) == 1, context.view
+            assert result.active[0].context == context
+            seen.add(result.active[0].record_id)
+        assert len(seen) == 5  # five distinct assertions, never shared
+
     def test_type_context_mismatch_is_typed_error_not_empty(self, tmp_path):
         queries = mixed_world(tmp_path)
         with pytest.raises(ModelQueryError) as excinfo:

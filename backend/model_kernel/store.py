@@ -14,6 +14,7 @@ codes — never absolute paths.
 import json
 import os
 import re
+import warnings
 from dataclasses import dataclass
 from pathlib import Path
 from types import MappingProxyType
@@ -76,6 +77,33 @@ def _fail(code: str, message: str) -> None:
     raise ModelIntegrityError(code, message)
 
 
+def revalidate(record) -> ModelRecord:
+    """Structurally revalidate a supplied record from plain serialized field
+    data at a public trust boundary.
+
+    Belonging to a record class proves nothing: ``model_copy``,
+    ``model_construct``, and stale or hand-deserialized instances all
+    bypass field validation, and a caller can rehash the result so its
+    content-derived id looks authentic. Every public boundary therefore
+    re-validates from data and uses the RESULT as the authoritative value —
+    so a structurally invalid record can never reach hashing, semantic
+    validation, or the ledger. Shape failures (and any serializer warning
+    they would raise) surface as a typed, path-free
+    ``MODEL_RECORD_INVALID``."""
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")  # serializer warnings are failures
+            payload = record.model_dump(mode="python")
+        return _RECORD_ADAPTER.validate_python(payload)
+    except (ValidationError, ValueError, TypeError, AttributeError,
+            KeyError, Warning) as error:
+        record_id = getattr(record, "record_id", None)
+        subject = record_id if isinstance(record_id, str) else "<unidentified>"
+        raise ModelIntegrityError(
+            "MODEL_RECORD_INVALID",
+            f"record {subject} is not structurally valid") from error
+
+
 def validate_record_collection(
     model_id: str,
     records: Mapping[str, ModelRecord],
@@ -90,6 +118,11 @@ def validate_record_collection(
     types: dict[str, RelationshipTypeDefinition] = {}
     assertions: dict[str, RelationshipAssertion] = {}
     withdrawals: dict[str, RelationshipWithdrawal] = {}
+
+    # This is itself a public boundary: revalidate structurally BEFORE any
+    # key binding, hashing, or semantic check, and keep the revalidated
+    # instances as the authoritative collection.
+    records = {key: revalidate(record) for key, record in records.items()}
 
     for record_id, record in records.items():
         if record_id != record.record_id:
@@ -262,6 +295,10 @@ class ModelStore:
     # -- append (VALIDATING; single-writer; atomic promote) ----------------
 
     def append(self, record: ModelRecord) -> str:
+        # Structural revalidation FIRST: a caller-supplied instance may have
+        # bypassed field validation and been rehashed, so its hash is not
+        # trustworthy until the shape is proven from data.
+        record = revalidate(record)
         if not verify_record_id(record):
             raise ModelIntegrityError(
                 "MODEL_RECORD_HASH_MISMATCH",

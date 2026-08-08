@@ -323,6 +323,10 @@ class LineageConflict(_Frozen):
 
 
 class RelationshipsResult(_Frozen):
+    """Absence is a structured status: an entity unknown to this revision is
+    never conflated with a registered entity that has no declared edge."""
+
+    status: Literal["registered", "not_registered"]
     anchor_id: str = Field(pattern=ENTITY_ANCHOR_ID_PATTERN)
     direction: Literal["incoming", "outgoing", "both"]
     type_name: str | None
@@ -338,6 +342,10 @@ class RelationshipsResult(_Frozen):
             raise ValueError("inactive summary placed in the active tuple")
         if any(summary.active for summary in self.inactive):
             raise ValueError("active summary placed in the inactive tuple")
+        if self.status == "not_registered" and (
+                self.active or self.inactive or self.lineage_conflicts):
+            raise ValueError(
+                "an unregistered anchor carries no relationships")
         return self
 
 
