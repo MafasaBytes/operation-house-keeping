@@ -257,6 +257,9 @@ nothing) / `ModelQueryError` (contract misuse). All codes `MODEL_*`.
 **Path-leakage rule:** error messages expose model IDs, record IDs, file
 *names*, and stable error codes — never the temporary-directory absolute
 path, the model-store root absolute path, or unrelated filesystem locations.
+Environment failures during append are wrapped as
+`ModelIntegrityError("MODEL_STORAGE_FAILURE", …)` carrying ids only, with
+the operating-system error chained as the cause.
 
 ## Integrity invariants (all-or-nothing; enforced at validating append AND load)
 
@@ -452,7 +455,7 @@ claimed name).
 
 ## Acceptance criteria
 
-All `tests/model_kernel/` tests pass (≈140–155), including: AST-based import
+All `tests/model_kernel/` tests pass (130 as implemented), including: AST-based import
 enforcement plus no-store-paths and stores-absent behavioral isolation;
 byte-for-byte non-writes to accepted stores and existing binding records
 including on failure paths; validating-append adversarial cases (dangling
