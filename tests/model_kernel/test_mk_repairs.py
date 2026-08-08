@@ -67,6 +67,20 @@ def corrupt(record, *, rehash=True, **updates):
     return forged
 
 
+def construct_unvalidated(record, **updates):
+    """Forge via ``model_construct``, which skips validation entirely
+    instead of overwriting validated fields, then rehash so the forgery is
+    self-consistent."""
+    fields = {name: getattr(record, name)
+              for name in type(record).model_fields}
+    fields.update(updates)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        forged = type(record).model_construct(**fields)
+        return type(record).model_construct(
+            **{**fields, "record_id": compute_record_id(forged)})
+
+
 def snapshot(store) -> dict[str, str]:
     """path name -> sha256 of every ledger member."""
     return {path.name: hashlib.sha256(path.read_bytes()).hexdigest()
@@ -122,6 +136,14 @@ CORRUPTIONS = [
     pytest.param(lambda kind, edge: corrupt(registration(ENT_C), rehash=False,
                                             record_kind="not_a_kind"),
                  id="record_kind_unknown"),
+    # model_construct skips validation entirely rather than overwriting
+    # validated fields — the other half of the bypass surface
+    pytest.param(lambda kind, edge: construct_unvalidated(registration(ENT_C),
+                                                          note=123),
+                 id="registration_model_construct_bad_note"),
+    pytest.param(lambda kind, edge: construct_unvalidated(
+        registration(ENT_C), anchor={"anchor_id": "not-an-anchor"}),
+        id="registration_model_construct_broken_anchor"),
 ]
 
 
@@ -285,6 +307,21 @@ class TestQueryInputValidation:
              lambda q: q.hierarchy_health("contains", view="as_imagined")),
             ("hierarchy_health(type_name)",
              lambda q: q.hierarchy_health(None, view="as_built")),
+            # unhashable type names: a dict-key lookup on the caller's value
+            # leaked a raw TypeError past the whole error contract
+            ("relationships(unhashable type_name)",
+             lambda q: q.relationships(ENT_A, direction="both", type_name=[],
+                                       context=AS_BUILT)),
+            ("parents(unhashable type_name)",
+             lambda q: q.parents(ENT_B, [], view="as_built")),
+            ("children(unhashable type_name)",
+             lambda q: q.children(ENT_A, {}, view="as_built")),
+            ("ancestors(unhashable type_name)",
+             lambda q: q.ancestors(ENT_B, [], view="as_built")),
+            ("descendants(unhashable type_name)",
+             lambda q: q.descendants(ENT_A, [], view="as_built")),
+            ("hierarchy_health(unhashable type_name)",
+             lambda q: q.hierarchy_health({}, view="as_built")),
         ]
         leaked = []
         for label, call in calls:

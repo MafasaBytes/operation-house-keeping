@@ -216,9 +216,11 @@ RelationshipSummary
 LineageConflict      { predecessor_id: rel_, competing_successor_ids:
                        sorted unique tuple of rel_, min 2 }
 
-RelationshipsResult  { anchor_id, direction, type_name|None, context,
+RelationshipsResult  { status registered|not_registered, anchor_id, direction,
+                       type_name|None, context,
                        active: tuple[RelationshipSummary], inactive: tuple[...],
                        lineage_conflicts: tuple[LineageConflict], revision }
+                     # not_registered ⇒ all three tuples empty
 
 EntityResult         { status registered|not_registered, anchor_id,
                        registration summary|None, revision }
@@ -252,8 +254,11 @@ HierarchyHealth      { type_name, view, cycles: tuple[{members sorted,
 ```
 
 Errors: `ModelKernelError(error_code, message)` → `ModelConfigurationError`
-(bad model root/id) / `ModelIntegrityError` (invalid revision — all-or-
-nothing) / `ModelQueryError` (contract misuse). All codes `MODEL_*`.
+(bad model root/id — `MODEL_SET_ID_INVALID`) / `ModelIntegrityError`
+(invalid revision — all-or-nothing; includes `MODEL_REVISION_INVALID` for a
+malformed, duplicated, or absent replay membership, and
+`MODEL_STORAGE_FAILURE` for environment failures) / `ModelQueryError`
+(contract misuse). All codes `MODEL_*`.
 **Path-leakage rule:** error messages expose model IDs, record IDs, file
 *names*, and stable error codes — never the temporary-directory absolute
 path, the model-store root absolute path, or unrelated filesystem locations.
@@ -495,9 +500,9 @@ claimed name).
 
 ## Acceptance criteria
 
-All `tests/model_kernel/` tests pass (165 as implemented, including the
+All `tests/model_kernel/` tests pass (167 as implemented, including the
 owner-validation repair suite), including: structural revalidation at both
-public store boundaries (rehashed `model_copy`/`model_construct`
+public store boundaries (rehashed `model_copy` and `model_construct`
 corruption of all four record kinds and an unknown `record_kind` rejected
 with typed path-free `MODEL_RECORD_INVALID`, no member file written, prior
 revision byte-identical and still loadable, no serializer warning escaping,

@@ -82,6 +82,12 @@ class ModelQueries:
                 "assertion context") from error
 
     def _require_type(self, type_name: str):
+        # guard the type BEFORE the mapping lookup: an unhashable value
+        # would otherwise leak a raw TypeError past the error contract
+        if not isinstance(type_name, str):
+            raise ModelQueryError(
+                "MODEL_UNKNOWN_TYPE",
+                f"{type_name!r} is not a relationship type name")
         current_id = self.loaded.current_type_by_name.get(type_name)
         if current_id is None:
             raise ModelQueryError(

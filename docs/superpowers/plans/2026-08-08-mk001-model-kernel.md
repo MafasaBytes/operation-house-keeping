@@ -143,6 +143,34 @@ generated through `identity_binding`'s own store code as fixture tooling),
 4. Generate fixtures; green. Commit
    `feat: committed MK-001 demo model and declaration fixture`.
 
+## Task 6 — Owner-validation repairs (added 2026-08-08 after MK-001 validation)
+
+Owner validation of the completed slice reproduced four defects; each was
+re-reproduced red-first by the test engineer in
+`tests/model_kernel/test_mk_repairs.py` before any production change.
+
+1. **Ledger poisoning (F1)** — a rehashed `model_copy`/`model_construct`
+   forgery appended successfully and the next `load()` failed. Repair:
+   `revalidate()` re-validates every supplied record from serialized field
+   data at BOTH public boundaries (`ModelStore.append` and
+   `validate_record_collection`), before key binding, hashing, or semantic
+   checks, using the revalidated instance as authoritative; typed,
+   path-free `MODEL_RECORD_INVALID`; serializer warnings escalated.
+2. **Unvalidated query inputs (F2)** — a bad view leaked `ValidationError`;
+   a mapping context silently answered empty; an unhashable `type_name`
+   leaked `TypeError` (found by the architect's agreement check). Repair:
+   view, context, direction, anchor id, and type name are validated and
+   normalized before evaluation (`MODEL_VIEW_INVALID`,
+   `MODEL_CONTEXT_INVALID`; existing semantic codes unchanged).
+3. **Ambiguous absence (F3)** — `RelationshipsResult.status`
+   (`registered | not_registered`) with the empty-tuple invariant.
+4. **No public surface (F4)** — `__init__.py` re-exports the supported API
+   under an explicit `__all__`; internals stay private.
+
+Acceptance: focused suite green including all five lifecycle-view
+partitions; full suite; both clean checkouts; committed demo golden
+revision and binding sets unchanged; upstream boundary intact.
+
 ## Task 5 — Gates and final verification
 
 1. software-test-engineer audit: red-first evidence per slice (captured
