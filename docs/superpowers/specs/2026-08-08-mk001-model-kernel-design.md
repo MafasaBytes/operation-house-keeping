@@ -352,12 +352,29 @@ file bytes); staging in `.staging/` outside the scanned directory; honest
 single-writer assumption (no locks pretended; TOCTOU under concurrent
 writers is out of contract); no fsync-grade durability claim.
 
+**Structural revalidation at public trust boundaries (mandatory).** A
+supplied object belonging to a record class proves nothing:
+`model_copy`, `model_construct`, and stale or hand-deserialized instances
+bypass field validation, and a caller can rehash the result so its
+content-derived id looks authentic. Therefore `ModelStore.append` and
+`validate_record_collection` — each a public boundary in its own right —
+revalidate **every** supplied record from plain serialized field data
+before key binding, hashing, or semantic checks, and use the revalidated
+instances as the authoritative values in the normalized collection and in
+`LoadedModel`. Shape failures, including any serializer warning they would
+raise, surface as typed, path-free
+`ModelIntegrityError("MODEL_RECORD_INVALID", …)`; raw `ValidationError`,
+`KeyError`, `AttributeError`, serializer errors, and warnings never escape
+as the public outcome. This is what makes "every successful append leaves
+an immediately loadable valid revision" true rather than aspirational.
+
 **`append(record)` — validating append (deliberate, owner-approved
 divergence from IB-001's record-local append; kernel records form a
 referential graph and late detection would poison the set for every
 reader):**
 
-1. validate the supplied record and its content-derived ID;
+1. structurally revalidate the supplied record, then verify its
+   content-derived ID;
 2. **load and fully validate the complete current model set** — a corrupted
    or invalid existing set fails the append with a typed integrity error
    before anything else happens, even for a would-be no-op;
@@ -393,12 +410,35 @@ revision is genuinely immutable.
 
 `ModelQueries(loaded_model)` — total functions over one explicit immutable
 revision; no ambient model, no implicit clock; every result embeds the full
-`ModelRevision`. Misuse raises typed `ModelQueryError` (malformed ids,
-unknown `type_name` → `MODEL_UNKNOWN_TYPE`, wrong/incompatible context arm →
-`MODEL_CONTEXT_MISMATCH`, missing/forbidden view → `MODEL_VIEW_REQUIRED` /
-`MODEL_VIEW_FORBIDDEN`, hierarchy queries on non-hierarchy types →
-`MODEL_NOT_A_HIERARCHY`); absence and disagreement are statuses, never
-exceptions.
+`ModelRevision`. **Public query arguments are validated and normalized
+before evaluation** — anchor id, type name, direction, lifecycle view, and
+assertion context: a valid context *mapping* is normalized into the
+discriminated context model (so matching never compares against raw input
+and malformed input never becomes a silently empty answer), a malformed
+context raises `MODEL_CONTEXT_INVALID`, and an invalid view literal raises
+`MODEL_VIEW_INVALID`. The semantic codes keep their meanings: malformed
+ids → `MODEL_ANCHOR_ID_INVALID`, bad direction → `MODEL_DIRECTION_INVALID`,
+unknown `type_name` → `MODEL_UNKNOWN_TYPE`, wrong/incompatible context arm
+→ `MODEL_CONTEXT_MISMATCH`, missing/forbidden view →
+`MODEL_VIEW_REQUIRED` / `MODEL_VIEW_FORBIDDEN`, hierarchy queries on
+non-hierarchy types → `MODEL_NOT_A_HIERARCHY`. No public query path leaks
+`ValidationError`, `AttributeError`, or `TypeError`. Absence and
+disagreement are statuses, never exceptions.
+
+**Relationship absence is structured**: `RelationshipsResult` carries
+`status: registered | not_registered`, so an entity unknown to this
+revision is never conflated with a registered entity that has no declared
+edge. `not_registered` implies empty active, inactive, and lineage-conflict
+tuples; `registered` may legitimately be empty; both carry the answering
+revision and the normalized query context.
+
+**Supported import surface**: callers import from `backend.model_kernel`,
+which re-exports (with an explicit `__all__`) the ledger record contracts,
+the assertion/query context contracts, the authority and evidence
+contracts, the typed error tree, the result contracts, and `build_record`,
+`ModelStore`, `LoadedModel`, `ModelQueries`. Canonicalization internals,
+`validate_record_collection`, and the hierarchy projection are
+implementation details and are deliberately not re-exported.
 
 `relationships(anchor_id, direction=incoming|outgoing|both, type_name=None,
 context: AssertionContext)` — strict context equality: the result contains
@@ -455,7 +495,20 @@ claimed name).
 
 ## Acceptance criteria
 
-All `tests/model_kernel/` tests pass (130 as implemented), including: AST-based import
+All `tests/model_kernel/` tests pass (165 as implemented, including the
+owner-validation repair suite), including: structural revalidation at both
+public store boundaries (rehashed `model_copy`/`model_construct`
+corruption of all four record kinds and an unknown `record_kind` rejected
+with typed path-free `MODEL_RECORD_INVALID`, no member file written, prior
+revision byte-identical and still loadable, no serializer warning escaping,
+and `validate_record_collection` rejecting a malformed instance directly);
+typed query-input validation (`MODEL_VIEW_INVALID` across all five
+hierarchy entry points, mapping-context normalization equalling the model
+form, `MODEL_CONTEXT_INVALID` for malformed contexts, and a sweep proving
+no public query raises anything outside the `ModelKernelError` tree); all
+five lifecycle views as separate query partitions; registered-versus-
+unregistered `RelationshipsResult.status` with its contract invariant; the
+declared package import surface with internals staying private; plus: AST-based import
 enforcement plus no-store-paths and stores-absent behavioral isolation;
 byte-for-byte non-writes to accepted stores and existing binding records
 including on failure paths; validating-append adversarial cases (dangling

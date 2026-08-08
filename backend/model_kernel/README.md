@@ -35,11 +35,25 @@ runtime model sets use the documented external verification procedure.
   context_requirement}`; exactly one current definition per name.
   Assertions are judged by the exact definition they cite and stale-marked
   when it is superseded — never retro-invalidated.
-- **Validating append**: `append` fully validates the current set, then the
-  prospective set, before an atomic staged promote — absent filesystem
-  tampering, the on-disk ledger is a valid revision after every successful
-  append. Identical re-append is a validated no-op that still fails if any
-  sibling is corrupted. Single-writer, honestly stated.
+- **Validating append**: every supplied record is structurally revalidated
+  from serialized field data at the public boundary (a record class alone
+  proves nothing — `model_copy`/`model_construct`/stale instances bypass
+  validation and can be rehashed), then `append` fully validates the
+  current set and the prospective set before an atomic staged promote —
+  absent filesystem tampering, the on-disk ledger is a valid revision after
+  every successful append. Identical re-append is a validated no-op that
+  still fails if any sibling is corrupted. Single-writer, honestly stated.
+- **Public query inputs are validated before evaluation**: anchor id, type
+  name, direction, lifecycle view (`MODEL_VIEW_INVALID`), and assertion
+  context (mappings normalized; `MODEL_CONTEXT_INVALID` when malformed).
+  Malformed input is never a silently empty answer, and no query leaks a
+  `ValidationError`, `AttributeError`, or `TypeError`.
+- **Absence is structured**: `RelationshipsResult.status` distinguishes a
+  registered entity with no matching edge from an anchor unknown to the
+  revision.
+- **Supported surface**: import from `backend.model_kernel` (see
+  `__all__`); canonicalization internals, collection validation, and the
+  hierarchy projection are private implementation details.
 - **Contention is surfaced, malformation invalidates**: distinct-parent/
   same-child conflicts and cycles are structured query results with full
   candidate/assertion disclosure, never resolved by recency or authority;
