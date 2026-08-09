@@ -48,13 +48,15 @@ runtime model sets use the documented external verification procedure.
   `MODEL_VIEW_INVALID`, assertion context → normalized mappings or
   `MODEL_CONTEXT_INVALID`) and store arguments (set directory, record
   collection, model id, replay membership) alike. Malformed input is never
-  a silently empty answer, and **every public entry point of the kernel —
-  queries, `ModelStore` construction, `append`, `load`, `replay`,
-  `validate_record_collection`, `build_record`, and `ModelQueries`
-  construction — fails through the `ModelKernelError` tree**: no
-  `ValidationError`, `AttributeError`, `TypeError`, `KeyError`,
+  a silently empty answer, and **every operational public entry point of
+  the kernel — queries, `ModelStore` construction, `append`, `load`,
+  `replay`, `validate_record_collection`, `build_record`, and
+  `ModelQueries` construction — fails through the `ModelKernelError`
+  tree**: no `ValidationError`, `AttributeError`, `TypeError`, `KeyError`,
   `UnicodeError`, `OSError`, serializer error, or warning escapes as the
-  public outcome.
+  public outcome. Direct construction of the pydantic contract models
+  (`EntityRegistration(...)` and friends) is the one deliberate carve-out:
+  it follows pydantic's normal `ValidationError` contract.
 - **Absence is structured**: `RelationshipsResult.status` distinguishes a
   registered entity with no matching edge from an anchor unknown to the
   revision.
@@ -79,6 +81,16 @@ runtime model sets use the documented external verification procedure.
 - **Revisions replay**: `mrv_` revisions are computed-only (never stored);
   `replay(record_ids)` validates pattern-checked, reference-closed subsets
   against the still-present files, with membership-relative currentness.
+  Membership input is validated before any member path is constructed;
+  then store availability is probed before member reads. Empty membership
+  is a valid revision only over an available model store; it is not
+  evidence that a missing store is empty (`MODEL_STORAGE_FAILURE` when the
+  records directory is gone, replaced, or unreadable). Exact-subset replay
+  never requires unrelated ledger members to validate.
+- **Cleanup is best-effort**: if promoting a staged record fails and
+  removing the staging temp then fails too, harmless staging residue may
+  remain — it never masks the typed `MODEL_STORAGE_FAILURE` and never
+  corrupts a later `load`.
 
 ## Verification
 
@@ -95,5 +107,10 @@ active assertion; disagreement detection exists only for hierarchy types;
 no time-varying structure (`rwd_` never means "stopped being true at T");
 runtime registration↔declaration consistency is procedural; no global
 cross-set anchor uniqueness at runtime; no knowledge-time revision queries;
-single-writer stores; no fsync-grade durability claim. Next milestone
-question: ports/variables/constraints layering over this kernel.
+single-writer stores; no fsync-grade durability claim. Validating append
+is O(N²) to build an N-record ledger — accepted for MK-001 scale. The
+typed-failure translation catches an enumerated exception set: a hostile
+in-process class whose metaclass raises outside it can still surface that
+exception, and exception `__cause__` chains can carry raw payloads into
+full tracebacks (public messages stay clean). Next milestone question:
+ports/variables/constraints layering over this kernel.

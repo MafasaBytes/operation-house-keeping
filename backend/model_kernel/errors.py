@@ -2,10 +2,13 @@
 
 Kept in its own module so every layer — including ``canonical``, which
 ``contracts`` imports — can raise through the public contract without an
-import cycle. Every public entry point of the kernel fails through this
-tree: raw ``ValidationError``, ``KeyError``, ``AttributeError``,
+import cycle. Every OPERATIONAL public entry point of the kernel
+(stores, queries, ``build_record``, collection validation) fails through
+this tree: raw ``ValidationError``, ``KeyError``, ``AttributeError``,
 ``TypeError``, ``OSError``, ``UnicodeError``, serializer errors, and
-warnings never escape as the public outcome. Messages carry model ids,
+warnings never escape as the public outcome. Direct construction of the
+pydantic contract models is the deliberate carve-out and follows
+pydantic's normal ``ValidationError`` contract. Messages carry model ids,
 record ids, and file names — never absolute paths.
 """
 

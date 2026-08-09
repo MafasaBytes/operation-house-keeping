@@ -256,9 +256,17 @@ HierarchyHealth      { type_name, view, cycles: tuple[{members sorted,
 Errors: `ModelKernelError(error_code, message)` → `ModelConfigurationError`
 (bad model root/id — `MODEL_SET_ID_INVALID`) / `ModelIntegrityError`
 (invalid revision — all-or-nothing; includes `MODEL_REVISION_INVALID` for a
-malformed, duplicated, or absent replay membership, and
+malformed, duplicated, absent, or unmaterializable replay membership, and
 `MODEL_STORAGE_FAILURE` for environment failures) / `ModelQueryError`
 (contract misuse). All codes `MODEL_*`.
+**Replay availability rule (owner decision):** empty membership is a valid
+revision only over an available model store; it is not evidence that a
+missing store is empty. `replay` validates membership input first
+(malformed/duplicate member ids → `MODEL_REVISION_INVALID` before any
+member-path construction), then probes that the records directory exists
+and is readable (deleted, replaced by a non-directory, or unreadable →
+`MODEL_STORAGE_FAILURE`), then replays the exact supplied membership —
+without requiring unrelated ledger members to validate.
 **Path-leakage rule:** error messages expose model IDs, record IDs, file
 *names*, and stable error codes — never the temporary-directory absolute
 path, the model-store root absolute path, or unrelated filesystem locations.
@@ -372,10 +380,18 @@ raise, surface as typed, path-free
 successful append leaves an immediately loadable valid revision" true
 rather than aspirational.
 
-**Typed failure is kernel-wide, not query-only.** Every public entry point
-— `ModelStore` construction, `append`, `load`, `replay`,
+**Typed failure is kernel-wide, not query-only.** Every operational public
+entry point — `ModelStore` construction, `append`, `load`, `replay`,
 `validate_record_collection`, `build_record`, `ModelQueries` construction,
 and every query method — fails through the `ModelKernelError` tree.
+`build_record` translates an invalid or unsupported record class, missing
+required fields, invalid field values, raw pydantic `ValidationError`,
+attribute/key/type failures while identifying the record kind, and
+canonical serialization failures into
+`ModelIntegrityError("MODEL_RECORD_INVALID", …)`, with a message that is
+path-free and never echoes field values or a non-identifier class name.
+The one deliberate carve-out: direct construction of the pydantic contract
+models follows pydantic's normal `ValidationError` contract.
 Nothing outside that tree escapes as the public outcome: not
 `ValidationError`, `KeyError`, `AttributeError`, `TypeError`,
 `UnicodeError` (content that validates but cannot be canonically
@@ -402,11 +418,15 @@ reader):**
    under every invariant above;
 5. stage a unique temp file and atomically promote only after prospective
    validation succeeds. On any failure: no member file written, the previous
-   revision byte-for-byte unchanged and loadable, staging cleaned.
+   revision byte-for-byte unchanged and loadable, staging cleaned
+   best-effort — if cleanup itself fails, harmless staging residue may
+   remain, and it never replaces the typed `MODEL_STORAGE_FAILURE` outcome
+   or corrupts a later load.
 
 Consequences (documented): construction order — types and registrations
 before assertions that cite them, predecessors before successors; O(set)
-validation per append (trivial at MK-001 scale; a derived projection can
+validation per append — O(N²) to build an N-record ledger, accepted as an
+MK-001 limitation (a derived projection can
 change this later without contract change); **absent filesystem tampering,
 the on-disk ledger is a valid revision after every successful append.**
 Load-time full validation is retained unchanged because crafted files bypass
@@ -512,8 +532,12 @@ claimed name).
 
 ## Acceptance criteria
 
-All `tests/model_kernel/` tests pass (189 as implemented, including the
-owner-validation repair suite), including: structural revalidation at both
+All `tests/model_kernel/` tests pass (213 as implemented, including the
+owner-validation repair suite and the closure suite:
+`build_record` typed-failure matrix, replay empty-versus-unavailable
+distinction with input-validation-first ordering, best-effort append
+cleanup under double fault, raising-membership-iterable translation, and
+duck-typed/hostile-class-name hardening), including: structural revalidation at both
 public store boundaries (rehashed `model_copy` and `model_construct`
 corruption of all four record kinds and an unknown `record_kind` rejected
 with typed path-free `MODEL_RECORD_INVALID`, no member file written, prior

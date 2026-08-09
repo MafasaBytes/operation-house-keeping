@@ -171,6 +171,39 @@ Acceptance: focused suite green including all five lifecycle-view
 partitions; full suite; both clean checkouts; committed demo golden
 revision and binding sets unchanged; upstream boundary intact.
 
+## Task 7 — Closure repairs (added 2026-08-09 after final owner validation)
+
+Owner accepted the four Task-6 repairs and mandated one closure pass,
+encoded red-first in `tests/model_kernel/test_mk_closure.py` (test
+engineer), repaired minimally (backend engineer), then adversarially
+audited one final time (code reviewer):
+
+1. **`build_record` typed failure** — the operational API translates every
+   constructive failure (bad class, missing/invalid fields, pydantic
+   `ValidationError`, kind-identification faults, canonical serialization
+   faults, duck-typed finalization faults) into path-free
+   `MODEL_RECORD_INVALID` that never echoes field values or a
+   non-identifier class name. Nine stale test pins that asserted raw
+   `ValidationError` through `build_record` were migrated to the kernel
+   error (direct contract-model construction keeps pydantic behavior, per
+   the owner's carve-out); a first-attempt hybrid exception class
+   satisfying both contracts was rejected as masking the contract change.
+2. **Replay availability rule (owner decision)** — empty membership is a
+   valid revision only over an available store: membership input validated
+   first, then a light `os.scandir` availability probe
+   (`MODEL_STORAGE_FAILURE` on deleted/replaced/unreadable records dir),
+   then exact-subset replay; raising membership iterables now fail typed
+   (`MODEL_REVISION_INVALID`), closing a reviewer-confirmed leak.
+3. **Best-effort append cleanup** — a cleanup `OSError` after a failed
+   promotion no longer replaces the typed `MODEL_STORAGE_FAILURE`;
+   staging residue is harmless and load-safe.
+4. **Documentation narrowing** — "operational public entry points" vs the
+   direct-pydantic-construction carve-out; the replay availability rule;
+   O(N²) validating append recorded as an accepted MK-001 limitation.
+
+Acceptance: focused suite 213; full suite; both clean checkouts; golden
+revision unchanged; upstream boundary intact; commits local, no push.
+
 ## Task 5 — Gates and final verification
 
 1. software-test-engineer audit: red-first evidence per slice (captured
