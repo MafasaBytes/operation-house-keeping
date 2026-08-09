@@ -13,6 +13,7 @@ from backend.model_kernel.contracts import (
     IdentityBindingRecordEvidence,
     LifecycleViewContext,
     LineageConflict,
+    ModelIntegrityError,
     ModelRevision,
     OwnerDeclarationEvidence,
     ParentResult,
@@ -74,8 +75,9 @@ def assertion(**overrides):
 class TestRecordShapes:
     def test_registration_has_no_lifecycle(self):
         """Registrations are lifecycle-free: no supersedes field exists, and
-        a mistaken registration has no kernel correction path."""
-        with pytest.raises(ValidationError):
+        a mistaken registration has no kernel correction path. Through the
+        operational `build_record` API the rejection is typed."""
+        with pytest.raises(ModelIntegrityError):
             registration(supersedes=None)
 
     def test_registration_embeds_full_anchor_verbatim(self):
@@ -89,20 +91,20 @@ class TestRecordShapes:
         for record in (registration(), type_definition(), assertion()):
             with pytest.raises(ValidationError):
                 record.note = "edited"
-        with pytest.raises(ValidationError):
+        with pytest.raises(ModelIntegrityError):
             registration(unexpected_field="x")
 
     def test_type_definition_lineage_fields(self):
         record = type_definition()
         assert record.record_id.startswith("rtd_")
         assert record.hierarchy_semantics == "containment"
-        with pytest.raises(ValidationError):
+        with pytest.raises(ModelIntegrityError):
             type_definition(directionality="symmetric")  # MK-001: directed only
-        with pytest.raises(ValidationError):
+        with pytest.raises(ModelIntegrityError):
             type_definition(type_name="Contains")  # lowercase machine names
 
     def test_containment_with_self_relation_rejected_at_construction(self):
-        with pytest.raises(ValidationError):
+        with pytest.raises(ModelIntegrityError):
             type_definition(self_relation_allowed=True)
 
     def test_endpoint_kind_tuples_normalized_sorted_unique(self):
@@ -117,19 +119,19 @@ class TestRecordShapes:
             source_referent_kinds=("unknown", "physical_instance"),
             target_referent_kinds=("physical_instance",))
         assert "unknown" in permissive.source_referent_kinds
-        with pytest.raises(ValidationError):
+        with pytest.raises(ModelIntegrityError):
             type_definition(source_referent_kinds=())  # min 1
-        with pytest.raises(ValidationError):
+        with pytest.raises(ModelIntegrityError):
             type_definition(source_referent_kinds=("widget",))
 
     def test_assertion_shape_and_patterns(self):
         record = assertion()
         assert record.record_id.startswith("rel_")
-        with pytest.raises(ValidationError):
+        with pytest.raises(ModelIntegrityError):
             assertion(source_anchor_id="extruder")   # names are not identity
-        with pytest.raises(ValidationError):
+        with pytest.raises(ModelIntegrityError):
             assertion(type_id=REL)                   # must cite an rtd_
-        with pytest.raises(ValidationError):
+        with pytest.raises(ModelIntegrityError):
             assertion(evidence=())                   # evidence-free claims
 
     def test_context_arms_are_discriminated(self):
@@ -143,7 +145,7 @@ class TestRecordShapes:
         record = build_record(RelationshipWithdrawal, withdraws=REL,
                               recorded_at=T0, authority=AUTHORITY)
         assert record.record_id.startswith("rwd_")
-        with pytest.raises(ValidationError):
+        with pytest.raises(ModelIntegrityError):
             build_record(RelationshipWithdrawal, withdraws=RTD,
                          recorded_at=T0, authority=AUTHORITY)
 
@@ -163,7 +165,7 @@ class TestEvidence:
             OwnerDeclarationEvidence(kind="owner_declaration", statement="")
 
     def test_evidence_discriminator_rejects_unknown_kind(self):
-        with pytest.raises(ValidationError):
+        with pytest.raises(ModelIntegrityError):
             assertion(evidence=({"kind": "blog_post", "url": "x"},))
 
 

@@ -73,11 +73,26 @@ def verify_record_id(record) -> bool:
 def build_record(record_cls, **fields):
     """Construct a ledger record with its content-derived id. A placeholder
     id satisfies the pattern during the first validation pass; the real id
-    is computed from the validated content, which excludes the id itself."""
-    kind = record_cls.model_fields["record_kind"].default
-    placeholder = f"{_PREFIX_BY_KIND[kind]}_{'0' * 64}"
-    draft = record_cls(record_id=placeholder, **fields)
-    return draft.model_copy(update={"record_id": compute_record_id(draft)})
+    is computed from the validated content, which excludes the id itself.
+
+    An operational public entry point: a class that is not a known record
+    kind, missing or invalid fields, and pydantic ``ValidationError`` (a
+    ``ValueError``) all fail typed. The message is path-free and never
+    echoes field values — the record class name at most."""
+    try:
+        kind = record_cls.model_fields["record_kind"].default
+        placeholder = f"{_PREFIX_BY_KIND[kind]}_{'0' * 64}"
+        draft = record_cls(record_id=placeholder, **fields)
+        # finalization stays inside the typed net: a duck-typed draft can
+        # fail here first (model_copy/model_dump lookup precedes hashing)
+        return draft.model_copy(update={"record_id": compute_record_id(draft)})
+    except (AttributeError, KeyError, TypeError, ValueError) as error:
+        name = getattr(record_cls, "__name__", "record")
+        if not isinstance(name, str) or not name.isidentifier():
+            name = "record"  # never interpolate an attacker-shaped name
+        raise ModelIntegrityError(
+            "MODEL_RECORD_INVALID",
+            f"could not build a valid {name} model record") from error
 
 
 def canonical_sort_key(model) -> bytes:

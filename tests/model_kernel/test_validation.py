@@ -44,19 +44,19 @@ class TestCollectionIdentity:
 
     def test_registration_duplicates_are_semantic_not_shape(self):
         """The registration-lifecycle guard: (a) `supersedes` fails as an
-        unknown field (shape), and — independently — (b) two distinct
+        unknown field (typed MODEL_RECORD_INVALID through the operational
+        `build_record` API), and — independently — (b) two distinct
         registrations for one anchor fail with the semantic duplicate
         error."""
-        from pydantic import ValidationError
-
         from backend.model_kernel.canonical import build_record
         from backend.model_kernel.contracts import EntityRegistration
 
         from tests.model_kernel.builders import AUTHORITY, T0, anchor
 
-        with pytest.raises(ValidationError):
+        with pytest.raises(ModelIntegrityError) as shape_exc:
             build_record(EntityRegistration, anchor=anchor(), recorded_at=T0,
                          authority=AUTHORITY, supersedes=None)
+        assert shape_exc.value.error_code == "MODEL_RECORD_INVALID"
         expect_invalid("MODEL_DUPLICATE_REGISTRATION",
                        [registration(note="one"), registration(note="two")])
 

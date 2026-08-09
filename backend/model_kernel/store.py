@@ -352,7 +352,12 @@ class ModelStore:
             # environment failures surface through the typed contract with
             # ids only — never an absolute path
             if temp is not None:
-                temp.unlink(missing_ok=True)
+                try:
+                    temp.unlink(missing_ok=True)
+                except OSError:
+                    # cleanup is best-effort; staging residue must never
+                    # mask the typed storage failure
+                    pass
             raise ModelIntegrityError(
                 "MODEL_STORAGE_FAILURE",
                 f"could not persist {record.record_id} to model "
@@ -401,11 +406,13 @@ class ModelStore:
         reference-closed."""
         try:
             supplied = list(record_ids)
-        except TypeError as error:
+        except Exception as error:
+            # non-iterable input AND an iterator that raises mid-iteration
+            # (a file-backed id source, say) both fail typed
             raise ModelIntegrityError(
                 "MODEL_REVISION_INVALID",
-                "a revision membership must be an iterable of record ids",
-            ) from error
+                "the revision membership could not be materialized into "
+                "record ids") from error
         for record_id in supplied:
             if not isinstance(record_id, str) or not _RECORD_ID.fullmatch(
                     record_id):
@@ -416,6 +423,17 @@ class ModelStore:
             raise ModelIntegrityError(
                 "MODEL_REVISION_INVALID",
                 "revision membership contains duplicates")
+        # Light store-availability probe: an empty (or any) membership is
+        # valid only against an existing, readable records directory — a
+        # destroyed store must not be misreported as a missing member.
+        try:
+            with os.scandir(self.records_dir):
+                pass
+        except OSError as error:
+            raise ModelIntegrityError(
+                "MODEL_STORAGE_FAILURE",
+                f"could not read the records directory of model "
+                f"{self.model_id}") from error
         records: dict[str, ModelRecord] = {}
         for record_id in supplied:
             path = self.records_dir / f"{record_id}.json"
