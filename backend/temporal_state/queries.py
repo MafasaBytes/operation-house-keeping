@@ -9,6 +9,8 @@ never actual system state.
 """
 
 import json
+import sqlite3
+from contextlib import contextmanager
 from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
@@ -20,6 +22,7 @@ from backend.temporal_state.contracts import (
     TemporalAttemptEvent,
     TemporalOccurrence,
     TemporalQueryError,
+    TemporalStoreError,
 )
 from backend.temporal_state.store import TemporalStore, _dt, _iso, marker_from_json
 
@@ -123,6 +126,21 @@ class TemporalQueries:
     def __init__(self, store: TemporalStore) -> None:
         self.store = store
 
+    @contextmanager
+    def _reader(self):
+        """Public reads fail typed when the store is missing, corrupted,
+        or unreadable — never with a raw sqlite3 exception, and never with
+        a database path or storage-implementation detail in the message.
+        Unavailability stays distinguishable from an empty answer."""
+        try:
+            with self.store.reader() as conn:
+                yield conn
+        except sqlite3.Error as error:
+            raise TemporalStoreError(
+                "TEMPORAL_STORE_UNAVAILABLE",
+                "the temporal store for this query is unavailable or "
+                "unreadable") from error
+
     # -- histories
 
     def history(self, subject, prop, limit: int | None = None):
@@ -132,11 +150,11 @@ class TemporalQueries:
         if limit is not None:
             sql += " LIMIT ?"
             params = (*params, limit)
-        with self.store.reader() as conn:
+        with self._reader() as conn:
             return [_occurrence_from_row(r) for r in conn.execute(sql, params)]
 
     def change_history(self, subject, prop):
-        with self.store.reader() as conn:
+        with self._reader() as conn:
             rows = conn.execute(
                 f"SELECT * FROM temporal_occurrences WHERE {_KEY_WHERE} AND "
                 f"change_class != 'unchanged' ORDER BY {_ORDER_ASC}",
@@ -149,7 +167,7 @@ class TemporalQueries:
     def latest_observed(self, subject, prop, as_of: datetime):
         as_of = _require_aware(as_of)
         cutoff = _iso(as_of)
-        with self.store.reader() as conn:
+        with self._reader() as conn:
             row = conn.execute(
                 f"SELECT * FROM temporal_occurrences WHERE {_KEY_WHERE} AND "
                 f"received_at <= ? ORDER BY received_at DESC, {_ORDER_DESC} "
@@ -235,14 +253,14 @@ class TemporalQueries:
             sql += " AND item_key=?"
             params = (*params, item_key)
         sql += f" ORDER BY {_ORDER_ASC}"
-        with self.store.reader() as conn:
+        with self._reader() as conn:
             return [_attempt_from_row(r) for r in conn.execute(sql, params)]
 
     def freshness(self, source_id: str, as_of: datetime):
         as_of = _require_aware(as_of)
         cutoff = _iso(as_of)
         entries = []
-        with self.store.reader() as conn:
+        with self._reader() as conn:
             keys = conn.execute(
                 "SELECT DISTINCT source_id, adapter_id, subject_identifier, "
                 "extraction_route, item_key, json_pointer FROM "
@@ -270,7 +288,7 @@ class TemporalQueries:
         return entries
 
     def provenance(self, occurrence_id: str) -> ProvenanceChain | None:
-        with self.store.reader() as conn:
+        with self._reader() as conn:
             row = conn.execute(
                 "SELECT occurrence_id, attempt_id, observation_id, "
                 "raw_record_id, payload_checksum FROM temporal_occurrences "
@@ -284,7 +302,7 @@ class TemporalQueries:
         )
 
     def clock_segments(self, source_id: str):
-        with self.store.reader() as conn:
+        with self._reader() as conn:
             rows = conn.execute(
                 "SELECT * FROM clock_segment_openings WHERE source_id=? "
                 "ORDER BY opened_at_effective_wall_time, segment_id",
