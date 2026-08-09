@@ -135,6 +135,12 @@ class TemporalQueries:
         try:
             with self.store.reader() as conn:
                 yield conn
+        except (sqlite3.ProgrammingError, sqlite3.InterfaceError) as error:
+            # malformed ARGUMENTS on a healthy store are caller misuse —
+            # never reported as storage unavailability
+            raise TemporalQueryError(
+                "TEMPORAL_QUERY_INVALID",
+                "temporal query arguments are not valid") from error
         except sqlite3.Error as error:
             raise TemporalStoreError(
                 "TEMPORAL_STORE_UNAVAILABLE",

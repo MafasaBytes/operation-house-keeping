@@ -138,12 +138,18 @@ FROZEN_MK001_RECORDS = {
     "56e688d7a29a0d518ffbcbb1e776d229ec4a0419be4ceb6db021741b40b5e008",
 }
 
+FROZEN_VM001_RECORD = {
+    "vrg_40c8c6b984345af33de6913ca9025d60d22b0e627b110e974c78270eb941dca7.json":
+    "dc16507a5f0aeec36ead054ff68dce4ac5d639e0d58cf30eb60315b8d41deefc",
+}
+
 
 class TestVm001Fixture:
     def test_nine_mk001_records_byte_frozen(self):
         import hashlib
 
-        for name, digest in FROZEN_MK001_RECORDS.items():
+        for name, digest in {**FROZEN_MK001_RECORDS,
+                             **FROZEN_VM001_RECORD}.items():
             path = DEMO_MODEL / "records" / name
             assert hashlib.sha256(
                 path.read_bytes()).hexdigest() == digest, name

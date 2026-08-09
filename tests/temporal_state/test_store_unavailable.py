@@ -106,3 +106,31 @@ class TestStorageFailuresAreTyped:
             queries.latest_observed(SUBJECT, PROP,
                                     datetime(2026, 8, 7, 21, 0, 0))
         assert excinfo.value.error_code == "TEMPORAL_NAIVE_CUTOFF"
+
+
+class TestQueryMisuseIsNotUnavailability:
+    """Gate repair R1: malformed ARGUMENTS on a healthy store are query
+    misuse — never storage unavailability. The distinction is the whole
+    point of TEMPORAL_STORE_UNAVAILABLE."""
+
+    @pytest.mark.parametrize("call", [
+        pytest.param(lambda q: q.provenance({}), id="provenance_dict"),
+        pytest.param(lambda q: q.provenance(["x"]), id="provenance_list"),
+        pytest.param(lambda q: q.history(SUBJECT, PROP, limit={}),
+                     id="history_dict_limit"),
+        pytest.param(lambda q: q.freshness({}, AS_OF), id="freshness_dict"),
+        pytest.param(lambda q: q.clock_segments({}), id="segments_dict"),
+    ])
+    def test_malformed_arguments_are_typed_query_misuse(self, tmp_path, call):
+        _, queries = build(tmp_path)  # healthy, readable store
+        with pytest.raises(TemporalQueryError) as excinfo:
+            call(queries)
+        assert excinfo.value.error_code == "TEMPORAL_QUERY_INVALID"
+        assert str(tmp_path) not in str(excinfo.value)
+
+    def test_destroyed_store_still_reports_unavailability(self, tmp_path):
+        store, queries = build(tmp_path)
+        destroy_missing(store)
+        with pytest.raises(TemporalStoreError) as excinfo:
+            queries.provenance("0" * 32)
+        assert excinfo.value.error_code == "TEMPORAL_STORE_UNAVAILABLE"

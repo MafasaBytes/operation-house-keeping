@@ -42,6 +42,7 @@ class TestEmbeddedAnchorEquality:
                 "binding set")
             assert registration.anchor == declared[anchor_id], (
                 f"{anchor_id}: embedded anchor diverges from its declaration")
+        assert len(loaded.variable_registrations_by_anchor) >= 1
         for anchor_id, registration in (
                 loaded.variable_registrations_by_anchor.items()):
             assert anchor_id in declared, (

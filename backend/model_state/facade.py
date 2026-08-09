@@ -19,6 +19,8 @@ or presented as a single current value.
 import re
 from datetime import UTC, datetime
 
+from pydantic import ValidationError
+
 from backend.identity_binding.facade import BoundTemporalQueries
 from backend.identity_binding.resolver import BindingResolver
 from backend.model_kernel import LoadedModel
@@ -95,10 +97,23 @@ class ModelStateQueries:
             raise ModelStateQueryError(
                 "MODEL_STATE_INPUT_INVALID",
                 f"{entity_anchor_id!r} is not a canonical entity anchor id")
-        if source is not None and not isinstance(source, SourceSelector):
-            raise ModelStateQueryError(
-                "MODEL_STATE_INPUT_INVALID",
-                "an explicit source selector must be a SourceSelector")
+        if source is not None:
+            if not isinstance(source, SourceSelector):
+                raise ModelStateQueryError(
+                    "MODEL_STATE_INPUT_INVALID",
+                    "an explicit source selector must be a SourceSelector")
+            try:
+                # structural revalidation from field data (kernel
+                # precedent): model_construct forgeries never reach the
+                # pipeline or surface downstream error codes
+                source = SourceSelector.model_validate(
+                    source.model_dump(mode="python", warnings=False))
+            except (ValidationError, ValueError, TypeError, AttributeError,
+                    KeyError, UnicodeError, Warning) as error:
+                raise ModelStateQueryError(
+                    "MODEL_STATE_INPUT_INVALID",
+                    "the source selector is not structurally valid",
+                ) from error
 
         # model membership (never fabricated)
         registration = self.model.variable_registrations_by_anchor.get(

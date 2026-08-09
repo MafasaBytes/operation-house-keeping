@@ -193,9 +193,10 @@ class VariableStateResult(_Frozen):
             fail("requested_entity_membership follows the supplied id")
         if supplied == (self.requested_entity_agreement == "not_supplied"):
             fail("requested_entity_agreement follows the supplied id")
-        if self.requested_entity_registration is not None and (
-                self.requested_entity_membership != "registered"):
-            fail("requested_entity_registration only when registered")
+        if (self.requested_entity_membership == "registered") != (
+                self.requested_entity_registration is not None):
+            fail("requested_entity_registration present exactly when the "
+                 "supplied entity is registered")
         if supplied:
             if (self.requested_entity_agreement == "owner_unavailable") != (
                     not registered):

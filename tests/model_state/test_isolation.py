@@ -106,3 +106,14 @@ class TestLedgerVocabulary:
                            "received_at", "occurrence", "staleness",
                            "moonraker"):
                 assert needle not in text, f"{needle!r} in {path.name}"
+
+
+class TestLimitationWording:
+    def test_latest_per_locator_limitation_stated_verbatim(self):
+        def flat(path):
+            return " ".join((PACKAGE_DIR / path).read_text().split())
+
+        phrase = "no latest candidate observation attachable"
+        assert phrase in flat("contracts.py")
+        assert phrase in flat("README.md").replace("**", "")
+        assert 'never "no observation ever"' in flat("contracts.py")

@@ -94,5 +94,20 @@ class TestCrossFieldInvariants:
     def test_no_aggregate_value_field_exists(self, happy):
         assert "value" not in VariableStateResult.model_fields
         assert "current_value" not in VariableStateResult.model_fields
-        assert not any("value" == name
-                       for name in VariableStateResult.model_fields)
+        from backend.model_state import CandidateObservation
+
+        assert "value" not in CandidateObservation.model_fields
+
+
+class TestGateRepairs:
+    def test_requested_entity_registration_iff_registered(self, tmp_path):
+        """R2: the biconditional — a 'registered' supplied entity with no
+        carried registration is unconstructible."""
+        from tests.model_state.helpers import E1
+
+        queries, _, _ = state_queries(tmp_path)
+        result = queries.variable_state(V1, as_of=AS_OF, entity_anchor_id=E1)
+        dumped = result.model_dump()
+        dumped["requested_entity_registration"] = None
+        with pytest.raises(ValidationError):
+            VariableStateResult(**dumped)

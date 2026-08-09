@@ -443,6 +443,14 @@ class TestKernelQueries:
         children = queries.children(ENT_A, "contains", view="as_built")
         assert all(not entry.anchor.anchor_id.startswith("var_")
                    for entry in children.entries)
+        parents = queries.parents(ENT_B, "contains", view="as_built")
+        assert not parents.parent.anchor_id.startswith("var_")
+        ancestors = queries.ancestors(ENT_B, "contains", view="as_built")
+        assert all(not step.anchor.anchor_id.startswith("var_")
+                   for step in ancestors.steps)
+        descendants = queries.descendants(ENT_A, "contains", view="as_built")
+        assert all(not step.anchor.anchor_id.startswith("var_")
+                   for step in descendants.steps)
         health = queries.hierarchy_health("contains", view="as_built")
         bare = ModelQueries(store_with(
             tmp_path / "bare", contains_type(), registration(ENT_A),

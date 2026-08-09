@@ -381,6 +381,7 @@ class TestCrossTime:
         before = queries.variable_state(V1, as_of=cutoff).model_dump()
         runner.run("printer-1")
         projector.project("printer-1")
+        assert len(temporal.history(SUBJECT, PROP_TEMP)) == 2  # not vacuous
         after = queries.variable_state(V1, as_of=cutoff).model_dump()
         assert after == before
 
@@ -463,3 +464,49 @@ class TestTypedFailures:
         with pytest.raises(ModelStateError) as excinfo:
             ModelStateQueries(**args)
         assert excinfo.value.error_code == "MODEL_STATE_INPUT_INVALID"
+
+
+class TestGateRepairs:
+    def test_forged_selector_rejected_at_entry(self, tmp_path):
+        """R3: a model_construct selector forgery fails as INPUT_INVALID —
+        never a downstream binding/temporal error code."""
+        queries, _, _ = state_queries(tmp_path)
+        forged = SourceSelector.model_construct(subject="nope",
+                                                property="nope")
+        with pytest.raises(ModelStateError) as excinfo:
+            queries.variable_state(V1, as_of=AS_OF, source=forged)
+        assert excinfo.value.error_code == "MODEL_STATE_INPUT_INVALID"
+
+    def test_naive_as_of_utcoffset_none_clause(self, tmp_path):
+        from datetime import tzinfo as tzinfo_cls
+
+        class _NoOffset(tzinfo_cls):
+            def utcoffset(self, dt):
+                return None
+
+            def dst(self, dt):
+                return None
+
+        queries, _, _ = state_queries(tmp_path)
+        hostile = datetime(2026, 8, 7, 23, 0, tzinfo=_NoOffset())
+        with pytest.raises(ModelStateError) as excinfo:
+            queries.variable_state(V1, as_of=hostile)
+        assert excinfo.value.error_code == "MODEL_STATE_NAIVE_AS_OF"
+
+    def test_explicit_selector_discloses_declared_multiplicity(
+            self, tmp_path):
+        """Selector mode with TWO declared locators: the count says so."""
+        from tests.model_state.helpers import (entity_declaration,
+                                               prop_assertion,
+                                               var_declaration)
+
+        records = (entity_declaration(), var_declaration(),
+                   prop_assertion(prop=PROP_TEMP),
+                   prop_assertion(prop=PROP_TARGET))
+        queries, _, _ = state_queries(tmp_path, binding_records=records)
+        result = queries.variable_state(
+            V1, as_of=AS_OF,
+            source=SourceSelector(subject=SUBJECT, property=PROP_TEMP))
+        assert result.selection == "explicit"
+        assert len(result.candidates) == 1
+        assert result.declared_locator_count == 2  # multiplicity disclosed

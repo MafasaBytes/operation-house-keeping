@@ -124,9 +124,6 @@ def resolver_with(tmp_path, *records):
     return BindingResolver(store.load())
 
 
-STANDARD_BINDINGS = None  # computed lazily per tmp_path
-
-
 def standard_bindings():
     return (entity_declaration(), var_declaration(), prop_assertion())
 

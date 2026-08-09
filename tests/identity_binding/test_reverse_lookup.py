@@ -199,9 +199,11 @@ class TestReverseDiscovery:
         targets = {s.target_anchor_id
                    for s in result.locators[0].assertion_summaries}
         assert targets == {V1, V2}
-        # and V3, never targeted by this locator, does not inherit it
-        resolver_with(tmp_path / "other", entity_declaration(),
-                      declaration(V3))
+        # and V3, never targeted by any locator, does not inherit it
+        v3_resolver = resolver_with(tmp_path / "other", entity_declaration(),
+                                    declaration(V3))
+        assert v3_resolver.declared_property_locators(
+            V3).status == "none_declared"
 
     def test_result_is_time_free(self, tmp_path):
         assert "at" not in inspect.signature(
