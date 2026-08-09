@@ -20,6 +20,7 @@ from backend.model_kernel.contracts import (
     ChildrenResult,
     CycleReport,
     EntityResult,
+    EntityVariablesResult,
     EvidenceDisclosure,
     HierarchyHealth,
     LifecycleView,
@@ -34,12 +35,18 @@ from backend.model_kernel.contracts import (
     TraversalBlock,
     TraversalResult,
     TraversalStep,
+    VariableRegistrationSummary,
+    VariableResult,
 )
 from backend.model_kernel.hierarchy import HierarchyProjection, build_projection
 from backend.model_kernel.store import LoadedModel
-from backend.system_identity import ENTITY_ANCHOR_ID_PATTERN
+from backend.system_identity import (
+    ENTITY_ANCHOR_ID_PATTERN,
+    VARIABLE_ANCHOR_ID_PATTERN,
+)
 
 _ANCHOR_ID = re.compile(ENTITY_ANCHOR_ID_PATTERN)
+_VARIABLE_ANCHOR_ID = re.compile(VARIABLE_ANCHOR_ID_PATTERN)
 _CONTEXT_ADAPTER: TypeAdapter = TypeAdapter(AssertionContext)
 _LIFECYCLE_VIEWS = frozenset(typing.get_args(LifecycleView))
 
@@ -60,6 +67,14 @@ class ModelQueries:
             raise ModelQueryError(
                 "MODEL_ANCHOR_ID_INVALID",
                 f"{anchor_id!r} is not a canonical entity anchor id")
+        return anchor_id
+
+    def _require_variable_anchor_id(self, anchor_id: str) -> str:
+        if not isinstance(anchor_id, str) or not _VARIABLE_ANCHOR_ID.fullmatch(
+                anchor_id):
+            raise ModelQueryError(
+                "MODEL_ANCHOR_ID_INVALID",
+                f"{anchor_id!r} is not a canonical variable anchor id")
         return anchor_id
 
     def _require_view(self, view):
@@ -168,6 +183,42 @@ class ModelQueries:
                 authority=registration.authority,
                 recorded_at=registration.recorded_at),
             revision=self.loaded.revision)
+
+    # -- variables (membership only; never hierarchy, never state) --------
+
+    def _variable_summary(self, registration) -> VariableRegistrationSummary:
+        return VariableRegistrationSummary(
+            record_id=registration.record_id, anchor=registration.anchor,
+            authority=registration.authority,
+            recorded_at=registration.recorded_at)
+
+    def variable(self, anchor_id: str) -> VariableResult:
+        anchor_id = self._require_variable_anchor_id(anchor_id)
+        registration = self.loaded.variable_registrations_by_anchor.get(
+            anchor_id)
+        if registration is None:
+            return VariableResult(status="not_registered",
+                                  anchor_id=anchor_id, registration=None,
+                                  revision=self.loaded.revision)
+        return VariableResult(
+            status="registered", anchor_id=anchor_id,
+            registration=self._variable_summary(registration),
+            revision=self.loaded.revision)
+
+    def variables_of(self, entity_anchor_id: str) -> EntityVariablesResult:
+        entity_anchor_id = self._require_anchor_id(entity_anchor_id)
+        if entity_anchor_id not in self.loaded.registrations_by_anchor:
+            return EntityVariablesResult(
+                status="not_registered", entity_anchor_id=entity_anchor_id,
+                entries=(), revision=self.loaded.revision)
+        entries = tuple(
+            self._variable_summary(registration)
+            for anchor_id, registration in sorted(
+                self.loaded.variable_registrations_by_anchor.items())
+            if registration.anchor.entity_anchor_id == entity_anchor_id)
+        return EntityVariablesResult(
+            status="registered", entity_anchor_id=entity_anchor_id,
+            entries=entries, revision=self.loaded.revision)
 
     # -- relationships (strict context equality) ---------------------------
 

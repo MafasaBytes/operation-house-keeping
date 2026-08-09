@@ -30,7 +30,9 @@ import backend.model_kernel as kernel_package
 # relative path from the wrong cwd silently globbed zero files)
 KERNEL_DIR = Path(kernel_package.__file__).parent
 FORBIDDEN_MODULES = ("backend.identity_binding", "backend.temporal_state",
-                     "backend.data_sources")
+                     "backend.data_sources",
+    "backend.model_state",  # the kernel never imports the upper facade
+)
 ALLOWED_ROOTS = ("backend.system_identity", "backend.model_kernel", "pydantic")
 
 

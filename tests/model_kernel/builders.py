@@ -95,3 +95,27 @@ def containment_world(tmp_path, *extra):
     """A minimal valid world: contains type + registrations A, B."""
     return store_with(tmp_path, contains_type(), registration(ENT_A),
                       registration(ENT_B), *extra)
+
+
+# ------------------------------------------------------------ VM-001 vars
+VAR_A = "var_" + "1" * 32
+VAR_B = "var_" + "2" * 32
+VAR_C = "var_" + "3" * 32
+
+
+def variable_anchor(anchor_id=VAR_A, owner=ENT_A, name="Demo variable",
+                    role=None):
+    from backend.system_identity import VariableAnchor
+
+    return VariableAnchor(anchor_id=anchor_id, entity_anchor_id=owner,
+                          namespace="demo-printer", display_name=name,
+                          role_name=role)
+
+
+def variable_registration(anchor_id=VAR_A, owner=ENT_A, name="Demo variable",
+                          note="", role=None):
+    from backend.model_kernel.contracts import VariableRegistration
+
+    return build_record(VariableRegistration,
+                        anchor=variable_anchor(anchor_id, owner, name, role),
+                        recorded_at=T0, authority=AUTHORITY, note=note)

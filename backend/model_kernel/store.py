@@ -38,11 +38,12 @@ from backend.model_kernel.contracts import (
     RelationshipAssertion,
     RelationshipTypeDefinition,
     RelationshipWithdrawal,
+    VariableRegistration,
 )
 
 _RECORD_ADAPTER: TypeAdapter = TypeAdapter(ModelRecord)
 _RECORD_ID = re.compile(MODEL_RECORD_ID_PATTERN)
-_FILENAME = re.compile(r"^(reg|rtd|rel|rwd)_[0-9a-f]{64}\.json$")
+_FILENAME = re.compile(r"^(reg|rtd|rel|rwd|vrg)_[0-9a-f]{64}\.json$")
 
 _EMPTY: Mapping = MappingProxyType({})
 
@@ -71,6 +72,7 @@ class LoadedModel:
     withdrawals: Mapping[str, RelationshipWithdrawal]
     superseded_by: Mapping[str, tuple[str, ...]] = _EMPTY
     withdrawn_by: Mapping[str, tuple[str, ...]] = _EMPTY
+    variable_registrations_by_anchor: Mapping[str, VariableRegistration] = _EMPTY
 
 
 def _fail(code: str, message: str) -> None:
@@ -115,6 +117,7 @@ def validate_record_collection(
     subset — subsets must be reference-closed and currentness is
     membership-relative)."""
     registrations: dict[str, EntityRegistration] = {}
+    variable_registrations: dict[str, VariableRegistration] = {}
     types: dict[str, RelationshipTypeDefinition] = {}
     assertions: dict[str, RelationshipAssertion] = {}
     withdrawals: dict[str, RelationshipWithdrawal] = {}
@@ -142,6 +145,7 @@ def validate_record_collection(
                   f"content of {record_id} does not match its id")
         bucket = {
             "entity_registration": registrations,
+            "variable_registration": variable_registrations,
             "relationship_type_definition": types,
             "relationship_assertion": assertions,
             "relationship_withdrawal": withdrawals,
@@ -156,6 +160,28 @@ def validate_record_collection(
             _fail("MODEL_DUPLICATE_REGISTRATION",
                   f"{anchor_id} is registered more than once")
         registrations_by_anchor[anchor_id] = registration
+
+    # -- variable registrations: one per variable anchor; the OWNER entity
+    # must belong to the same collection (reference closure — including
+    # explicitly supplied replay subsets)
+    variable_registrations_by_anchor: dict[str, VariableRegistration] = {}
+    for record_id in sorted(variable_registrations):
+        variable = variable_registrations[record_id]
+        anchor_id = variable.anchor.anchor_id
+        existing = variable_registrations_by_anchor.get(anchor_id)
+        if existing is not None:
+            # agreeing or divergent embedded fields alike: never tie-broken
+            # by recorded_at, authority, or record id
+            _fail("MODEL_DUPLICATE_REGISTRATION",
+                  f"variable {anchor_id} is registered more than once "
+                  f"({existing.record_id}, {record_id})")
+        variable_registrations_by_anchor[anchor_id] = variable
+    for variable in variable_registrations_by_anchor.values():
+        owner_id = variable.anchor.entity_anchor_id
+        if owner_id not in registrations_by_anchor:
+            _fail("MODEL_REFERENCE_INVALID",
+                  f"variable registration {variable.record_id} references "
+                  f"unregistered owner entity {owner_id}")
 
     # -- type lineages: invariant fields, acyclic, one current per name ---
     for record_id in sorted(types):
@@ -283,6 +309,8 @@ def validate_record_collection(
         type_name_by_id=_frozen_mapping(type_name_by_id),
         assertions=_frozen_mapping(assertions),
         withdrawals=_frozen_mapping(withdrawals),
+        variable_registrations_by_anchor=_frozen_mapping(
+            variable_registrations_by_anchor),
         superseded_by=_frozen_mapping(superseded_by),
         withdrawn_by=_frozen_mapping(withdrawn_by))
 

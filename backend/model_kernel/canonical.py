@@ -19,6 +19,7 @@ from backend.model_kernel.errors import ModelIntegrityError
 
 _PREFIX_BY_KIND = {
     "entity_registration": "reg",
+    "variable_registration": "vrg",
     "relationship_type_definition": "rtd",
     "relationship_assertion": "rel",
     "relationship_withdrawal": "rwd",

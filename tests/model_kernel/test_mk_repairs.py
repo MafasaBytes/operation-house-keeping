@@ -370,7 +370,8 @@ class TestRelationshipAbsenceIsUnambiguous:
 # --------------------------------------------------------------- finding 4
 SUPPORTED_EXPORTS = (
     # ledger record contracts
-    "EntityRegistration", "RelationshipTypeDefinition",
+    "EntityRegistration", "VariableRegistration",
+    "RelationshipTypeDefinition",
     "RelationshipAssertion", "RelationshipWithdrawal", "ModelRecord",
     # query/assertion context contracts
     "AssertionContext", "LifecycleViewContext", "ViewIndependentContext",
@@ -385,7 +386,8 @@ SUPPORTED_EXPORTS = (
     # result contracts
     "ModelRevision", "EvidenceDisclosure", "RelationshipSummary",
     "LineageConflict", "RelationshipsResult", "RegistrationSummary",
-    "EntityResult", "ParentResult", "ParentStatus", "TraversalAnnotation",
+    "EntityResult", "VariableRegistrationSummary", "VariableResult",
+    "EntityVariablesResult", "ParentResult", "ParentStatus", "TraversalAnnotation",
     "ChildEntry", "ChildrenResult", "TraversalStep", "TraversalBlock",
     "TraversalResult", "CycleReport", "ParentConflictReport",
     "HierarchyHealth",

@@ -18,15 +18,16 @@ BINDING_SETS = (Path("bindings/demo-printer"),
                 Path("bindings/demo-printer-model"))
 
 
-def committed_declarations() -> dict[str, EntityAnchor]:
-    declared: dict[str, EntityAnchor] = {}
+def committed_declarations():
+    """ALL committed declarations — entity AND variable anchors alike, so
+    every kernel-embedded anchor (VM-001 included) faces the seam."""
+    declared = {}
     for set_dir in BINDING_SETS:
         loaded = BindingStore(set_dir).load()
         for anchor_id, anchor in loaded.anchors_by_id.items():
-            if isinstance(anchor, EntityAnchor):
-                assert anchor_id not in declared, (
-                    f"{anchor_id} declared in more than one committed set")
-                declared[anchor_id] = anchor
+            assert anchor_id not in declared, (
+                f"{anchor_id} declared in more than one committed set")
+            declared[anchor_id] = anchor
     return declared
 
 
@@ -41,6 +42,14 @@ class TestEmbeddedAnchorEquality:
                 "binding set")
             assert registration.anchor == declared[anchor_id], (
                 f"{anchor_id}: embedded anchor diverges from its declaration")
+        for anchor_id, registration in (
+                loaded.variable_registrations_by_anchor.items()):
+            assert anchor_id in declared, (
+                f"variable {anchor_id} is registered but declared in no "
+                "committed binding set")
+            assert registration.anchor == declared[anchor_id], (
+                f"{anchor_id}: embedded variable anchor diverges from its "
+                "declaration (including entity_anchor_id ownership)")
 
     def test_seam_has_teeth_diverged_value_detected(self, tmp_path):
         """Negative control: a re-hashed registration embedding a diverged

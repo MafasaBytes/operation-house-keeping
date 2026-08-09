@@ -26,6 +26,16 @@ runtime model sets use the documented external verification procedure.
 
 ## Semantics worth knowing
 
+- **Variables are membership, not structure or state** (VM-001): a
+  `VariableRegistration` embeds one canonical `VariableAnchor` verbatim.
+  Ownership is identity (`anchor.entity_anchor_id` — no `variable_of`
+  edge); the owner entity must be registered in the same revision
+  (reference-closed, including replay subsets); one registration per
+  variable anchor (duplicates rejected whether embedded fields agree or
+  conflict — never tie-broken); variables never appear in hierarchy views;
+  `variable()` / `variables_of()` answer membership with structured
+  absence. Like entity registrations: no lifecycle, no correction path,
+  no units, no datatype, no meaning, no state.
 - **Registrations have no lifecycle**: no supersession, no withdrawal, no
   path that alters an embedded anchor field. Two distinct registrations for
   one anchor invalidate the revision.

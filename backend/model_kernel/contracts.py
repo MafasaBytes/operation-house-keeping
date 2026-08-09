@@ -23,12 +23,17 @@ from pydantic import (
 )
 
 from backend.model_kernel.canonical import canonical_sort_key, compute_revision_id
-from backend.system_identity import ENTITY_ANCHOR_ID_PATTERN, EntityAnchor
+from backend.system_identity import (
+    ENTITY_ANCHOR_ID_PATTERN,
+    VARIABLE_ANCHOR_ID_PATTERN,
+    EntityAnchor,
+    VariableAnchor,
+)
 
 UtcDatetime = Annotated[AwareDatetime, AfterValidator(lambda v: v.astimezone(UTC))]
 
 MODEL_ID_PATTERN = r"^[a-z0-9-]+$"
-MODEL_RECORD_ID_PATTERN = r"^(reg|rtd|rel|rwd)_[0-9a-f]{64}$"
+MODEL_RECORD_ID_PATTERN = r"^(reg|rtd|rel|rwd|vrg)_[0-9a-f]{64}$"
 
 ReferentKind = Literal[
     "logical_instance", "physical_instance", "type_definition", "unknown"
@@ -87,8 +92,10 @@ class OwnerDeclarationEvidence(_Frozen):
 
 
 class ModelRecordEvidence(_Frozen):
+    # registrations (entity AND variable), types, and assertions are
+    # citable; a withdrawal is a non-claim and stays uncitable
     kind: Literal["model_record"]
-    record_id: str = Field(pattern=r"^(reg|rtd|rel)_[0-9a-f]{64}$")
+    record_id: str = Field(pattern=r"^(reg|rtd|rel|vrg)_[0-9a-f]{64}$")
 
 
 class IdentityBindingRecordEvidence(_Frozen):
@@ -151,6 +158,22 @@ class EntityRegistration(_Frozen):
     schema_version: Literal["1"] = "1"
     record_id: str = Field(pattern=r"^reg_[0-9a-f]{64}$")
     anchor: EntityAnchor
+    recorded_at: UtcDatetime
+    authority: AuthorityRef
+    note: str = ""
+
+
+class VariableRegistration(_Frozen):
+    """Membership claim for one already-declared canonical VARIABLE of a
+    registered entity. Ownership is identity (`anchor.entity_anchor_id`),
+    never a relationship edge; like entity registrations there is NO
+    lifecycle and no kernel correction path. Membership only — no state,
+    no units, no datatype, no meaning."""
+
+    record_kind: Literal["variable_registration"] = "variable_registration"
+    schema_version: Literal["1"] = "1"
+    record_id: str = Field(pattern=r"^vrg_[0-9a-f]{64}$")
+    anchor: VariableAnchor
     recorded_at: UtcDatetime
     authority: AuthorityRef
     note: str = ""
@@ -222,8 +245,8 @@ class RelationshipWithdrawal(_Frozen):
 
 
 ModelRecord = Union[
-    EntityRegistration, RelationshipTypeDefinition, RelationshipAssertion,
-    RelationshipWithdrawal,
+    EntityRegistration, VariableRegistration, RelationshipTypeDefinition,
+    RelationshipAssertion, RelationshipWithdrawal,
 ]
 
 
@@ -354,6 +377,46 @@ class EntityResult(_Frozen):
     def _registration_iff_registered(self):
         if (self.status == "registered") != (self.registration is not None):
             raise ValueError("registration is present exactly when registered")
+        return self
+
+
+class VariableRegistrationSummary(_Frozen):
+    record_id: str = Field(pattern=r"^vrg_[0-9a-f]{64}$")
+    anchor: VariableAnchor
+    authority: AuthorityRef
+    recorded_at: UtcDatetime
+
+
+class VariableResult(_Frozen):
+    status: Literal["registered", "not_registered"]
+    anchor_id: str = Field(pattern=VARIABLE_ANCHOR_ID_PATTERN)
+    registration: VariableRegistrationSummary | None = None
+    revision: ModelRevision
+
+    @model_validator(mode="after")
+    def _registration_iff_registered(self):
+        if (self.status == "registered") != (self.registration is not None):
+            raise ValueError("registration is present exactly when registered")
+        return self
+
+
+class EntityVariablesResult(_Frozen):
+    """Variables owned by one entity in this revision. `status` is the
+    ENTITY's membership: an unregistered entity is never conflated with a
+    registered entity that owns zero variables."""
+
+    status: Literal["registered", "not_registered"]
+    entity_anchor_id: str = Field(pattern=ENTITY_ANCHOR_ID_PATTERN)
+    entries: tuple[VariableRegistrationSummary, ...] = ()
+    revision: ModelRevision
+
+    @model_validator(mode="after")
+    def _absence_is_structured(self):
+        if self.status == "not_registered" and self.entries:
+            raise ValueError("an unregistered entity carries no variables")
+        ids = [entry.anchor.anchor_id for entry in self.entries]
+        if ids != sorted(ids):
+            raise ValueError("entries must be ordered by anchor id")
         return self
 
 

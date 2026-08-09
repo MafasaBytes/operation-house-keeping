@@ -24,6 +24,7 @@ from backend.model_kernel.contracts import (
     CycleReport,
     EntityRegistration,
     EntityResult,
+    EntityVariablesResult,
     EvidenceDisclosure,
     EvidenceRef,
     HierarchyHealth,
@@ -55,6 +56,9 @@ from backend.model_kernel.contracts import (
     TraversalBlock,
     TraversalResult,
     TraversalStep,
+    VariableRegistration,
+    VariableRegistrationSummary,
+    VariableResult,
     ViewIndependentContext,
 )
 from backend.model_kernel.queries import ModelQueries
@@ -62,7 +66,7 @@ from backend.model_kernel.store import LoadedModel, ModelStore
 
 __all__ = [
     # ledger record contracts
-    "EntityRegistration",
+    "EntityRegistration", "VariableRegistration",
     "RelationshipTypeDefinition",
     "RelationshipAssertion",
     "RelationshipWithdrawal",
@@ -92,8 +96,8 @@ __all__ = [
     "RelationshipSummary",
     "LineageConflict",
     "RelationshipsResult",
-    "RegistrationSummary",
-    "EntityResult",
+    "RegistrationSummary", "VariableRegistrationSummary", "VariableResult",
+    "EntityResult", "EntityVariablesResult",
     "ParentResult",
     "ParentStatus",
     "TraversalAnnotation",
