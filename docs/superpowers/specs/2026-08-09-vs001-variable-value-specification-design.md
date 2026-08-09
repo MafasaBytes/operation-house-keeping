@@ -250,9 +250,12 @@ class ObservationCompatibilityQueries:
     ) -> VariableValueCompatibilityResult: ...
 ```
 
-One injected object; the kernel query is constructed from `state.model`,
-the same public `LoadedModel` the VM-001 facade already uses, so a
-model/specification revision mismatch is **unconstructible**. The facade
+One injected object; the kernel query is constructed **per call** from
+`state.model`, the same public `LoadedModel` the VM-001 facade just used,
+so a model/specification revision mismatch is structurally impossible
+rather than merely detected — snapshotting the query at construction time
+would let a caller desynchronize the two halves by reassigning the
+injected facade's public attribute. The facade
 computes no tips, no conflict determination, no superseded set, and no
 registration status; it reads `specification_result.status` and never
 serializes a second vocabulary for that fact.
@@ -275,12 +278,12 @@ class CandidateValueCompatibility(_Frozen):
                             "no_observation", "indeterminate"]
     evidence_consistency: Literal["consistent", "json_type_unrecognized",
                                   "shape_disagreement", "value_json_malformed",
-                                  "not_evaluated"]
+                                  "value_not_representable", "not_evaluated"]
     observed_shape: Literal["boolean", "number", "string",
                             "null", "array", "object"] | None
 
-    value_shape_compatibility: Literal["satisfies_specification",
-                                       "does_not_satisfy_specification",
+    value_shape_compatibility: Literal["satisfies_value_shape",
+                                       "does_not_satisfy_value_shape",
                                        "not_evaluated"]
     value_shape_finding: Literal["shape_matches", "shape_differs",
                                  "explicit_null_allowed",
@@ -323,8 +326,15 @@ Order of evaluation:
 1. `json_type` outside `{object, array, string, number, boolean, null}` →
    `evidence_consistency = "json_type_unrecognized"`, presence
    `"indeterminate"`.
-2. `value_json` fails the strict parse → `"value_json_malformed"`,
-   presence `"indeterminate"`.
+2. `value_json` is not JSON at all (bad text, or a non-finite constant,
+   which JSON does not permit) → `"value_json_malformed"`, presence
+   `"indeterminate"`. Well-formed JSON this interpreter cannot represent —
+   a digit string beyond `int_max_str_digits`, an exponent `Decimal`
+   rejects, nesting past the recursion limit — is
+   `"value_not_representable"`: the evidence is not at fault and must not
+   be called malformed. `RecursionError` is caught here explicitly; it is
+   not a `ValueError`, so omitting it lets a deeply nested lexeme escape
+   the typed contract.
 3. Parsed shape disagrees with the stored `json_type` →
    `"shape_disagreement"`, presence `"indeterminate"`. **Neither field is
    repaired and neither is preferred.**
@@ -338,7 +348,7 @@ the specification*.
 
 | observed_shape | vs `boolean` | vs `number` | vs `string` |
 |---|---|---|---|
-| `boolean` | satisfies / `shape_matches` | does_not_satisfy / `shape_differs` | does_not_satisfy / `shape_differs` |
+| `boolean` | satisfies_value_shape / `shape_matches` | does_not_satisfy / `shape_differs` | does_not_satisfy / `shape_differs` |
 | `number` | does_not_satisfy | satisfies / `shape_matches` | does_not_satisfy |
 | `string` | does_not_satisfy | does_not_satisfy | satisfies / `shape_matches` |
 | `null` | `nullable` ? satisfies / `explicit_null_allowed` : does_not_satisfy / `explicit_null_not_allowed` | same | same |
@@ -491,7 +501,12 @@ accepted VM-001 boundary the facade delegates to; its typed
 `ModelStateQueryError` propagates unchanged, so a `model_construct`
 forgery never leaks a raw `ValidationError`. `ModelKernelError`,
 `ModelStateError`, `IdentityBindingError`, and `TemporalError` propagate
-with classes and codes unchanged. Malformed or self-contradictory
+with classes and codes unchanged. The contracts this module owns are
+hardened with `revalidate_instances`; carried lower-layer objects are
+trusted because the accepted facades produce them and a caller never
+supplies one — `revalidate_instances` is read from the model being
+validated and so cannot reach types owned by modules VS-001 must leave
+byte-unchanged. Malformed or self-contradictory
 observation content becomes a compatibility **outcome**, never an
 exception. The strict parse catches a narrowly scoped
 `(json.JSONDecodeError, ValueError, decimal.InvalidOperation)` around the

@@ -36,6 +36,7 @@ from backend.temporal_state.contracts import TemporalOccurrence
 from tests.model_state.helpers import (  # noqa: F401  (re-exported)
     AS_OF,
     E1,
+    PROP_TARGET,
     PROP_TEMP,
     SUBJECT,
     V1,

@@ -267,7 +267,8 @@ def _identifier(value: str) -> str:
 
 
 LocalIdentifier = Annotated[
-    str, Field(min_length=1, pattern=_LOCAL_IDENTIFIER),
+    str, Field(min_length=1, max_length=128,
+               pattern=_LOCAL_IDENTIFIER),
     AfterValidator(_identifier)]
 
 

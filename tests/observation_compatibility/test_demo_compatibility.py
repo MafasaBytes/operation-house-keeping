@@ -65,7 +65,7 @@ class TestCommittedDemonstration:
         assert candidate.evidence_consistency == "consistent"
         assert candidate.value_presence == "value_present"
         assert candidate.observed_shape == "number"
-        assert candidate.value_shape_compatibility == "satisfies_specification"
+        assert candidate.value_shape_compatibility == "satisfies_value_shape"
         assert candidate.value_shape_finding == "shape_matches"
         assert candidate.value_shape_not_evaluated_reason is None
 

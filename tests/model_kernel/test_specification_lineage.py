@@ -9,6 +9,7 @@ including after repeated contention."""
 import json
 
 import pytest
+from pydantic import ValidationError
 
 from backend.model_kernel import (
     ModelKernelError,
@@ -105,13 +106,20 @@ class TestParentValidation:
                        variable_registration(VAR_B, owner=ENT_A),
                        first, alien)
         assert excinfo.value.error_code == "MODEL_SPECIFICATION_LINEAGE_INVALID"
+        assert "specifies a different variable" in str(excinfo.value)
 
     def test_self_reference_rejected(self, tmp_path):
         record = specification()
         forged = VariableValueSpecification.model_construct(
             **{**record.model_dump(), "supersedes": (record.record_id,)})
-        with pytest.raises(ModelKernelError):
+        with pytest.raises(ModelKernelError) as excinfo:
             world(tmp_path).append(forged)
+        # the contract guard catches it during revalidation, before any
+        # store-level lineage pass sees it
+        assert excinfo.value.error_code == "MODEL_RECORD_INVALID"
+        with pytest.raises(ValidationError):
+            VariableValueSpecification(
+                **{**record.model_dump(), "supersedes": (record.record_id,)})
 
     def test_cycle_rejected(self, tmp_path):
         """A crafted two-record cycle: each names the other as parent."""
@@ -127,8 +135,11 @@ class TestParentValidation:
         with pytest.raises(ModelKernelError) as excinfo:
             validate_record_collection("demo-printer", collection,
                                        verify_hashes=False)
-        assert excinfo.value.error_code in (
-            "MODEL_SPECIFICATION_LINEAGE_INVALID", "MODEL_RECORD_INVALID")
+        # pin the CYCLE guard specifically: without the message assertion
+        # the zero-tip defence-in-depth branch satisfies this test with the
+        # same error code, and a regression in the DAG walk would pass
+        assert excinfo.value.error_code == "MODEL_SPECIFICATION_LINEAGE_INVALID"
+        assert "supersession cycle" in str(excinfo.value)
 
 
 class TestTipsAndConflict:
@@ -360,3 +371,22 @@ class TestSpecificationQuery:
         result = ModelQueries(old).variable_value_specification(VAR_A)
         assert result.status == "not_specified"
         assert result.revision == old.revision
+
+
+class TestSupersededHistoryIsPerVariable:
+    def test_history_never_leaks_another_variables_lineage(self, tmp_path):
+        a_old = specification(variable_anchor_id=VAR_A, note="a-old")
+        a_new = specification(variable_anchor_id=VAR_A, note="a-new",
+                              supersedes=(a_old.record_id,))
+        b_old = specification(variable_anchor_id=VAR_B, note="b-old")
+        b_new = specification(variable_anchor_id=VAR_B, note="b-new",
+                              supersedes=(b_old.record_id,))
+        loaded = store_with(tmp_path, registration(ENT_A),
+                            variable_registration(VAR_A, owner=ENT_A),
+                            variable_registration(VAR_B, owner=ENT_A),
+                            a_old, a_new, b_old, b_new).load()
+        queries = ModelQueries(loaded)
+        assert queries.variable_value_specification(
+            VAR_A).superseded_specification_ids == (a_old.record_id,)
+        assert queries.variable_value_specification(
+            VAR_B).superseded_specification_ids == (b_old.record_id,)

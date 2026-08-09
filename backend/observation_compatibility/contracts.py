@@ -55,7 +55,14 @@ class ObservationCompatibilityConfigurationError(
 
 
 class _Frozen(BaseModel):
-    model_config = ConfigDict(frozen=True, extra="forbid")
+    # `revalidate_instances` is read from the model being validated, so
+    # this hardens THIS module's own nested contracts against forged
+    # instances. It cannot reach the carried lower-layer types, whose
+    # config belongs to their own accepted modules: those objects are
+    # trusted because the accepted VM-001 and kernel facades produce them
+    # — they are never supplied by a caller of this module.
+    model_config = ConfigDict(frozen=True, extra="forbid",
+                              revalidate_instances="always")
 
 
 class CandidateValueCompatibility(_Frozen):
@@ -65,12 +72,14 @@ class CandidateValueCompatibility(_Frozen):
                             "no_observation", "indeterminate"]
     evidence_consistency: Literal["consistent", "json_type_unrecognized",
                                   "shape_disagreement", "value_json_malformed",
-                                  "not_evaluated"]
+                                  "value_not_representable", "not_evaluated"]
     observed_shape: Literal["boolean", "number", "string",
                             "null", "array", "object"] | None = None
 
-    value_shape_compatibility: Literal["satisfies_specification",
-                                       "does_not_satisfy_specification",
+    # named for the dimension actually assessed: a specification also
+    # declares a unit, and that half is reported separately
+    value_shape_compatibility: Literal["satisfies_value_shape",
+                                       "does_not_satisfy_value_shape",
                                        "not_evaluated"]
     value_shape_finding: Literal["shape_matches", "shape_differs",
                                  "explicit_null_allowed",
@@ -111,7 +120,7 @@ class CandidateValueCompatibility(_Frozen):
             satisfies = self.value_shape_finding in (
                 "shape_matches", "explicit_null_allowed")
             if satisfies != (self.value_shape_compatibility
-                             == "satisfies_specification"):
+                             == "satisfies_value_shape"):
                 raise ValueError("the finding must agree with the verdict")
 
         # presence and evidence consistency are properties of the
@@ -129,7 +138,7 @@ class CandidateValueCompatibility(_Frozen):
         if observed:
             indeterminate = self.evidence_consistency in (
                 "json_type_unrecognized", "shape_disagreement",
-                "value_json_malformed")
+                "value_json_malformed", "value_not_representable")
             if (self.value_presence == "indeterminate") != indeterminate:
                 raise ValueError("indeterminate presence exactly when the "
                                  "evidence is not assessable")

@@ -31,30 +31,42 @@ _JSON_TYPES = frozenset(
     {"object", "array", "string", "number", "boolean", "null"})
 
 
+class _NonFiniteConstant(ValueError):
+    """NaN/Infinity are not JSON: malformed text, not an unrepresentable
+    value."""
+
+
 def _reject_constant(name: str):
-    raise ValueError(f"non-finite JSON constant {name!r} rejected")
+    raise _NonFiniteConstant(f"non-finite JSON constant {name!r} rejected")
 
 
 def _parse_shape(value_json: str):
-    """Return the JSON shape the stored lexeme actually preserves, or None
-    when it cannot be parsed. ``bool`` is tested before ``int`` so a Python
-    boolean never enters number handling."""
+    """Return (shape, failure) for the stored lexeme. ``bool`` is tested
+    before ``int`` so a Python boolean never enters number handling.
+
+    Two failures are distinguished honestly: text that is not JSON is
+    `malformed`, while well-formed JSON this interpreter cannot represent
+    (a digit string beyond ``int_max_str_digits``, an exponent Decimal
+    rejects, nesting past the recursion limit) is `not_representable` — the
+    evidence is not at fault and must not be called malformed."""
     try:
         value = json.loads(value_json, parse_float=Decimal, parse_int=int,
                            parse_constant=_reject_constant)
-    except (json.JSONDecodeError, ValueError, InvalidOperation):
-        return None
+    except (json.JSONDecodeError, _NonFiniteConstant):
+        return None, "value_json_malformed"
+    except (ValueError, InvalidOperation, RecursionError):
+        return None, "value_not_representable"
     if isinstance(value, bool):
-        return "boolean"
+        return "boolean", None
     if value is None:
-        return "null"
+        return "null", None
     if isinstance(value, (int, Decimal)):
-        return "number"
+        return "number", None
     if isinstance(value, str):
-        return "string"
+        return "string", None
     if isinstance(value, list):
-        return "array"
-    return "object"
+        return "array", None
+    return "object", None
 
 
 class ObservationCompatibilityQueries:
@@ -64,8 +76,6 @@ class ObservationCompatibilityQueries:
                 "OBSERVATION_COMPATIBILITY_INPUT_INVALID",
                 "composition requires a ModelStateQueries instance")
         self.state = state
-        # the EXACT public loaded model the state facade uses
-        self.model_queries = ModelQueries(state.model)
 
     def variable_value_compatibility(
         self, variable_anchor_id: str, *, as_of: datetime,
@@ -79,8 +89,11 @@ class ObservationCompatibilityQueries:
         state = self.state.variable_state(
             variable_anchor_id, as_of=as_of, entity_anchor_id=entity_anchor_id,
             source=source)
-        specification_result = self.model_queries.variable_value_specification(
-            variable_anchor_id)
+        # built per call from the EXACT public loaded model the state
+        # facade just used, so a membership/specification revision
+        # mismatch is structurally impossible rather than merely detected
+        specification_result = ModelQueries(
+            self.state.model).variable_value_specification(variable_anchor_id)
 
         specified = specification_result.status == "specified"
         specification = specification_result.specification
@@ -113,10 +126,10 @@ class ObservationCompatibilityQueries:
             consistency, presence, shape = ("json_type_unrecognized",
                                             "indeterminate", None)
         else:
-            parsed = _parse_shape(occurrence.value_json)
+            parsed, failure = _parse_shape(occurrence.value_json)
             if parsed is None:
-                consistency, presence, shape = ("value_json_malformed",
-                                                "indeterminate", None)
+                consistency, presence, shape = (failure, "indeterminate",
+                                                None)
             elif parsed != occurrence.json_type:
                 # neither field is repaired and neither is preferred
                 consistency, presence, shape = ("shape_disagreement",
@@ -140,8 +153,8 @@ class ObservationCompatibilityQueries:
             shape_verdict, finding = "not_evaluated", None
         else:
             satisfies, finding = self._shape_verdict(shape, specification)
-            shape_verdict = ("satisfies_specification" if satisfies
-                             else "does_not_satisfy_specification")
+            shape_verdict = ("satisfies_value_shape" if satisfies
+                             else "does_not_satisfy_value_shape")
 
         # -- lexical relation, NOT gated on evidence consistency
         unit_reason = self._unit_reason(observed, attached, status, model_unit,

@@ -17,9 +17,10 @@ decisions: `docs/adr/0009-variable-value-specification-and-observation-compatibi
 ## Composition
 
 `ObservationCompatibilityQueries(state: ModelStateQueries)` — one injected
-accepted query object. The kernel query is constructed from
-`state.model`, the exact public loaded model the state facade uses, so a
-membership/specification revision mismatch is unconstructible. The VM-001
+accepted query object. The kernel query is constructed **per call** from
+`state.model`, the exact public loaded model the state facade just used,
+so a membership/specification revision mismatch is structurally impossible
+rather than merely detected. The VM-001
 `VariableStateResult`, each of its candidates, and the kernel's
 `VariableSpecificationResult` are carried **verbatim**; nothing is
 recomputed or re-expressed here.
@@ -35,6 +36,13 @@ recomputed or re-expressed here.
   never erases an explicitly supplied source-unit string, and source-unit
   evidence is disclosed whenever an observation exists — including for
   unattached candidates, where the comparison is withheld.
+- **Unrepresentable is not malformed.** Text that is not JSON (including
+  the non-finite constants JSON forbids) is `value_json_malformed`;
+  well-formed JSON this interpreter cannot represent — a digit string
+  beyond `int_max_str_digits`, an exponent `Decimal` rejects, nesting past
+  the recursion limit — is `value_not_representable`. The evidence is not
+  at fault, and saying so would be the layer overclaiming about the bytes
+  it holds.
 - **Contradictory evidence is not incompatibility.** `json_type` and
   `value_json` are cross-checked by strict parse; a disagreement is
   reported as inconsistent evidence, neither field is repaired, neither is
@@ -56,6 +64,11 @@ recomputed or re-expressed here.
   distinction, so a lexical integer verdict would describe the normalized
   representation rather than the source's numeric category. Mathematical
   integrality is never inferred.
+- **The shape verdict is named for the dimension it assesses.**
+  `satisfies_value_shape` says the observed JSON shape matches the
+  declared shape — never that the observation satisfies the whole
+  specification, whose unit half is reported separately and is often
+  `not_evaluated`.
 - **Nothing is aggregated, ranked, converted, filled, or selected.**
   Compatibility is per candidate; there is no aggregate, normalized,
   winning, current, or usable value field.

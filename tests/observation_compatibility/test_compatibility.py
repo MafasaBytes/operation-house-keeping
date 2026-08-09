@@ -20,6 +20,7 @@ from tests.observation_compatibility.helpers import (
     AS_OF,
     E1,
     NO_UNIT,
+    PROP_TARGET,
     PROP_TEMP,
     SUBJECT,
     V1,
@@ -97,7 +98,7 @@ class TestSpecificationAvailability:
         assert candidate.value_presence == "value_present"
         assert candidate.evidence_consistency == "consistent"
         assert candidate.observed_shape == "number"
-        assert candidate.value_shape_compatibility == "satisfies_specification"
+        assert candidate.value_shape_compatibility == "satisfies_value_shape"
         assert candidate.value_shape_finding == "shape_matches"
         assert candidate.value_shape_not_evaluated_reason is None
 
@@ -202,25 +203,25 @@ class TestConflictDoesNotOverridePrecedence:
 
 class TestValueShape:
     @pytest.mark.parametrize("literal,shape,expected,finding", [
-        pytest.param("60.4", "number", "satisfies_specification",
+        pytest.param("60.4", "number", "satisfies_value_shape",
                      "shape_matches", id="number_ok"),
-        pytest.param("60", "number", "satisfies_specification",
+        pytest.param("60", "number", "satisfies_value_shape",
                      "shape_matches", id="integer_lexeme_is_a_number"),
-        pytest.param("0", "number", "satisfies_specification",
+        pytest.param("0", "number", "satisfies_value_shape",
                      "shape_matches", id="zero"),
-        pytest.param("6e2", "number", "satisfies_specification",
+        pytest.param("6e2", "number", "satisfies_value_shape",
                      "shape_matches", id="exponent_is_a_number"),
-        pytest.param('"60.4"', "number", "does_not_satisfy_specification",
+        pytest.param('"60.4"', "number", "does_not_satisfy_value_shape",
                      "shape_differs", id="numeric_string_never_coerced"),
-        pytest.param("true", "number", "does_not_satisfy_specification",
+        pytest.param("true", "number", "does_not_satisfy_value_shape",
                      "shape_differs", id="boolean_never_satisfies_number"),
-        pytest.param("false", "boolean", "satisfies_specification",
+        pytest.param("false", "boolean", "satisfies_value_shape",
                      "shape_matches", id="false_is_a_boolean"),
-        pytest.param('""', "string", "satisfies_specification",
+        pytest.param('""', "string", "satisfies_value_shape",
                      "shape_matches", id="empty_string"),
-        pytest.param("[1,2]", "number", "does_not_satisfy_specification",
+        pytest.param("[1,2]", "number", "does_not_satisfy_value_shape",
                      "unsupported_observed_structure", id="array"),
-        pytest.param('{"a":1}', "number", "does_not_satisfy_specification",
+        pytest.param('{"a":1}', "number", "does_not_satisfy_value_shape",
                      "unsupported_observed_structure", id="object"),
     ])
     def test_shape_matrix(self, tmp_path, literal, shape, expected, finding):
@@ -235,9 +236,9 @@ class TestValueShape:
         assert candidate.value_shape_finding == finding
 
     @pytest.mark.parametrize("nullable,expected,finding", [
-        pytest.param(True, "satisfies_specification", "explicit_null_allowed",
+        pytest.param(True, "satisfies_value_shape", "explicit_null_allowed",
                      id="nullable"),
-        pytest.param(False, "does_not_satisfy_specification",
+        pytest.param(False, "does_not_satisfy_value_shape",
                      "explicit_null_not_allowed", id="not_nullable"),
     ])
     def test_explicit_null_follows_nullable(self, tmp_path, nullable,
@@ -266,7 +267,7 @@ class TestValueShape:
         queries, _, _ = compatibility(tmp_path, temporal=temporal)
         candidate = only(queries.variable_value_compatibility(V1, as_of=AS_OF))
         assert candidate.observed_shape == "number"
-        assert candidate.value_shape_compatibility == "satisfies_specification"
+        assert candidate.value_shape_compatibility == "satisfies_value_shape"
 
     def test_very_long_integer_never_overflows(self, tmp_path):
         temporal = observed_value(tmp_path, "9" * 400)
@@ -328,7 +329,7 @@ class TestEvidenceIntegrity:
                                       model_store=store)
         honest = only(queries.variable_value_compatibility(V1, as_of=AS_OF))
         assert honest.value_shape_compatibility == (
-            "does_not_satisfy_specification")
+            "does_not_satisfy_value_shape")
 
         contradictory = observed_stack(tmp_path / "b")
         craft_occurrence(contradictory, value_json='"60.4"',
@@ -535,7 +536,7 @@ class TestResultInvariants:
         dumped = queries.variable_value_compatibility(
             V1, as_of=AS_OF).model_dump()
         dumped["candidates"][0].update(
-            value_shape_compatibility="satisfies_specification",
+            value_shape_compatibility="satisfies_value_shape",
             value_shape_finding="shape_matches",
             value_shape_not_evaluated_reason=None)
         with pytest.raises(ValidationError):
@@ -565,3 +566,202 @@ class TestResultInvariants:
         dumped["candidates"][0]["source_unit_evidence"] = "present"
         with pytest.raises(ValidationError):
             VariableValueCompatibilityResult(**dumped)
+
+
+class TestGateRepairs:
+    """Findings accepted from the acceptance audit and the adversarial
+    review."""
+
+    def test_deep_nesting_is_an_outcome_not_a_recursion_error(self, tmp_path):
+        """Reviewer F1: json's scanner raises RecursionError, which is not a
+        ValueError and escaped the typed contract."""
+        temporal = observed_stack(tmp_path)
+        craft_occurrence(temporal, value_json="[" * 20000 + "]" * 20000,
+                         json_type="array")
+        queries, _, _ = compatibility(tmp_path, temporal=temporal)
+        candidate = only(queries.variable_value_compatibility(V1, as_of=AS_OF))
+        assert candidate.evidence_consistency == "value_not_representable"
+        assert candidate.value_presence == "indeterminate"
+        assert candidate.value_shape_not_evaluated_reason == (
+            "evidence_not_assessable")
+
+    @pytest.mark.parametrize("lexeme", [
+        pytest.param("9" * 5000, id="beyond_int_max_str_digits"),
+        pytest.param("1E+" + "9" * 400, id="exponent_decimal_rejects"),
+    ])
+    def test_well_formed_but_unrepresentable_is_not_called_malformed(
+            self, tmp_path, lexeme):
+        """Reviewer F2: the evidence is valid JSON; this interpreter cannot
+        represent it. Calling that 'malformed' states a false fact about
+        the stored bytes."""
+        temporal = observed_stack(tmp_path)
+        craft_occurrence(temporal, value_json=lexeme, json_type="number")
+        queries, _, _ = compatibility(tmp_path, temporal=temporal)
+        candidate = only(queries.variable_value_compatibility(V1, as_of=AS_OF))
+        assert candidate.evidence_consistency == "value_not_representable"
+
+    def test_non_finite_constants_remain_malformed(self, tmp_path):
+        """NaN is not JSON at all — that IS malformed, and must stay
+        distinguishable from the unrepresentable case."""
+        temporal = observed_stack(tmp_path)
+        craft_occurrence(temporal, value_json="NaN", json_type="number")
+        queries, _, _ = compatibility(tmp_path, temporal=temporal)
+        candidate = only(queries.variable_value_compatibility(V1, as_of=AS_OF))
+        assert candidate.evidence_consistency == "value_json_malformed"
+
+    def test_mutating_the_injected_model_cannot_desynchronize_the_result(
+            self, tmp_path):
+        """Reviewer F3: the kernel query is now built per call from the
+        state facade's current model, so the two halves cannot disagree."""
+        queries, state, _ = compatibility(tmp_path)
+        other = model_with(tmp_path, specifications=(), name="other").load()
+        state.model = other
+        result = queries.variable_value_compatibility(V1, as_of=AS_OF)
+        assert result.specification_result.revision == result.state.model_revision
+        assert result.specification_result.status == "not_specified"
+
+    def test_this_modules_own_contracts_reject_forged_instances(self,
+                                                                tmp_path):
+        """Reviewer F5, honestly scoped: revalidate_instances hardens the
+        contracts THIS module owns."""
+        queries, _, _ = compatibility(tmp_path)
+        result = queries.variable_value_compatibility(V1, as_of=AS_OF)
+        forged = result.candidates[0].model_copy(
+            update={"value_presence": "totally_made_up"})
+        with pytest.raises(ValidationError):
+            VariableValueCompatibilityResult(
+                **{**result.model_dump(), "candidates": (forged,)})
+
+    def test_carried_lower_layer_objects_are_trusted_by_their_producer(
+            self, tmp_path):
+        """The honest boundary: `revalidate_instances` is read from the
+        model being validated, so it cannot reach model_state's own types
+        (which this milestone must leave byte-unchanged). Those objects are
+        trusted because the accepted facades produce them — a caller never
+        supplies one. Pinned so the trust is explicit rather than assumed."""
+        from backend.observation_compatibility import (
+            CandidateValueCompatibility)
+
+        queries, _, _ = compatibility(tmp_path)
+        real = only(queries.variable_value_compatibility(V1, as_of=AS_OF))
+        forged = real.state_candidate.model_copy(
+            update={"attachment": "totally_made_up"})
+        carried = CandidateValueCompatibility(
+            **{**real.model_dump(), "state_candidate": forged})
+        assert carried.state_candidate.attachment == "totally_made_up"
+
+    def test_the_result_is_not_hashable_and_that_is_documented(self, tmp_path):
+        """frozen=True synthesizes __hash__, but the carried temporal
+        occurrence holds a list. Pinned so a consumer learns it here."""
+        queries, _, _ = compatibility(tmp_path)
+        result = queries.variable_value_compatibility(V1, as_of=AS_OF)
+        with pytest.raises(TypeError):
+            hash(result)
+
+
+class TestMultipleCandidates:
+    """Both gates flagged that no test ever produced more than one
+    candidate, leaving the index-parallel invariant unexercised."""
+
+    def two_locator_bindings(self):
+        from tests.model_state.helpers import PROP_TARGET, prop_assertion
+
+        return (entity_declaration(), var_declaration(),
+                prop_assertion(prop=PROP_TEMP),
+                prop_assertion(prop=PROP_TARGET)), PROP_TARGET
+
+    def test_candidates_stay_separate_and_ordered(self, tmp_path):
+        records, _ = self.two_locator_bindings()
+        queries, state, _ = compatibility(tmp_path, binding_records=records)
+        result = queries.variable_value_compatibility(V1, as_of=AS_OF)
+        assert len(result.candidates) == 2
+        assert result.state.selection == "multiple"
+        assert [c.state_candidate for c in result.candidates] == list(
+            result.state.candidates)
+        pointers = [c.state_candidate.property.json_pointer
+                    for c in result.candidates]
+        assert pointers == sorted(pointers)          # never reordered
+        for candidate in result.candidates:
+            assert candidate.value_shape_compatibility == (
+                "satisfies_value_shape")
+
+    def test_verdicts_are_independent_per_candidate(self, tmp_path):
+        """One locator carries a malformed value; the other is unaffected."""
+        records, prop_target = self.two_locator_bindings()
+        temporal = observed_stack(tmp_path)
+        existing = temporal.history(SUBJECT, prop_target)[-1]
+        from datetime import timedelta
+
+        from backend.temporal_state.contracts import TemporalOccurrence
+
+        crafted = TemporalOccurrence(
+            **{**existing.model_dump(), "occurrence_id": "e" * 32,
+               "observation_id": "f" * 32,
+               "received_at": existing.received_at + timedelta(seconds=30),
+               "finished_at": existing.finished_at + timedelta(seconds=30),
+               "value_json": "NaN", "json_type": "number",
+               "previous_occurrence_id": existing.occurrence_id,
+               "change_class": "changed"})
+        with temporal.store.writer() as conn:
+            temporal.store.insert_occurrence(conn, crafted)
+
+        queries, _, _ = compatibility(tmp_path, temporal=temporal,
+                                      binding_records=records)
+        result = queries.variable_value_compatibility(V1, as_of=AS_OF)
+        by_pointer = {c.state_candidate.property.json_pointer: c
+                      for c in result.candidates}
+        broken = by_pointer[prop_target.json_pointer]
+        intact = by_pointer[PROP_TEMP.json_pointer]
+        assert broken.evidence_consistency == "value_json_malformed"
+        assert broken.value_shape_compatibility == "not_evaluated"
+        assert intact.evidence_consistency == "consistent"
+        assert intact.value_shape_compatibility == "satisfies_value_shape"
+
+    def test_reordering_candidates_is_rejected(self, tmp_path):
+        records, _ = self.two_locator_bindings()
+        queries, _, _ = compatibility(tmp_path, binding_records=records)
+        dumped = queries.variable_value_compatibility(
+            V1, as_of=AS_OF).model_dump()
+        dumped["candidates"] = tuple(reversed(dumped["candidates"]))
+        with pytest.raises(ValidationError):
+            VariableValueCompatibilityResult(**dumped)
+
+
+class TestFullShapeMatrix:
+    """The audit found only 9 of 21 shape-table cells exercised."""
+
+    @pytest.mark.parametrize("spec_shape", ["boolean", "number", "string"])
+    @pytest.mark.parametrize("literal,observed", [
+        pytest.param("true", "boolean", id="boolean"),
+        pytest.param("60.4", "number", id="number"),
+        pytest.param('"text"', "string", id="string"),
+        pytest.param("[1,2]", "array", id="array"),
+        pytest.param('{"a":1}', "object", id="object"),
+    ])
+    def test_every_cell(self, tmp_path, spec_shape, literal, observed):
+        temporal = observed_value(tmp_path, literal)
+        store = model_with(tmp_path,
+                           specifications=((spec_shape, False, None),))
+        queries, _, _ = compatibility(tmp_path, temporal=temporal,
+                                      model_store=store)
+        candidate = only(queries.variable_value_compatibility(V1, as_of=AS_OF))
+        assert candidate.observed_shape == observed
+        if observed in ("array", "object"):
+            expected, finding = ("does_not_satisfy_value_shape",
+                                 "unsupported_observed_structure")
+        elif observed == spec_shape:
+            expected, finding = "satisfies_value_shape", "shape_matches"
+        else:
+            expected, finding = "does_not_satisfy_value_shape", "shape_differs"
+        assert candidate.value_shape_compatibility == expected
+        assert candidate.value_shape_finding == finding
+
+    @pytest.mark.parametrize("spec_shape", ["boolean", "number", "string"])
+    def test_explicit_null_against_every_shape(self, tmp_path, spec_shape):
+        temporal = observed_value(tmp_path, "null")
+        store = model_with(tmp_path,
+                           specifications=((spec_shape, True, None),))
+        queries, _, _ = compatibility(tmp_path, temporal=temporal,
+                                      model_store=store)
+        candidate = only(queries.variable_value_compatibility(V1, as_of=AS_OF))
+        assert candidate.value_shape_finding == "explicit_null_allowed"

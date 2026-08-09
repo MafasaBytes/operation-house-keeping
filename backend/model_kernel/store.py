@@ -200,9 +200,6 @@ def validate_record_collection(
             _fail("MODEL_REFERENCE_INVALID",
                   f"specification {record_id} references unregistered "
                   f"variable {record.variable_anchor_id}")
-        if record_id in record.supersedes:
-            _fail("MODEL_SPECIFICATION_LINEAGE_INVALID",
-                  f"specification {record_id} supersedes itself")
         for parent_id in record.supersedes:
             parent = specifications.get(parent_id)
             if parent is None:
