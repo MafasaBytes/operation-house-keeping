@@ -20,29 +20,23 @@ from backend.data_sources.contracts.models import (
 from backend.data_sources.contracts.api import ApiExtractionManifest
 from backend.data_sources.contracts.pdf import PdfExtractionManifest
 
-
 class CsvTableResult(_FrozenModel):
     kind: Literal["csv_table"] = "csv_table"
     table: ExtractedTable
-
 
 class StepManifestResult(_FrozenModel):
     kind: Literal["step_manifest"] = "step_manifest"
     manifest: StepExtractionManifest
 
-
 class PdfManifestResult(_FrozenModel):
     kind: Literal["pdf_manifest"] = "pdf_manifest"
     manifest: PdfExtractionManifest
-
 
 class ApiObservationsResult(_FrozenModel):
     kind: Literal["api_observations"] = "api_observations"
     manifest: ApiExtractionManifest
 
-
 ExtractionOutcome = Literal["succeeded", "partial"]
-
 
 class ExtractionResult(_FrozenModel):
     model_config = ConfigDict(frozen=True, extra="forbid")

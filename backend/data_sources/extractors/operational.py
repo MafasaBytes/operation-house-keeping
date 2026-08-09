@@ -13,7 +13,7 @@ from decimal import Decimal
 from backend.data_sources.contracts import ExtractionError
 
 
-# ---------------------------------------------------------- hard parsing
+# -- hard parsing
 @dataclass(frozen=True)
 class JsonLimits:
     max_depth: int = 64
@@ -94,7 +94,7 @@ def parse_bounded_json(data: bytes, limits: JsonLimits):
     return value
 
 
-# ------------------------------------------------------------ canonical
+# -- canonical
 def canonical_json(value) -> str:
     """Deterministic canonical JSON text.
 
@@ -139,7 +139,7 @@ def json_type_of(value) -> str:
     raise TypeError(f"not a JSON-native value: {type(value).__name__}")
 
 
-# -------------------------------------------------------------- pointer
+# -- pointer
 def escape_pointer_token(token: str) -> str:
     """RFC 6901: '~' escapes to '~0', '/' to '~1' (in that order)."""
     return token.replace("~", "~0").replace("/", "~1")

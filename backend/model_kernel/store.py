@@ -148,7 +148,7 @@ def validate_record_collection(
         }[record.record_kind]
         bucket[record_id] = record
 
-    # -- registrations: exactly one per anchor, no lifecycle --------------
+    # -- registrations: exactly one per anchor, no lifecycle 
     registrations_by_anchor: dict[str, EntityRegistration] = {}
     for registration in registrations.values():
         anchor_id = registration.anchor.anchor_id
@@ -157,7 +157,7 @@ def validate_record_collection(
                   f"{anchor_id} is registered more than once")
         registrations_by_anchor[anchor_id] = registration
 
-    # -- type lineages: invariant fields, acyclic, one current per name ---
+    # -- type lineages: invariant fields, acyclic, one current per name 
     for record_id in sorted(types):
         definition = types[record_id]
         if definition.supersedes is not None:
@@ -194,7 +194,7 @@ def validate_record_collection(
     type_name_by_id = {record_id: definition.type_name
                        for record_id, definition in types.items()}
 
-    # -- assertions: judged by the EXACT cited definition ------------------
+    # -- assertions: judged by the EXACT cited definition
     for record_id in sorted(assertions):
         claim = assertions[record_id]
         cited = types.get(claim.type_id)
@@ -310,7 +310,7 @@ class ModelStore:
                 f"could not open the records directory of model "
                 f"{self.model_id}") from error
 
-    # -- append (VALIDATING; single-writer; atomic promote) ----------------
+    # -- append (VALIDATING; single-writer; atomic promote)
 
     def append(self, record: ModelRecord) -> str:
         # Structural revalidation FIRST: a caller-supplied instance may have
@@ -364,7 +364,7 @@ class ModelStore:
                 f"{self.model_id}") from error
         return record.record_id
 
-    # -- load / replay -----------------------------------------------------
+    # -- load / replay 
 
     def _read_record(self, path: Path) -> ModelRecord:
         try:

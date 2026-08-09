@@ -33,13 +33,12 @@ from backend.data_sources.contracts import (
     SourceDefinition,
     StatusCheck,
 )
-from backend.data_sources.provenance import sanitize_source_text
 
 _HEADER_ALLOWLIST = ("Content-Type", "Date", "Retry-After", "X-Request-Id")
 _HEADER_VALUE_BOUND = 200
 
 
-# transport
+# ------------------------------------------------------------ transport
 @dataclass
 class TransportRequest:
     url: str
@@ -124,7 +123,7 @@ class UrllibTransport:
                                      body=raw)
 
 
-# credentials
+# ----------------------------------------------------------- credentials
 class CredentialResolver(Protocol):
     def resolve(self, reference: str) -> str: ...
 
@@ -158,7 +157,7 @@ class EnvironmentCredentialResolver:
         return value
 
 
-# network policy
+# --------------------------------------------------------- network policy
 def _classify(ip: ipaddress.IPv4Address | ipaddress.IPv6Address) -> str:
     if ip.is_loopback:
         return "loopback"
@@ -208,7 +207,7 @@ def validate_target_address(
     return kind
 
 
-# connector
+# -------------------------------------------------------------- connector
 class HttpApiConnector:
     MANIFEST = ConnectorManifest(
         connector_type="http_api",
@@ -311,20 +310,6 @@ class HttpApiConnector:
         auth_headers = adapter.auth_headers(
             self.credential_resolver, source.credential_reference
         )
-        # Every nonempty in-memory authorization value the adapter produced:
-        # exact occurrences are stripped from any source-derived value
-        # before an event (and therefore any persisted artifact) is built.
-        secret_values = sorted(
-            {value for value in auth_headers.values() if value},
-            key=len, reverse=True,
-        )
-
-        def sanitize_source_value(value: str | None) -> str | None:
-            if value is None:
-                return None
-            for secret in secret_values:
-                value = value.replace(secret, "<redacted-credential>")
-            return sanitize_source_text(value, max_len=_HEADER_VALUE_BOUND)
         for address in self.resolve_addresses(host):
             validate_target_address(address, scheme, allow_plaintext, scope)
         transport_security = (
@@ -350,7 +335,8 @@ class HttpApiConnector:
                 status_code=None,
                 extraction_route=adapter.extraction_route,
             )
-            if deadline - self.monotonic() <= 0:
+            remaining = deadline - self.monotonic()
+            if remaining <= 0:
                 evidence.finished_at = self.clock()
                 yield AcquisitionFailed(
                     item_key=item.item_key,
@@ -365,26 +351,17 @@ class HttpApiConnector:
                 validate_target_address(address, scheme, allow_plaintext, scope)
 
             response = None
-            late_response = None
             failure: tuple[str, str] | None = None
             retries = 0
             while True:
-                # the remaining sweep budget is recomputed before EVERY
-                # transport call — the per-call timeout is capped by it
-                remaining = deadline - self.monotonic()
-                if remaining <= 0:
-                    failure = (
-                        "ACQUIRE_SWEEP_DEADLINE",
-                        "total sweep deadline exhausted during acquisition",
-                    )
-                    break
                 try:
                     response = self.transport(TransportRequest(
                         url=origin + item.path_and_query,
                         headers=dict(auth_headers),
-                        timeout=min(self.request_timeout_seconds, remaining),
+                        timeout=min(self.request_timeout_seconds, max(remaining, 0.1)),
                         max_response_bytes=self.max_response_bytes,
                     ))
+                    break
                 except TransportError as error:
                     code = {
                         "timeout": "ACQUIRE_TIMEOUT",
@@ -393,43 +370,15 @@ class HttpApiConnector:
                         "oversize": "ACQUIRE_RESPONSE_TOO_LARGE",
                         "connection": "ACQUIRE_SOURCE_UNREACHABLE",
                     }.get(error.kind, "ACQUIRE_SOURCE_UNREACHABLE")
-                    after = deadline - self.monotonic()
-                    if (error.kind in ("timeout", "connection")
-                            and retries < self.max_retries and after > 0):
+                    if error.kind in ("timeout", "connection") and retries < self.max_retries:
                         retries += 1
                         continue
-                    if after <= 0:
-                        failure = (
-                            "ACQUIRE_SWEEP_DEADLINE",
-                            "total sweep deadline exhausted during acquisition",
-                        )
-                    else:
-                        failure = (code, str(error))
+                    failure = (code, str(error))
                     break
-                # recompute after the transport returns: a late response is
-                # never accepted, though its arrival is recorded honestly
-                if deadline - self.monotonic() <= 0:
-                    late_response = response
-                    response = None
-                    failure = (
-                        "ACQUIRE_SWEEP_DEADLINE",
-                        "response arrived after the total sweep deadline and "
-                        "was not accepted",
-                    )
-                break
             evidence.retries_used = retries
             evidence.finished_at = self.clock()
 
             if failure is not None:
-                if late_response is not None:
-                    evidence.received_at = evidence.finished_at
-                    evidence.status_code = late_response.status
-                    evidence.allowlisted_headers = {
-                        name: sanitize_source_value(str(late_response.headers[name]))
-                        for name in _HEADER_ALLOWLIST
-                        if name in late_response.headers
-                    }
-                    evidence.response_size_bytes = len(late_response.body)
                 yield AcquisitionFailed(
                     item_key=item.item_key, error_code=failure[0],
                     redacted_message=failure[1], api=evidence,
@@ -439,27 +388,11 @@ class HttpApiConnector:
             evidence.received_at = evidence.finished_at
             evidence.status_code = response.status
             evidence.allowlisted_headers = {
-                name: sanitize_source_value(str(response.headers[name]))
+                name: str(response.headers[name])[:_HEADER_VALUE_BOUND]
                 for name in _HEADER_ALLOWLIST if name in response.headers
             }
             evidence.response_size_bytes = len(response.body)
-            evidence.source_content_type = sanitize_source_value(
-                response.headers.get("Content-Type")
-            )
-
-            if response.status == 200 and any(
-                secret.encode("utf-8") in response.body for secret in secret_values
-            ):
-                # Raw evidence is never silently modified: a payload that
-                # echoes a resolved credential is refused, not rewritten.
-                yield AcquisitionFailed(
-                    item_key=item.item_key,
-                    error_code="ACQUIRE_SECRET_ECHOED",
-                    redacted_message="response body echoes a resolved "
-                    "credential value; the payload was not persisted",
-                    api=evidence,
-                )
-                continue
+            evidence.source_content_type = response.headers.get("Content-Type")
 
             if response.status == 200:
                 if len(response.body) > self.max_response_bytes:

@@ -53,7 +53,7 @@ class ModelQueries:
                 "ModelStore.replay()")
         self.loaded = loaded
 
-    # -- boundary checks ---------------------------------------------------
+    # -- boundary checks 
 
     def _require_anchor_id(self, anchor_id: str) -> str:
         if not isinstance(anchor_id, str) or not _ANCHOR_ID.fullmatch(anchor_id):
@@ -119,7 +119,7 @@ class ModelQueries:
                 f"type {type_name!r} is view-independent; no view applies")
         return definition
 
-    # -- summaries ---------------------------------------------------------
+    # -- summaries
 
     def _summary(self, record_id: str) -> RelationshipSummary:
         claim = self.loaded.assertions[record_id]
@@ -152,7 +152,7 @@ class ModelQueries:
         return (not self.loaded.superseded_by[record_id]
                 and not self.loaded.withdrawn_by[record_id])
 
-    # -- entity ------------------------------------------------------------
+    # -- entity 
 
     def entity(self, anchor_id: str) -> EntityResult:
         anchor_id = self._require_anchor_id(anchor_id)
@@ -169,7 +169,7 @@ class ModelQueries:
                 recorded_at=registration.recorded_at),
             revision=self.loaded.revision)
 
-    # -- relationships (strict context equality) ---------------------------
+    # -- relationships (strict context equality) 
 
     def relationships(self, anchor_id: str, *, direction: str,
                       type_name: str | None = None,
@@ -232,7 +232,7 @@ class ModelQueries:
             inactive=inactive, lineage_conflicts=conflicts,
             revision=self.loaded.revision)
 
-    # -- hierarchy ---------------------------------------------------------
+    # -- hierarchy 
 
     def _projection(self, type_name: str, view) -> HierarchyProjection:
         return build_projection(self.loaded, type_name, view)
@@ -393,7 +393,7 @@ class ModelQueries:
             status="partial" if blocks else "complete",
             steps=tuple(steps), blocked=blocks, **common)
 
-    # -- health ------------------------------------------------------------
+    # -- health 
 
     def hierarchy_health(self, type_name: str,
                          view: LifecycleView | None = None) -> HierarchyHealth:

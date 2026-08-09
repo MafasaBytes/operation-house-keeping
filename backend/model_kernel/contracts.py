@@ -38,7 +38,7 @@ LifecycleView = Literal[
 ]
 
 
-# ---------------------------------------------------------------- errors
+# -- errors
 # defined in `errors` so `canonical` can raise them without an import cycle
 from backend.model_kernel.errors import (  # noqa: E402  (re-export)
     ModelConfigurationError,
@@ -52,7 +52,7 @@ class _Frozen(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
 
-# ------------------------------------------------------------- authority
+# -- authority
 class AuthorityRef(_Frozen):
     """A recorded CLAIM of authorship — nothing is authenticated or signed."""
 
@@ -61,7 +61,7 @@ class AuthorityRef(_Frozen):
     method: Literal["manual_declaration"]
 
 
-# -------------------------------------------------------------- contexts
+# -- contexts
 class LifecycleViewContext(_Frozen):
     kind: Literal["lifecycle_view"]
     view: LifecycleView
@@ -77,7 +77,7 @@ AssertionContext = Annotated[
 ]
 
 
-# -------------------------------------------------------------- evidence
+# -- evidence
 class OwnerDeclarationEvidence(_Frozen):
     """The claim's basis is a human decision, honestly labeled as such —
     the only prose-bearing evidence kind."""
@@ -141,7 +141,7 @@ def _canonical_evidence(value: tuple) -> tuple:
     return normalized
 
 
-# --------------------------------------------------------- ledger records
+# -- ledger records
 class EntityRegistration(_Frozen):
     """Membership claim for one already-declared canonical identity. NO
     lifecycle: the kernel provides no supersession, no withdrawal, and no
@@ -227,7 +227,7 @@ ModelRecord = Union[
 ]
 
 
-# ---------------------------------------------------------------- revision
+# -- revision
 class ModelRevision(_Frozen):
     """COMPUTED ONLY — never a file, never a ledger record; the membership
     pattern structurally excludes mrv_. Canonical order is the sorted
@@ -253,7 +253,7 @@ class ModelRevision(_Frozen):
         return self
 
 
-# --------------------------------------------------------------- results
+# -- results
 def _sorted_unique(values) -> bool:
     return list(values) == sorted(set(values))
 

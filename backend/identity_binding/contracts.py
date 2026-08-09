@@ -41,7 +41,7 @@ def _sorted_unique(values) -> bool:
     return list(values) == sorted(set(values))
 
 
-# ---------------------------------------------------------------- errors
+# -- errors
 class IdentityBindingError(Exception):
     def __init__(self, error_code: str, message: str) -> None:
         super().__init__(f"{error_code}: {message}")
@@ -66,7 +66,7 @@ class _Frozen(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
 
-# ------------------------------------------------------------- authority
+# -- authority
 class AuthorityRef(_Frozen):
     """A recorded CLAIM of authorship. Nothing is authenticated or signed
     in IB-001; `agent` is a claimed name and never a credential."""
@@ -76,7 +76,7 @@ class AuthorityRef(_Frozen):
     method: Literal["manual_declaration"]
 
 
-# ---------------------------------------------------- applicability scope
+# -- applicability scope
 class DeclaredBoundary(_Frozen):
     kind: Literal["declared"]
     at: UtcDatetime
@@ -119,7 +119,7 @@ class AppliesScope(_Frozen):
         return self
 
 
-# --------------------------------------------------------- ledger records
+# -- ledger records
 class AnchorDeclaration(_Frozen):
     record_kind: Literal["anchor_declaration"] = "anchor_declaration"
     schema_version: Literal["1"] = "1"
@@ -227,7 +227,7 @@ LedgerRecord = Union[
 ]
 
 
-# ---------------------------------------------------------------- revision
+# -- revision
 class BindingRevision(_Frozen):
     """Exact, reconstructable membership. `revision_id` names both the
     authoritative set and its membership; canonical order is the sorted
@@ -253,7 +253,7 @@ class BindingRevision(_Frozen):
         return self
 
 
-# ------------------------------------------------------------- resolution
+# -- resolution
 ResolutionStatus = Literal[
     "bound", "applicability_unknown", "outside_applicability", "unbound",
     "ambiguous", "conflicted", "superseded", "retracted", "inactive",

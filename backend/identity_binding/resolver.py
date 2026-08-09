@@ -160,7 +160,7 @@ class BindingResolver:
     def __init__(self, loaded: LoadedBindingSet) -> None:
         self.loaded = loaded
 
-    # -- public ------------------------------------------------------------
+    # -- public 
 
     def resolve_subject(self, subject: SourceSubjectRef,
                         at: datetime | None = None) -> ResolutionResult:
@@ -204,7 +204,7 @@ class BindingResolver:
                     f"to {context.resolved_entity.anchor_id}")
         return self._result(assessment, subject, prop, subject_context=context)
 
-    # -- internals ----------------------------------------------------------
+    # -- internals
 
     def _assess(self, binding_kind, subject, prop, at) -> _Assessment:
         matching = [

@@ -9,7 +9,6 @@ from backend.data_sources.contracts.models import _FrozenModel
 
 NonEmptyStr = Annotated[str, StringConstraints(min_length=1)]
 
-
 class ExtractorIdentity(_FrozenModel):
     name: NonEmptyStr
     version: NonEmptyStr

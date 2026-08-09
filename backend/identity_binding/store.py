@@ -115,7 +115,7 @@ def validate_record_collection(
         }[record.record_kind]
         bucket[record_id] = record
 
-    # -- anchors: exactly one declaration owns each canonical ID ---------
+    # -- anchors: exactly one declaration owns each canonical ID 
     anchors_by_id: dict[str, EntityAnchor | VariableAnchor] = {}
     seen_identifiers: dict[str, str] = {}  # 32-hex tail -> anchor_id
     for declaration in declarations.values():
@@ -134,7 +134,7 @@ def validate_record_collection(
                       f"variable {anchor.anchor_id} references undeclared "
                       f"entity {anchor.entity_anchor_id}")
 
-    # -- assertions: targets and supersession ----------------------------
+    # -- assertions: targets and supersession
     for assertion in assertions.values():
         if assertion.target_anchor_id not in anchors_by_id:
             _fail("BINDING_ANCHOR_REFERENCE_INVALID",
@@ -170,7 +170,7 @@ def validate_record_collection(
                   f"rejection {rejection.record_id} references undeclared "
                   f"anchor {rejection.rejected_anchor_id}")
 
-    # -- closures: narrowing-only, at most one per assertion -------------
+    # -- closures: narrowing-only, at most one per assertion 
     closure_records: dict[str, tuple[str, ...]] = {
         record_id: () for record_id in assertions}
     effective_applies: dict[str, AppliesScope] = {
@@ -243,7 +243,7 @@ class BindingStore:
         self.staging_dir = set_dir / ".staging"
         self.records_dir.mkdir(parents=True, exist_ok=True)
 
-    # -- append (write-once, atomic, single-writer) -----------------------
+    # -- append (write-once, atomic, single-writer)
 
     def append(self, record: LedgerRecord) -> str:
         """Write one record. Staging happens OUTSIDE the scanned ledger
@@ -280,7 +280,7 @@ class BindingStore:
             raise
         return record.record_id
 
-    # -- load --------------------------------------------------------------
+    # -- load 
 
     def _read_record(self, path: Path) -> LedgerRecord:
         try:

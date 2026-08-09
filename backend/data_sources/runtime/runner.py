@@ -138,7 +138,7 @@ class IngestionRunner:
         )
         return ExtractionProduct(result=result)
 
-    # -- public API -------------------------------------------------------
+    # -- public API
 
     def run(self, source_id: str) -> IngestionRun:
         source = self.catalog.get(source_id)  # unknown source raises here
@@ -359,7 +359,7 @@ class IngestionRunner:
             api_evidence=self._api_health_evidence(source_id),
         )
 
-    # -- acquisition helpers (DS-004) -------------------------------------
+    # -- acquisition helpers (DS-004)
 
     @staticmethod
     def _locator_from_event(event) -> "ApiSourceLocator | None":
@@ -457,7 +457,7 @@ class IngestionRunner:
             ),
         )
 
-    # -- extraction dispatch ---------------------------------------------
+    # -- extraction dispatch
 
     def _extract_product(self, envelope: RawRecord, payload: bytes) -> ExtractionProduct:
         # Vendor-aware routing: an explicit extraction route stored with the
@@ -532,7 +532,7 @@ class IngestionRunner:
             result=product.result, derivative_payloads=product.derivative_payloads
         )
 
-    # -- internals --------------------------------------------------------
+    # -- internals
 
     def _check_profile(self, source: SourceDefinition) -> None:
         if self.profile is None:

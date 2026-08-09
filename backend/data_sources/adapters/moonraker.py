@@ -73,7 +73,7 @@ class MoonrakerAdapter:
             return {}
         return {"X-Api-Key": resolver.resolve(credential_reference)}
 
-    # ---------------------------------------------------------- extraction
+    # -- extraction
     def identity(self) -> ExtractorIdentity:
         fingerprint = hashlib.sha256(_canonical_query().encode()).hexdigest()[:16]
         return ExtractorIdentity(
