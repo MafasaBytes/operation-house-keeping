@@ -1,0 +1,19 @@
+{
+  "anchor": {
+    "anchor_id": "var_b7e2d3c4f5a6172839405a6b7c8d9e0f",
+    "display_name": "Hotend temperature",
+    "entity_anchor_id": "ent_a3f1c2d4e5b6478899aa0b1c2d3e4f50",
+    "namespace": "demo-printer",
+    "role_name": "hotend-temperature"
+  },
+  "authority": {
+    "agent": "mk001_demo_fixture",
+    "kind": "test_fixture",
+    "method": "manual_declaration"
+  },
+  "note": "",
+  "record_id": "vrg_40c8c6b984345af33de6913ca9025d60d22b0e627b110e974c78270eb941dca7",
+  "record_kind": "variable_registration",
+  "recorded_at": "2026-08-09T12:00:00+00:00",
+  "schema_version": "1"
+}
