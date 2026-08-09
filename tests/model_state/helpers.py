@@ -147,3 +147,38 @@ def state_queries(tmp_path, *, temporal=None, binding_records=None,
                     else binding_records))
     store = model_store if model_store is not None else model_with(tmp_path)
     return ModelStateQueries(store.load(), resolver, temporal), resolver, temporal
+
+
+def full_timeline_stack(tmp_path):
+    """The COMPLETE accepted TS-001 three-occurrence timeline:
+
+        20:00:06  60.1  first_seen
+        20:00:12  60.1  unchanged
+        20:00:18  60.4  changed   <- latest at any cutoff >= 20:00:18
+
+    Built exactly as the accepted temporal suite builds it — two sweeps of
+    the base fixture, then the transport script swapped to the accepted
+    `moonraker_printer_objects_changed.json` for a third sweep. Contrast
+    `observed_stack(...)`, which replays ONE payload and therefore yields
+    a single-sweep projection, not this timeline."""
+    from backend.temporal_state.projector import TemporalProjector
+    from backend.temporal_state.queries import TemporalQueries
+    from backend.temporal_state.store import TemporalStore
+
+    from tests.data_sources.test_ingestion_runner_api import (
+        fixture_response,
+        happy_script,
+        make_runner,
+    )
+
+    runner, ds_store, transport = make_runner(tmp_path / "ds", happy_script())
+    store = TemporalStore(tmp_path / "temporal.db",
+                          evidence_root=ds_store.base_dir)
+    projector = TemporalProjector(ds_store, store)
+    runner.run("printer-1")
+    runner.run("printer-1")
+    transport.script["/printer/objects/query"] = fixture_response(
+        "moonraker_printer_objects_changed.json")
+    runner.run("printer-1")
+    projector.project("printer-1")
+    return TemporalQueries(store)
