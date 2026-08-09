@@ -13,7 +13,8 @@ PACKAGE_DIR = Path(model_state_package.__file__).parent
 ALLOWED_ROOTS = ("backend.system_identity", "backend.model_kernel",
                  "backend.identity_binding", "backend.temporal_state",
                  "backend.model_state", "pydantic")
-FORBIDDEN_MODULES = ("backend.data_sources", "sqlite3")
+FORBIDDEN_MODULES = ("backend.data_sources", "sqlite3",
+                     "backend.observation_compatibility")
 FORBIDDEN_CALLS = ("ModelStore", "BindingStore", "TemporalStore")
 
 

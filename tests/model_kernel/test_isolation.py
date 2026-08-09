@@ -31,8 +31,8 @@ import backend.model_kernel as kernel_package
 KERNEL_DIR = Path(kernel_package.__file__).parent
 FORBIDDEN_MODULES = ("backend.identity_binding", "backend.temporal_state",
                      "backend.data_sources",
-    "backend.model_state",  # the kernel never imports the upper facade
-)
+    "backend.model_state",  # the kernel never imports the upper facade,
+                     "backend.observation_compatibility")
 ALLOWED_ROOTS = ("backend.system_identity", "backend.model_kernel", "pydantic")
 
 
