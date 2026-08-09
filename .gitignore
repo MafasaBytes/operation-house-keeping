@@ -17,3 +17,7 @@ __pycache__/
 
 # Raw store working data (DS-001 local runs)
 /var/
+
+# Ecosystem
+/hous/
+/venv/
