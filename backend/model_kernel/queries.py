@@ -37,6 +37,7 @@ from backend.model_kernel.contracts import (
     TraversalStep,
     VariableRegistrationSummary,
     VariableResult,
+    VariableSpecificationResult,
 )
 from backend.model_kernel.hierarchy import HierarchyProjection, build_projection
 from backend.model_kernel.store import LoadedModel
@@ -219,6 +220,38 @@ class ModelQueries:
         return EntityVariablesResult(
             status="registered", entity_anchor_id=entity_anchor_id,
             entries=entries, revision=self.loaded.revision)
+
+    def variable_value_specification(
+            self, anchor_id: str) -> VariableSpecificationResult:
+        """What the model requires this variable's value to be. Competing
+        current tips are reported as `conflicted` with every tip carried
+        verbatim — never resolved by recency, authority, record id, file
+        order, or append order."""
+        anchor_id = self._require_variable_anchor_id(anchor_id)
+        revision = self.loaded.revision
+        if anchor_id not in self.loaded.variable_registrations_by_anchor:
+            return VariableSpecificationResult(
+                status="not_registered", anchor_id=anchor_id,
+                revision=revision)
+        tips = self.loaded.current_specification_tips_by_variable.get(
+            anchor_id, ())
+        superseded = tuple(sorted(
+            record_id for record_id, successors
+            in self.loaded.specification_superseded_by.items()
+            if successors and self.loaded.specifications[
+                record_id].variable_anchor_id == anchor_id))
+        if not tips:
+            return VariableSpecificationResult(
+                status="not_specified", anchor_id=anchor_id,
+                superseded_specification_ids=superseded, revision=revision)
+        if len(tips) > 1:
+            return VariableSpecificationResult(
+                status="conflicted", anchor_id=anchor_id,
+                conflicting_specifications=tips,
+                superseded_specification_ids=superseded, revision=revision)
+        return VariableSpecificationResult(
+            status="specified", anchor_id=anchor_id, specification=tips[0],
+            superseded_specification_ids=superseded, revision=revision)
 
     # -- relationships (strict context equality) ---------------------------
 

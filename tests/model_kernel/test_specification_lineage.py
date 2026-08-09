@@ -292,3 +292,71 @@ class TestAppendAndReplay:
         assert record.record_id not in loaded.variable_registrations_by_anchor
         assert len(loaded.variable_registrations_by_anchor) == 1
         assert loaded.types == {} and loaded.assertions == {}
+
+
+class TestSpecificationQuery:
+    """The kernel query is the SINGLE source of specification status."""
+
+    def test_specified(self, tmp_path):
+        record = specification()
+        loaded = world(tmp_path, record).load()
+        result = ModelQueries(loaded).variable_value_specification(VAR_A)
+        assert result.status == "specified"
+        assert result.specification == record          # verbatim
+        assert result.conflicting_specifications == ()
+        assert result.superseded_specification_ids == ()
+        assert result.anchor_id == VAR_A
+        assert result.revision == loaded.revision
+
+    def test_not_specified_for_a_registered_variable(self, tmp_path):
+        loaded = world(tmp_path).load()
+        result = ModelQueries(loaded).variable_value_specification(VAR_A)
+        assert result.status == "not_specified"
+        assert result.specification is None
+
+    def test_not_registered_variable(self, tmp_path):
+        loaded = world(tmp_path).load()
+        result = ModelQueries(loaded).variable_value_specification(VAR_B)
+        assert result.status == "not_registered"
+        assert result.specification is None
+        assert result.superseded_specification_ids == ()
+
+    def test_conflicted_carries_every_tip_verbatim(self, tmp_path):
+        first = specification(note="first")
+        second = specification(note="second")
+        loaded = world(tmp_path, first, second).load()
+        result = ModelQueries(loaded).variable_value_specification(VAR_A)
+        assert result.status == "conflicted"
+        assert result.specification is None
+        assert set(result.conflicting_specifications) == {first, second}
+        ids = [record.record_id for record in result.conflicting_specifications]
+        assert ids == sorted(ids)
+
+    def test_superseded_history_disclosed(self, tmp_path):
+        first = specification(note="first")
+        second = specification(note="second", supersedes=(first.record_id,))
+        loaded = world(tmp_path, first, second).load()
+        result = ModelQueries(loaded).variable_value_specification(VAR_A)
+        assert result.status == "specified"
+        assert result.specification == second
+        assert result.superseded_specification_ids == (first.record_id,)
+
+    @pytest.mark.parametrize("bad", [
+        pytest.param(ENT_A, id="entity_id"), pytest.param(None, id="none"),
+        pytest.param(123, id="int"), pytest.param([], id="unhashable"),
+        pytest.param("", id="empty"),
+    ])
+    def test_input_is_typed(self, tmp_path, bad):
+        queries = ModelQueries(world(tmp_path).load())
+        with pytest.raises(ModelKernelError) as excinfo:
+            queries.variable_value_specification(bad)
+        assert excinfo.value.error_code == "MODEL_ANCHOR_ID_INVALID"
+
+    def test_replayed_revision_answers_for_that_membership(self, tmp_path):
+        record = specification()
+        store = world(tmp_path, record)
+        old = store.replay([registration(ENT_A).record_id,
+                            variable_registration(VAR_A).record_id])
+        result = ModelQueries(old).variable_value_specification(VAR_A)
+        assert result.status == "not_specified"
+        assert result.revision == old.revision
