@@ -37,8 +37,14 @@ IB-001 (canonical anchors in `backend/system_identity/` and the explicit
 identity-binding ledger in `backend/identity_binding/`) and MK-001 (the
 typed entity/relationship model kernel in `backend/model_kernel/`), each
 validated and repaired under owner mandate. The current milestone is
-VM-001 (explicit variable membership in the model kernel plus the
-read-only `backend/model_state/` bound model-state query facade); see
+VS-001 (explicit variable VALUE specification in the model kernel plus
+the read-only `backend/observation_compatibility/` facade that assesses
+whether an attached observation matches that specification). VM-001
+(explicit variable membership in the model kernel plus the read-only
+`backend/model_state/` bound model-state query facade) is accepted and
+pushed. A model specification states what the model requires; a source
+observation states what a source supplied; the two are never conflated,
+and a model unit is never inherited into source evidence. See
 docs/superpowers/specs/ and docs/adr/ for accepted designs. The
 historical sentence "Only `data_sources` is currently in scope" in the
 Current Phase section below is superseded by this Status section; the
