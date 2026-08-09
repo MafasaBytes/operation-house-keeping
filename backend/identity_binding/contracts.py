@@ -298,6 +298,92 @@ class AssertionSummary(_Frozen):
         return self
 
 
+class DeclaredBindingSummary(_Frozen):
+    """One property-binding assertion, summarized declaratively for
+    reverse discovery. Deliberately TIME-FREE: `lifecycle_flags` states
+    which lifecycle events this binding revision records (sorted, unique;
+    an empty tuple means no supersession, retraction, or closure is
+    recorded — NEVER "currently applicable"). Applicability at an
+    observation is decided solely by forward resolution at that
+    occurrence's own received_at."""
+
+    record_id: str = Field(pattern=r"^iba_[0-9a-f]{64}$")
+    target_anchor_id: str
+    authority: AuthorityRef
+    recorded_at: UtcDatetime
+    declared_applies: AppliesScope
+    effective_applies: AppliesScope
+    supersedes: str | None = Field(default=None,
+                                   pattern=r"^iba_[0-9a-f]{64}$")
+    superseded_by: tuple[str, ...] = ()
+    retracted_by: tuple[str, ...] = ()
+    closure_records: tuple[str, ...] = ()
+    lifecycle_flags: tuple[Literal["closed", "retracted", "superseded"],
+                           ...] = ()
+
+    @model_validator(mode="after")
+    def _lifecycle_consistent(self):
+        derived = tuple(sorted(
+            flag for flag, links in (("closed", self.closure_records),
+                                     ("retracted", self.retracted_by),
+                                     ("superseded", self.superseded_by))
+            if links))
+        if self.lifecycle_flags != derived:
+            raise ValueError(
+                "lifecycle_flags must derive exactly from the lifecycle "
+                "record-id tuples")
+        if len(self.closure_records) > 1:
+            raise ValueError("a valid result carries at most one closure")
+        for values, prefix in ((self.superseded_by, "iba"),
+                               (self.retracted_by, "ibr"),
+                               (self.closure_records, "ibc")):
+            if not _sorted_unique(values):
+                raise ValueError("lifecycle record ids must be unique/sorted")
+            for record_id in values:
+                if not re.fullmatch(rf"^{prefix}_[0-9a-f]{{64}}$", record_id):
+                    raise ValueError(f"{record_id!r} is not a {prefix} id")
+        return self
+
+
+class DeclaredLocatorEntry(_Frozen):
+    """One source locator with ALL property assertions declared on it —
+    any target — so a shared locator explains its own conflicts
+    standalone."""
+
+    subject: SourceSubjectRef
+    property: SourcePropertyRef
+    assertion_summaries: tuple[DeclaredBindingSummary, ...] = Field(
+        min_length=1)
+
+    @model_validator(mode="after")
+    def _summaries_sorted(self):
+        ids = [summary.record_id for summary in self.assertion_summaries]
+        if ids != sorted(ids):
+            raise ValueError("assertion summaries must be sorted by id")
+        return self
+
+
+class DeclaredPropertyLocatorsResult(_Frozen):
+    """Every locator EVER declared for one variable anchor in this
+    revision — including superseded, retracted, and closed declarations,
+    disclosed via their summaries. `none_declared` means the anchor is
+    declared but no property assertion targets it (unbound at discovery
+    level — a valid answer); `anchor_not_declared` means the revision does
+    not declare the anchor at all (the cross-set gap). Never a winner; no
+    recency or authority ordering."""
+
+    status: Literal["declared", "none_declared", "anchor_not_declared"]
+    target_anchor_id: str = Field(pattern=VARIABLE_ANCHOR_ID_PATTERN)
+    locators: tuple[DeclaredLocatorEntry, ...] = ()
+    revision: BindingRevision
+
+    @model_validator(mode="after")
+    def _status_consistent(self):
+        if (self.status == "declared") != bool(self.locators):
+            raise ValueError("locators are present exactly when declared")
+        return self
+
+
 class SubjectResolutionContext(_Frozen):
     """Non-recursive subject context on property results: statuses,
     anchors, and assertion ids only — never a nested ResolutionResult."""
