@@ -32,10 +32,18 @@ API; Moonraker validation source), and TS-001 (rebuildable temporal
 evidence projection), each with owner-mandated repair slices where
 independent validation found violations. `backend/data_sources/` and
 `backend/temporal_state/` are accepted and change only through
-owner-approved repair slices. The current milestone is IB-001 (explicit
-identity binding and canonical anchors); see docs/superpowers/specs/ and
-docs/adr/ for accepted designs. All other sections of this document
-remain binding for new modules.
+owner-approved repair slices. Accepted since that note was written:
+IB-001 (canonical anchors in `backend/system_identity/` and the explicit
+identity-binding ledger in `backend/identity_binding/`) and MK-001 (the
+typed entity/relationship model kernel in `backend/model_kernel/`), each
+validated and repaired under owner mandate. The current milestone is
+VM-001 (explicit variable membership in the model kernel plus the
+read-only `backend/model_state/` bound model-state query facade); see
+docs/superpowers/specs/ and docs/adr/ for accepted designs. The
+historical sentence "Only `data_sources` is currently in scope" in the
+Current Phase section below is superseded by this Status section; the
+section itself is preserved as the original milestone record. All other
+sections of this document remain binding for new modules.
 
 ## Current Phase
 
