@@ -97,7 +97,7 @@ class TestLedgerVocabulary:
 
     def test_no_locator_or_value_vocabulary_in_model_ledger(self):
         records = sorted(Path("models/demo-printer/records").glob("*.json"))
-        assert len(records) == 10
+        assert len(records) == 11
         for path in records:
             payload = json.loads(path.read_text())
             text = json.dumps(payload)

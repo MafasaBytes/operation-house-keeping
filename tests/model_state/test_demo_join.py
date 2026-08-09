@@ -161,7 +161,7 @@ class TestCommittedDemoJoin:
         store = ModelStore(Path("models/demo-printer"))
         old_ids = [record_id for record_id
                    in store.load().revision.record_ids
-                   if not record_id.startswith("vrg_")]
+                   if not record_id.startswith(("vrg_", "vsp_"))]
         replayed = store.replay(old_ids)
         resolver = BindingResolver(
             BindingStore(Path("bindings/demo-printer")).load())

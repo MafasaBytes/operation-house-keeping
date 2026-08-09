@@ -1,0 +1,30 @@
+{
+  "authority": {
+    "agent": "mk001_demo_fixture",
+    "kind": "test_fixture",
+    "method": "manual_declaration"
+  },
+  "evidence": [
+    {
+      "kind": "owner_declaration",
+      "statement": "Model-side value specification only. This record states that the model requires this variable to carry a JSON number and the project-local unit identity ohk-units-1/degree_celsius. It makes no claim about any source, adapter, connector, observation, or supplied source unit. The unit code is an identity token, not a unit definition: it asserts no dimension, convertibility, scale or offset, SI traceability, or equivalence to an external standard."
+    }
+  ],
+  "note": "",
+  "nullable": false,
+  "record_id": "vsp_c8e5d91d38c5e3f36d0d592737aac5ce26c03eb5d169365c38953f971ff62ba0",
+  "record_kind": "variable_value_specification",
+  "recorded_at": "2026-08-09T12:00:00+00:00",
+  "schema_version": "1",
+  "supersedes": [],
+  "unit": {
+    "kind": "declared",
+    "unit": {
+      "code": "degree_celsius",
+      "system_edition": "ohk-units-1",
+      "system_id": "project_local"
+    }
+  },
+  "value_shape": "number",
+  "variable_anchor_id": "var_b7e2d3c4f5a6172839405a6b7c8d9e0f"
+}

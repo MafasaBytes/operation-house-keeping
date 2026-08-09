@@ -9,8 +9,10 @@ from backend.model_kernel.queries import ModelQueries
 from backend.model_kernel.store import ModelStore
 
 DEMO_MODEL = Path("models/demo-printer")
-GOLDEN_REVISION = ("mrv_105658072294bad92f83e3d536863cb46d6d7ae83f271fb59d5"
-                   "026839d002686")  # 10 records (VM-001)
+GOLDEN_REVISION = ("mrv_25afc0ebf17ed12bd6ef0a95795798a53ef2"
+                   "731983410136d3da15c4d0f98093")  # 11 records (VS-001)
+PRE_SPECIFICATION_REVISION = ("mrv_105658072294bad92f83e3d536863cb46d6d7ae83"
+                              "f271fb59d5026839d002686")  # 10 records (VM-001)
 PRE_VARIABLE_REVISION = ("mrv_c28b6301f712f94249e6ccea87f1cfd4f9c04c1cc00fef3"
                          "ae3d023e3da83227f")  # 9 records (MK-001)
 ROOT = "ent_0f1e2d3c4b5a69788796a5b4c3d2e1f0"
@@ -27,8 +29,9 @@ class TestCommittedLedger:
     def test_golden_revision_and_membership(self):
         loaded = ModelStore(DEMO_MODEL).load()
         assert loaded.revision.revision_id == GOLDEN_REVISION
-        assert loaded.revision.record_count == 10
+        assert loaded.revision.record_count == 11
         assert len(loaded.variable_registrations_by_anchor) == 1
+        assert len(loaded.specifications) == 1
         assert len(loaded.types) == 2
         assert len(loaded.assertions) == 3
         assert len(loaded.registrations_by_anchor) == 4
@@ -138,6 +141,11 @@ FROZEN_MK001_RECORDS = {
     "56e688d7a29a0d518ffbcbb1e776d229ec4a0419be4ceb6db021741b40b5e008",
 }
 
+FROZEN_VS001_RECORD = {
+    "vsp_c8e5d91d38c5e3f36d0d592737aac5ce26c03eb5d169365c38953f971ff62ba0.json":
+    "f190ec2437f5e3cee40e0e8a74ca27e0608866ae818f5b351dd8f8a1f48a06e5",
+}
+
 FROZEN_VM001_RECORD = {
     "vrg_40c8c6b984345af33de6913ca9025d60d22b0e627b110e974c78270eb941dca7.json":
     "dc16507a5f0aeec36ead054ff68dce4ac5d639e0d58cf30eb60315b8d41deefc",
@@ -149,7 +157,8 @@ class TestVm001Fixture:
         import hashlib
 
         for name, digest in {**FROZEN_MK001_RECORDS,
-                             **FROZEN_VM001_RECORD}.items():
+                             **FROZEN_VM001_RECORD,
+                             **FROZEN_VS001_RECORD}.items():
             path = DEMO_MODEL / "records" / name
             assert hashlib.sha256(
                 path.read_bytes()).hexdigest() == digest, name
@@ -182,3 +191,51 @@ class TestVm001Fixture:
         owned = queries.variables_of(EXTRUDER)
         assert [e.anchor.anchor_id for e in owned.entries] == [
             HOTEND_VARIABLE]
+
+
+class TestVs001Fixture:
+    HOTEND = HOTEND_VARIABLE
+    SPECIFICATION_ID = "vsp_c8e5d91d38c5e3f36d0d592737aac5ce26c03eb5d169365c38953f971ff62ba0"
+
+    def test_specification_governs_with_the_approved_content(self):
+        result = demo_queries().variable_value_specification(self.HOTEND)
+        assert result.status == "specified"
+        record = result.specification
+        assert record.record_id == self.SPECIFICATION_ID
+        assert record.variable_anchor_id == self.HOTEND
+        assert record.value_shape == "number"
+        assert record.nullable is False
+        assert record.unit.kind == "declared"
+        assert (record.unit.unit.system_id, record.unit.unit.system_edition,
+                record.unit.unit.code) == ("project_local", "ohk-units-1",
+                                           "degree_celsius")
+        assert record.supersedes == ()
+        assert record.authority.agent == "mk001_demo_fixture"
+        assert len(record.evidence) == 1
+        assert record.evidence[0].kind == "owner_declaration"
+
+    def test_permanent_evidence_is_model_only(self):
+        """The ledger record makes no claim about any source. Naming a
+        specific device or its absent unit would be source knowledge in the
+        model ledger."""
+        statement = demo_queries().variable_value_specification(
+            self.HOTEND).specification.evidence[0].statement
+        for banned in ("moonraker", "klipper", "printer", "extruder",
+                       "hotend", "json_pointer", "declared_unit",
+                       "adapter_id", "source_id", "60.4"):
+            assert banned not in statement.lower(), banned
+        assert "makes no claim about any source" in statement
+        assert "identity token, not a unit definition" in statement
+
+    def test_pre_specification_revision_replays_without_it(self):
+        store = ModelStore(DEMO_MODEL)
+        old_ids = [record_id for record_id
+                   in store.load().revision.record_ids
+                   if not record_id.startswith("vsp_")]
+        replayed = store.replay(old_ids)
+        assert replayed.revision.revision_id == PRE_SPECIFICATION_REVISION
+        assert replayed.revision.record_count == 10
+        result = ModelQueries(replayed).variable_value_specification(
+            self.HOTEND)
+        assert result.status == "not_specified"
+        assert result.specification is None
