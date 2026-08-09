@@ -119,3 +119,32 @@ def variable_registration(anchor_id=VAR_A, owner=ENT_A, name="Demo variable",
     return build_record(VariableRegistration,
                         anchor=variable_anchor(anchor_id, owner, name, role),
                         recorded_at=T0, authority=AUTHORITY, note=note)
+
+
+# ------------------------------------------------------- VS-001 specs
+SPEC_EVIDENCE = (OwnerDeclarationEvidence(
+    kind="owner_declaration",
+    statement="synthetic model-side value specification"),)
+
+
+def declared_unit(code="degree_celsius", system_edition="ohk-units-1"):
+    from backend.model_kernel.contracts import DeclaredUnit, UnitReference
+
+    return DeclaredUnit(kind="declared",
+                        unit=UnitReference(system_id="project_local",
+                                           system_edition=system_edition,
+                                           code=code))
+
+
+def specification(variable_anchor_id=VAR_A, value_shape="number",
+                  nullable=False, unit=None, evidence=SPEC_EVIDENCE,
+                  supersedes=(), recorded_at=T0, note="", **overrides):
+    from backend.model_kernel.contracts import VariableValueSpecification
+
+    fields = dict(variable_anchor_id=variable_anchor_id,
+                  value_shape=value_shape, nullable=nullable,
+                  unit=unit if unit is not None else declared_unit(),
+                  evidence=evidence, supersedes=supersedes,
+                  recorded_at=recorded_at, authority=AUTHORITY, note=note)
+    fields.update(overrides)
+    return build_record(VariableValueSpecification, **fields)

@@ -22,6 +22,7 @@ from backend.model_kernel.contracts import (
     ChildEntry,
     ChildrenResult,
     CycleReport,
+    DeclaredUnit,
     EntityRegistration,
     EntityResult,
     EntityVariablesResult,
@@ -50,6 +51,9 @@ from backend.model_kernel.contracts import (
     RelationshipSummary,
     RelationshipTypeDefinition,
     RelationshipWithdrawal,
+    UnitDeclaration,
+    UnitNotDeclared,
+    UnitReference,
     SourceRawRecordEvidence,
     TemporalOccurrenceEvidence,
     TraversalAnnotation,
@@ -59,6 +63,8 @@ from backend.model_kernel.contracts import (
     VariableRegistration,
     VariableRegistrationSummary,
     VariableResult,
+    VariableSpecificationResult,
+    VariableValueSpecification,
     ViewIndependentContext,
 )
 from backend.model_kernel.queries import ModelQueries
@@ -67,6 +73,7 @@ from backend.model_kernel.store import LoadedModel, ModelStore
 __all__ = [
     # ledger record contracts
     "EntityRegistration", "VariableRegistration",
+    "VariableValueSpecification",
     "RelationshipTypeDefinition",
     "RelationshipAssertion",
     "RelationshipWithdrawal",
@@ -84,6 +91,8 @@ __all__ = [
     "ModelRecordEvidence",
     "IdentityBindingRecordEvidence",
     "SourceRawRecordEvidence",
+    "UnitReference", "DeclaredUnit", "UnitNotDeclared",
+    "UnitDeclaration",
     "TemporalOccurrenceEvidence",
     # typed errors
     "ModelKernelError",
@@ -97,6 +106,7 @@ __all__ = [
     "LineageConflict",
     "RelationshipsResult",
     "RegistrationSummary", "VariableRegistrationSummary", "VariableResult",
+    "VariableSpecificationResult",
     "EntityResult", "EntityVariablesResult",
     "ParentResult",
     "ParentStatus",

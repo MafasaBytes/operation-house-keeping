@@ -39,11 +39,12 @@ from backend.model_kernel.contracts import (
     RelationshipTypeDefinition,
     RelationshipWithdrawal,
     VariableRegistration,
+    VariableValueSpecification,
 )
 
 _RECORD_ADAPTER: TypeAdapter = TypeAdapter(ModelRecord)
 _RECORD_ID = re.compile(MODEL_RECORD_ID_PATTERN)
-_FILENAME = re.compile(r"^(reg|rtd|rel|rwd|vrg)_[0-9a-f]{64}\.json$")
+_FILENAME = re.compile(r"^(reg|rtd|rel|rwd|vrg|vsp)_[0-9a-f]{64}\.json$")
 
 _EMPTY: Mapping = MappingProxyType({})
 
@@ -73,6 +74,10 @@ class LoadedModel:
     superseded_by: Mapping[str, tuple[str, ...]] = _EMPTY
     withdrawn_by: Mapping[str, tuple[str, ...]] = _EMPTY
     variable_registrations_by_anchor: Mapping[str, VariableRegistration] = _EMPTY
+    specifications: Mapping[str, VariableValueSpecification] = _EMPTY
+    current_specification_tips_by_variable: Mapping[
+        str, tuple[VariableValueSpecification, ...]] = _EMPTY
+    specification_superseded_by: Mapping[str, tuple[str, ...]] = _EMPTY
 
 
 def _fail(code: str, message: str) -> None:
@@ -118,6 +123,7 @@ def validate_record_collection(
     membership-relative)."""
     registrations: dict[str, EntityRegistration] = {}
     variable_registrations: dict[str, VariableRegistration] = {}
+    specifications: dict[str, VariableValueSpecification] = {}
     types: dict[str, RelationshipTypeDefinition] = {}
     assertions: dict[str, RelationshipAssertion] = {}
     withdrawals: dict[str, RelationshipWithdrawal] = {}
@@ -146,6 +152,7 @@ def validate_record_collection(
         bucket = {
             "entity_registration": registrations,
             "variable_registration": variable_registrations,
+            "variable_value_specification": specifications,
             "relationship_type_definition": types,
             "relationship_assertion": assertions,
             "relationship_withdrawal": withdrawals,
@@ -182,6 +189,78 @@ def validate_record_collection(
             _fail("MODEL_REFERENCE_INVALID",
                   f"variable registration {variable.record_id} references "
                   f"unregistered owner entity {owner_id}")
+
+    # -- value specifications: a multi-parent DAG per variable anchor.
+    # Competing current tips are SURFACED, never fatal: the revision stays
+    # loadable, queryable, and replayable, and a record superseding every
+    # tip converges the lineage.
+    for record_id in sorted(specifications):
+        record = specifications[record_id]
+        if record.variable_anchor_id not in variable_registrations_by_anchor:
+            _fail("MODEL_REFERENCE_INVALID",
+                  f"specification {record_id} references unregistered "
+                  f"variable {record.variable_anchor_id}")
+        if record_id in record.supersedes:
+            _fail("MODEL_SPECIFICATION_LINEAGE_INVALID",
+                  f"specification {record_id} supersedes itself")
+        for parent_id in record.supersedes:
+            parent = specifications.get(parent_id)
+            if parent is None:
+                _fail("MODEL_REFERENCE_INVALID",
+                      f"specification {record_id} supersedes missing "
+                      f"specification {parent_id}")
+            if parent.variable_anchor_id != record.variable_anchor_id:
+                _fail("MODEL_SPECIFICATION_LINEAGE_INVALID",
+                      f"specification {record_id} supersedes {parent_id}, "
+                      "which specifies a different variable")
+
+    # acyclicity over the DAG (iterative three-colour walk — a chain walk
+    # cannot express multiple parents)
+    _visiting, _done = set(), set()
+    for start in sorted(specifications):
+        if start in _done:
+            continue
+        stack = [(start, iter(specifications[start].supersedes))]
+        _visiting.add(start)
+        while stack:
+            node, parents = stack[-1]
+            advanced = False
+            for parent_id in parents:
+                if parent_id in _visiting:
+                    _fail("MODEL_SPECIFICATION_LINEAGE_INVALID",
+                          "specification supersession cycle")
+                if parent_id not in _done:
+                    _visiting.add(parent_id)
+                    stack.append(
+                        (parent_id, iter(specifications[parent_id].supersedes)))
+                    advanced = True
+                    break
+            if not advanced:
+                stack.pop()
+                _visiting.discard(node)
+                _done.add(node)
+
+    specification_superseded_by: dict[str, tuple[str, ...]] = {
+        record_id: () for record_id in specifications}
+    for record_id in sorted(specifications):
+        for parent_id in specifications[record_id].supersedes:
+            specification_superseded_by[parent_id] = tuple(sorted(
+                (*specification_superseded_by[parent_id], record_id)))
+    tips_by_variable: dict[str, tuple[VariableValueSpecification, ...]] = {}
+    for record_id in sorted(specifications):
+        record = specifications[record_id]
+        if specification_superseded_by[record_id]:
+            continue  # superseded by another member of this collection
+        tips_by_variable[record.variable_anchor_id] = (
+            *tips_by_variable.get(record.variable_anchor_id, ()), record)
+    # defence in depth: unreachable while the DAG is acyclic, since a finite
+    # acyclic graph always contains an unreferenced node
+    for anchor_id in {record.variable_anchor_id
+                      for record in specifications.values()}:
+        if not tips_by_variable.get(anchor_id):
+            _fail("MODEL_SPECIFICATION_LINEAGE_INVALID",
+                  f"variable {anchor_id} has specifications but no current "
+                  "tip")
 
     # -- type lineages: invariant fields, acyclic, one current per name ---
     for record_id in sorted(types):
@@ -311,6 +390,11 @@ def validate_record_collection(
         withdrawals=_frozen_mapping(withdrawals),
         variable_registrations_by_anchor=_frozen_mapping(
             variable_registrations_by_anchor),
+        specifications=_frozen_mapping(specifications),
+        current_specification_tips_by_variable=_frozen_mapping(
+            tips_by_variable),
+        specification_superseded_by=_frozen_mapping(
+            specification_superseded_by),
         superseded_by=_frozen_mapping(superseded_by),
         withdrawn_by=_frozen_mapping(withdrawn_by))
 

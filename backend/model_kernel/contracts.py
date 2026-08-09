@@ -33,7 +33,7 @@ from backend.system_identity import (
 UtcDatetime = Annotated[AwareDatetime, AfterValidator(lambda v: v.astimezone(UTC))]
 
 MODEL_ID_PATTERN = r"^[a-z0-9-]+$"
-MODEL_RECORD_ID_PATTERN = r"^(reg|rtd|rel|rwd|vrg)_[0-9a-f]{64}$"
+MODEL_RECORD_ID_PATTERN = r"^(reg|rtd|rel|rwd|vrg|vsp)_[0-9a-f]{64}$"
 
 ReferentKind = Literal[
     "logical_instance", "physical_instance", "type_definition", "unknown"
@@ -95,7 +95,7 @@ class ModelRecordEvidence(_Frozen):
     # registrations (entity AND variable), types, and assertions are
     # citable; a withdrawal is a non-claim and stays uncitable
     kind: Literal["model_record"]
-    record_id: str = Field(pattern=r"^(reg|rtd|rel|vrg)_[0-9a-f]{64}$")
+    record_id: str = Field(pattern=r"^(reg|rtd|rel|vrg|vsp)_[0-9a-f]{64}$")
 
 
 class IdentityBindingRecordEvidence(_Frozen):
@@ -244,9 +244,112 @@ class RelationshipWithdrawal(_Frozen):
     note: str = ""
 
 
+# ------------------------------------------------- value specification
+_LOCAL_IDENTIFIER = r"^[a-z0-9][a-z0-9._-]*$"
+_LOCAL_IDENTIFIER_RE = re.compile(r"[a-z0-9][a-z0-9._-]*")
+_LOCAL_IDENTIFIER_CHARS = frozenset(
+    "abcdefghijklmnopqrstuvwxyz0123456789._-")
+
+
+def _identifier(value: str) -> str:
+    r"""Behavioural grammar guard. The `pattern=` constraint is correct
+    under pydantic's default engine, but the guarantee must not rest on an
+    engine default: `$` admits a trailing newline under Python's `re`, and
+    `\A..\Z` is rejected outright by the default engine. fullmatch plus an
+    explicit character set is engine-independent."""
+    if not isinstance(value, str):
+        raise ValueError("identifier must be a string")
+    if not _LOCAL_IDENTIFIER_RE.fullmatch(value):
+        raise ValueError("identifier grammar violation")
+    if not set(value) <= _LOCAL_IDENTIFIER_CHARS:
+        raise ValueError("identifier contains a forbidden character")
+    return value
+
+
+LocalIdentifier = Annotated[
+    str, Field(min_length=1, pattern=_LOCAL_IDENTIFIER),
+    AfterValidator(_identifier)]
+
+
+class UnitReference(_Frozen):
+    """An identity TOKEN for a unit, never a unit definition. It asserts no
+    dimension, convertibility, scale or offset, SI traceability, or
+    equivalence to any external standard. Identity is the exact triple
+    (system_id, system_edition, code), compared byte-for-byte."""
+
+    system_id: Literal["project_local"]
+    system_edition: LocalIdentifier
+    code: LocalIdentifier
+
+
+class DeclaredUnit(_Frozen):
+    kind: Literal["declared"]
+    unit: UnitReference
+
+
+class UnitNotDeclared(_Frozen):
+    """The model declares no unit for this variable — an explicit claim,
+    distinct from a source that supplied no unit."""
+
+    kind: Literal["not_declared"]
+
+
+UnitDeclaration = Annotated[
+    Union[DeclaredUnit, UnitNotDeclared], Field(discriminator="kind")]
+
+
+def _canonical_parents(value: tuple) -> tuple:
+    """Accept any input order, reject duplicates, sort canonically. The
+    normalized tuple is what the digest sees, so the parent SET is part of
+    identity while the caller's ordering is not."""
+    if len(set(value)) != len(value):
+        raise ValueError("superseded specification ids must be unique")
+    return tuple(sorted(value))
+
+
+class VariableValueSpecification(_Frozen):
+    """What the MODEL requires this variable's value representation to be.
+
+    An unauthenticated authority CLAIM about the model — never a claim
+    about any source, adapter, connector, or observation, and never
+    evidence that an observed value carries the specified unit. It
+    specifies value shape, nullability, and an optional model-unit
+    identity only: no quantity kind, no physical meaning, no limits, no
+    behaviour. The variable anchor is REFERENCED, not embedded: the
+    registration already embeds it verbatim."""
+
+    record_kind: Literal["variable_value_specification"] = (
+        "variable_value_specification")
+    schema_version: Literal["1"] = "1"
+    record_id: str = Field(pattern=r"^vsp_[0-9a-f]{64}$")
+    variable_anchor_id: str = Field(pattern=VARIABLE_ANCHOR_ID_PATTERN)
+    value_shape: Literal["boolean", "number", "string"]
+    nullable: bool = False
+    unit: UnitDeclaration
+    evidence: Annotated[tuple[EvidenceRef, ...], Field(min_length=1),
+                        AfterValidator(_canonical_evidence)]
+    supersedes: Annotated[
+        tuple[str, ...],
+        AfterValidator(_canonical_parents)] = ()
+    recorded_at: UtcDatetime
+    authority: AuthorityRef
+    note: str = ""
+
+    @model_validator(mode="after")
+    def _parent_ids_well_formed(self):
+        for parent_id in self.supersedes:
+            if not re.fullmatch(r"vsp_[0-9a-f]{64}", parent_id):
+                raise ValueError(
+                    f"{parent_id!r} is not a specification record id")
+        if self.record_id in self.supersedes:
+            raise ValueError("a specification cannot supersede itself")
+        return self
+
+
 ModelRecord = Union[
-    EntityRegistration, VariableRegistration, RelationshipTypeDefinition,
-    RelationshipAssertion, RelationshipWithdrawal,
+    EntityRegistration, VariableRegistration, VariableValueSpecification,
+    RelationshipTypeDefinition, RelationshipAssertion,
+    RelationshipWithdrawal,
 ]
 
 
@@ -417,6 +520,43 @@ class EntityVariablesResult(_Frozen):
         ids = [entry.anchor.anchor_id for entry in self.entries]
         if ids != sorted(ids):
             raise ValueError("entries must be ordered by anchor id")
+        return self
+
+
+class VariableSpecificationResult(_Frozen):
+    """The SINGLE source of specification status. `conflicted` carries every
+    competing current tip verbatim and is never resolved by recency,
+    authority, record id, file order, or append order."""
+
+    status: Literal["specified", "not_specified", "conflicted",
+                    "not_registered"]
+    anchor_id: str = Field(pattern=VARIABLE_ANCHOR_ID_PATTERN)
+    specification: VariableValueSpecification | None = None
+    conflicting_specifications: tuple[VariableValueSpecification, ...] = ()
+    superseded_specification_ids: tuple[str, ...] = ()
+    revision: ModelRevision
+
+    @model_validator(mode="after")
+    def _status_consistent(self):
+        if (self.status == "specified") != (self.specification is not None):
+            raise ValueError(
+                "a specification is carried exactly when specified")
+        if (self.status == "conflicted") != bool(
+                self.conflicting_specifications):
+            raise ValueError("competing tips are carried exactly when "
+                             "conflicted")
+        if self.status == "conflicted" and len(
+                self.conflicting_specifications) < 2:
+            raise ValueError("a conflict needs at least two current tips")
+        ids = [record.record_id for record in self.conflicting_specifications]
+        if ids != sorted(ids):
+            raise ValueError("competing tips must be canonically ordered")
+        if not _sorted_unique(self.superseded_specification_ids):
+            raise ValueError("superseded ids must be unique and sorted")
+        if self.status == "not_registered" and (
+                self.superseded_specification_ids):
+            raise ValueError(
+                "an unregistered variable carries no specification history")
         return self
 
 

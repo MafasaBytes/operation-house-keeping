@@ -371,7 +371,7 @@ class TestRelationshipAbsenceIsUnambiguous:
 SUPPORTED_EXPORTS = (
     # ledger record contracts
     "EntityRegistration", "VariableRegistration",
-    "RelationshipTypeDefinition",
+    "VariableValueSpecification", "RelationshipTypeDefinition",
     "RelationshipAssertion", "RelationshipWithdrawal", "ModelRecord",
     # query/assertion context contracts
     "AssertionContext", "LifecycleViewContext", "ViewIndependentContext",
@@ -380,6 +380,7 @@ SUPPORTED_EXPORTS = (
     "AuthorityRef", "EvidenceRef", "OwnerDeclarationEvidence",
     "ModelRecordEvidence", "IdentityBindingRecordEvidence",
     "SourceRawRecordEvidence", "TemporalOccurrenceEvidence",
+    "UnitReference", "DeclaredUnit", "UnitNotDeclared", "UnitDeclaration",
     # typed errors
     "ModelKernelError", "ModelConfigurationError", "ModelIntegrityError",
     "ModelQueryError",
@@ -387,7 +388,7 @@ SUPPORTED_EXPORTS = (
     "ModelRevision", "EvidenceDisclosure", "RelationshipSummary",
     "LineageConflict", "RelationshipsResult", "RegistrationSummary",
     "EntityResult", "VariableRegistrationSummary", "VariableResult",
-    "EntityVariablesResult", "ParentResult", "ParentStatus", "TraversalAnnotation",
+    "EntityVariablesResult", "VariableSpecificationResult", "ParentResult", "ParentStatus", "TraversalAnnotation",
     "ChildEntry", "ChildrenResult", "TraversalStep", "TraversalBlock",
     "TraversalResult", "CycleReport", "ParentConflictReport",
     "HierarchyHealth",

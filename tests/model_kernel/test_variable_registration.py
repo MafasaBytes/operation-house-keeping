@@ -231,7 +231,7 @@ class TestRecordIntegrity:
 
         members = typing.get_args(ModelRecord)
         assert VariableRegistration in members
-        assert len(_PREFIX_BY_KIND) == len(members) == 5
+        assert len(_PREFIX_BY_KIND) == len(members) == 6
         for prefix in _PREFIX_BY_KIND.values():
             sample = f"{prefix}_{'0' * 64}"
             assert re.fullmatch(MODEL_RECORD_ID_PATTERN, sample)
@@ -472,10 +472,10 @@ class TestKernelQueries:
             with pytest.raises(ModelKernelError):
                 call()
 
-    def test_public_surface_is_47_names(self):
+    def test_public_surface_is_53_names(self):
         import backend.model_kernel as kernel
 
-        assert len(kernel.__all__) == 47
+        assert len(kernel.__all__) == 53
         for name in ("VariableRegistration", "VariableRegistrationSummary",
                      "VariableResult", "EntityVariablesResult"):
             assert name in kernel.__all__
