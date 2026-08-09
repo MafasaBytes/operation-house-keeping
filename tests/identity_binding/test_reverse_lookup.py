@@ -266,3 +266,38 @@ class TestReverseDiscovery:
         assert entry.property.json_pointer == (
             "/result/status/extruder/temperature")
         assert entry.assertion_summaries[0].lifecycle_flags == ()
+
+
+class TestDeclaredLocator:
+    """Companion lookup: the time-free declarative entry for ONE locator,
+    any target — how an explicit selector is classified without
+    re-implementing binding matching outside identity_binding."""
+
+    def test_entry_for_locator_declared_only_for_another_target(
+            self, tmp_path):
+        other = prop_assertion(target=V2)
+        resolver = resolver_with(tmp_path, entity_declaration(),
+                                 declaration(V2), other)
+        entry = resolver.declared_locator(SUBJECT, PROP_TEMP)
+        assert entry is not None
+        assert {s.target_anchor_id
+                for s in entry.assertion_summaries} == {V2}
+        # and it matches the discovery-produced entry for V2 exactly
+        via_discovery = resolver.declared_property_locators(V2).locators[0]
+        assert entry == via_discovery
+
+    def test_none_for_a_never_declared_locator(self, tmp_path):
+        resolver = resolver_with(tmp_path, entity_declaration(), declaration())
+        assert resolver.declared_locator(SUBJECT, PROP_TEMP) is None
+
+    @pytest.mark.parametrize("subject,prop", [
+        pytest.param(None, PROP_TEMP, id="none_subject"),
+        pytest.param("printer-1", PROP_TEMP, id="str_subject"),
+        pytest.param(SUBJECT, None, id="none_property"),
+        pytest.param(SUBJECT, {"json_pointer": "/x"}, id="dict_property"),
+    ])
+    def test_invalid_locator_input_typed(self, tmp_path, subject, prop):
+        resolver = resolver_with(tmp_path, entity_declaration(), declaration())
+        with pytest.raises(BindingResolutionError) as excinfo:
+            resolver.declared_locator(subject, prop)
+        assert excinfo.value.error_code == "BINDING_LOCATOR_INVALID"

@@ -225,7 +225,18 @@ class DeclaredPropertyLocatorsResult(_Frozen):
     revision: BindingRevision
 ```
 
-`BindingResolver.declared_property_locators(target_anchor_id)`:
+`BindingResolver.declared_property_locators(target_anchor_id)` — plus a
+small companion required by amendment 1's selector classification:
+`BindingResolver.declared_locator(subject, property) ->
+DeclaredLocatorEntry | None`, the time-free declarative entry for ONE
+locator (all property assertions on it, any target) or None when never
+declared; invalid subject/property inputs →
+`BindingResolutionError("BINDING_LOCATOR_INVALID", …)`. Without it,
+classifying a selector declared only for another variable would force
+`model_state` to re-implement locator matching over binding internals —
+exactly what the one-authoritative-home decision forbids.
+
+Semantics of the discovery query:
 
 - **No `at` parameter** — revision-relative and time-free. Lists every
   locator ever declared for the variable in this revision, including

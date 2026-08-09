@@ -274,6 +274,29 @@ class BindingResolver:
                                          ("superseded", superseded_by))
                 if links)))
 
+    def declared_locator(self, subject, prop):
+        """Time-free declarative entry for ONE locator — ALL property
+        assertions on it, any target — or None when never declared. The
+        matching predicate is the same locator equality the resolver uses;
+        no time, no winner."""
+        if not isinstance(subject, SourceSubjectRef) or not isinstance(
+                prop, SourcePropertyRef):
+            raise BindingResolutionError(
+                "BINDING_LOCATOR_INVALID",
+                "a declared-locator lookup requires source subject and "
+                "property references")
+        group = sorted(
+            (candidate for candidate in self.loaded.assertions.values()
+             if candidate.binding_kind == "property"
+             and candidate.subject == subject and candidate.property == prop),
+            key=lambda a: a.record_id)
+        if not group:
+            return None
+        return DeclaredLocatorEntry(
+            subject=subject, property=prop,
+            assertion_summaries=tuple(
+                self._declared_summary(candidate) for candidate in group))
+
     # -- internals ----------------------------------------------------------
 
     def _assess(self, binding_kind, subject, prop, at) -> _Assessment:
