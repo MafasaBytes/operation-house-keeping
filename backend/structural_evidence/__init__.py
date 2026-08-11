@@ -25,6 +25,7 @@ from backend.structural_evidence.contracts import (
 from backend.structural_evidence.claims import (
     CsvStructuralReading,
     csv_structural_claims,
+    step_structural_claims,
 )
 from backend.structural_evidence.errors import (
     StructuralEvidenceConfigurationError,
@@ -46,6 +47,7 @@ __all__ = [
     "StructuralEvidenceConfigurationError",
     "CsvStructuralReading",
     "csv_structural_claims",
+    "step_structural_claims",
     "StructuralClaimKind",
     "SourceNativeField",
     "SourceStructuralClaim",

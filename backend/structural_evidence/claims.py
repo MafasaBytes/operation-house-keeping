@@ -14,8 +14,9 @@ multiple rows yields an `UnresolvedParentReference`, never a guess.
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from backend.data_sources.contracts import ExtractionResult
-from backend.data_sources.provenance import derive_record_id
+from backend.data_sources.provenance import derive_entity_id, derive_record_id
 from backend.structural_evidence.contracts import (
+    DerivedUsagePath,
     EngineeringContext,
     QuantityFieldRef,
     SourceContainmentClaim,
@@ -28,6 +29,8 @@ from backend.structural_evidence.errors import StructuralEvidenceError
 from backend.structural_evidence.locators import (
     CsvCellLocator,
     CsvRowLocator,
+    StepDefinitionLocator,
+    StepUsageLocator,
     StructuralAddress,
     StructuralSourceRef,
 )
@@ -172,6 +175,159 @@ def csv_structural_claims(
         containment_claims=containment_claims,
         quantity_field=quantity_field,
         unresolved_parent_references=unresolved,
+        extraction_outcome=extraction.outcome,
+        extraction_warnings=tuple(extraction.warnings),
+    )
+
+
+def step_structural_claims(
+    extraction: ExtractionResult,
+    *,
+    source_id: str,
+    payload_checksum: str,
+    engineering_context: EngineeringContext,
+) -> SourceStructuralClaimSet:
+    """STEP definition/usage claims from a persisted extraction result.
+
+    A usage occurrence is NAUO-shaped: this definition inside that parent
+    DEFINITION. Parenthood comes only from `parent_definition_ref` (None
+    only for the synthesized root); a flattened per-path tree is SN-001's
+    own derivation, labelled, with ambiguity reported rather than picked
+    when a parent definition is used more than once. Upstream ids are
+    recomputed on read — a manifest whose ids do not re-derive is
+    malformation, never a silent wrong binding.
+    """
+    try:
+        manifest = extraction.manifest_view()
+    except ValueError as error:
+        raise StructuralEvidenceError(
+            "SN_EXTRACTION_KIND_UNSUPPORTED",
+            "step claim derivation requires a step_manifest extraction "
+            "result") from error
+    if not hasattr(manifest, "instances"):
+        raise StructuralEvidenceError(
+            "SN_EXTRACTION_KIND_UNSUPPORTED",
+            "step claim derivation requires a step_manifest extraction "
+            "result")
+    if derive_record_id(source_id, payload_checksum, 0) != \
+            extraction.raw_record_id:
+        raise StructuralEvidenceError(
+            "SN_EXTRACTION_MISMATCH",
+            "payload checksum and source id do not derive the extraction's "
+            "raw record id")
+    version = extraction.extractor.version
+    for definition in manifest.definitions:
+        if derive_entity_id(extraction.raw_record_id, version,
+                            f"def:{definition.extractor_path_id}") != \
+                definition.definition_id:
+            raise StructuralEvidenceError(
+                "SN_EXTRACTION_MISMATCH",
+                "a definition id does not re-derive from its path — the "
+                "manifest was produced by a different ingestion or "
+                "toolchain")
+
+    source_ref = StructuralSourceRef(
+        source_id=source_id, raw_record_id=extraction.raw_record_id,
+        payload_checksum=payload_checksum, extractor=extraction.extractor)
+    path_by_definition_id = {d.definition_id: d.extractor_path_id
+                             for d in manifest.definitions}
+
+    def definition_address(definition) -> StructuralAddress:
+        return StructuralAddress(
+            source=source_ref,
+            locator=StepDefinitionLocator(
+                kind="step_part_definition",
+                extractor_path_id=definition.extractor_path_id,
+                upstream_definition_id=definition.definition_id))
+
+    def usage_locator(instance) -> StepUsageLocator:
+        return StepUsageLocator(
+            kind="step_nauo_usage",
+            extractor_path_id=instance.extractor_path_id,
+            upstream_instance_id=instance.instance_id,
+            definition_path_id=path_by_definition_id[instance.definition_ref],
+            parent_definition_path_id=(
+                path_by_definition_id[instance.parent_definition_ref]
+                if instance.parent_definition_ref is not None else None))
+
+    def name_field(name, address) -> tuple[SourceNativeField, ...]:
+        if name is None:
+            return ()
+        return (SourceNativeField(field_name_as_extracted="name",
+                                  lexeme=name, address=address),)
+
+    definition_claims = tuple(
+        SourceStructuralClaim(
+            claim_kind="step_part_definition",
+            address=definition_address(definition),
+            fields=name_field(definition.name,
+                              definition_address(definition)))
+        for definition in sorted(manifest.definitions,
+                                 key=lambda d: d.extractor_path_id))
+
+    non_root = tuple(sorted(
+        (instance for instance in manifest.instances
+         if instance.parent_definition_ref is not None),
+        key=lambda i: i.extractor_path_id))
+    usage_claims = tuple(
+        SourceStructuralClaim(
+            claim_kind="step_nauo_usage",
+            address=StructuralAddress(source=source_ref,
+                                      locator=usage_locator(instance)),
+            fields=name_field(
+                instance.occurrence_name,
+                StructuralAddress(source=source_ref,
+                                  locator=usage_locator(instance))))
+        for instance in non_root)
+
+    definition_by_id = {d.definition_id: d for d in manifest.definitions}
+    containment_claims = tuple(
+        SourceContainmentClaim(
+            claim_kind="step_nauo_usage_edge",
+            child=StructuralAddress(source=source_ref,
+                                    locator=usage_locator(instance)),
+            parent=definition_address(
+                definition_by_id[instance.parent_definition_ref]))
+        for instance in non_root)
+
+    uses_of_definition = {
+        definition.definition_id: tuple(
+            instance for instance in manifest.instances
+            if instance.definition_ref == definition.definition_id)
+        for definition in manifest.definitions}
+    root_definitions = {
+        instance.definition_ref for instance in manifest.instances
+        if instance.parent_definition_ref is None}
+
+    def derived_path(instance) -> DerivedUsagePath:
+        # root-first chain; ambiguous the moment any ancestor definition
+        # is used by more than one non-root usage
+        chain = (usage_locator(instance),)
+        current = instance
+        while current.parent_definition_ref not in root_definitions:
+            parent_uses = tuple(
+                use for use in uses_of_definition[
+                    current.parent_definition_ref]
+                if use.parent_definition_ref is not None)
+            if len(parent_uses) != 1:
+                return DerivedUsagePath(
+                    derivation="nauo_parent_definition_chain_v1",
+                    steps=(), ambiguity="multiple_parent_uses")
+            current = parent_uses[0]
+            chain = (usage_locator(current),) + chain
+        return DerivedUsagePath(
+            derivation="nauo_parent_definition_chain_v1",
+            steps=chain, ambiguity="unique")
+
+    derived_paths = tuple(derived_path(instance) for instance in non_root)
+
+    return SourceStructuralClaimSet(
+        source_ref=source_ref,
+        engineering_context=engineering_context,
+        subject_claims=definition_claims + usage_claims,
+        containment_claims=containment_claims,
+        derived_paths=derived_paths,
+        quantity_field=None,  # STEP declares no quantity column, ever
         extraction_outcome=extraction.outcome,
         extraction_warnings=tuple(extraction.warnings),
     )
