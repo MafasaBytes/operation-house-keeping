@@ -38,8 +38,12 @@ from backend.structural_evidence.locators import (
     StepUsageLocator,
     StructuralAddress,
     StructuralLocator,
+    StructuralEvidenceProjection,
     StructuralSourceRef,
     canonical_locator_value,
+    from_kernel_evidence,
+    to_kernel_evidence,
+    toolchain_fingerprint,
 )
 
 __all__ = [
@@ -68,4 +72,8 @@ __all__ = [
     "StructuralLocator",
     "StructuralAddress",
     "canonical_locator_value",
+    "StructuralEvidenceProjection",
+    "to_kernel_evidence",
+    "from_kernel_evidence",
+    "toolchain_fingerprint",
 ]

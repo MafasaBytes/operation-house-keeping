@@ -12,12 +12,14 @@ identifiers (`derive_entity_id` output), never canonical system entity
 anchors; they are carried as recorded cross-checks verified on read.
 """
 
+import hashlib
 from typing import Annotated, Literal, Union
-from urllib.parse import quote
+from urllib.parse import quote, unquote
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from backend.data_sources.contracts.identity import ExtractorIdentity
+from backend.model_kernel import StructuralSourceLocatorEvidence
 from backend.structural_evidence.errors import StructuralEvidenceError
 
 # The load-bearing bound is on the CANONICAL value (percent-encoding
@@ -120,3 +122,101 @@ def canonical_locator_value(locator) -> str:
             f"canonical locator value exceeds {_CANONICAL_VALUE_MAX} "
             "characters after percent-encoding")
     return value
+
+
+def toolchain_fingerprint(extractor: ExtractorIdentity) -> str:
+    """sha256 over the exact toolchain lexeme, first 16 hex. STEP OCAF
+    paths exist only relative to a toolchain; carrying the fingerprint
+    makes a toolchain change a different identity domain instead of a
+    silently re-pointed mapping."""
+    return hashlib.sha256(
+        extractor.toolchain.encode("utf-8")).hexdigest()[:16]
+
+
+class StructuralEvidenceProjection(_Frozen):
+    """The projection of a StructuralAddress into kernel evidence, plus
+    the NAMED fields the projection deliberately drops: `source_id` is
+    binding knowledge and forbidden in a model record; the toolchain
+    PROSE is dropped while its fingerprint is carried. Both are required
+    keyword arguments of `from_kernel_evidence`, so the loss is a typed
+    obligation, never a silent default."""
+
+    evidence: StructuralSourceLocatorEvidence
+    dropped: tuple[Literal["extractor_toolchain", "source_id"], ...]
+
+
+def to_kernel_evidence(address: StructuralAddress) -> \
+        StructuralEvidenceProjection:
+    return StructuralEvidenceProjection(
+        evidence=StructuralSourceLocatorEvidence(
+            kind="structural_source_locator",
+            raw_record_id=address.source.raw_record_id,
+            payload_checksum=address.source.payload_checksum,
+            extractor_name=address.source.extractor.name,
+            extractor_version=address.source.extractor.version,
+            extractor_config_fingerprint=(
+                address.source.extractor.config_fingerprint),
+            extractor_toolchain_fingerprint=toolchain_fingerprint(
+                address.source.extractor),
+            locator_scheme=address.locator.kind,
+            locator_value=canonical_locator_value(address.locator)),
+        dropped=("extractor_toolchain", "source_id"))
+
+
+def _parse_fields(value: str, prefixes: tuple[str, ...]) -> tuple[str, ...]:
+    parts = value.split(";")
+    if len(parts) != len(prefixes) or not all(
+            part.startswith(prefix)
+            for part, prefix in zip(parts, prefixes)):
+        raise StructuralEvidenceError(
+            "SN_LOCATOR_VALUE_INVALID",
+            "canonical locator value does not match its scheme grammar")
+    return tuple(part[len(prefix):]
+                 for part, prefix in zip(parts, prefixes))
+
+
+def from_kernel_evidence(ref: StructuralSourceLocatorEvidence, *,
+                         source_id: str,
+                         extractor_toolchain: str) -> StructuralAddress:
+    """Inverse of `to_kernel_evidence`. Display names are not carried by
+    a citation (the canonical value deliberately excludes them), so a
+    reconstructed csv_cell locator has an empty disclosure name."""
+    if toolchain_fingerprint(ExtractorIdentity(
+            name=ref.extractor_name, version=ref.extractor_version,
+            toolchain=extractor_toolchain,
+            config_fingerprint=ref.extractor_config_fingerprint)) != \
+            ref.extractor_toolchain_fingerprint:
+        raise StructuralEvidenceError(
+            "SN_TOOLCHAIN_FINGERPRINT_MISMATCH",
+            "the supplied toolchain prose does not fingerprint to the "
+            "cited toolchain — a different identity domain")
+    source = StructuralSourceRef(
+        source_id=source_id, raw_record_id=ref.raw_record_id,
+        payload_checksum=ref.payload_checksum,
+        extractor=ExtractorIdentity(
+            name=ref.extractor_name, version=ref.extractor_version,
+            toolchain=extractor_toolchain,
+            config_fingerprint=ref.extractor_config_fingerprint))
+    if ref.locator_scheme == "csv_row":
+        (row,) = _parse_fields(ref.locator_value, ("r=",))
+        locator = CsvRowLocator(kind="csv_row", physical_row_index=int(row))
+    elif ref.locator_scheme == "csv_cell":
+        row, column = _parse_fields(ref.locator_value, ("r=", "c="))
+        locator = CsvCellLocator(kind="csv_cell",
+                                 physical_row_index=int(row),
+                                 column_index=int(column),
+                                 column_name_as_extracted="")
+    elif ref.locator_scheme == "step_part_definition":
+        path, upstream = _parse_fields(ref.locator_value, ("p=", "d="))
+        locator = StepDefinitionLocator(
+            kind="step_part_definition", extractor_path_id=unquote(path),
+            upstream_definition_id=upstream)
+    else:  # step_nauo_usage
+        path, upstream, def_path, parent = _parse_fields(
+            ref.locator_value, ("p=", "i=", "dp=", "pp="))
+        locator = StepUsageLocator(
+            kind="step_nauo_usage", extractor_path_id=unquote(path),
+            upstream_instance_id=upstream,
+            definition_path_id=unquote(def_path),
+            parent_definition_path_id=(unquote(parent) if parent else None))
+    return StructuralAddress(source=source, locator=locator)
