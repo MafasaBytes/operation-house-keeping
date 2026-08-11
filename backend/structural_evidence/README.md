@@ -38,13 +38,32 @@ domain requiring explicit new mappings.
 
 1. A recorded mapping is an unauthenticated authority claim, never
    evidence that the mapping is correct.
+2. Usage-path identity is derived by SN-001 and is not guaranteed stable
+   across re-exports of the same CAD model.
+3. STEP-derived identifiers are stable for a fixed extractor build; the
+   toolchain fingerprint makes a build change a new identity domain, and
+   the golden id pins make it loud.
+4. `assembly_definition_contains` is a second, non-merging containment
+   lineage and is never "the hierarchy".
+5. An accepted entity registration cannot cite its structural
+   derivation; the link is one-directional via the relationship
+   assertion. 5b. A model record cannot, by itself, name the ingestion
+   source; the cited `iba_` record does. Two hops, neither
+   kernel-verified.
 6. Structural mapping applicability is asserted on the ingestion-receipt
    axis only and carries no lifecycle-view validity.
 7. A claim whose engineering context is unknown can never be materialized.
+8. In the base-only verification the frozen STEP extraction is trusted;
+   its agreement with the live extractor is verified only in the
+   all-extras column.
+9. Enumeration-order independence is asserted for reversed and
+   adversarially-named orderings, not proven exhaustively.
 10. Anchor ids are uuid4 hex by accepted decision; SN-001 generates none.
+11. The showcase does not resemble a real printer and is not intended to.
 12. The raw store is not committed; a committed record citing a raw
     record is a dangling reference from a clean checkout until the
     demonstration regenerates it against pinned golden constants.
+13. Atomic multi-record acceptance is not provided.
 14. Changes to the shared rule interpreter or subject encoder under a
     fixed `sx1`/`semantics_version` are guarded by tests and review, not
     by construction.
@@ -53,9 +72,6 @@ domain requiring explicit new mappings.
 16. A structural mapping is scoped to one `source_id`: the same bytes
     re-ingested under a different source id are a different subject and
     resolve `source_subject_unmapped`.
-
-(Numbering follows the SN-001 spec's limitation list; the remaining
-entries land with the slices that introduce their subjects.)
 
 ## `resolution_at`
 

@@ -514,20 +514,22 @@ to `anchor_not_registered` instead.
 
 ## Findings — the complete frozen vocabulary (25 literals)
 
-`basis = source_claim` (12): `supported_by_bom_only`,
+`basis = source_claim` (11): `supported_by_bom_only`,
 `supported_by_step_only`, `claims_mutually_contradictory`,
 `claims_not_comparable`, `duplicate_source_label_not_identity`,
 `absence_is_not_evidence_of_absence`, `evidence_incomplete`,
-`evidence_unavailable`, `cited_extraction_not_found`,
-`cited_payload_checksum_differs`, `extractor_identity_changed`,
-`derived_usage_path_ambiguous`.
+`evidence_unavailable`, `cited_payload_checksum_differs`,
+`extractor_identity_changed`, `derived_usage_path_ambiguous`.
 
-`basis = authority_interpretation` (10): `source_subject_unmapped`,
+`basis = authority_interpretation` (11): `source_subject_unmapped`,
 `mapping_ambiguous`, `mapping_conflicted`, `mappings_jointly_incoherent`,
 `context_unknown`, `context_incompatible`,
 `subject_bound_in_multiple_sets_consistently`,
 `mapping_conflicted_across_sets`, `anchor_declared_in_multiple_sets`,
-`required_binding_set_missing`.
+`required_binding_set_missing`, `cited_extraction_not_found` —
+`cited_extraction_not_found` speaks for the MAPPING that cites absent
+evidence (no claim exists to support a `source_claim` basis); this is an
+implementation-documented correction to the earlier 12/10/3 split.
 
 `basis = accepted_model_record` (3): `anchor_not_registered`,
 `quantity_not_reconcilable_with_registered_instances`,

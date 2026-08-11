@@ -288,6 +288,22 @@ class TestA5PublishedWording:
         # the forbidden overclaim never reappears for interpreter changes
         assert "structurally impossible" not in text
 
+    def test_a5i_full_limitation_list_verbatim(self):
+        """A5i (commit 18): all sixteen limitations, verbatim."""
+        text = README.read_text(encoding="utf-8")
+        for fragment in (
+            "not guaranteed stable\n   across re-exports",
+            "stable for a fixed extractor build",
+            "second, non-merging containment\n   lineage",
+            "cannot cite its structural\n   derivation",
+            "Two hops, neither\n   kernel-verified.",
+            "the frozen STEP extraction is trusted",
+            "not proven exhaustively",
+            "does not resemble a real printer",
+            "Atomic multi-record acceptance is not provided.",
+        ):
+            assert fragment in text, fragment
+
     def test_a5i_a_sn001a_limitation_subset_verbatim(self):
         text = README.read_text(encoding="utf-8")
         for fragment in (
