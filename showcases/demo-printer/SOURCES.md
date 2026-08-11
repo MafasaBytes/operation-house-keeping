@@ -78,3 +78,26 @@ committed model at 14 records, and the readings above:
 - the STEP claim set's subjects, being mapped from a view-less source:
   `context_unknown` where a mapping exists but no authority declared a
   context for the source reading.
+
+## The complete golden finding multiset (authored for DM1)
+
+With both committed binding sets (post-SN-001c), the committed model at
+14 records, both showcase claim sets (contexts unknown; BOM reading:
+quantity col 2, parent col 4 matching col 0, label col 1), and any aware
+`resolution_at`:
+
+| finding | count | why |
+|---|---|---|
+| corroborated_by_all_mapped_sources | 1 | the extruder anchor (BOM EXT-100 + STEP extruder-unit definition) |
+| supported_by_step_only | 1 | the assembly-type anchor (STEP root definition; no BOM subject maps to it) |
+| quantity_not_reconcilable_with_registered_instances | 1 | EXT-100 lexeme "4" against the one registered instance |
+| claims_not_comparable | 1 | BOM quantity vs a STEP set that declares no quantity column |
+| context_unknown | 3 | the three positively-bound subjects; both sources are view-less and no authority declared a reading context |
+| duplicate_source_label_not_identity | 1 | "Corner bracket" on BRK-400 and BRK-401 — two distinct subjects |
+| derived_usage_path_ambiguous | 2 | idler-front and idler-rear (gantry-sub used twice) |
+| absence_is_not_evidence_of_absence | 3 | the model relates the joined anchors to the subsystem and the extruder-unit type, which no supplied source supports (subsystem x1, unit-type x2 via the two joined anchors) |
+| source_subject_unmapped | 20 | 11 of the 12 BOM subjects (six rows x two rules, one bound) + 9 of the 11 STEP subjects (two bound) |
+
+Proposals: none — both joined anchors are already registered and every
+containment claim has an unmapped endpoint or an unknown context; the
+result is `not_proposable` with no blocking findings, honestly.
