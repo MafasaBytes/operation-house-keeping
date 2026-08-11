@@ -36,15 +36,24 @@ owner-approved repair slices. Accepted since that note was written:
 IB-001 (canonical anchors in `backend/system_identity/` and the explicit
 identity-binding ledger in `backend/identity_binding/`) and MK-001 (the
 typed entity/relationship model kernel in `backend/model_kernel/`), each
-validated and repaired under owner mandate. The current milestone is
-VS-001 (explicit variable VALUE specification in the model kernel plus
-the read-only `backend/observation_compatibility/` facade that assesses
-whether an attached observation matches that specification). VM-001
+validated and repaired under owner mandate. Also accepted: VM-001
 (explicit variable membership in the model kernel plus the read-only
-`backend/model_state/` bound model-state query facade) is accepted and
-pushed. A model specification states what the model requires; a source
-observation states what a source supplied; the two are never conflated,
-and a model unit is never inherited into source evidence. See
+`backend/model_state/` bound model-state query facade) and VS-001
+(explicit variable VALUE specification in the model kernel plus the
+read-only `backend/observation_compatibility/` facade that assesses
+whether an attached observation matches that specification). A model
+specification states what the model requires; a source observation states
+what a source supplied; the two are never conflated, and a model unit is
+never inherited into source evidence. The current milestone is SN-001
+(structural evidence normalization and cross-source model binding:
+payload-pinned structural claims in the read-only
+`backend/structural_evidence/` module; identity mappings as ordinary
+`BindingAssertion` records; read-only multi-set reconciliation; inert
+proposals; separately hand-authored model acceptance), implemented in
+three owner-gated slices — see
+docs/superpowers/specs/2026-08-11-sn001-structural-evidence-design.md and
+docs/adr/0010. Source structure never silently becomes model truth; names,
+labels, and part numbers are never identity or join keys. See
 docs/superpowers/specs/ and docs/adr/ for accepted designs. The
 historical sentence "Only `data_sources` is currently in scope" in the
 Current Phase section below is superseded by this Status section; the
