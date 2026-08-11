@@ -147,6 +147,14 @@ class TestPatternPinning:
         assert ENTITY_ANCHOR_ID_PATTERN == r"^ent_[0-9a-f]{32}$"
         assert VARIABLE_ANCHOR_ID_PATTERN == r"^var_[0-9a-f]{32}$"
 
+        # SN-001 (KR4): the structural arm restates the raw-record and
+        # checksum shapes; staleness must be loud here too
+        structural_ev = mk.StructuralSourceLocatorEvidence.model_fields
+        assert (structural_ev["raw_record_id"].metadata[0].pattern
+                == raw_pattern)
+        assert (structural_ev["payload_checksum"].metadata[0].pattern
+                == checksum_pattern)
+
     def test_committed_records_parity_across_canonicalizers(self):
         from backend.identity_binding import canonical as ib_canonical
         from backend.model_kernel import canonical as mk_canonical

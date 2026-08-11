@@ -115,10 +115,39 @@ class TemporalOccurrenceEvidence(_Frozen):
     occurrence_id: str = Field(pattern=r"^[0-9a-f]{32}$")
 
 
+class StructuralSourceLocatorEvidence(_Frozen):
+    """An EXACT structural position inside one immutable source payload,
+    declared by the authoring authority (SN-001, ADR-0010 decision 10).
+
+    SELF-CONTAINED: every field is a canonical scalar. The kernel imports
+    nothing to interpret it, resolves nothing, and verifies nothing about
+    it — disclosure is always verification="declared_reference", because
+    the kernel structurally cannot import data_sources. This is a
+    CITATION, never a locator ledger and never an identity: it names
+    where a claim was read, not what the claim is about. It has no
+    lifecycle and no applicability, cannot resolve source identity, and
+    cannot discover or replace a BindingAssertion. The toolchain
+    fingerprint makes a STEP locator exact: an OCAF path exists only
+    relative to a toolchain."""
+
+    kind: Literal["structural_source_locator"]
+    raw_record_id: str = Field(pattern=r"^[0-9a-f]{32}$")
+    payload_checksum: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    extractor_name: str = Field(pattern=r"^[a-z][a-z0-9_]{0,63}$")
+    extractor_version: str = Field(
+        pattern=r"^[0-9A-Za-z][0-9A-Za-z._+-]{0,31}$")
+    extractor_config_fingerprint: str = Field(pattern=r"^[0-9a-f]{16,64}$")
+    extractor_toolchain_fingerprint: str = Field(pattern=r"^[0-9a-f]{16}$")
+    locator_scheme: Literal["csv_row", "csv_cell",
+                            "step_part_definition", "step_nauo_usage"]
+    locator_value: str = Field(
+        pattern=r"^(?:r=|p=)[0-9A-Za-z._~:@!$&*+,;=%/-]{1,508}$")
+
+
 EvidenceRef = Annotated[
     Union[OwnerDeclarationEvidence, ModelRecordEvidence,
           IdentityBindingRecordEvidence, SourceRawRecordEvidence,
-          TemporalOccurrenceEvidence],
+          TemporalOccurrenceEvidence, StructuralSourceLocatorEvidence],
     Field(discriminator="kind"),
 ]
 

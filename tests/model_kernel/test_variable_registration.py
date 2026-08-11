@@ -472,12 +472,14 @@ class TestKernelQueries:
             with pytest.raises(ModelKernelError):
                 call()
 
-    def test_public_surface_is_53_names(self):
+    def test_public_surface_name_count(self):
+        # 53 + StructuralSourceLocatorEvidence (SN-001, ADR-0010 d10) = 54
         import backend.model_kernel as kernel
 
-        assert len(kernel.__all__) == 53
+        assert len(kernel.__all__) == 54
         for name in ("VariableRegistration", "VariableRegistrationSummary",
-                     "VariableResult", "EntityVariablesResult"):
+                     "VariableResult", "EntityVariablesResult",
+                     "StructuralSourceLocatorEvidence"):
             assert name in kernel.__all__
 
 
