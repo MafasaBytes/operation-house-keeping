@@ -1,0 +1,7 @@
+item_no,name,quantity,unit,parent
+PRN-000,Printer assembly,1,piece,
+EXT-100,Extruder unit,4,piece,PRN-000
+CBL-300,Wiring harness,1,piece,PRN-000
+BRK-400,Corner bracket,1,piece,PRN-000
+BRK-401,Corner bracket,1,piece,PRN-000
+FAS-500,Idler wheel,2,piece,EXT-100
