@@ -22,6 +22,10 @@ from backend.structural_evidence.contracts import (
     UnresolvedParentReference,
     ViewIndependentEngineeringContext,
 )
+from backend.structural_evidence.claims import (
+    CsvStructuralReading,
+    csv_structural_claims,
+)
 from backend.structural_evidence.errors import (
     StructuralEvidenceConfigurationError,
     StructuralEvidenceError,
@@ -40,6 +44,8 @@ from backend.structural_evidence.locators import (
 __all__ = [
     "StructuralEvidenceError",
     "StructuralEvidenceConfigurationError",
+    "CsvStructuralReading",
+    "csv_structural_claims",
     "StructuralClaimKind",
     "SourceNativeField",
     "SourceStructuralClaim",
