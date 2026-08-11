@@ -115,14 +115,16 @@ class TestX3NamedDrops:
 
 class TestX4NoBindingVocabularyInTheArm:
     def test_arm_field_names_and_values_avoid_the_accepted_needles(self):
-        """Commit 16 lifts the accepted sweeps' needle lists into
-        importable constants and re-anchors this test to import them;
-        until then the list is restated verbatim from
-        tests/model_state/test_isolation.py."""
-        needles = ("source_id", "adapter_id", "json_pointer",
-                   "extraction_route", "item_key", "value_json",
-                   "received_at", "occurrence", "staleness", "moonraker")
-        assert len(needles) == 10
+        """The needle lists are IMPORTED from the accepted sweep (SV1), so
+        a future needle addition fails loudly here too."""
+        from tests.model_state.test_isolation import (
+            APPROVED_STRUCTURAL_CITATION_FIELDS,
+            LEDGER_VOCABULARY_NEEDLES,
+        )
+        needles = LEDGER_VOCABULARY_NEEDLES
+        assert len(needles) >= 10
+        assert set(StructuralSourceLocatorEvidence.model_fields) == \
+            set(APPROVED_STRUCTURAL_CITATION_FIELDS)
         field_names = set(StructuralSourceLocatorEvidence.model_fields)
         for needle in needles:
             for name in field_names:

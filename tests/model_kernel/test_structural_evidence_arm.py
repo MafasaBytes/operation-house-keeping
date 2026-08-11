@@ -23,8 +23,8 @@ from backend.model_kernel import (
 from backend.model_kernel.canonical import verify_record_id
 
 DEMO_MODEL = Path("models/demo-printer")
-GOLDEN_REVISION = ("mrv_25afc0ebf17ed12bd6ef0a95795798a53ef2"
-                   "731983410136d3da15c4d0f98093")
+CURRENT_REVISION = ("mrv_702c840f7da00617feb1be252838105d8b001b2e199788"
+                    "42bdcbec56996c99ff")  # 14 records (SN-001)
 
 ARM = dict(
     kind="structural_source_locator",
@@ -42,8 +42,8 @@ ARM = dict(
 class TestKR1CommittedLedgerUnchanged:
     def test_all_committed_ids_verify_under_the_six_arm_union(self):
         loaded = ModelStore(DEMO_MODEL).load()
-        assert loaded.revision.record_count == 11
-        assert loaded.revision.revision_id == GOLDEN_REVISION
+        assert loaded.revision.record_count == 14
+        assert loaded.revision.revision_id == CURRENT_REVISION
         for record in loaded.records.values():
             assert verify_record_id(record), record.record_id
 

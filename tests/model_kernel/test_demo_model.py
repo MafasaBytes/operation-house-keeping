@@ -9,6 +9,11 @@ from backend.model_kernel.queries import ModelQueries
 from backend.model_kernel.store import ModelStore
 
 DEMO_MODEL = Path("models/demo-printer")
+# Every HISTORICAL revision is pinned by replay over an explicit id list;
+# only the current membership is pinned by load(). A prefix filter is
+# never an acceptable membership selector.
+CURRENT_REVISION = ("mrv_702c840f7da00617feb1be252838105d8b001b2e19978842"
+                    "bdcbec56996c99ff")  # 14 records (SN-001)
 GOLDEN_REVISION = ("mrv_25afc0ebf17ed12bd6ef0a95795798a53ef2"
                    "731983410136d3da15c4d0f98093")  # 11 records (VS-001)
 PRE_SPECIFICATION_REVISION = ("mrv_105658072294bad92f83e3d536863cb46d6d7ae83"
@@ -19,6 +24,18 @@ ROOT = "ent_0f1e2d3c4b5a69788796a5b4c3d2e1f0"
 SUBSYSTEM = "ent_1a2b3c4d5e6f708192a3b4c5d6e7f809"
 EXTRUDER = "ent_a3f1c2d4e5b6478899aa0b1c2d3e4f50"
 UNIT_TYPE = "ent_2b3c4d5e6f70819a2b3c4d5e6f708192"
+ASSEMBLY_TYPE = "ent_5a6b7c8d9e0f1a2b3c4d5e6f70819203"  # SN-001, O2
+
+SN001_MODEL_RECORDS = (
+    "reg_c17de916b41ab5f6bcdf4165f47da1d604689e1eafa9afc31ea99092eacbcc90",
+    "rel_2978509392132152b2d74beb139d2f85e8508f6c50e6ebfea996cd7c78fcf0d5",
+    "rtd_04b8da45255190340e7366ce2a373a9b402dc32eb86b6312f382f5e37a4e81b7",
+)
+
+
+def eleven_ids(loaded):
+    return tuple(sorted(set(loaded.revision.record_ids)
+                        - set(SN001_MODEL_RECORDS)))
 
 
 def demo_queries():
@@ -27,20 +44,38 @@ def demo_queries():
 
 class TestCommittedLedger:
     def test_golden_revision_and_membership(self):
-        loaded = ModelStore(DEMO_MODEL).load()
-        assert loaded.revision.revision_id == GOLDEN_REVISION
-        assert loaded.revision.record_count == 11
+        store = ModelStore(DEMO_MODEL)
+        loaded = store.load()
+        assert loaded.revision.revision_id == CURRENT_REVISION
+        assert loaded.revision.record_count == 14
         assert len(loaded.variable_registrations_by_anchor) == 1
         assert len(loaded.specifications) == 1
-        assert len(loaded.types) == 2
-        assert len(loaded.assertions) == 3
-        assert len(loaded.registrations_by_anchor) == 4
+        assert len(loaded.types) == 3
+        assert len(loaded.assertions) == 4
+        assert len(loaded.registrations_by_anchor) == 5
+        # RP1: the VS-001 revision replays from its explicit 11-id list
+        replayed = store.replay(eleven_ids(loaded))
+        assert replayed.revision.revision_id == GOLDEN_REVISION
+        assert replayed.revision.record_count == 11
 
     def test_fixture_authority_never_human_owner(self):
-        for path in (DEMO_MODEL / "records").glob("*.json"):
+        """Mandatory regression, per-record form (AU2): every record is
+        test_fixture; the eleven pre-SN-001 records stay attributed to
+        mk001_demo_fixture and the three SN-001 records to
+        sn001_showcase_fixture. An unlisted record fails."""
+        loaded = ModelStore(DEMO_MODEL).load()
+        expected = {record_id: ("sn001_showcase_fixture"
+                                if record_id in SN001_MODEL_RECORDS
+                                else "mk001_demo_fixture")
+                    for record_id in loaded.revision.record_ids}
+        paths = sorted((DEMO_MODEL / "records").glob("*.json"))
+        assert len(paths) == len(expected) == 14
+        for path in paths:
             record = json.loads(path.read_text())
             assert record["authority"]["kind"] == "test_fixture", path.name
-            assert record["authority"]["agent"] == "mk001_demo_fixture"
+            assert record["record_id"] in expected, path.name
+            assert record["authority"]["agent"] == \
+                expected[record["record_id"]], path.name
         for path in Path("bindings/demo-printer-model/records").glob("*.json"):
             record = json.loads(path.read_text())
             assert record["authority"]["kind"] == "test_fixture", path.name
@@ -151,6 +186,25 @@ FROZEN_VM001_RECORD = {
     "dc16507a5f0aeec36ead054ff68dce4ac5d639e0d58cf30eb60315b8d41deefc",
 }
 
+# RP6 (SN-001): the seven pre-SN-001 binding records are byte-frozen too;
+# an SN-001c append may only ADD files, never touch these.
+FROZEN_PRE_SN001_BINDING_RECORDS = {
+    "bindings/demo-printer/records/anc_81d43569d1b093c1b52247bdfb8039ae6e4777eecd3918c498a85655fec9bbdc.json":
+    "0d16b20f768b3e14f8137c42d1cfd03c0825070aeffc699303ed4d1e5cb1cbfa",
+    "bindings/demo-printer/records/anc_e7bd0b35b97ee920384ac5791c90e3ae34889b642b54608cf3293a5174cb5ae3.json":
+    "6254e0486741235483fc079c29a1fd9dce9d77bc1596c397719bb5530694a36a",
+    "bindings/demo-printer/records/iba_b1b86a4fd0c56f36aafb4574176429c0edab530dbbd5d1da954a54f2533fd90c.json":
+    "08cdf0f23d2938f4419421eaec6f9a79e7507db427195367700c1d174b59bd8a",
+    "bindings/demo-printer/records/iba_ba80b9e561b564a465b19109e2576d79d93b10e5b87e9917bf7ed45558c3a90a.json":
+    "bf13714a1094e13944b0a6d4d3ebf3639b928ea411d694e8f9f1c6348eaa068f",
+    "bindings/demo-printer-model/records/anc_037d327111553c3410f162dbb8ffccf475fd0b1a15b4134e304d6ade99141c21.json":
+    "f648fd2e25b3594905da44343e197675186ab814f9735e0fd899bfeadfb3af40",
+    "bindings/demo-printer-model/records/anc_69ebd49c67eb6b5ab775dbf0866efbbdfeaf625005bc50d2848d98a044014a22.json":
+    "37dc5639a2bfbcf1122bf6c2b1ae2a81d8dd390e2cb0d1cfac77c08eb369720e",
+    "bindings/demo-printer-model/records/anc_c6aa3f3f3e03cc689a40ecd5d70d04828cbd1143bb107e85c2dd55268c2312d8.json":
+    "40e99c14da3ebcbfb30e26a2761c991d9990aac503053ec1fb193d046a89a3c5",
+}
+
 
 class TestVm001Fixture:
     def test_nine_mk001_records_byte_frozen(self):
@@ -162,6 +216,10 @@ class TestVm001Fixture:
             path = DEMO_MODEL / "records" / name
             assert hashlib.sha256(
                 path.read_bytes()).hexdigest() == digest, name
+        # RP6: the seven pre-SN-001 binding records stay byte-identical
+        for relpath, digest in FROZEN_PRE_SN001_BINDING_RECORDS.items():
+            assert hashlib.sha256(
+                Path(relpath).read_bytes()).hexdigest() == digest, relpath
 
     def test_old_revision_replays_without_the_variable(self):
         """Append-only history: the pre-variable revision is intact, and a
@@ -228,9 +286,12 @@ class TestVs001Fixture:
         assert "identity token, not a unit definition" in statement
 
     def test_pre_specification_revision_replays_without_it(self):
+        """RP2: explicit membership, never a prefix filter — after the
+        SN-001 appends a `vsp_` filter would silently select 13 records
+        while claiming the pre-specification revision."""
         store = ModelStore(DEMO_MODEL)
         old_ids = [record_id for record_id
-                   in store.load().revision.record_ids
+                   in eleven_ids(store.load())
                    if not record_id.startswith("vsp_")]
         replayed = store.replay(old_ids)
         assert replayed.revision.revision_id == PRE_SPECIFICATION_REVISION

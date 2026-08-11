@@ -1,0 +1,26 @@
+{
+  "authority": {
+    "agent": "sn001_showcase_fixture",
+    "kind": "test_fixture",
+    "method": "manual_declaration"
+  },
+  "context_requirement": "lifecycle_view",
+  "directionality": "directed",
+  "forward_label": "assembly definition contains",
+  "hierarchy_semantics": "containment",
+  "inverse_label": "assembly definition is contained in",
+  "note": "SN-001 (ADR-0010 d7): DEFINITION-level assembly containment - a second, non-merging containment lineage, queried explicitly by type name, never substituted for physical-instance containment and never presented as the hierarchy.",
+  "record_id": "rtd_04b8da45255190340e7366ce2a373a9b402dc32eb86b6312f382f5e37a4e81b7",
+  "record_kind": "relationship_type_definition",
+  "recorded_at": "2026-08-11T12:00:00+00:00",
+  "schema_version": "1",
+  "self_relation_allowed": false,
+  "source_referent_kinds": [
+    "type_definition"
+  ],
+  "supersedes": null,
+  "target_referent_kinds": [
+    "type_definition"
+  ],
+  "type_name": "assembly_definition_contains"
+}

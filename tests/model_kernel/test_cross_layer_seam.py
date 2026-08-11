@@ -35,7 +35,7 @@ class TestEmbeddedAnchorEquality:
     def test_every_registration_matches_its_declaration_exactly(self):
         declared = committed_declarations()
         loaded = ModelStore(DEMO_MODEL).load()
-        assert len(loaded.registrations_by_anchor) == 4
+        assert len(loaded.registrations_by_anchor) == 5
         for anchor_id, registration in loaded.registrations_by_anchor.items():
             assert anchor_id in declared, (
                 f"{anchor_id} is registered but declared in no committed "

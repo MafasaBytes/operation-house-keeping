@@ -1,0 +1,52 @@
+{
+  "authority": {
+    "agent": "sn001_showcase_fixture",
+    "kind": "test_fixture",
+    "method": "manual_declaration"
+  },
+  "context": {
+    "kind": "lifecycle_view",
+    "view": "as_designed"
+  },
+  "evidence": [
+    {
+      "binding_set_id": "demo-printer",
+      "kind": "identity_binding_record",
+      "record_id": "iba_22a8eef16595ec5d38f9135b04499c76f358055a6e5ea4dba9c62f7d9b9d3a43"
+    },
+    {
+      "binding_set_id": "demo-printer-model",
+      "kind": "identity_binding_record",
+      "record_id": "anc_4a576f8b7630176969e2c3186ae5c8233e71311cfbac7c071d7c125b32e0bfdb"
+    },
+    {
+      "extractor_config_fingerprint": "df1e6ef6478d93b4",
+      "extractor_name": "step_extractor",
+      "extractor_toolchain_fingerprint": "1be707a7751618e9",
+      "extractor_version": "1.0.0",
+      "kind": "structural_source_locator",
+      "locator_scheme": "step_nauo_usage",
+      "locator_value": "p=0%3A1%3A1%3A1%3A1;i=cc9888c62685d48953adfef514339088;dp=0%3A1%3A1%3A2;pp=0%3A1%3A1%3A1",
+      "payload_checksum": "sha256:080bc250c6eba3e6bdf88167043835dac0261621a7abe373a6de3130e48e8474",
+      "raw_record_id": "bf4c84d44f569cd712d9281aa2f8d428"
+    },
+    {
+      "kind": "owner_declaration",
+      "statement": "The STEP evidence shows the printer-assembly definition using the extruder-unit definition (NAUO extruder-1). Reading that DEFINITION-level edge as 'the assembly type contains the extruder type' is this authority's declaration, made at acceptance with the as_designed view it also declares; the source declared no view. Synthetic showcase knowledge; no real printer."
+    },
+    {
+      "kind": "source_raw_record",
+      "payload_checksum": "sha256:080bc250c6eba3e6bdf88167043835dac0261621a7abe373a6de3130e48e8474",
+      "raw_record_id": "bf4c84d44f569cd712d9281aa2f8d428"
+    }
+  ],
+  "note": "SN-001 acceptance: hand-authored, separately committed; SN-001 runtime code proposed but never wrote this record.",
+  "record_id": "rel_2978509392132152b2d74beb139d2f85e8508f6c50e6ebfea996cd7c78fcf0d5",
+  "record_kind": "relationship_assertion",
+  "recorded_at": "2026-08-11T12:00:00+00:00",
+  "schema_version": "1",
+  "source_anchor_id": "ent_5a6b7c8d9e0f1a2b3c4d5e6f70819203",
+  "supersedes": null,
+  "target_anchor_id": "ent_2b3c4d5e6f70819a2b3c4d5e6f708192",
+  "type_id": "rtd_04b8da45255190340e7366ce2a373a9b402dc32eb86b6312f382f5e37a4e81b7"
+}

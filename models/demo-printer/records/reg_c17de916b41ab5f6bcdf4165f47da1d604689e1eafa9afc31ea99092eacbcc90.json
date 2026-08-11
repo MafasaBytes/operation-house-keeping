@@ -1,0 +1,19 @@
+{
+  "anchor": {
+    "anchor_id": "ent_5a6b7c8d9e0f1a2b3c4d5e6f70819203",
+    "display_name": "Printer assembly type (synthetic)",
+    "namespace": "demo-printer",
+    "referent_kind": "type_definition",
+    "role_name": "printer-assembly-type"
+  },
+  "authority": {
+    "agent": "sn001_showcase_fixture",
+    "kind": "test_fixture",
+    "method": "manual_declaration"
+  },
+  "note": "Membership claim for the synthetic printer-assembly type (SN-001, O2). Hand-authored; never minted by runtime code.",
+  "record_id": "reg_c17de916b41ab5f6bcdf4165f47da1d604689e1eafa9afc31ea99092eacbcc90",
+  "record_kind": "entity_registration",
+  "recorded_at": "2026-08-11T12:00:00+00:00",
+  "schema_version": "1"
+}

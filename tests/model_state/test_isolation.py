@@ -91,22 +91,40 @@ class TestImportBoundary:
                     f"device word {needle!r} in {path.name}")
 
 
+# SV1 (SN-001, owner D3 ruling): the needle list is a module constant so
+# the structural-evidence suite IMPORTS it rather than copying it; the
+# sweep is semantic per record kind — registrations and specifications
+# carry no source-locator or binding vocabulary at all, and relationship
+# EVIDENCE may carry exactly the approved immutable structural citation,
+# whose field names are enumerated here and collide with no needle.
+LEDGER_VOCABULARY_NEEDLES = ("source_id", "adapter_id", "json_pointer",
+                             "extraction_route", "item_key", "value_json",
+                             "received_at", "occurrence", "staleness",
+                             "moonraker")
+APPROVED_STRUCTURAL_CITATION_FIELDS = (
+    "kind", "raw_record_id", "payload_checksum", "extractor_name",
+    "extractor_version", "extractor_config_fingerprint",
+    "extractor_toolchain_fingerprint", "locator_scheme", "locator_value")
+
+
 class TestLedgerVocabulary:
     """No source locator and no temporal value is persisted as model
-    membership — swept over ALL committed model records (must see all 10,
+    membership — swept over ALL committed model records (count-guarded,
     or the sweep is vacuous)."""
 
     def test_no_locator_or_value_vocabulary_in_model_ledger(self):
         records = sorted(Path("models/demo-printer/records").glob("*.json"))
-        assert len(records) == 11
+        assert len(records) == 14
         for path in records:
             payload = json.loads(path.read_text())
             text = json.dumps(payload)
-            for needle in ("source_id", "adapter_id", "json_pointer",
-                           "extraction_route", "item_key", "value_json",
-                           "received_at", "occurrence", "staleness",
-                           "moonraker"):
+            for needle in LEDGER_VOCABULARY_NEEDLES:
                 assert needle not in text, f"{needle!r} in {path.name}"
+        # the approved citation's own vocabulary never collides with a
+        # banned needle (renaming a needle here must fail loudly)
+        for field in APPROVED_STRUCTURAL_CITATION_FIELDS:
+            for needle in LEDGER_VOCABULARY_NEEDLES:
+                assert needle not in field, (needle, field)
 
 
 class TestLimitationWording:

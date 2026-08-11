@@ -118,10 +118,19 @@ class TestCommittedDemonstration:
 
     def test_pre_specification_replay_is_attached_but_unspecified(self,
                                                                   tmp_path):
+        # RP2/HD1: explicit membership, never a prefix filter (a vsp_
+        # filter would silently select 13 of 14 records post-SN-001)
+        from tests.model_kernel.test_demo_model import (
+            PRE_SPECIFICATION_REVISION,
+            eleven_ids,
+        )
         store = ModelStore(Path("models/demo-printer"))
-        old_ids = [record_id for record_id in store.load().revision.record_ids
+        old_ids = [record_id for record_id in eleven_ids(store.load())
                    if not record_id.startswith("vsp_")]
-        queries, _, _ = committed(tmp_path, model=store.replay(old_ids))
+        replayed = store.replay(old_ids)
+        assert replayed.revision.revision_id == PRE_SPECIFICATION_REVISION
+        assert replayed.revision.record_count == 10
+        queries, _, _ = committed(tmp_path, model=replayed)
         result = queries.variable_value_compatibility(HOTEND, as_of=AS_OF)
         [candidate] = result.candidates
         assert result.specification_result.status == "not_specified"
@@ -148,6 +157,6 @@ class TestCommittedDemonstration:
         from backend.model_kernel.canonical import verify_record_id
 
         loaded = ModelStore(Path("models/demo-printer")).load()
-        assert loaded.revision.record_count == 11
+        assert loaded.revision.record_count == 14
         for record in loaded.records.values():
             assert verify_record_id(record), record.record_id

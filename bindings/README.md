@@ -16,3 +16,16 @@ committed deterministic fixture observations. It makes no claim about a
 real printer. A real deployment records its own binding set (same
 format) outside the repository, with `human_owner` authority and
 genuinely known intervals.
+
+## SN-001 structural subject namespace (`sx1:`)
+
+Structural mappings are ordinary `binding_assertion` records whose
+subject `adapter_id` is the eight-component `sx1` namespace —
+`sx1:family:extractor-name:extractor-version:config-fp:toolchain-fp:
+rule-id:rule-fp` — binding the identity to the exact interpretation
+mechanism that produced it. Set selection is forced by anchor ownership
+(same-set validation is all-or-nothing): mappings targeting the extruder
+live in `demo-printer/`; the assembly-type mapping lives in
+`demo-printer-model/` beside its declaration. Applicability is asserted
+on the ingestion-receipt axis only and carries no lifecycle-view
+validity.
