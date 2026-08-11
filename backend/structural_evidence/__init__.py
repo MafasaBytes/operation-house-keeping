@@ -28,6 +28,12 @@ from backend.structural_evidence.claims import (
     csv_structural_claims,
     step_structural_claims,
 )
+from backend.structural_evidence.proposals import (
+    REQUIRED_BY_PROPOSAL_KIND,
+    EntityRegistrationProposal,
+    ModelProposalResult,
+    RelationshipAssertionProposal,
+)
 from backend.structural_evidence.reconcile import (
     BASIS_BY_FINDING,
     BindingSetParticipation,
@@ -110,4 +116,8 @@ __all__ = [
     "StructuralReconciliationResult",
     "StructuralReconciler",
     "compute_inputs_digest",
+    "REQUIRED_BY_PROPOSAL_KIND",
+    "EntityRegistrationProposal",
+    "RelationshipAssertionProposal",
+    "ModelProposalResult",
 ]

@@ -537,6 +537,24 @@ class StructuralReconciler:
         return StructuralReconciliationResult(**draft,
                                               inputs_digest=digest)
 
+    def propose(self, reconciliation: StructuralReconciliationResult):
+        """Never recomputes revisions: a stale reconciliation is refused,
+        not silently refreshed."""
+        expected = tuple(
+            (set_id, resolver.loaded.revision.revision_id)
+            for set_id, resolver in self._resolvers.items())
+        supplied = tuple((p.binding_set_id, p.revision.revision_id)
+                         for p in reconciliation.participations)
+        if supplied != expected or \
+                reconciliation.model_revision.revision_id != \
+                self._model.revision.revision_id:
+            raise StructuralEvidenceError(
+                "SN_REVISION_MISMATCH",
+                "the reconciliation was computed against different "
+                "binding or model revisions than this reconciler holds")
+        from backend.structural_evidence.proposals import build_proposals
+        return build_proposals(reconciliation)
+
     # -- resolution ----------------------------------------------------
     def _disclose(self, claim_set, resolution_at) -> ClaimSetDisclosure:
         def resolved(claim, rule) -> ResolvedSubject:
