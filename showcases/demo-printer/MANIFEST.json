@@ -1,0 +1,38 @@
+{
+  "honesty": "Synthetic showcase evidence; represents no real machine. The frozen extraction derivatives are test artifacts, NOT an authoritative ledger record, and carry no engineering truth or runtime authority.",
+  "regeneration_command": ".venv/bin/python showcases/demo-printer/tools/generate.py  # then re-freeze via the documented ingestion in docs/superpowers/plans/2026-08-11-sn001-structural-evidence.md; regenerated STEP output is byte-different and must never silently replace the frozen sources",
+  "sources": {
+    "showcase-printer-bom": {
+      "extractor": {
+        "config_fingerprint": "433d72ff12ad11dd",
+        "name": "csv_extractor",
+        "toolchain": "python-stdlib-csv",
+        "version": "1.1.0"
+      },
+      "extractor_toolchain_fingerprint": "b7aac5efd406cbd4",
+      "frozen_extraction_file": "extractions/acc5f289912d91be96e52ad8d44580b7.json",
+      "frozen_extraction_sha256": "4b205f3349bc6c8044190777006d7c113c6a02dfb839cfb70d927a17416a2220",
+      "pinned_payload_checksum": "sha256:400f03e619e0f84c4d76211b228eb9ed8cb751d25f62b653ff727c7b30f3a090",
+      "pinned_raw_record_id": "acc5f289912d91be96e52ad8d44580b7",
+      "pinned_source_id": "showcase-printer-bom",
+      "source_file": "sources/printer_bom.csv",
+      "source_sha256": "400f03e619e0f84c4d76211b228eb9ed8cb751d25f62b653ff727c7b30f3a090"
+    },
+    "showcase-printer-cad": {
+      "extractor": {
+        "config_fingerprint": "df1e6ef6478d93b4",
+        "name": "step_extractor",
+        "toolchain": "cadquery-ocp 7.9.3.1.1",
+        "version": "1.0.0"
+      },
+      "extractor_toolchain_fingerprint": "1be707a7751618e9",
+      "frozen_extraction_file": "extractions/bf4c84d44f569cd712d9281aa2f8d428.json",
+      "frozen_extraction_sha256": "6c833cdf3957068471e6c434f0f0194d4b0ec734b74325f6e5556e20b8f0dc8e",
+      "pinned_payload_checksum": "sha256:080bc250c6eba3e6bdf88167043835dac0261621a7abe373a6de3130e48e8474",
+      "pinned_raw_record_id": "bf4c84d44f569cd712d9281aa2f8d428",
+      "pinned_source_id": "showcase-printer-cad",
+      "source_file": "sources/printer_assembly.step",
+      "source_sha256": "080bc250c6eba3e6bdf88167043835dac0261621a7abe373a6de3130e48e8474"
+    }
+  }
+}
