@@ -56,3 +56,16 @@ domain requiring explicit new mappings.
 
 (Numbering follows the SN-001 spec's limitation list; the remaining
 entries land with the slices that introduce their subjects.)
+
+## `resolution_at`
+
+`resolution_at` is a required, timezone-aware instant on the
+ingestion-receipt axis — the same axis
+`AppliesScope.axis == "ingestion_received_at"` names. It is the instant at
+which binding applicability is evaluated, and nothing else. It is not a
+model-knowledge cutoff: the supplied model revision alone decides
+membership. It is not an observation cutoff. It is not a wall clock:
+SN-001 never reads the clock, and the caller must supply the instant. Two
+reconciliations differing only in `resolution_at` are different results
+with different `inputs_digest` values, even when every finding is
+identical.

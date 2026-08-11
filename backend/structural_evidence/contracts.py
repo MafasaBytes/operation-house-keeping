@@ -79,9 +79,12 @@ class SourceContainmentClaim(_Frozen):
 class DerivedUsagePath(_Frozen):
     """SN-001's OWN derivation, explicitly labelled; never what the
     source reported. When the parent definition is used more than once,
-    SN-001 reports rather than picks."""
+    SN-001 reports rather than picks. `for_usage` names the usage the
+    path was derived FOR, so an ambiguous path (steps=()) still
+    identifies its subject."""
 
     derivation: Literal["nauo_parent_definition_chain_v1"]
+    for_usage: StepUsageLocator
     steps: tuple[StepUsageLocator, ...] = ()  # root-first; () unless unique
     ambiguity: Literal["unique", "multiple_parent_uses", "unresolved"]
 
@@ -96,6 +99,17 @@ class DerivedUsagePath(_Frozen):
 class QuantityFieldRef(_Frozen):
     """The exact extracted column carrying the quantity lexeme,
     identified by column index — never by a display/header name."""
+
+    column_index: int = Field(ge=0)
+    column_name_as_extracted: str  # disclosure only
+
+
+class LabelFieldRef(_Frozen):
+    """The DECLARED display-label column, identified by column index. A
+    label is disclosure: duplicate labels are reported, never merged,
+    and a label is never identity and never a join key. STEP claim sets
+    carry no label declaration — their single `name` field is the label
+    by construction, and step_structural_claims documents that."""
 
     column_index: int = Field(ge=0)
     column_name_as_extracted: str  # disclosure only
@@ -159,6 +173,7 @@ class SourceStructuralClaimSet(_Frozen):
     containment_claims: tuple[SourceContainmentClaim, ...] = ()
     derived_paths: tuple[DerivedUsagePath, ...] = ()
     quantity_field: QuantityFieldRef | None = None
+    label_field: LabelFieldRef | None = None
     unresolved_parent_references: tuple[UnresolvedParentReference, ...] = ()
     extraction_outcome: ExtractionOutcome
     extraction_warnings: tuple[str, ...] = ()

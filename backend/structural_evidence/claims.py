@@ -312,11 +312,13 @@ def step_structural_claims(
             if len(parent_uses) != 1:
                 return DerivedUsagePath(
                     derivation="nauo_parent_definition_chain_v1",
+                    for_usage=usage_locator(instance),
                     steps=(), ambiguity="multiple_parent_uses")
             current = parent_uses[0]
             chain = (usage_locator(current),) + chain
         return DerivedUsagePath(
             derivation="nauo_parent_definition_chain_v1",
+            for_usage=usage_locator(instance),
             steps=chain, ambiguity="unique")
 
     derived_paths = tuple(derived_path(instance) for instance in non_root)

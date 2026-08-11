@@ -177,18 +177,20 @@ class TestC0DerivedUsagePath:
                                 parent_definition_path_id=None)
 
     def test_steps_are_present_exactly_when_unique(self):
+        subject = self.usage("0:1:1:9")
         unique = DerivedUsagePath(
-            derivation="nauo_parent_definition_chain_v1",
+            derivation="nauo_parent_definition_chain_v1", for_usage=subject,
             steps=(self.usage("0:1:1"),), ambiguity="unique")
         assert unique.steps
         ambiguous = DerivedUsagePath(
-            derivation="nauo_parent_definition_chain_v1",
+            derivation="nauo_parent_definition_chain_v1", for_usage=subject,
             steps=(), ambiguity="multiple_parent_uses")
         assert ambiguous.steps == ()
+        assert ambiguous.for_usage == subject  # identifiable while ambiguous
         with pytest.raises(ValidationError):
             DerivedUsagePath(derivation="nauo_parent_definition_chain_v1",
-                             steps=(self.usage("0:1:1"),),
+                             for_usage=subject, steps=(self.usage("0:1:1"),),
                              ambiguity="multiple_parent_uses")
         with pytest.raises(ValidationError):
             DerivedUsagePath(derivation="nauo_parent_definition_chain_v1",
-                             steps=(), ambiguity="unique")
+                             for_usage=subject, steps=(), ambiguity="unique")

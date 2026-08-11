@@ -67,7 +67,10 @@ class TestI1aNoIdentityMinting:
         canonical id prefix. SN-001 derives or mints no ent_/var_/reg_/
         rel_/rtd_ identifier — upstream extractor-local ids are not
         canonical anchors and carry no such prefix."""
-        # word-boundary form: "parent_column_index" must not trip "ent_"
+        # word-boundary form: "parent_column_index" must not trip "ent_".
+        # A fully-anchored VALIDATION regex ("^reg_[0-9a-f]{64}$") is not
+        # id production — the string cannot itself be an id value — and is
+        # exempt; every other literal shape stays banned.
         producing = re.compile(
             "(?<![A-Za-z0-9])(" + "|".join(CANONICAL_ID_PREFIXES) + ")")
         checked = 0
@@ -75,6 +78,8 @@ class TestI1aNoIdentityMinting:
             tree = ast.parse(path.read_text(encoding="utf-8"))
             for value in string_literals(tree):
                 checked += 1
+                if value.startswith("^") and value.endswith("$"):
+                    continue
                 match = producing.search(value)
                 assert match is None, (
                     f"{match.group(0) if match else ''!r} inside a literal "
