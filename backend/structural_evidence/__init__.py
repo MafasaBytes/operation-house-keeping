@@ -8,6 +8,20 @@ ledger. Identity decisions live in identity_binding; model truth lives in
 model_kernel.
 """
 
+from backend.structural_evidence.contracts import (
+    DeclaredEngineeringContext,
+    DerivedUsagePath,
+    EngineeringContext,
+    QuantityFieldRef,
+    SourceContainmentClaim,
+    SourceNativeField,
+    SourceStructuralClaim,
+    SourceStructuralClaimSet,
+    StructuralClaimKind,
+    UnknownEngineeringContext,
+    UnresolvedParentReference,
+    ViewIndependentEngineeringContext,
+)
 from backend.structural_evidence.errors import (
     StructuralEvidenceConfigurationError,
     StructuralEvidenceError,
@@ -26,6 +40,18 @@ from backend.structural_evidence.locators import (
 __all__ = [
     "StructuralEvidenceError",
     "StructuralEvidenceConfigurationError",
+    "StructuralClaimKind",
+    "SourceNativeField",
+    "SourceStructuralClaim",
+    "SourceContainmentClaim",
+    "DerivedUsagePath",
+    "QuantityFieldRef",
+    "UnresolvedParentReference",
+    "DeclaredEngineeringContext",
+    "ViewIndependentEngineeringContext",
+    "UnknownEngineeringContext",
+    "EngineeringContext",
+    "SourceStructuralClaimSet",
     "StructuralSourceRef",
     "CsvRowLocator",
     "CsvCellLocator",
