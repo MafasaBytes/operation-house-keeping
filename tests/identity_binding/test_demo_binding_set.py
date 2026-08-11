@@ -71,21 +71,80 @@ def demo_facade(queries):
         BindingResolver(BindingStore(DEMO_SET).load()), queries)
 
 
+# IB-001's original four-record revision, pinned by explicit membership
+# and replayed via load_revision (RP4). Never a prefix filter.
+ORIGINAL_FOUR = (
+    "anc_81d43569d1b093c1b52247bdfb8039ae6e4777eecd3918c498a85655fec9bbdc",
+    "anc_e7bd0b35b97ee920384ac5791c90e3ae34889b642b54608cf3293a5174cb5ae3",
+    "iba_b1b86a4fd0c56f36aafb4574176429c0edab530dbbd5d1da954a54f2533fd90c",
+    "iba_ba80b9e561b564a465b19109e2576d79d93b10e5b87e9917bf7ed45558c3a90a",
+)
+ORIGINAL_REVISION = ("rev_8605f52c345eeabf08bfde235090f1ad1c6cf39f45e617c"
+                     "7dd0070535a7fa754")
+# SN-001's two structural mappings (commit 15 append)
+SN001_RECORDS = (
+    "iba_2061f4017a7f2355a36d30ee69a6ebc24a94de2e1db8866b4216916678b4d5aa",
+    "iba_22a8eef16595ec5d38f9135b04499c76f358055a6e5ea4dba9c62f7d9b9d3a43",
+)
+# AU1: exhaustive per-record authority map — an unlisted record FAILS,
+# so this is strictly STRONGER than the old blanket assertion.
+EXPECTED_AGENT_BY_RECORD = {
+    **{record_id: "ib001_demo_fixture" for record_id in ORIGINAL_FOUR},
+    **{record_id: "sn001_showcase_fixture" for record_id in SN001_RECORDS},
+}
+
+
 class TestCommittedSet:
     def test_loads_valid_with_expected_membership(self):
         loaded = BindingStore(DEMO_SET).load()
-        assert loaded.revision.record_count == 4
+        assert loaded.revision.record_count == 6
         assert loaded.revision.binding_set_id == "demo-printer"
         assert set(loaded.anchors_by_id) == {ENT, VAR}
+        assert set(loaded.revision.record_ids) == \
+            set(ORIGINAL_FOUR) | set(SN001_RECORDS)
 
     def test_fixture_authority_never_human_owner(self):
-        """Mandatory regression: fixture authority is test_fixture, never
-        human_owner — the committed evidence is deterministic validation
-        data, not authenticated real-world knowledge."""
-        for path in (DEMO_SET / "records").glob("*.json"):
+        """Mandatory regression, per-record form (AU1): fixture authority
+        is test_fixture, never human_owner; the original four records stay
+        attributed to ib001_demo_fixture and the SN-001 mappings to
+        sn001_showcase_fixture. Every record id must appear in exactly one
+        expectation group — an unlisted record fails."""
+        paths = sorted((DEMO_SET / "records").glob("*.json"))
+        assert len(paths) == len(EXPECTED_AGENT_BY_RECORD)
+        for path in paths:
             record = json.loads(path.read_text())
             assert record["authority"]["kind"] == "test_fixture", path.name
-            assert record["authority"]["agent"] == "ib001_demo_fixture"
+            assert record["record_id"] in EXPECTED_AGENT_BY_RECORD, path.name
+            assert record["authority"]["agent"] == \
+                EXPECTED_AGENT_BY_RECORD[record["record_id"]], path.name
+
+    def test_rp4_original_revision_replays_and_still_binds(self):
+        """RP4 (D5): the original four-record revision stays provable by
+        explicit-membership replay, and the Moonraker subject still
+        resolves bound inside it."""
+        loaded = BindingStore(DEMO_SET).load_revision(ORIGINAL_FOUR)
+        assert loaded.revision.revision_id == ORIGINAL_REVISION
+        assert loaded.revision.record_count == 4
+        result = BindingResolver(loaded).resolve_subject(SUBJECT,
+                                                         at=IN_HOUR)
+        assert result.status == "bound"
+        assert result.resolved_target.anchor_id == ENT
+
+    def test_rp5_model_set_original_revision_replays(self):
+        original_three = (
+            "anc_037d327111553c3410f162dbb8ffccf475fd0b1a15b4134e30"
+            "4d6ade99141c21",
+            "anc_69ebd49c67eb6b5ab775dbf0866efbbdfeaf625005bc50d2848"
+            "d98a044014a22",
+            "anc_c6aa3f3f3e03cc689a40ecd5d70d04828cbd1143bb107e85c2d"
+            "d55268c2312d8",
+        )
+        loaded = BindingStore(Path("bindings/demo-printer-model")
+                              ).load_revision(original_three)
+        assert loaded.revision.revision_id == (
+            "rev_b4878a692ed628e60c6e70fe321add50bda52fb15eca216f3c9c8"
+            "a6e1c7b1a6f")
+        assert loaded.revision.record_count == 3
 
     def test_no_secrets_or_absolute_paths_committed(self):
         for path in (DEMO_SET / "records").glob("*.json"):
@@ -119,7 +178,7 @@ class TestEndToEndChain:
         citing = [s for s in result.resolution.via_assertions
                   if s.membership_at == "in"]
         assert citing and citing[0].record_id.startswith("iba_")
-        assert result.resolution.revision.record_count == 4
+        assert result.resolution.revision.record_count == 6
 
         # ← SourceSubjectRef + SourcePropertyRef ← TemporalOccurrence
         occurrence = result.observed.occurrence

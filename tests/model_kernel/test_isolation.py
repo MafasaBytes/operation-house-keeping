@@ -153,5 +153,6 @@ class TestUpstreamBoundary:
         # no anc_ records in the model ledger; no model records in bindings
         binding_files = list(
             Path("bindings/demo-printer-model/records").glob("*.json"))
-        assert len(binding_files) == 3
-        assert all(p.name.startswith("anc_") for p in binding_files)
+        assert len(binding_files) == 5
+        assert all(p.name.split("_")[0] in ("anc", "iba")
+                   for p in binding_files)

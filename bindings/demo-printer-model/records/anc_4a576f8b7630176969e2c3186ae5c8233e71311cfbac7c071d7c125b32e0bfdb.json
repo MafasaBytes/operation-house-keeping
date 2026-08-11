@@ -1,0 +1,20 @@
+{
+  "anchor": {
+    "anchor_id": "ent_5a6b7c8d9e0f1a2b3c4d5e6f70819203",
+    "display_name": "Printer assembly type (synthetic)",
+    "namespace": "demo-printer",
+    "referent_kind": "type_definition",
+    "role_name": "printer-assembly-type"
+  },
+  "anchor_kind": "entity",
+  "authority": {
+    "agent": "sn001_showcase_fixture",
+    "kind": "test_fixture",
+    "method": "manual_declaration"
+  },
+  "note": "Synthetic showcase knowledge (SN-001, O2): the printer assembly TYPE. Never a real printer component.",
+  "record_id": "anc_4a576f8b7630176969e2c3186ae5c8233e71311cfbac7c071d7c125b32e0bfdb",
+  "record_kind": "anchor_declaration",
+  "recorded_at": "2026-08-11T12:00:00+00:00",
+  "schema_version": "1"
+}

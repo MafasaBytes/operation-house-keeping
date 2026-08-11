@@ -1,0 +1,31 @@
+{
+  "applies": {
+    "axis": "ingestion_received_at",
+    "end_boundary": {
+      "kind": "unbounded"
+    },
+    "interval_semantics": "half_open",
+    "start_boundary": {
+      "kind": "unbounded"
+    }
+  },
+  "authority": {
+    "agent": "sn001_showcase_fixture",
+    "kind": "test_fixture",
+    "method": "manual_declaration"
+  },
+  "binding_kind": "subject",
+  "note": "Structural mapping (SN-001). Applicability is asserted on the ingestion-receipt axis only and carries no lifecycle-view validity. Synthetic showcase knowledge; no claim about a real printer.",
+  "property": null,
+  "record_id": "iba_162f634fe39b38369db141c76718140340773f0080bca628503090eac445fa08",
+  "record_kind": "binding_assertion",
+  "recorded_at": "2026-08-11T12:00:00+00:00",
+  "schema_version": "1",
+  "subject": {
+    "adapter_id": "sx1:step:step_extractor:1.0.0:df1e6ef6478d93b4:1be707a7751618e9:step-ocaf-entry-v1:8496bcb773e204bf",
+    "source_id": "showcase-printer-cad",
+    "subject_identifier": "0%3A1%3A1%3A1"
+  },
+  "supersedes": null,
+  "target_anchor_id": "ent_5a6b7c8d9e0f1a2b3c4d5e6f70819203"
+}

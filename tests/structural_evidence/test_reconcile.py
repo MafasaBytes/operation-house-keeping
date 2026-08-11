@@ -729,15 +729,22 @@ class TestA12NegativeCorpus:
             resolvers=resolvers, rules=RULES, model=model).reconcile(
             [claims], resolution_at=RESOLUTION_AT)
         found = literals(result)
-        # 6 rows x 2 applicable BOM rules = 12 unmapped subjects, plus the
-        # context-unknown disclosure is NOT emitted for unmapped subjects
+        # 6 rows x 2 applicable BOM rules = 12 unmapped subjects; the
+        # context-unknown disclosure is NOT emitted for unmapped subjects.
+        # Since the SN-001c appends, the committed sets also carry three
+        # sx1 structural mappings (iba_S1, iba_S2, iba_S4) whose showcase
+        # sources this negative arrangement deliberately does NOT supply:
+        # the honest multiset therefore includes exactly three
+        # cited_extraction_not_found findings.
         assert found["source_subject_unmapped"] == 12
+        assert found["cited_extraction_not_found"] == 3
         for absent in ("claims_mutually_contradictory",
                        "corroborated_by_all_mapped_sources",
                        "quantity_not_reconcilable_with_registered_instances",
                        "anchor_not_registered"):
             assert found[absent] == 0, absent
-        assert set(found) == {"source_subject_unmapped"}
+        assert set(found) == {"source_subject_unmapped",
+                              "cited_extraction_not_found"}
 
 
 class TestOneSidedSupport:
