@@ -125,6 +125,74 @@ def propose(claim_sets, resolvers, model, rules=ITEM_NO_RULE):
         reconciler.reconcile(claim_sets, resolution_at=RESOLUTION_AT))
 
 
+# --------------------------------------------------------------- defect 1
+class TestD1CrossSourceEndpointContamination:
+    def test_a_relationship_resolves_exclusively_to_source_a_anchors(
+            self, tmp_path):
+        """Owner reproduction: with locator-only endpoint keys, source
+        B's r=1/r=2 joins overwrote source A's and A's containment claim
+        proposed a relationship between B's anchors."""
+        claim_sets, resolvers, model = two_source_world(
+            tmp_path, a_context=declared_context("as_designed"),
+            b_context=declared_context("as_designed"))
+        result = propose(claim_sets, resolvers, model)
+        edges = [p for p in result.proposals
+                 if p.proposal_kind == "relationship_assertion"]
+        assert len(edges) == 1
+        [edge] = edges
+        assert (edge.source_anchor_id, edge.target_anchor_id) == \
+            (ENT_PA, ENT_CA)
+
+    def test_declared_context_on_b_never_unlocks_a_unknown_containment(
+            self, tmp_path):
+        """Owner reproduction (unknown-context twin): B's declared
+        context at the same locator must never make A's unknown-context
+        containment proposable."""
+        claim_sets, resolvers, model = two_source_world(
+            tmp_path, a_context=UNKNOWN,
+            b_context=declared_context("as_designed"))
+        result = propose(claim_sets, resolvers, model)
+        assert [p for p in result.proposals
+                if p.proposal_kind == "relationship_assertion"] == []
+        assert any(f.finding == "context_unknown"
+                   for f in result.blocking_findings)
+
+    def test_two_rules_joining_one_claim_apart_is_not_proposable(
+            self, tmp_path):
+        """Same complete address, two rules, two different accepted
+        anchors: silent last-rule-wins is the same defect class, so the
+        endpoint is treated as unresolved and nothing is proposed."""
+        source = bom_source("a-bom")
+        parent = bom_claim(source, 1, "A-PRN")
+        child = bom_claim(source, 2, "A-EXT")
+        containment = SourceContainmentClaim(
+            claim_kind="bom_parent_column", child=child.address,
+            parent=parent.address)
+        claim_set = bom_claim_set(source=source, claims=(parent, child),
+                                  containment=(containment,),
+                                  context=declared_context("as_designed"))
+        resolver = resolver_with(
+            tmp_path, "set-a",
+            anchor_declaration(ENT_PA, role="parent"),
+            anchor_declaration(ENT_CA, role="child-by-item-no"),
+            anchor_declaration(ENT_CB, role="child-by-row"),
+            subject_assertion(subject_for(parent, "bom-item-no-v1"),
+                              ENT_PA),
+            subject_assertion(subject_for(parent, "bom-physical-row-v1"),
+                              ENT_PA),
+            subject_assertion(subject_for(child, "bom-item-no-v1"),
+                              ENT_CA),
+            subject_assertion(subject_for(child, "bom-physical-row-v1"),
+                              ENT_CB))
+        model = model_with(tmp_path, ENT_PA, ENT_CA, ENT_CB)
+        result = propose(
+            [claim_set], [resolver], model,
+            rules=(SUBJECT_RULES["bom-item-no-v1"],
+                   SUBJECT_RULES["bom-physical-row-v1"]))
+        assert [p for p in result.proposals
+                if p.proposal_kind == "relationship_assertion"] == []
+
+
 # --------------------------------------------------------------- defect 2
 class TestD2ProvenanceCoherence:
     def row_address(self, source, row):

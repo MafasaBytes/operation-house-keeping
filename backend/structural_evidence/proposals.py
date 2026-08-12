@@ -168,29 +168,36 @@ def build_proposals(
                                           caller_must_supply=(
                                               "authority", "recorded_at")))
 
+    # Endpoint resolution is keyed by the COMPLETE StructuralAddress —
+    # payload, source identity, extractor, and locator — never by the
+    # locator value alone: two sources both contain an r=1, and a
+    # locator-only key let source B's join re-point source A's
+    # containment claim (owner audit 2026-08-12, defect 1). An address
+    # whose rules join it to DIFFERENT anchors is excluded outright:
+    # silent last-writer-wins is the same defect class.
     joined_by_address = {}
     context_ok_by_address = {}
+    conflicted_addresses = set()
     for disclosure, rs in _joined_members(reconciliation):
-        from backend.structural_evidence.locators import (
-            canonical_locator_value,
-        )
-        key = canonical_locator_value(rs.claim_address.locator)
+        key = rs.claim_address
+        if key in joined_by_address and \
+                joined_by_address[key] != rs.join_anchor_id:
+            conflicted_addresses.add(key)
         joined_by_address[key] = rs.join_anchor_id
-        context_ok_by_address[key] = (
-            disclosure.claim_set.engineering_context.kind != "unknown")
+        ok = disclosure.claim_set.engineering_context.kind != "unknown"
+        context_ok_by_address[key] = \
+            context_ok_by_address.get(key, True) and ok
 
     edge_proposals = ()
     blocking = ()
     if not conflicted:
-        from backend.structural_evidence.locators import (
-            canonical_locator_value,
-        )
         for disclosure in reconciliation.claim_sets:
             for containment in disclosure.claim_set.containment_claims:
-                child_key = canonical_locator_value(
-                    containment.child.locator)
-                parent_key = canonical_locator_value(
-                    containment.parent.locator)
+                child_key = containment.child
+                parent_key = containment.parent
+                if child_key in conflicted_addresses or \
+                        parent_key in conflicted_addresses:
+                    continue  # no single join: nothing to propose
                 child_anchor = joined_by_address.get(child_key)
                 parent_anchor = joined_by_address.get(parent_key)
                 if child_anchor is None or parent_anchor is None:
