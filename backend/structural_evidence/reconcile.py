@@ -194,20 +194,21 @@ class ClaimSetDisclosure(_Frozen):
 
     @model_validator(mode="after")
     def _one_to_one_over_claim_and_rule(self):
-        keys = [(canonical_locator_value(rs.claim_address.locator),
-                 rs.rule_id) for rs in self.resolved_subjects]
+        # complete addresses, never bare locator strings: a locator-only
+        # key admits a foreign source at the same position (owner audit
+        # 2026-08-12, defect 2)
+        keys = [(rs.claim_address, rs.rule_id)
+                for rs in self.resolved_subjects]
         if len(keys) != len(set(keys)):
             raise ValueError("duplicate (claim, rule) resolution")
-        claim_values = {canonical_locator_value(c.address.locator)
-                        for c in self.claim_set.subject_claims}
-        for value, _ in keys:
-            if value not in claim_values:
+        claim_addresses = {c.address for c in self.claim_set.subject_claims}
+        for address, _ in keys:
+            if address not in claim_addresses:
                 raise ValueError(
                     "a resolved subject must address a disclosed claim")
         rules_by_kind: dict[str, set] = {}
         for claim in self.claim_set.subject_claims:
-            value = canonical_locator_value(claim.address.locator)
-            rules = {rule for v, rule in keys if v == value}
+            rules = {rule for a, rule in keys if a == claim.address}
             expected = rules_by_kind.setdefault(claim.claim_kind, rules)
             if rules != expected:
                 raise ValueError(
@@ -688,9 +689,8 @@ class StructuralReconciler:
         return dict(sorted(index.items()))
 
     def _member_claim(self, disclosure, rs) -> SourceStructuralClaim:
-        value = canonical_locator_value(rs.claim_address.locator)
         for claim in disclosure.claim_set.subject_claims:
-            if canonical_locator_value(claim.address.locator) == value:
+            if claim.address == rs.claim_address:
                 return claim
         raise StructuralEvidenceError(  # pragma: no cover - O1 guarantees
             "SN_INTERNAL", "resolved subject without its claim")
@@ -913,11 +913,9 @@ class StructuralReconciler:
             for path in disclosure.claim_set.derived_paths:
                 if path.ambiguity == "unique":
                     continue
-                value = canonical_locator_value(path.for_usage)
                 support = tuple(
                     claim for claim in disclosure.claim_set.subject_claims
-                    if canonical_locator_value(claim.address.locator)
-                    == value)
+                    if claim.address.locator == path.for_usage)
                 yield ReconciliationFinding(
                     finding="derived_usage_path_ambiguous",
                     basis="source_claim", supporting_claims=support,

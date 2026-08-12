@@ -125,6 +125,195 @@ def propose(claim_sets, resolvers, model, rules=ITEM_NO_RULE):
         reconciler.reconcile(claim_sets, resolution_at=RESOLUTION_AT))
 
 
+# --------------------------------------------------------------- defect 2
+class TestD2ProvenanceCoherence:
+    def row_address(self, source, row):
+        return StructuralAddress(
+            source=source,
+            locator=CsvRowLocator(kind="csv_row", physical_row_index=row))
+
+    def cell_address(self, source, row, col, name):
+        return StructuralAddress(
+            source=source,
+            locator=CsvCellLocator(kind="csv_cell", physical_row_index=row,
+                                   column_index=col,
+                                   column_name_as_extracted=name))
+
+    def test_the_owner_reproduction_is_unconstructible(self):
+        """claim_set.source_ref names 'declared-source' while the claim's
+        address names 'foreign-source' — this constructed at 81cd0fc."""
+        declared = bom_source("declared-source")
+        with pytest.raises(ValidationError):
+            SourceStructuralClaimSet(
+                source_ref=declared, engineering_context=UNKNOWN,
+                subject_claims=(bom_claim(foreign_bom_source(), 1, "X-1"),),
+                extraction_outcome="succeeded")
+
+    def test_a_field_from_a_foreign_source_cannot_join_a_claim(self):
+        a = bom_source("a-bom")
+        foreign = SourceNativeField(
+            field_name_as_extracted="item_no", lexeme="X-1",
+            address=self.cell_address(foreign_bom_source(), 1, 0,
+                                      "item_no"))
+        with pytest.raises(ValidationError):
+            SourceStructuralClaim(claim_kind="bom_row",
+                                  address=self.row_address(a, 1),
+                                  fields=(foreign,))
+
+    def test_bom_row_requires_a_csv_row_locator(self):
+        a = bom_source("a-bom")
+        with pytest.raises(ValidationError):
+            SourceStructuralClaim(
+                claim_kind="bom_row",
+                address=self.cell_address(a, 1, 0, "item_no"))
+
+    def test_bom_row_fields_are_cells_on_the_claims_physical_row(self):
+        a = bom_source("a-bom")
+        row_locator_field = SourceNativeField(
+            field_name_as_extracted="item_no", lexeme="X-1",
+            address=self.row_address(a, 1))
+        with pytest.raises(ValidationError):
+            SourceStructuralClaim(claim_kind="bom_row",
+                                  address=self.row_address(a, 1),
+                                  fields=(row_locator_field,))
+        other_row_cell = SourceNativeField(
+            field_name_as_extracted="item_no", lexeme="X-1",
+            address=self.cell_address(a, 2, 0, "item_no"))
+        with pytest.raises(ValidationError):
+            SourceStructuralClaim(claim_kind="bom_row",
+                                  address=self.row_address(a, 1),
+                                  fields=(other_row_cell,))
+
+    def test_field_name_disclosure_agrees_with_its_cell_locator(self):
+        a = bom_source("a-bom")
+        renamed = SourceNativeField(
+            field_name_as_extracted="item_no", lexeme="X-1",
+            address=self.cell_address(a, 1, 0, "quantity"))
+        with pytest.raises(ValidationError):
+            SourceStructuralClaim(claim_kind="bom_row",
+                                  address=self.row_address(a, 1),
+                                  fields=(renamed,))
+
+    def step_definition_address(self, source, path="0:1:1:2"):
+        return StructuralAddress(
+            source=source,
+            locator=StepDefinitionLocator(kind="step_part_definition",
+                                          extractor_path_id=path,
+                                          upstream_definition_id="b0" * 16))
+
+    def step_usage_address(self, source, path="0:1:1:1:1",
+                           parent="0:1:1:1"):
+        return StructuralAddress(
+            source=source,
+            locator=StepUsageLocator(kind="step_nauo_usage",
+                                     extractor_path_id=path,
+                                     upstream_instance_id="cc" * 16,
+                                     definition_path_id="0:1:1:2",
+                                     parent_definition_path_id=parent))
+
+    def test_step_claim_kinds_require_their_own_locator_schemes(self):
+        source = step_source()
+        with pytest.raises(ValidationError):
+            SourceStructuralClaim(
+                claim_kind="step_part_definition",
+                address=self.step_usage_address(source))
+        with pytest.raises(ValidationError):
+            SourceStructuralClaim(
+                claim_kind="step_nauo_usage",
+                address=self.step_definition_address(source))
+
+    def test_step_fields_address_the_containing_claim_exactly(self):
+        source = step_source()
+        address = self.step_definition_address(source)
+        elsewhere = SourceNativeField(
+            field_name_as_extracted="name", lexeme="extruder",
+            address=self.step_definition_address(source, path="0:1:1:9"))
+        with pytest.raises(ValidationError):
+            SourceStructuralClaim(claim_kind="step_part_definition",
+                                  address=address, fields=(elsewhere,))
+
+    def test_bom_parent_column_endpoints_are_same_source_row_addresses(
+            self):
+        a = bom_source("a-bom")
+        with pytest.raises(ValidationError):
+            SourceContainmentClaim(
+                claim_kind="bom_parent_column",
+                child=self.row_address(a, 2),
+                parent=self.row_address(foreign_bom_source(), 1))
+        with pytest.raises(ValidationError):
+            SourceContainmentClaim(
+                claim_kind="bom_parent_column",
+                child=self.cell_address(a, 2, 0, "item_no"),
+                parent=self.row_address(a, 1))
+
+    def test_step_nauo_usage_edge_endpoint_grammar(self):
+        source = step_source()
+        usage = self.step_usage_address(source, parent="0:1:1:1")
+        parent = self.step_definition_address(source, path="0:1:1:1")
+        SourceContainmentClaim(claim_kind="step_nauo_usage_edge",
+                               child=usage, parent=parent)  # the twin
+        with pytest.raises(ValidationError):  # child must be the usage
+            SourceContainmentClaim(claim_kind="step_nauo_usage_edge",
+                                   child=parent, parent=usage)
+        with pytest.raises(ValidationError):  # parent path must match
+            SourceContainmentClaim(
+                claim_kind="step_nauo_usage_edge", child=usage,
+                parent=self.step_definition_address(source, path="0:1:1:9"))
+
+    def test_containment_endpoints_must_be_disclosed_subject_claims(self):
+        a = bom_source("a-bom")
+        parent = bom_claim(a, 1, "A-PRN")
+        undisclosed_child = self.row_address(a, 7)
+        with pytest.raises(ValidationError):
+            bom_claim_set(source=a, claims=(parent,), containment=(
+                SourceContainmentClaim(claim_kind="bom_parent_column",
+                                       child=undisclosed_child,
+                                       parent=parent.address),))
+
+    def test_unresolved_parent_child_belongs_to_the_set_source(self):
+        a = bom_source("a-bom")
+        with pytest.raises(ValidationError):
+            SourceStructuralClaimSet(
+                source_ref=a, engineering_context=UNKNOWN,
+                subject_claims=(bom_claim(a, 1, "A-PRN"),),
+                unresolved_parent_references=(UnresolvedParentReference(
+                    child=self.row_address(foreign_bom_source(), 3),
+                    parent_lexeme="x", reason="no_matching_row"),),
+                extraction_outcome="succeeded")
+
+    def test_derived_path_for_an_undisclosed_usage_is_rejected(self):
+        source = step_source()
+        definition = step_definition_claim(source, "0:1:1:2",
+                                           "extruder-unit")
+        stray = self.step_usage_address(source).locator
+        with pytest.raises(ValidationError):
+            SourceStructuralClaimSet(
+                source_ref=source, engineering_context=UNKNOWN,
+                subject_claims=(definition,),
+                derived_paths=(DerivedUsagePath(
+                    derivation="nauo_parent_definition_chain_v1",
+                    for_usage=stray, steps=(),
+                    ambiguity="multiple_parent_uses"),),
+                quantity_field=None, extraction_outcome="succeeded")
+
+    def test_disclosure_coverage_compares_exact_addresses(self):
+        """At 81cd0fc a resolved subject at (foreign source, r=1) passed
+        coverage because the disclosed claim at (own source, r=1) shares
+        its locator STRING."""
+        a = bom_source("a-bom")
+        claim = bom_claim(a, 1, "A-PRN")
+        claim_set = bom_claim_set(source=a, claims=(claim,))
+        foreign_address = StructuralAddress(
+            source=foreign_bom_source(), locator=claim.address.locator)
+        stray = ResolvedSubject(
+            claim_address=foreign_address, rule_id="bom-item-no-v1",
+            rule_fingerprint="0" * 16, toolchain_fingerprint="0" * 16,
+            subject=None, no_subject_reason="rule_yielded_none")
+        with pytest.raises(ValidationError):
+            ClaimSetDisclosure(claim_set=claim_set,
+                               resolved_subjects=(stray,))
+
+
 # --------------------------------------------------------------- defect 4
 VALID_LOCATOR_VALUES = {
     "csv_row": "r=3",
@@ -201,3 +390,14 @@ class TestD4TypedConversionErrors:
         assert canonical_locator_value(back.locator) == root
 
 
+# --------------------------------------------------------------- defect 5
+class TestD5EndpointGrammarAdjudication:
+    def test_contract_wording_matches_the_implemented_grammar(self):
+        """Owner reproduction: the contract claimed both STEP endpoints
+        are definitions while the implementation emits a usage-address
+        child. Adjudicated: the usage-child grammar stays (it keeps
+        repeated same-pair usages distinct and both definitions remain
+        named through the usage locator); the wording moves."""
+        doc = " ".join(SourceContainmentClaim.__doc__.split())
+        assert "both endpoints are DEFINITIONS" not in doc
+        assert "parent_definition_path_id" in doc

@@ -48,9 +48,21 @@ def _field_sort_key(field: SourceNativeField) -> tuple[str, str]:
             canonical_locator_value(field.address.locator))
 
 
+_LOCATOR_KIND_BY_CLAIM_KIND = {
+    "bom_row": "csv_row",
+    "step_part_definition": "step_part_definition",
+    "step_nauo_usage": "step_nauo_usage",
+}
+
+
 class SourceStructuralClaim(_Frozen):
     """What the source reported. Carries no anchor, no engineering
-    vocabulary, no derived count, no name-derived key."""
+    vocabulary, no derived count, no name-derived key. Provenance is
+    coherent by construction (owner audit 2026-08-12): the claim kind
+    fixes the locator scheme, and every field is pinned to the claim's
+    exact source — a bom_row field is a csv_cell on the claim's physical
+    row whose disclosed name agrees with its locator, and a STEP field
+    addresses the same structural object as its claim."""
 
     claim_kind: StructuralClaimKind
     address: StructuralAddress
@@ -65,15 +77,88 @@ class SourceStructuralClaim(_Frozen):
                 "(field_name_as_extracted, canonical locator value)")
         return self
 
+    @model_validator(mode="after")
+    def _kind_and_fields_cohere(self):
+        locator = self.address.locator
+        expected = _LOCATOR_KIND_BY_CLAIM_KIND[self.claim_kind]
+        if locator.kind != expected:
+            raise ValueError(
+                f"a {self.claim_kind} claim is addressed by a {expected} "
+                f"locator, not {locator.kind}")
+        for field in self.fields:
+            if field.address.source != self.address.source:
+                raise ValueError(
+                    "a field belongs to its claim's exact source")
+            if self.claim_kind == "bom_row":
+                cell = field.address.locator
+                if cell.kind != "csv_cell":
+                    raise ValueError(
+                        "a bom_row field is addressed by a csv_cell "
+                        "locator")
+                if cell.physical_row_index != locator.physical_row_index:
+                    raise ValueError(
+                        "a bom_row field lives on its claim's physical "
+                        "row")
+                if field.field_name_as_extracted != \
+                        cell.column_name_as_extracted:
+                    raise ValueError(
+                        "the field name disclosure must agree with its "
+                        "cell locator's extracted column name")
+            elif field.address != self.address:
+                raise ValueError(
+                    "a STEP field addresses the same structural object "
+                    "as its claim")
+        return self
+
 
 class SourceContainmentClaim(_Frozen):
     """Containment IN THE SOURCE'S OWN VOCABULARY. Never an MK-001 edge,
-    never functional/causal/electrical/fluid/physical containment. For
-    STEP both endpoints are DEFINITIONS (NAUO semantics)."""
+    never functional/causal/electrical/fluid/physical containment.
+
+    Endpoint grammar (adjudicated against D6, owner audit 2026-08-12):
+
+    - `bom_parent_column`: child and parent are both csv_row addresses
+      from one source.
+    - `step_nauo_usage_edge`: the parent is the RELATING definition's
+      step_part_definition address; the child is the NAUO usage
+      occurrence's step_nauo_usage address, whose `definition_path_id`
+      names the RELATED definition and whose `parent_definition_path_id`
+      must equal the parent endpoint's `extractor_path_id`. Both
+      definitions therefore stay named, and repeated same-pair usages
+      stay distinct. This is a source claim about STEP product
+      structure, never the model's hand-authored definition-level
+      relationship (D6), whose definition-to-definition endpoints and
+      type name live only in the accepted model ledger."""
 
     claim_kind: Literal["bom_parent_column", "step_nauo_usage_edge"]
     child: StructuralAddress
     parent: StructuralAddress
+
+    @model_validator(mode="after")
+    def _endpoint_grammar(self):
+        if self.child.source != self.parent.source:
+            raise ValueError(
+                "containment endpoints come from one exact source")
+        if self.claim_kind == "bom_parent_column":
+            if self.child.locator.kind != "csv_row" or \
+                    self.parent.locator.kind != "csv_row":
+                raise ValueError(
+                    "bom_parent_column endpoints are csv_row addresses")
+        else:
+            if self.child.locator.kind != "step_nauo_usage":
+                raise ValueError(
+                    "the step_nauo_usage_edge child is the NAUO usage "
+                    "occurrence address")
+            if self.parent.locator.kind != "step_part_definition":
+                raise ValueError(
+                    "the step_nauo_usage_edge parent is the relating "
+                    "definition address")
+            if self.child.locator.parent_definition_path_id != \
+                    self.parent.locator.extractor_path_id:
+                raise ValueError(
+                    "the usage's parent_definition_path_id must equal "
+                    "the parent endpoint's extractor_path_id")
+        return self
 
 
 class DerivedUsagePath(_Frozen):
@@ -177,3 +262,37 @@ class SourceStructuralClaimSet(_Frozen):
     unresolved_parent_references: tuple[UnresolvedParentReference, ...] = ()
     extraction_outcome: ExtractionOutcome
     extraction_warnings: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def _provenance_coherent(self):
+        """Owner audit 2026-08-12: every address in a claim set belongs
+        to the set's exact `source_ref`, containment endpoints refer to
+        disclosed subject claims (complete addresses, never bare
+        locators), and a derived path is derived FOR a disclosed usage
+        claim."""
+        def own(address, what):
+            if address.source != self.source_ref:
+                raise ValueError(f"{what} must belong to the claim set's "
+                                 "exact source_ref")
+        claim_addresses = set()
+        usage_locators = set()
+        for claim in self.subject_claims:
+            own(claim.address, "a subject claim")
+            claim_addresses.add(claim.address)
+            if claim.claim_kind == "step_nauo_usage":
+                usage_locators.add(claim.address.locator)
+        for containment in self.containment_claims:
+            own(containment.child, "a containment endpoint")
+            if containment.child not in claim_addresses or \
+                    containment.parent not in claim_addresses:
+                raise ValueError(
+                    "containment endpoints must refer to disclosed "
+                    "subject claims")
+        for reference in self.unresolved_parent_references:
+            own(reference.child, "an unresolved parent child")
+        for path in self.derived_paths:
+            if path.for_usage not in usage_locators:
+                raise ValueError(
+                    "a derived path must be derived for a disclosed "
+                    "usage claim")
+        return self
