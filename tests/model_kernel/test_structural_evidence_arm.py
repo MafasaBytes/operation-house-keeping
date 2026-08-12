@@ -112,3 +112,62 @@ class TestX5DeclaredReferenceDisclosure:
         disclosures = {d.ref.kind: d.verification for d in summary.evidence}
         assert disclosures["structural_source_locator"] == \
             "declared_reference"
+
+
+VALID_BY_SCHEME = {
+    "csv_row": "r=3",
+    "csv_cell": "r=3;c=12",
+    "step_part_definition": "p=0%3A1%3A1%3A2;d=" + "27" * 16,
+    "step_nauo_usage": ("p=0%3A1%3A1%3A3%3A1;i=" + "83" * 16 +
+                        ";dp=0%3A1%3A1%3A4;pp=0%3A1%3A1%3A3"),
+}
+ROOT_USAGE = "p=0%3A1;i=" + "93" * 16 + ";dp=0%3A1%3A1;pp="
+
+MALFORMED = [
+    ("csv_row", "r=abc"),                        # the owner reproduction
+    ("csv_row", "r=-1"),                         # negative index
+    ("csv_row", "r=01"),                         # noncanonical integer
+    ("csv_row", "r=+1"),                         # noncanonical integer
+    ("csv_row", "r=3;c=12"),                     # wrong component count
+    ("csv_row", VALID_BY_SCHEME["step_part_definition"]),  # foreign scheme
+    ("csv_cell", "r=3"),                         # missing component
+    ("csv_cell", "r=3;c=x"),                     # malformed integer
+    ("csv_cell", "r=3;c=012"),                   # noncanonical integer
+    ("step_part_definition", "r=3"),             # foreign scheme
+    ("step_part_definition", "p=0%3A1"),         # missing identifier
+    ("step_part_definition", "p=0%3A1;d=xyz"),   # malformed identifier
+    ("step_part_definition", "p=0%3A1;d=" + "27" * 15),    # short id
+    ("step_part_definition", "p=0%3a1;d=" + "27" * 16),    # lowercase %hex
+    ("step_nauo_usage", "p=a;i=" + "83" * 16),   # missing components
+    ("step_nauo_usage", VALID_BY_SCHEME["step_part_definition"]),
+    ("step_nauo_usage", "p=;i=" + "83" * 16 + ";dp=a;pp="),  # empty path
+]
+
+
+class TestKR5SchemeSpecificGrammar:
+    """Owner audit defect 4 (2026-08-12): each locator scheme enforces
+    its own canonical grammar inside the SELF-CONTAINED kernel contract.
+    Every malformed pair below constructed successfully at 81cd0fc."""
+
+    def evidence(self, scheme, value):
+        return StructuralSourceLocatorEvidence(
+            **{**ARM, "locator_scheme": scheme, "locator_value": value})
+
+    def test_every_arm_constructs_from_its_canonical_grammar(self):
+        for scheme, value in VALID_BY_SCHEME.items():
+            assert self.evidence(scheme, value).locator_value == value
+        root = self.evidence("step_nauo_usage", ROOT_USAGE)
+        assert root.locator_value.endswith(";pp=")
+
+    @pytest.mark.parametrize("scheme,value", MALFORMED,
+                             ids=[f"{s}:{v[:24]}" for s, v in MALFORMED])
+    def test_a_scheme_value_mismatch_is_unconstructible(self, scheme,
+                                                        value):
+        with pytest.raises(ValidationError):
+            self.evidence(scheme, value)
+
+    def test_the_committed_ledger_satisfies_the_grammar(self):
+        """The grammar is additive: every committed structural citation
+        in models/demo-printer already satisfies its scheme."""
+        loaded = ModelStore(DEMO_MODEL).load()
+        assert loaded.revision.record_count == 14

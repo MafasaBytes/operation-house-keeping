@@ -115,6 +115,19 @@ class TemporalOccurrenceEvidence(_Frozen):
     occurrence_id: str = Field(pattern=r"^[0-9a-f]{32}$")
 
 
+_LOCATOR_INT = r"(?:0|[1-9][0-9]*)"
+_LOCATOR_PATH = r"(?:[0-9A-Za-z_.~-]|%[0-9A-F]{2})"
+_LOCATOR_VALUE_BY_SCHEME = {
+    "csv_row": re.compile(rf"^r={_LOCATOR_INT}$"),
+    "csv_cell": re.compile(rf"^r={_LOCATOR_INT};c={_LOCATOR_INT}$"),
+    "step_part_definition": re.compile(
+        rf"^p={_LOCATOR_PATH}+;d=[0-9a-f]{{32}}$"),
+    "step_nauo_usage": re.compile(
+        rf"^p={_LOCATOR_PATH}+;i=[0-9a-f]{{32}}"
+        rf";dp={_LOCATOR_PATH}+;pp={_LOCATOR_PATH}*$"),
+}
+
+
 class StructuralSourceLocatorEvidence(_Frozen):
     """An EXACT structural position inside one immutable source payload,
     declared by the authoring authority (SN-001, ADR-0010 decision 10).
@@ -142,6 +155,21 @@ class StructuralSourceLocatorEvidence(_Frozen):
                             "step_part_definition", "step_nauo_usage"]
     locator_value: str = Field(
         pattern=r"^(?:r=|p=)[0-9A-Za-z._~:@!$&*+,;=%/-]{1,508}$")
+
+    @model_validator(mode="after")
+    def _locator_value_matches_its_scheme(self):
+        # Each scheme's own canonical grammar, restated here as regular
+        # expressions over canonical scalars so the kernel stays
+        # self-contained (owner audit 2026-08-12): canonical decimal
+        # integers (no sign, no leading zero), 32-hex upstream
+        # identifiers, and percent-encoded path components with
+        # uppercase escapes exactly as `quote(value, safe="")` emits.
+        if not _LOCATOR_VALUE_BY_SCHEME[self.locator_scheme].fullmatch(
+                self.locator_value):
+            raise ValueError(
+                "locator_value does not satisfy the canonical grammar "
+                f"of locator_scheme {self.locator_scheme}")
+        return self
 
 
 EvidenceRef = Annotated[

@@ -16,7 +16,7 @@ import hashlib
 from typing import Annotated, Literal, Union
 from urllib.parse import quote, unquote
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from backend.data_sources.contracts.identity import ExtractorIdentity
 from backend.model_kernel import StructuralSourceLocatorEvidence
@@ -197,26 +197,49 @@ def from_kernel_evidence(ref: StructuralSourceLocatorEvidence, *,
             name=ref.extractor_name, version=ref.extractor_version,
             toolchain=extractor_toolchain,
             config_fingerprint=ref.extractor_config_fingerprint))
-    if ref.locator_scheme == "csv_row":
-        (row,) = _parse_fields(ref.locator_value, ("r=",))
-        locator = CsvRowLocator(kind="csv_row", physical_row_index=int(row))
-    elif ref.locator_scheme == "csv_cell":
-        row, column = _parse_fields(ref.locator_value, ("r=", "c="))
-        locator = CsvCellLocator(kind="csv_cell",
-                                 physical_row_index=int(row),
-                                 column_index=int(column),
-                                 column_name_as_extracted="")
-    elif ref.locator_scheme == "step_part_definition":
-        path, upstream = _parse_fields(ref.locator_value, ("p=", "d="))
-        locator = StepDefinitionLocator(
-            kind="step_part_definition", extractor_path_id=unquote(path),
-            upstream_definition_id=upstream)
-    else:  # step_nauo_usage
-        path, upstream, def_path, parent = _parse_fields(
-            ref.locator_value, ("p=", "i=", "dp=", "pp="))
-        locator = StepUsageLocator(
-            kind="step_nauo_usage", extractor_path_id=unquote(path),
-            upstream_instance_id=upstream,
-            definition_path_id=unquote(def_path),
-            parent_definition_path_id=(unquote(parent) if parent else None))
+    try:
+        if ref.locator_scheme == "csv_row":
+            (row,) = _parse_fields(ref.locator_value, ("r=",))
+            locator = CsvRowLocator(kind="csv_row",
+                                    physical_row_index=int(row))
+        elif ref.locator_scheme == "csv_cell":
+            row, column = _parse_fields(ref.locator_value, ("r=", "c="))
+            locator = CsvCellLocator(kind="csv_cell",
+                                     physical_row_index=int(row),
+                                     column_index=int(column),
+                                     column_name_as_extracted="")
+        elif ref.locator_scheme == "step_part_definition":
+            path, upstream = _parse_fields(ref.locator_value, ("p=", "d="))
+            locator = StepDefinitionLocator(
+                kind="step_part_definition",
+                extractor_path_id=unquote(path),
+                upstream_definition_id=upstream)
+        else:  # step_nauo_usage
+            path, upstream, def_path, parent = _parse_fields(
+                ref.locator_value, ("p=", "i=", "dp=", "pp="))
+            locator = StepUsageLocator(
+                kind="step_nauo_usage", extractor_path_id=unquote(path),
+                upstream_instance_id=upstream,
+                definition_path_id=unquote(def_path),
+                parent_definition_path_id=(unquote(parent) if parent
+                                           else None))
+    except StructuralEvidenceError:
+        raise
+    except (ValueError, ValidationError) as error:
+        # int() failures, locator-field pattern failures, and every
+        # other reconstruction failure become the typed error — no raw
+        # ValueError or pydantic ValidationError escapes this boundary
+        # (owner audit 2026-08-12, defect 4).
+        raise StructuralEvidenceError(
+            "SN_LOCATOR_VALUE_INVALID",
+            "the cited locator value cannot be reconstructed under its "
+            "scheme") from error
+    if canonical_locator_value(locator) != ref.locator_value:
+        # total canonicality guard: noncanonical integers ("r=01") and
+        # noncanonical percent-encodings re-encode differently and are
+        # refused rather than silently re-pointed
+        raise StructuralEvidenceError(
+            "SN_LOCATOR_VALUE_INVALID",
+            "the cited locator value is not the canonical encoding of "
+            "any locator in its scheme")
     return StructuralAddress(source=source, locator=locator)
