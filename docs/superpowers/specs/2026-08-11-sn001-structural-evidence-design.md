@@ -195,6 +195,13 @@ SubjectIdentityRuleBody = Annotated[Union[...], Field(discriminator="rule_kind")
 class SubjectIdentityRule(_Frozen):
     rule_id:    str = Field(pattern=r"^[a-z][a-z0-9-]{0,47}$")
     applies_to: tuple[StructuralClaimKind, ...] = Field(min_length=1)
+    #           ^ a VALIDATED MIRROR of the body's rule kind (owner-audit
+    #           amendment): csv_column_lexeme -> ("bom_row",);
+    #           csv_physical_row -> ("bom_row",); step_extractor_path ->
+    #           ("step_part_definition", "step_nauo_usage"). Additions,
+    #           removals, substitutions, and reordering are rejected at
+    #           construction; only statement and stability are
+    #           non-generation disclosure.
     body:       SubjectIdentityRuleBody
     statement:  str = Field(min_length=1, max_length=1024)   # NOT fingerprinted
     stability:  Literal["source_native_key", "payload_pinned",
@@ -312,8 +319,13 @@ class SourceStructuralClaim(_Frozen):
 
 class SourceContainmentClaim(_Frozen):
     """Containment in the SOURCE'S OWN vocabulary. Never an MK-001 edge,
-    never functional/causal/electrical/fluid/physical containment. For STEP
-    both endpoints are DEFINITIONS."""
+    never functional/causal/electrical/fluid/physical containment.
+    Endpoint grammar (validated at construction; owner-audit amendment):
+    bom_parent_column has csv_row child and parent from one source;
+    step_nauo_usage_edge has the RELATING definition's address as parent
+    and the NAUO usage occurrence's address as child, whose
+    definition_path_id names the RELATED definition and whose
+    parent_definition_path_id must equal the parent's extractor_path_id."""
     claim_kind: Literal["bom_parent_column", "step_nauo_usage_edge"]
     child:  StructuralAddress
     parent: StructuralAddress
@@ -867,3 +879,49 @@ run (enumerated in the plan, commit 10) plus a 12th
 — with the two prefix-filter replays (`test_demo_join.py:162-164`,
 `test_demo_compatibility.py:122`) passing silently while selecting 12 and
 13 records: the honesty defect the RP2/HD1 migration kills.
+
+## Owner-audit integrity repair (2026-08-12 amendment)
+
+The independent owner audit of `81cd0fc` reproduced five defects; each
+was encoded as a failing-before regression
+(`docs/superpowers/plans/2026-08-12-sn001-owner-audit-red-baseline.md`)
+and repaired on this branch without touching any accepted ledger record:
+
+1. **Proposal endpoints** are keyed by the complete `StructuralAddress`
+   (payload, source identity, extractor, locator), never by the
+   canonical locator value alone; the engineering-context gate composes
+   by logical AND on collision; an address whose rules join it to
+   different anchors is excluded from proposals outright.
+   Locator-only comparison survives only where defect 2's validators
+   prove source equality (field ordering within one claim, ordering
+   within one claim set).
+2. **Claim contracts enforce provenance coherence**: claim kind fixes
+   locator scheme; fields are pinned to the claim's exact source, row,
+   and disclosed column name; containment endpoints follow the endpoint
+   grammar above, come from one source, and must BE disclosed subject
+   claims; unresolved-parent children belong to the set's source;
+   derived paths are derived for disclosed usage claims;
+   `ClaimSetDisclosure` coverage compares complete addresses.
+3. **`applies_to` is a validated mirror** of the fingerprinted body's
+   rule kind, so generation scope structurally cannot vary
+   independently of the fingerprint. No identity migrated: the shipped
+   tuples already equaled their mirrors, and the three shipped
+   fingerprints are pinned byte-for-byte.
+4. **The kernel locator citation is scheme-typed**: each
+   `locator_scheme` enforces its own canonical grammar inside the
+   self-contained kernel contract, and `from_kernel_evidence` converts
+   every malformed-value or reconstruction failure into
+   `SN_LOCATOR_VALUE_INVALID`, refusing any value that is not the
+   canonical encoding of the reconstructed locator. All 14 committed
+   model records satisfy the grammar unchanged.
+5. **One `toolchain_fingerprint`** (locators.py) feeds namespace
+   generation, kernel projection/inversion, resolved-subject
+   disclosure, and `inputs_digest` material; a cross-boundary invariant
+   test pins the agreement. The STEP containment endpoint wording was
+   adjudicated against D6: the claim layer keeps the usage-address
+   child / definition-address parent grammar (repeated same-pair usages
+   stay distinct; both definitions stay named through the usage
+   locator), and the earlier "both endpoints are DEFINITIONS" sentence
+   was corrected here and in the contract docstring. The model's
+   definition-to-definition relationship remains separately
+   hand-authored, exactly as D6 requires.
