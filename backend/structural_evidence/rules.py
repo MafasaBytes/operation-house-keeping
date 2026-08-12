@@ -37,11 +37,15 @@ from backend.structural_evidence.contracts import (
     StructuralClaimKind,
 )
 from backend.structural_evidence.errors import StructuralEvidenceError
+# toolchain_fingerprint has exactly ONE implementation (locators.py);
+# namespace generation, kernel projection/inversion, and reconciliation
+# disclosure all share it (owner audit 2026-08-12, defect 5).
 from backend.structural_evidence.locators import (
     CsvRowLocator,
     StepDefinitionLocator,
     StepUsageLocator,
     StructuralAddress,
+    toolchain_fingerprint,
 )
 from backend.temporal_state.contracts import SourceSubjectRef
 
@@ -240,15 +244,6 @@ _NAMESPACE_PATTERNS = (
     ("rule_id", r"[a-z][a-z0-9-]{0,47}"),
     ("rule_fingerprint", r"[0-9a-f]{16}"),
 )
-
-
-def toolchain_fingerprint(extractor: ExtractorIdentity) -> str:
-    """sha256 over the exact toolchain lexeme, first 16 hex. STEP OCAF
-    paths exist only relative to a toolchain; carrying the fingerprint in
-    the namespace makes a toolchain change a different identity domain
-    instead of a silently re-pointed mapping."""
-    return hashlib.sha256(
-        extractor.toolchain.encode("utf-8")).hexdigest()[:16]
 
 
 class ParsedStructuralNamespace(_Frozen):

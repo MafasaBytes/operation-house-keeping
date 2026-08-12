@@ -512,6 +512,40 @@ class TestD4TypedConversionErrors:
 
 
 # --------------------------------------------------------------- defect 5
+class TestD5OneToolchainFingerprint:
+    def test_the_two_module_names_are_one_function(self):
+        """Owner reproduction: rules.py and locators.py carried two
+        independent implementations — byte-identical today, free to
+        drift apart tomorrow."""
+        from backend.structural_evidence import locators, rules
+        assert rules.toolchain_fingerprint is locators.toolchain_fingerprint
+
+    def test_namespace_disclosure_kernel_and_digest_material_agree(
+            self, tmp_path):
+        source = step_source()
+        claim = step_definition_claim(source, "0:1:1:2", "extruder-unit")
+        claim_set = step_claim_set(source=source, claims=(claim,))
+        resolver = resolver_with(
+            tmp_path, "set-a", anchor_declaration(ENT_PA),
+            subject_assertion(subject_for(claim, "step-ocaf-entry-v1"),
+                              ENT_PA))
+        model = model_with(tmp_path, ENT_PA)
+        reconciler = StructuralReconciler(
+            resolvers=[resolver],
+            rules=(SUBJECT_RULES["step-ocaf-entry-v1"],), model=model)
+        result = reconciler.reconcile([claim_set],
+                                      resolution_at=RESOLUTION_AT)
+        [rs] = result.claim_sets[0].resolved_subjects
+        expected = toolchain_fingerprint(STEP_EXTRACTOR)
+        parsed = parse_structural_namespace(rs.subject.adapter_id)
+        kernel_arm = to_kernel_evidence(rs.claim_address).evidence
+        assert parsed.toolchain_fingerprint == expected
+        assert rs.toolchain_fingerprint == expected
+        assert kernel_arm.extractor_toolchain_fingerprint == expected
+        assert result.toolchain_fingerprints_used == (expected,)
+        assert result.inputs_digest == compute_inputs_digest(result)
+
+
 class TestD5EndpointGrammarAdjudication:
     def test_contract_wording_matches_the_implemented_grammar(self):
         """Owner reproduction: the contract claimed both STEP endpoints
