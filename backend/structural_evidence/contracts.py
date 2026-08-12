@@ -295,4 +295,28 @@ class SourceStructuralClaimSet(_Frozen):
                 raise ValueError(
                     "a derived path must be derived for a disclosed "
                     "usage claim")
+            # Owner follow-up (2026-08-12): every STEP of a unique
+            # chain — not merely its for_usage — is evidence-backed and
+            # coherent. Ambiguous/unresolved paths carry no steps (the
+            # DerivedUsagePath contract enforces that), so this loop is
+            # the unique-path discipline.
+            if len(set(path.steps)) != len(path.steps):
+                raise ValueError(
+                    "derived-path steps must not repeat")
+            for step in path.steps:
+                if step not in usage_locators:
+                    raise ValueError(
+                        "every derived-path step must be a disclosed "
+                        "usage claim")
+            if path.steps and path.steps[-1] != path.for_usage:
+                raise ValueError(
+                    "a unique derived path ends at its for_usage")
+            for parent_step, child_step in zip(path.steps,
+                                               path.steps[1:]):
+                if child_step.parent_definition_path_id != \
+                        parent_step.definition_path_id:
+                    raise ValueError(
+                        "adjacent derived-path steps must chain the "
+                        "parent usage's definition to the child's "
+                        "parent definition")
         return self

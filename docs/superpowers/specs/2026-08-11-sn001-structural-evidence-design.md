@@ -331,7 +331,14 @@ class SourceContainmentClaim(_Frozen):
     parent: StructuralAddress
 
 class DerivedUsagePath(_Frozen):
-    """SN-001's OWN derivation, explicitly labelled."""
+    """SN-001's OWN derivation, explicitly labelled. EVERY step of a
+    unique chain — not merely for_usage — is backed by a disclosed
+    step_nauo_usage claim in the same claim set (owner follow-up
+    amendment): the claim-set validator requires each step to BE a
+    disclosed usage claim, steps[-1] to equal for_usage, adjacent
+    root-first steps to chain (child.parent_definition_path_id ==
+    preceding parent's definition_path_id), and no repeated steps.
+    Ambiguous/unresolved paths carry no steps."""
     derivation: Literal["nauo_parent_definition_chain_v1"]
     steps:      tuple[StepUsageLocator, ...]      # root-first; () unless unique
     ambiguity:  Literal["unique", "multiple_parent_uses", "unresolved"]
@@ -900,8 +907,15 @@ and repaired on this branch without touching any accepted ledger record:
    and disclosed column name; containment endpoints follow the endpoint
    grammar above, come from one source, and must BE disclosed subject
    claims; unresolved-parent children belong to the set's source;
-   derived paths are derived for disclosed usage claims;
-   `ClaimSetDisclosure` coverage compares complete addresses.
+   derived paths are derived for disclosed usage claims — and, by the
+   2026-08-12 owner follow-up, every derived-path STEP is itself a
+   disclosed usage claim, a unique chain ends at its `for_usage`,
+   adjacent root-first steps chain parent definition to child, and
+   steps never repeat; `ClaimSetDisclosure` coverage compares complete
+   addresses. The same follow-up made kernel STEP path components
+   genuinely canonical: each must be its own `quote(decoded, safe="")`
+   re-encoding under strict UTF-8, rejecting over-encoded unreserved
+   characters and invalid UTF-8 at kernel contract construction.
 3. **`applies_to` is a validated mirror** of the fingerprinted body's
    rule kind, so generation scope structurally cannot vary
    independently of the fingerprint. No identity migrated: the shipped
