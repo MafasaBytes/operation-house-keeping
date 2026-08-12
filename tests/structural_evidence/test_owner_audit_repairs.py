@@ -382,6 +382,59 @@ class TestD2ProvenanceCoherence:
                                resolved_subjects=(stray,))
 
 
+# --------------------------------------------------------------- defect 3
+CSV_BODY = CsvColumnLexemeRuleBody(
+    rule_kind="csv_column_lexeme", semantics_version="v1",
+    column_name_as_extracted="item_no", name_match="exact_as_extracted",
+    empty_lexeme_outcome="no_subject_identity")
+ROW_BODY = CsvPhysicalRowRuleBody(
+    rule_kind="csv_physical_row", semantics_version="v1",
+    include_payload_checksum=True)
+STEP_BODY = StepPathRuleBody(
+    rule_kind="step_extractor_path", semantics_version="v1",
+    path_source="extractor_path_id")
+
+
+class TestD3AppliesToIsABodyDerivedMirror:
+    def rule(self, body, applies_to):
+        return SubjectIdentityRule(
+            rule_id="audit-rule", applies_to=applies_to, body=body,
+            statement="Owner-audit reproduction rule.",
+            stability="source_native_key")
+
+    def test_widening_applies_to_is_unconstructible(self):
+        """Owner reproduction: at 81cd0fc the widened rule constructed
+        and kept the narrow rule's fingerprint byte-for-byte."""
+        assert self.rule(CSV_BODY, ("bom_row",)).fingerprint \
+            == "57241bb3231eac29"
+        with pytest.raises(ValidationError):
+            self.rule(CSV_BODY, ("bom_row", "step_part_definition"))
+
+    def test_substitution_removal_and_reordering_are_rejected(self):
+        for body, bad in (
+                (CSV_BODY, ("step_part_definition",)),          # substitute
+                (ROW_BODY, ("bom_row", "step_nauo_usage")),     # addition
+                (STEP_BODY, ("step_part_definition",)),         # removal
+                (STEP_BODY, ("step_nauo_usage",                 # reorder
+                             "step_part_definition"))):
+            with pytest.raises(ValidationError):
+                self.rule(body, bad)
+
+    def test_shipped_rules_fingerprints_and_mirrors_are_unchanged(self):
+        """The repair must not migrate any identity: the shipped tuples
+        already equal their body-derived mirrors and every fingerprint
+        (hence every sx1 namespace and committed binding) is pinned."""
+        expected = {
+            "bom-item-no-v1": (("bom_row",), "57241bb3231eac29"),
+            "bom-physical-row-v1": (("bom_row",), "569e04f2ed1277de"),
+            "step-ocaf-entry-v1": (("step_part_definition",
+                                    "step_nauo_usage"),
+                                   "8496bcb773e204bf"),
+        }
+        assert {rid: (rule.applies_to, rule.fingerprint)
+                for rid, rule in SUBJECT_RULES.items()} == expected
+
+
 # --------------------------------------------------------------- defect 4
 VALID_LOCATOR_VALUES = {
     "csv_row": "r=3",

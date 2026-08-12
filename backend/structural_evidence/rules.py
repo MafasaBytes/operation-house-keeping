@@ -29,7 +29,7 @@ from types import MappingProxyType
 from typing import Annotated, Literal, Mapping, Union
 from urllib.parse import quote
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from backend.data_sources.contracts.identity import ExtractorIdentity
 from backend.structural_evidence.contracts import (
@@ -80,11 +80,26 @@ SubjectIdentityRuleBody = Annotated[
 ]
 
 
+# `applies_to` is a validated MIRROR of the fingerprinted body, never
+# independent state: the body's rule kind alone decides which claims the
+# rule generates over, so a rule whose applies_to departed from this
+# table would change generation behaviour without changing its
+# fingerprint (owner audit 2026-08-12, defect 3). Only `statement` and
+# `stability` are non-generation disclosure.
+_APPLIES_TO_BY_RULE_KIND: Mapping[str, tuple] = MappingProxyType({
+    "csv_column_lexeme": ("bom_row",),
+    "csv_physical_row": ("bom_row",),
+    "step_extractor_path": ("step_part_definition", "step_nauo_usage"),
+})
+
+
 class SubjectIdentityRule(_Frozen):
     """`body` is the complete generation program. `statement` and
     `stability` are disclosure and are NOT fingerprinted — and cannot
     affect generation, because `apply_rule` takes the body, not the
-    rule."""
+    rule. `applies_to` is a validated mirror derived from the body's
+    rule kind: additions, removals, substitutions, and reordering are
+    rejected, so it cannot vary independently of the fingerprint."""
 
     rule_id: str = Field(pattern=r"^[a-z][a-z0-9-]{0,47}$")
     applies_to: tuple[StructuralClaimKind, ...] = Field(min_length=1)
@@ -92,6 +107,16 @@ class SubjectIdentityRule(_Frozen):
     statement: str = Field(min_length=1, max_length=1024)  # NOT fingerprinted
     stability: Literal["source_native_key", "payload_pinned",
                        "toolchain_relative"]               # NOT fingerprinted
+
+    @model_validator(mode="after")
+    def _applies_to_mirrors_the_body(self):
+        expected = _APPLIES_TO_BY_RULE_KIND[self.body.rule_kind]
+        if self.applies_to != expected:
+            raise ValueError(
+                f"applies_to must be exactly {expected} for rule kind "
+                f"{self.body.rule_kind}: it mirrors the fingerprinted "
+                "body and cannot vary independently")
+        return self
 
     @property
     def fingerprint(self) -> str:
