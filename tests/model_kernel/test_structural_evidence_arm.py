@@ -171,3 +171,58 @@ class TestKR5SchemeSpecificGrammar:
         in models/demo-printer already satisfies its scheme."""
         loaded = ModelStore(DEMO_MODEL).load()
         assert loaded.revision.record_count == 14
+
+
+NONCANONICAL_STEP_PATHS = [
+    ("step_part_definition", "p=%41;d=" + "27" * 16),   # over-encoded 'A'
+    ("step_part_definition", "p=%FF;d=" + "27" * 16),   # invalid UTF-8
+    ("step_part_definition", "p=%C3;d=" + "27" * 16),   # truncated UTF-8
+    ("step_part_definition", "p=0%3A1%41;d=" + "27" * 16),  # embedded
+    ("step_nauo_usage", "p=%41;i=" + "83" * 16 + ";dp=0%3A1;pp="),
+    ("step_nauo_usage", "p=0%3A1;i=" + "83" * 16 + ";dp=%FF;pp="),
+    ("step_nauo_usage",
+     "p=0%3A1;i=" + "83" * 16 + ";dp=0%3A1%3A1;pp=%41"),
+]
+
+CANONICAL_STEP_PATHS = [
+    ("step_part_definition", "p=part-1.2_v3~x;d=" + "27" * 16),  # unreserved
+    ("step_part_definition", "p=0%3A1%2Fa;d=" + "27" * 16),  # reserved, enc.
+    ("step_part_definition", "p=%C3%A9;d=" + "27" * 16),     # UTF-8 e-acute
+    ("step_part_definition", "p=%25;d=" + "27" * 16),        # literal percent
+    ("step_part_definition", "p=%2541;d=" + "27" * 16),      # the STRING "%41"
+    ("step_nauo_usage",
+     "p=%C3%A9;i=" + "83" * 16 + ";dp=%25;pp=part_1"),
+]
+
+
+class TestKR6CanonicalStepPathEncoding:
+    """Owner follow-up (2026-08-12, at 7eaff7f): every STEP path
+    component must BE its own `quote(decoded, safe="")` re-encoding
+    under strict UTF-8 — over-encoded unreserved characters and
+    non-UTF-8 byte sequences cannot identify an exact source path.
+    Every NONCANONICAL pair below constructed at 7eaff7f."""
+
+    def evidence(self, scheme, value):
+        return StructuralSourceLocatorEvidence(
+            **{**ARM, "locator_scheme": scheme, "locator_value": value})
+
+    @pytest.mark.parametrize("scheme,value", NONCANONICAL_STEP_PATHS,
+                             ids=[v[:26] for _, v in NONCANONICAL_STEP_PATHS])
+    def test_a_noncanonical_encoding_is_unconstructible(self, scheme,
+                                                        value):
+        with pytest.raises(ValidationError):
+            self.evidence(scheme, value)
+
+    @pytest.mark.parametrize("scheme,value", CANONICAL_STEP_PATHS,
+                             ids=[v[:26] for _, v in CANONICAL_STEP_PATHS])
+    def test_a_canonical_twin_constructs(self, scheme, value):
+        """Valid twins, green before and after: raw unreserved text,
+        encoded reserved characters, valid UTF-8, the literal percent,
+        and the canonically double-encoded string '%41'."""
+        assert self.evidence(scheme, value).locator_value == value
+
+    def test_all_four_arms_and_the_root_sentinel_still_construct(self):
+        for scheme, value in VALID_BY_SCHEME.items():
+            assert self.evidence(scheme, value).locator_value == value
+        assert self.evidence("step_nauo_usage",
+                             ROOT_USAGE).locator_value == ROOT_USAGE

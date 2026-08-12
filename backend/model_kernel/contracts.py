@@ -12,6 +12,7 @@ correction path.
 import re
 from datetime import UTC
 from typing import Annotated, Literal, Union
+from urllib.parse import quote
 
 from pydantic import (
     AfterValidator,
@@ -121,11 +122,34 @@ _LOCATOR_VALUE_BY_SCHEME = {
     "csv_row": re.compile(rf"^r={_LOCATOR_INT}$"),
     "csv_cell": re.compile(rf"^r={_LOCATOR_INT};c={_LOCATOR_INT}$"),
     "step_part_definition": re.compile(
-        rf"^p={_LOCATOR_PATH}+;d=[0-9a-f]{{32}}$"),
+        rf"^p=({_LOCATOR_PATH}+);d=[0-9a-f]{{32}}$"),
     "step_nauo_usage": re.compile(
-        rf"^p={_LOCATOR_PATH}+;i=[0-9a-f]{{32}}"
-        rf";dp={_LOCATOR_PATH}+;pp={_LOCATOR_PATH}*$"),
+        rf"^p=({_LOCATOR_PATH}+);i=[0-9a-f]{{32}}"
+        rf";dp=({_LOCATOR_PATH}+);pp=({_LOCATOR_PATH}*)$"),
 }
+
+
+def _is_canonical_quoted(component: str) -> bool:
+    """True exactly when the component is its own quote(decoded,
+    safe="") re-encoding under strict UTF-8. Over-encoded unreserved
+    characters ("%41" for "A"), non-UTF-8 byte sequences ("%FF"), and
+    truncated multi-byte sequences cannot identify an exact source path
+    and are refused. The surrounding scheme grammar has already
+    guaranteed well-formed "%XX" escapes and the quote() alphabet."""
+    data = bytearray()
+    index = 0
+    while index < len(component):
+        if component[index] == "%":
+            data.append(int(component[index + 1:index + 3], 16))
+            index += 3
+        else:
+            data.append(ord(component[index]))
+            index += 1
+    try:
+        decoded = bytes(data).decode("utf-8")
+    except UnicodeDecodeError:
+        return False
+    return quote(decoded, safe="") == component
 
 
 class StructuralSourceLocatorEvidence(_Frozen):
@@ -164,11 +188,21 @@ class StructuralSourceLocatorEvidence(_Frozen):
         # integers (no sign, no leading zero), 32-hex upstream
         # identifiers, and percent-encoded path components with
         # uppercase escapes exactly as `quote(value, safe="")` emits.
-        if not _LOCATOR_VALUE_BY_SCHEME[self.locator_scheme].fullmatch(
-                self.locator_value):
+        match = _LOCATOR_VALUE_BY_SCHEME[self.locator_scheme].fullmatch(
+            self.locator_value)
+        if not match:
             raise ValueError(
                 "locator_value does not satisfy the canonical grammar "
                 f"of locator_scheme {self.locator_scheme}")
+        # Owner follow-up (2026-08-12): every STEP path component (p,
+        # dp, and a non-empty pp — the empty pp root sentinel is exempt)
+        # must be genuinely canonical, not merely alphabet-conformant.
+        for component in match.groups():
+            if component and not _is_canonical_quoted(component):
+                raise ValueError(
+                    "a STEP path component is not the canonical "
+                    'quote(value, safe="") encoding of any exact '
+                    "source path")
         return self
 
 
