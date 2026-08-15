@@ -15,7 +15,8 @@ ALLOWED_ROOTS = ("backend.system_identity", "backend.model_kernel",
                  "backend.model_state", "backend.temporal_state",
                  "backend.observation_compatibility", "pydantic")
 FORBIDDEN_MODULES = ("backend.data_sources", "backend.identity_binding",
-                     "sqlite3")
+                     "backend.source_interpretation",
+                     "backend.semantic_compatibility", "sqlite3")
 FORBIDDEN_CALLS = ("ModelStore", "BindingStore", "TemporalStore")
 
 
