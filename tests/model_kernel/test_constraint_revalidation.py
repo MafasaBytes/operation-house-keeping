@@ -167,6 +167,46 @@ def forged_revision(valid):
 
 
 class TestQueryResultRevisionRevalidation:
+    def test_result_translates_surrogate_in_stale_registration_to_validation_error(
+            self, tmp_path):
+        store = declaration_store(tmp_path)
+        declaration = constraint_declaration()
+        store.append(declaration)
+        result = ModelQueries(store.load()).constraint_declaration(CON_A)
+        hostile = result.registration.model_copy(update={"note": "\ud800"})
+        with pytest.raises(ValidationError):
+            ConstraintDeclarationResult(
+                **{**result.model_dump(exclude={"registration"}),
+                   "registration": hostile})
+
+    def test_result_translates_surrogate_in_stale_declaration_to_validation_error(
+            self, tmp_path):
+        store = declaration_store(tmp_path)
+        declaration = constraint_declaration()
+        store.append(declaration)
+        result = ModelQueries(store.load()).constraint_declaration(CON_A)
+        hostile = result.declaration.model_copy(update={"note": "\ud800"})
+        with pytest.raises(ValidationError):
+            ConstraintDeclarationResult(
+                **{**result.model_dump(exclude={"declaration"}),
+                   "declaration": hostile})
+
+    def test_result_translates_surrogate_in_stale_conflict_tip_to_validation_error(
+            self, tmp_path):
+        first = constraint_declaration(note="first")
+        second = constraint_declaration(note="second")
+        store = declaration_store(tmp_path)
+        store.append(first)
+        store.append(second)
+        result = ModelQueries(store.load()).constraint_declaration(CON_A)
+        hostile = result.conflicting_declarations[0].model_copy(
+            update={"note": "\ud800"})
+        conflicts = (hostile, *result.conflicting_declarations[1:])
+        with pytest.raises(ValidationError):
+            ConstraintDeclarationResult(
+                **{**result.model_dump(exclude={"conflicting_declarations"}),
+                   "conflicting_declarations": conflicts})
+
     def test_constraint_result_rejects_stale_id_registration_model_copy(
             self, tmp_path):
         store = declaration_store(tmp_path)

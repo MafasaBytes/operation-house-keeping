@@ -742,11 +742,24 @@ class ConstraintDeclarationResult(_ConstraintResultFrozen):
         if declaration is not None:
             declaration = VariableConstraintDeclaration.model_validate(
                 declaration.model_dump())
-        if registration is not None and not verify_record_id(registration):
+        try:
+            registration_valid = (registration is None
+                                  or verify_record_id(registration))
+            declaration_valid = (declaration is None
+                                 or verify_record_id(declaration))
+            conflicts_valid = all(verify_record_id(item)
+                                  for item in declarations)
+        except ModelIntegrityError as error:
+            # Direct pydantic construction follows the normal ValidationError
+            # contract; operational typed kernel errors belong to store/query
+            # entry points, not nested field validation.
+            raise ValueError(
+                "carried constraint content is not canonically valid") from error
+        if not registration_valid:
             raise ValueError("registration content does not match its record id")
-        if declaration is not None and not verify_record_id(declaration):
+        if not declaration_valid:
             raise ValueError("declaration content does not match its record id")
-        if any(not verify_record_id(item) for item in declarations):
+        if not conflicts_valid:
             raise ValueError("conflict content does not match its record id")
 
         registered = self.status != "not_registered"
