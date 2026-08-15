@@ -11,6 +11,7 @@ correction path.
 
 import re
 from datetime import UTC
+from decimal import Decimal, InvalidOperation
 from typing import Annotated, Literal, Union
 from urllib.parse import quote
 
@@ -29,6 +30,7 @@ from backend.system_identity import (
     CONSTRAINT_ANCHOR_ID_PATTERN,
     ENTITY_ANCHOR_ID_PATTERN,
     VARIABLE_ANCHOR_ID_PATTERN,
+    ConstraintAnchor,
     EntityAnchor,
     VariableAnchor,
 )
@@ -412,7 +414,9 @@ UnitDeclaration = Annotated[
 
 # ------------------------------------------------------ canonical decimal
 _CANONICAL_DECIMAL = re.compile(
-    r"^-?(?:0|[1-9][0-9]{0,127})(?:\.[0-9]{0,127}[1-9])?$")
+    r"(?:0|-?(?:0\.[0-9]*[1-9]|[1-9][0-9]*(?:\.[0-9]*[1-9])?))")
+_AUTHORING_DECIMAL = re.compile(
+    r"-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?")
 
 
 def _canonical_decimal(value: str) -> str:
@@ -423,12 +427,14 @@ def _canonical_decimal(value: str) -> str:
     negative zero, leading zeros, a bare point, trailing fractional zeros,
     exponents, and whitespace are refused. Non-string input is refused by
     ``StrictStr`` before this validator runs."""
-    if not _CANONICAL_DECIMAL.fullmatch(value):
+    if len(value.encode("utf-8")) > 386 or not _CANONICAL_DECIMAL.fullmatch(value):
         raise ValueError("not a canonical decimal string")
-    # a minus with no nonzero digit anywhere is negative zero ("-0"; the
-    # trailing-fractional-zero rule already rejects "-0.0", "-0.00", ...)
-    if value.startswith("-") and not any(c in "123456789" for c in value):
-        raise ValueError("negative zero is not canonical")
+    unsigned = value.removeprefix("-")
+    integer, dot, fraction = unsigned.partition(".")
+    coefficient_digits = len(integer) + len(fraction)
+    if (coefficient_digits > 256 or len(integer) > 256
+            or (dot and len(fraction) > 128)):
+        raise ValueError("canonical decimal exceeds declaration limits")
     return value
 
 
@@ -436,39 +442,80 @@ def _canonical_decimal(value: str) -> str:
 CanonicalDecimal = Annotated[StrictStr, AfterValidator(_canonical_decimal)]
 
 
+def canonical_constraint_decimal(value: str) -> str:
+    """Canonicalize an authoring lexeme before record construction.
+
+    Direct contracts and ledger load never call this helper.  Its deliberately
+    small exponent preflight prevents hostile fixed-point expansion."""
+    if not isinstance(value, str) or len(value.encode("utf-8")) > 386:
+        raise ValueError("decimal authoring input is invalid")
+    match = _AUTHORING_DECIMAL.fullmatch(value)
+    if match is None:
+        raise ValueError("decimal authoring input is invalid")
+    mantissa, separator, exponent_text = value.lower().partition("e")
+    unsigned = mantissa.removeprefix("-")
+    integer, dot, fraction = unsigned.partition(".")
+    if (len(integer) + len(fraction) > 256 or len(integer) > 256
+            or (dot and len(fraction) > 128)):
+        raise ValueError("decimal authoring input exceeds coefficient limits")
+    if exponent_text and abs(int(exponent_text)) > 256:
+        raise ValueError("decimal authoring input exceeds expansion limits")
+    try:
+        number = Decimal(value)
+    except InvalidOperation as error:
+        raise ValueError("decimal authoring input is invalid") from error
+    if not number.is_finite():
+        raise ValueError("decimal authoring input must be finite")
+    rendered = format(number, "f")
+    if "." in rendered:
+        rendered = rendered.rstrip("0").rstrip(".")
+    if Decimal(rendered).is_zero():
+        rendered = "0"
+    return _canonical_decimal(rendered)
+
+
 # ----------------------------------------------------------- v1 predicate
-ScalarComparisonOperator = Literal[
-    "less_than", "less_than_or_equal", "equal",
-    "greater_than_or_equal", "greater_than", "not_equal",
-]
-
-
-class ScalarComparisonPredicate(_Frozen):
-    """The v1 constraint predicate: one comparison operator against one
-    ``CanonicalDecimal`` threshold for one variable. A two-sided range is
-    two independent constraints (two anchors), never an interval; ``interval``,
-    ``between``, ``tolerance``, ``lower``, ``severity``, and
-    ``other_variable_anchor_id`` are forbidden extras. The unit is a model
-    declaration (``DeclaredUnit`` or explicit ``UnitNotDeclared``), never an
-    inferred/conversion target. Like ``ConstraintAnchor``, the predicate
-    re-validates any instance handed back through ``model_validate``, so a
-    ``model_construct`` forgery (a bad variable id, a non-canonical threshold)
-    re-fails (acceptance B6)."""
-
+class _ConstraintValue(_Frozen):
     model_config = ConfigDict(
         frozen=True, extra="forbid", revalidate_instances="always")
 
-    kind: Literal["scalar_comparison"] = "scalar_comparison"
-    variable_anchor_id: str = Field(pattern=VARIABLE_ANCHOR_ID_PATTERN)
-    operator: ScalarComparisonOperator
-    threshold: CanonicalDecimal
-    unit: UnitDeclaration
+
+class NumericBoundary(_ConstraintValue):
+    value: CanonicalDecimal
+    inclusion: Literal["inclusive", "exclusive"]
 
 
-#: v1 has one predicate kind; the discriminated union leaves a closed path
-#: to a future predicate shape without re-opening the record envelope.
+class ExactNumericLowerBound(_ConstraintValue):
+    kind: Literal["lower_bound"] = "lower_bound"
+    lower: NumericBoundary
+
+
+class ExactNumericUpperBound(_ConstraintValue):
+    kind: Literal["upper_bound"] = "upper_bound"
+    upper: NumericBoundary
+
+
+class ExactNumericInterval(_ConstraintValue):
+    kind: Literal["interval"] = "interval"
+    lower: NumericBoundary
+    upper: NumericBoundary
+
+    @model_validator(mode="after")
+    def _interval_is_nonempty(self):
+        lower = Decimal(self.lower.value)
+        upper = Decimal(self.upper.value)
+        if lower > upper:
+            raise ValueError("interval lower boundary exceeds upper boundary")
+        if lower == upper and (
+                self.lower.inclusion != "inclusive"
+                or self.upper.inclusion != "inclusive"):
+            raise ValueError("an equal-endpoint interval must be inclusive")
+        return self
+
+
 ConstraintPredicate = Annotated[
-    Union[ScalarComparisonPredicate], Field(discriminator="kind")]
+    Union[ExactNumericLowerBound, ExactNumericUpperBound,
+          ExactNumericInterval], Field(discriminator="kind")]
 
 
 def _canonical_parents(value: tuple) -> tuple:
@@ -561,6 +608,12 @@ class VariableSemanticDeclaration(_Frozen):
         return self
 
 
+class ConstraintSemanticSignature(_Frozen):
+    quantity_kind: QuantityKindReference
+    observation_role: ObservationRoleReference
+    unit: UnitReference
+
+
 class ConstraintRegistration(_Frozen):
     """PERMANENT, evidence-bearing membership claim: one constraint identity
     (``con_`` anchor) targets one variable. Unlike entity/variable
@@ -574,7 +627,7 @@ class ConstraintRegistration(_Frozen):
     record_kind: Literal["constraint_registration"] = "constraint_registration"
     schema_version: Literal["1"] = "1"
     record_id: str = Field(pattern=r"^crg_[0-9a-f]{64}$")
-    constraint_anchor_id: str = Field(pattern=CONSTRAINT_ANCHOR_ID_PATTERN)
+    anchor: ConstraintAnchor
     variable_anchor_id: str = Field(pattern=VARIABLE_ANCHOR_ID_PATTERN)
     evidence: Annotated[tuple[EvidenceRef, ...], Field(min_length=1),
                         AfterValidator(_canonical_evidence)]
@@ -585,23 +638,17 @@ class ConstraintRegistration(_Frozen):
 
 class VariableConstraintDeclaration(_Frozen):
     """The correctable numeric constraint claim. Its LINEAGE KEY is the
-    ``con_`` anchor; lineage invariants are the anchor, the target variable,
-    the semantic lock (quantity kind, observation role), and the predicate's
-    unit and operator — only the ``threshold`` may change across a
-    supersession. The DAG is the accepted multi-parent three-colour form;
-    competing tips are ``conflicted``, never resolved. The lock is NOT
-    validated against ``vsm``/``vsp`` at append (the kernel does not
-    cross-validate); a lock mismatch surfaces at evaluation as
-    ``not_evaluated``."""
+    ``con_`` anchor only. Predicate form, boundaries, inclusivity, and all
+    expected semantic tokens may change under a correction. The permanent
+    registration owns the target variable. Locks are intentionally not
+    cross-validated against VSM/VSP at append; mismatch belongs to Slice B."""
 
     record_kind: Literal["variable_constraint_declaration"] = (
         "variable_constraint_declaration")
     schema_version: Literal["1"] = "1"
     record_id: str = Field(pattern=r"^vcn_[0-9a-f]{64}$")
     constraint_anchor_id: str = Field(pattern=CONSTRAINT_ANCHOR_ID_PATTERN)
-    variable_anchor_id: str = Field(pattern=VARIABLE_ANCHOR_ID_PATTERN)
-    lock_quantity_kind: QuantityKindReference | None = None
-    lock_observation_role: ObservationRoleReference | None = None
+    expected_semantics: ConstraintSemanticSignature
     predicate: ConstraintPredicate
     evidence: Annotated[tuple[EvidenceRef, ...], Field(min_length=1),
                         AfterValidator(_canonical_evidence)]
@@ -621,13 +668,6 @@ class VariableConstraintDeclaration(_Frozen):
             raise ValueError("a constraint declaration cannot supersede itself")
         return self
 
-    @model_validator(mode="after")
-    def _predicate_targets_the_declared_variable(self):
-        if self.predicate.variable_anchor_id != self.variable_anchor_id:
-            raise ValueError(
-                "the predicate's variable must match the declaration's "
-                "variable")
-        return self
 
 
 ModelRecord = Union[

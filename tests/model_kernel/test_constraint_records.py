@@ -22,8 +22,8 @@ from backend.model_kernel import (
 )
 from backend.model_kernel.contracts import (
     MODEL_RECORD_ID_PATTERN,
-    ObservationRoleReference,
-    QuantityKindReference,
+    ConstraintSemanticSignature,
+    UnitReference,
 )
 from tests.model_kernel.builders import (
     AUTHORITY,
@@ -31,10 +31,10 @@ from tests.model_kernel.builders import (
     CONSTRAINT_EVIDENCE,
     T0,
     VAR_A,
-    VAR_B,
     constraint_declaration,
     constraint_registration,
-    scalar_predicate,
+    constraint_signature,
+    upper_bound,
 )
 
 CRG = "crg_" + "1" * 64
@@ -44,7 +44,7 @@ VCN = "vcn_" + "1" * 64
 def _registration(**overrides):
     fields = dict(
         record_id=CRG,
-        constraint_anchor_id=CON_A,
+        anchor=constraint_registration().anchor,
         variable_anchor_id=VAR_A,
         evidence=CONSTRAINT_EVIDENCE,
         recorded_at=T0,
@@ -59,10 +59,8 @@ def _declaration(**overrides):
     fields = dict(
         record_id=VCN,
         constraint_anchor_id=CON_A,
-        variable_anchor_id=VAR_A,
-        lock_quantity_kind=None,
-        lock_observation_role=None,
-        predicate=scalar_predicate(variable_anchor_id=VAR_A),
+        expected_semantics=constraint_signature(),
+        predicate=upper_bound(),
         evidence=CONSTRAINT_EVIDENCE,
         supersedes=(),
         recorded_at=T0,
@@ -153,23 +151,17 @@ def test_declaration_builds_with_a_content_derived_vcn_id():
     assert constraint_declaration().record_id == record.record_id
 
 
-def test_declaration_threshold_change_yields_a_new_id():
-    a = constraint_declaration(predicate=scalar_predicate(threshold="60"))
-    b = constraint_declaration(predicate=scalar_predicate(threshold="61"))
+def test_declaration_boundary_change_yields_a_new_id():
+    a = constraint_declaration(predicate=upper_bound(value="60"))
+    b = constraint_declaration(predicate=upper_bound(value="61"))
     assert a.record_id != b.record_id
-    assert (constraint_declaration(predicate=scalar_predicate(threshold="60"))
+    assert (constraint_declaration(predicate=upper_bound(value="60"))
             .record_id == a.record_id)
 
 
 def test_declaration_rejects_empty_evidence():
     with pytest.raises(ValidationError):
         _declaration(evidence=())
-
-
-def test_declaration_predicate_must_target_the_declared_variable():
-    mismatched = scalar_predicate(variable_anchor_id=VAR_B)
-    with pytest.raises(ValidationError):
-        _declaration(variable_anchor_id=VAR_A, predicate=mismatched)
 
 
 def test_declaration_rejects_a_self_supersede():
@@ -194,20 +186,15 @@ def test_declaration_rejects_forbidden_extra_fields():
         _declaration(tolerance="0.1")
 
 
-def test_declaration_lock_fields_are_optional_and_carried():
-    bare = constraint_declaration()
-    assert bare.lock_quantity_kind is None
-    assert bare.lock_observation_role is None
-    locked = constraint_declaration(
-        lock_quantity_kind=QuantityKindReference(
-            system_id="project_local", system_edition="ohk-semantics-1",
-            code="temperature"),
-        lock_observation_role=ObservationRoleReference(
-            system_id="project_local", system_edition="ohk-semantics-1",
-            code="measured"),
-    )
-    assert locked.lock_quantity_kind is not None
-    assert locked.lock_observation_role is not None
+def test_declaration_semantic_lock_is_complete_and_carried():
+    record = constraint_declaration()
+    assert isinstance(record.expected_semantics, ConstraintSemanticSignature)
+    assert isinstance(record.expected_semantics.unit, UnitReference)
+    with pytest.raises(ValidationError):
+        _declaration(expected_semantics={
+            "quantity_kind": record.expected_semantics.quantity_kind,
+            "observation_role": record.expected_semantics.observation_role,
+        })
 
 
 def test_both_records_are_members_of_the_model_record_union():

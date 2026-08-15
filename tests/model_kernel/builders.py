@@ -172,17 +172,28 @@ def observation_role(code="measured", system_edition="ohk-semantics-1"):
                                      system_edition=system_edition, code=code)
 
 
-def scalar_predicate(variable_anchor_id=VAR_A, operator="less_than_or_equal",
-                     threshold="60", unit=None, **overrides):
-    from backend.model_kernel.contracts import (
-        ScalarComparisonPredicate, UnitNotDeclared)
+def numeric_boundary(value="80", inclusion="inclusive"):
+    from backend.model_kernel.contracts import NumericBoundary
 
-    fields = dict(
-        kind="scalar_comparison", variable_anchor_id=variable_anchor_id,
-        operator=operator, threshold=threshold,
-        unit=unit if unit is not None else UnitNotDeclared(kind="not_declared"))
-    fields.update(overrides)
-    return ScalarComparisonPredicate(**fields)
+    return NumericBoundary(value=value, inclusion=inclusion)
+
+
+def upper_bound(value="80", inclusion="inclusive"):
+    from backend.model_kernel.contracts import ExactNumericUpperBound
+
+    return ExactNumericUpperBound(
+        upper=numeric_boundary(value=value, inclusion=inclusion))
+
+
+def constraint_signature():
+    from backend.model_kernel.contracts import (
+        ConstraintSemanticSignature, UnitReference)
+
+    return ConstraintSemanticSignature(
+        quantity_kind=quantity_kind(), observation_role=observation_role(),
+        unit=UnitReference(system_id="project_local",
+                           system_edition="ohk-units-1",
+                           code="degree_celsius"))
 
 
 def constraint_registration(constraint_anchor_id=CON_A,
@@ -190,26 +201,30 @@ def constraint_registration(constraint_anchor_id=CON_A,
                             evidence=CONSTRAINT_EVIDENCE, recorded_at=T0,
                             note="", **overrides):
     from backend.model_kernel.contracts import ConstraintRegistration
+    from backend.system_identity import ConstraintAnchor
 
-    fields = dict(constraint_anchor_id=constraint_anchor_id,
+    fields = dict(anchor=ConstraintAnchor(
+                      anchor_id=constraint_anchor_id,
+                      namespace="demo-printer",
+                      display_name="Synthetic constraint"),
                   variable_anchor_id=variable_anchor_id, evidence=evidence,
                   recorded_at=recorded_at, authority=AUTHORITY, note=note)
     fields.update(overrides)
     return build_record(ConstraintRegistration, **fields)
 
 
-def constraint_declaration(constraint_anchor_id=CON_A, variable_anchor_id=VAR_A,
-                           lock_quantity_kind=None, lock_observation_role=None,
+def constraint_declaration(constraint_anchor_id=CON_A,
+                           expected_semantics=None,
                            predicate=None, evidence=CONSTRAINT_EVIDENCE,
                            supersedes=(), recorded_at=T0, note="", **overrides):
     from backend.model_kernel.contracts import VariableConstraintDeclaration
 
     if predicate is None:
-        predicate = scalar_predicate(variable_anchor_id=variable_anchor_id)
+        predicate = upper_bound()
     fields = dict(constraint_anchor_id=constraint_anchor_id,
-                  variable_anchor_id=variable_anchor_id,
-                  lock_quantity_kind=lock_quantity_kind,
-                  lock_observation_role=lock_observation_role,
+                  expected_semantics=(expected_semantics
+                                      if expected_semantics is not None
+                                      else constraint_signature()),
                   predicate=predicate, evidence=evidence,
                   supersedes=supersedes, recorded_at=recorded_at,
                   authority=AUTHORITY, note=note)
