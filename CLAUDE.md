@@ -48,19 +48,19 @@ never inherited into source evidence. Also accepted: SN-001 (payload-pinned
 structural claims in the read-only `backend/structural_evidence` module;
 identity mappings as ordinary `BindingAssertion` records; read-only
 multi-set reconciliation; inert proposals; separately hand-authored model
-acceptance), validated and repaired under owner mandate. The current
-milestone is ES-001 (explicit per-dimension variable semantics in
-`backend/model_kernel`; exact-locator authority interpretation in the
-append-only `backend/source_interpretation` ledger; and read-only
+acceptance), validated and repaired under owner mandate. Also accepted:
+ES-001 (explicit per-dimension variable semantics in `backend/model_kernel`;
+exact-locator authority interpretation in the append-only
+`backend/source_interpretation` ledger; and read-only
 `backend/semantic_compatibility` composition over the accepted
 value-compatibility result), implemented through its committed fixture and
-completion demonstration, adversarially reviewed and dual-clean-checkout
-verified; awaiting owner acceptance — see
-docs/superpowers/specs/2026-08-13-es001-engineering-semantics-design.md and
-docs/adr/0011. Source interpretation is authority knowledge, never source
+completion demonstration, adversarially reviewed, repaired, and
+dual-clean-checkout verified — see
+`docs/superpowers/specs/2026-08-13-es001-engineering-semantics-design.md` and
+`docs/adr/0011`. Source interpretation is authority knowledge, never source
 evidence or identity binding; compatibility compares exact identity tokens
 only, performs no conversion or value grading, and never fills an absent
-source unit. See
+source unit. No post-ES-001 milestone has yet been owner-approved. See
 docs/superpowers/specs/ and docs/adr/ for accepted designs. The
 historical sentence "Only `data_sources` is currently in scope" in the
 Current Phase section below is superseded by this Status section; the

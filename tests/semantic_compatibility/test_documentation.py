@@ -38,8 +38,10 @@ def test_touched_accepted_module_notes_preserve_layer_ownership():
     assert "`membership()` helper" in binding
 
 
-def test_claude_status_records_group14_verification_awaiting_acceptance():
+def test_claude_status_records_owner_acceptance_of_es001():
     text = " ".join(Path("CLAUDE.md").read_text().split())
-    assert "The current milestone is ES-001" in text
-    assert ("adversarially reviewed and dual-clean-checkout verified; "
-            "awaiting owner acceptance") in text
+    assert "Also accepted: ES-001" in text
+    assert ("adversarially reviewed, repaired, and dual-clean-checkout "
+            "verified") in text
+    assert "No post-ES-001 milestone has yet been owner-approved." in text
+    assert "awaiting owner acceptance" not in text
