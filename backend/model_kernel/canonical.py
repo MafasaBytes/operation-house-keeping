@@ -22,6 +22,8 @@ _PREFIX_BY_KIND = {
     "variable_registration": "vrg",
     "variable_value_specification": "vsp",
     "variable_semantic_declaration": "vsm",
+    "constraint_registration": "crg",
+    "variable_constraint_declaration": "vcn",
     "relationship_type_definition": "rtd",
     "relationship_assertion": "rel",
     "relationship_withdrawal": "rwd",

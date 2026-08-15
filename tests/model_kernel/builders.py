@@ -148,3 +148,70 @@ def specification(variable_anchor_id=VAR_A, value_shape="number",
                   recorded_at=recorded_at, authority=AUTHORITY, note=note)
     fields.update(overrides)
     return build_record(VariableValueSpecification, **fields)
+
+
+# ---------------------------------------------------------- CN-001 records
+CON_A = "con_" + "a" * 32
+CON_B = "con_" + "b" * 32
+CONSTRAINT_EVIDENCE = (OwnerDeclarationEvidence(
+    kind="owner_declaration",
+    statement="synthetic test constraint registration"),)
+
+
+def quantity_kind(code="temperature", system_edition="ohk-semantics-1"):
+    from backend.model_kernel.contracts import QuantityKindReference
+
+    return QuantityKindReference(system_id="project_local",
+                                 system_edition=system_edition, code=code)
+
+
+def observation_role(code="measured", system_edition="ohk-semantics-1"):
+    from backend.model_kernel.contracts import ObservationRoleReference
+
+    return ObservationRoleReference(system_id="project_local",
+                                     system_edition=system_edition, code=code)
+
+
+def scalar_predicate(variable_anchor_id=VAR_A, operator="less_than_or_equal",
+                     threshold="60", unit=None, **overrides):
+    from backend.model_kernel.contracts import (
+        ScalarComparisonPredicate, UnitNotDeclared)
+
+    fields = dict(
+        kind="scalar_comparison", variable_anchor_id=variable_anchor_id,
+        operator=operator, threshold=threshold,
+        unit=unit if unit is not None else UnitNotDeclared(kind="not_declared"))
+    fields.update(overrides)
+    return ScalarComparisonPredicate(**fields)
+
+
+def constraint_registration(constraint_anchor_id=CON_A,
+                            variable_anchor_id=VAR_A,
+                            evidence=CONSTRAINT_EVIDENCE, recorded_at=T0,
+                            note="", **overrides):
+    from backend.model_kernel.contracts import ConstraintRegistration
+
+    fields = dict(constraint_anchor_id=constraint_anchor_id,
+                  variable_anchor_id=variable_anchor_id, evidence=evidence,
+                  recorded_at=recorded_at, authority=AUTHORITY, note=note)
+    fields.update(overrides)
+    return build_record(ConstraintRegistration, **fields)
+
+
+def constraint_declaration(constraint_anchor_id=CON_A, variable_anchor_id=VAR_A,
+                           lock_quantity_kind=None, lock_observation_role=None,
+                           predicate=None, evidence=CONSTRAINT_EVIDENCE,
+                           supersedes=(), recorded_at=T0, note="", **overrides):
+    from backend.model_kernel.contracts import VariableConstraintDeclaration
+
+    if predicate is None:
+        predicate = scalar_predicate(variable_anchor_id=variable_anchor_id)
+    fields = dict(constraint_anchor_id=constraint_anchor_id,
+                  variable_anchor_id=variable_anchor_id,
+                  lock_quantity_kind=lock_quantity_kind,
+                  lock_observation_role=lock_observation_role,
+                  predicate=predicate, evidence=evidence,
+                  supersedes=supersedes, recorded_at=recorded_at,
+                  authority=AUTHORITY, note=note)
+    fields.update(overrides)
+    return build_record(VariableConstraintDeclaration, **fields)

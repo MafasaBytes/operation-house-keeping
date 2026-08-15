@@ -231,7 +231,8 @@ class TestRecordIntegrity:
 
         members = typing.get_args(ModelRecord)
         assert VariableRegistration in members
-        assert len(_PREFIX_BY_KIND) == len(members) == 7
+        # 7 pre-CN-001 + crg/vcn (CN-001) = 9
+        assert len(_PREFIX_BY_KIND) == len(members) == 9
         for prefix in _PREFIX_BY_KIND.values():
             sample = f"{prefix}_{'0' * 64}"
             assert re.fullmatch(MODEL_RECORD_ID_PATTERN, sample)
@@ -475,10 +476,11 @@ class TestKernelQueries:
     def test_public_surface_name_count(self):
         # 62 (pre-CN-001) + 4 CN-001 value contracts (CanonicalDecimal,
         # ScalarComparisonOperator, ScalarComparisonPredicate,
-        # ConstraintPredicate) = 66
+        # ConstraintPredicate) + 2 CN-001 records (ConstraintRegistration,
+        # VariableConstraintDeclaration) = 68
         import backend.model_kernel as kernel
 
-        assert len(kernel.__all__) == 66
+        assert len(kernel.__all__) == 68
         for name in ("VariableRegistration", "VariableRegistrationSummary",
                      "VariableResult", "EntityVariablesResult",
                      "StructuralSourceLocatorEvidence"):

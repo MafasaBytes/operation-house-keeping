@@ -26,6 +26,7 @@ from pydantic import (
 
 from backend.model_kernel.canonical import canonical_sort_key, compute_revision_id
 from backend.system_identity import (
+    CONSTRAINT_ANCHOR_ID_PATTERN,
     ENTITY_ANCHOR_ID_PATTERN,
     VARIABLE_ANCHOR_ID_PATTERN,
     EntityAnchor,
@@ -35,7 +36,7 @@ from backend.system_identity import (
 UtcDatetime = Annotated[AwareDatetime, AfterValidator(lambda v: v.astimezone(UTC))]
 
 MODEL_ID_PATTERN = r"^[a-z0-9-]+$"
-MODEL_RECORD_ID_PATTERN = r"^(reg|rtd|rel|rwd|vrg|vsp|vsm)_[0-9a-f]{64}$"
+MODEL_RECORD_ID_PATTERN = r"^(reg|rtd|rel|rwd|vrg|vsp|vsm|crg|vcn)_[0-9a-f]{64}$"
 
 ReferentKind = Literal[
     "logical_instance", "physical_instance", "type_definition", "unknown"
@@ -94,10 +95,12 @@ class OwnerDeclarationEvidence(_Frozen):
 
 
 class ModelRecordEvidence(_Frozen):
-    # registrations (entity AND variable), types, and assertions are
-    # citable; a withdrawal is a non-claim and stays uncitable
+    # registrations (entity AND variable), types, assertions, and constraint
+    # records (crg_/vcn_) are citable; a withdrawal is a non-claim and stays
+    # uncitable
     kind: Literal["model_record"]
-    record_id: str = Field(pattern=r"^(reg|rtd|rel|vrg|vsp|vsm)_[0-9a-f]{64}$")
+    record_id: str = Field(
+        pattern=r"^(reg|rtd|rel|vrg|vsp|vsm|crg|vcn)_[0-9a-f]{64}$")
 
 
 class IdentityBindingRecordEvidence(_Frozen):
@@ -558,9 +561,79 @@ class VariableSemanticDeclaration(_Frozen):
         return self
 
 
+class ConstraintRegistration(_Frozen):
+    """PERMANENT, evidence-bearing membership claim: one constraint identity
+    (``con_`` anchor) targets one variable. Unlike entity/variable
+    registrations (membership-only envelopes), a constraint registration
+    carries nonempty ``EvidenceRef`` evidence, canonicalized by the uniform
+    rules. It has NO ``supersedes``, withdrawal, or lifecycle field: the
+    target-variable association must not become an unsupported model fact
+    when a later declaration is superseded. The anchor and target variable
+    are REFERENCED by id, never embedded."""
+
+    record_kind: Literal["constraint_registration"] = "constraint_registration"
+    schema_version: Literal["1"] = "1"
+    record_id: str = Field(pattern=r"^crg_[0-9a-f]{64}$")
+    constraint_anchor_id: str = Field(pattern=CONSTRAINT_ANCHOR_ID_PATTERN)
+    variable_anchor_id: str = Field(pattern=VARIABLE_ANCHOR_ID_PATTERN)
+    evidence: Annotated[tuple[EvidenceRef, ...], Field(min_length=1),
+                        AfterValidator(_canonical_evidence)]
+    recorded_at: UtcDatetime
+    authority: AuthorityRef
+    note: str = ""
+
+
+class VariableConstraintDeclaration(_Frozen):
+    """The correctable numeric constraint claim. Its LINEAGE KEY is the
+    ``con_`` anchor; lineage invariants are the anchor, the target variable,
+    the semantic lock (quantity kind, observation role), and the predicate's
+    unit and operator — only the ``threshold`` may change across a
+    supersession. The DAG is the accepted multi-parent three-colour form;
+    competing tips are ``conflicted``, never resolved. The lock is NOT
+    validated against ``vsm``/``vsp`` at append (the kernel does not
+    cross-validate); a lock mismatch surfaces at evaluation as
+    ``not_evaluated``."""
+
+    record_kind: Literal["variable_constraint_declaration"] = (
+        "variable_constraint_declaration")
+    schema_version: Literal["1"] = "1"
+    record_id: str = Field(pattern=r"^vcn_[0-9a-f]{64}$")
+    constraint_anchor_id: str = Field(pattern=CONSTRAINT_ANCHOR_ID_PATTERN)
+    variable_anchor_id: str = Field(pattern=VARIABLE_ANCHOR_ID_PATTERN)
+    lock_quantity_kind: QuantityKindReference | None = None
+    lock_observation_role: ObservationRoleReference | None = None
+    predicate: ConstraintPredicate
+    evidence: Annotated[tuple[EvidenceRef, ...], Field(min_length=1),
+                        AfterValidator(_canonical_evidence)]
+    supersedes: Annotated[tuple[str, ...],
+                          AfterValidator(_canonical_parents)] = ()
+    recorded_at: UtcDatetime
+    authority: AuthorityRef
+    note: str = ""
+
+    @model_validator(mode="after")
+    def _parent_ids_well_formed(self):
+        for parent_id in self.supersedes:
+            if not re.fullmatch(r"vcn_[0-9a-f]{64}", parent_id):
+                raise ValueError(
+                    f"{parent_id!r} is not a constraint declaration record id")
+        if self.record_id in self.supersedes:
+            raise ValueError("a constraint declaration cannot supersede itself")
+        return self
+
+    @model_validator(mode="after")
+    def _predicate_targets_the_declared_variable(self):
+        if self.predicate.variable_anchor_id != self.variable_anchor_id:
+            raise ValueError(
+                "the predicate's variable must match the declaration's "
+                "variable")
+        return self
+
+
 ModelRecord = Union[
     EntityRegistration, VariableRegistration, VariableValueSpecification,
     VariableSemanticDeclaration,
+    ConstraintRegistration, VariableConstraintDeclaration,
     RelationshipTypeDefinition, RelationshipAssertion,
     RelationshipWithdrawal,
 ]
