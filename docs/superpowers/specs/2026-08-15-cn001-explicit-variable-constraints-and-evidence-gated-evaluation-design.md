@@ -244,8 +244,8 @@ kinds, so each site is extended for `crg_` and `vcn_` together:
 6. `_FILENAME` regex (`store.py`) — a **distinct literal** from
    `MODEL_RECORD_ID_PATTERN`; add `crg|vcn`.
 7. Store bucket dispatch (`store.py`) — two new buckets.
-8. `LoadedModel` mappings (`store.py`) — `constraint_registrations`,
-   `constraint_registrations_by_anchor`, `constraint_registrations_by_variable`,
+8. `LoadedModel` mappings (`store.py`) —
+   `constraint_registrations_by_anchor`, `constraint_anchor_ids_by_variable`,
    `constraint_declarations`, `current_constraint_tips_by_anchor`,
    `constraint_superseded_by`.
 9. `validate_record_collection` body (`store.py`) — §7, §8.
