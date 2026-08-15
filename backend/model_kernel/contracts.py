@@ -34,7 +34,7 @@ from backend.system_identity import (
 UtcDatetime = Annotated[AwareDatetime, AfterValidator(lambda v: v.astimezone(UTC))]
 
 MODEL_ID_PATTERN = r"^[a-z0-9-]+$"
-MODEL_RECORD_ID_PATTERN = r"^(reg|rtd|rel|rwd|vrg|vsp)_[0-9a-f]{64}$"
+MODEL_RECORD_ID_PATTERN = r"^(reg|rtd|rel|rwd|vrg|vsp|vsm)_[0-9a-f]{64}$"
 
 ReferentKind = Literal[
     "logical_instance", "physical_instance", "type_definition", "unknown"
@@ -96,7 +96,7 @@ class ModelRecordEvidence(_Frozen):
     # registrations (entity AND variable), types, and assertions are
     # citable; a withdrawal is a non-claim and stays uncitable
     kind: Literal["model_record"]
-    record_id: str = Field(pattern=r"^(reg|rtd|rel|vrg|vsp)_[0-9a-f]{64}$")
+    record_id: str = Field(pattern=r"^(reg|rtd|rel|vrg|vsp|vsm)_[0-9a-f]{64}$")
 
 
 class IdentityBindingRecordEvidence(_Frozen):
@@ -374,6 +374,22 @@ class UnitReference(_Frozen):
     code: LocalIdentifier
 
 
+class QuantityKindReference(_Frozen):
+    """Exact identity token for a quantity kind, never an ontology."""
+
+    system_id: Literal["project_local"]
+    system_edition: LocalIdentifier
+    code: LocalIdentifier
+
+
+class ObservationRoleReference(_Frozen):
+    """Exact identity token for an observation role, never behaviour."""
+
+    system_id: Literal["project_local"]
+    system_edition: LocalIdentifier
+    code: LocalIdentifier
+
+
 class DeclaredUnit(_Frozen):
     kind: Literal["declared"]
     unit: UnitReference
@@ -438,8 +454,51 @@ class VariableValueSpecification(_Frozen):
         return self
 
 
+class QuantityKindDeclaration(_Frozen):
+    dimension: Literal["quantity_kind"]
+    quantity_kind: QuantityKindReference
+
+
+class ObservationRoleDeclaration(_Frozen):
+    dimension: Literal["observation_role"]
+    observation_role: ObservationRoleReference
+
+
+SemanticDimensionDeclaration = Annotated[
+    Union[QuantityKindDeclaration, ObservationRoleDeclaration],
+    Field(discriminator="dimension")]
+
+
+class VariableSemanticDeclaration(_Frozen):
+    """One authority claim about one dimension of model-side meaning."""
+
+    record_kind: Literal["variable_semantic_declaration"] = (
+        "variable_semantic_declaration")
+    schema_version: Literal["1"] = "1"
+    record_id: str = Field(pattern=r"^vsm_[0-9a-f]{64}$")
+    variable_anchor_id: str = Field(pattern=VARIABLE_ANCHOR_ID_PATTERN)
+    declaration: SemanticDimensionDeclaration
+    evidence: Annotated[tuple[EvidenceRef, ...], Field(min_length=1),
+                        AfterValidator(_canonical_evidence)]
+    supersedes: Annotated[tuple[str, ...],
+                          AfterValidator(_canonical_parents)] = ()
+    recorded_at: UtcDatetime
+    authority: AuthorityRef
+    note: str = ""
+
+    @model_validator(mode="after")
+    def _parent_ids_well_formed(self):
+        for parent_id in self.supersedes:
+            if not re.fullmatch(r"vsm_[0-9a-f]{64}", parent_id):
+                raise ValueError(f"{parent_id!r} is not a semantic record id")
+        if self.record_id in self.supersedes:
+            raise ValueError("a semantic declaration cannot supersede itself")
+        return self
+
+
 ModelRecord = Union[
     EntityRegistration, VariableRegistration, VariableValueSpecification,
+    VariableSemanticDeclaration,
     RelationshipTypeDefinition, RelationshipAssertion,
     RelationshipWithdrawal,
 ]
@@ -649,6 +708,51 @@ class VariableSpecificationResult(_Frozen):
                 self.superseded_specification_ids):
             raise ValueError(
                 "an unregistered variable carries no specification history")
+        return self
+
+
+class SemanticDimensionResult(_Frozen):
+    dimension: Literal["quantity_kind", "observation_role"]
+    status: Literal["declared", "not_declared", "conflicted",
+                    "not_registered"]
+    declaration: VariableSemanticDeclaration | None = None
+    conflicting_declarations: tuple[VariableSemanticDeclaration, ...] = ()
+    superseded_declaration_ids: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def _status_consistent(self):
+        if (self.status == "declared") != (self.declaration is not None):
+            raise ValueError("declaration is carried exactly when declared")
+        if (self.status == "conflicted") != bool(self.conflicting_declarations):
+            raise ValueError("competing declarations occur exactly when conflicted")
+        if self.status == "conflicted" and len(self.conflicting_declarations) < 2:
+            raise ValueError("a conflict requires at least two declarations")
+        ids = [record.record_id for record in self.conflicting_declarations]
+        if ids != sorted(ids):
+            raise ValueError("competing declarations must be canonically ordered")
+        if not _sorted_unique(self.superseded_declaration_ids):
+            raise ValueError("superseded declaration ids must be unique and sorted")
+        if self.status == "not_registered" and self.superseded_declaration_ids:
+            raise ValueError("an unregistered variable carries no semantic history")
+        return self
+
+
+class VariableSemanticsResult(_Frozen):
+    anchor_id: str = Field(pattern=VARIABLE_ANCHOR_ID_PATTERN)
+    quantity_kind: SemanticDimensionResult
+    observation_role: SemanticDimensionResult
+    revision: ModelRevision
+
+    @model_validator(mode="after")
+    def _dimensions_consistent(self):
+        if self.quantity_kind.dimension != "quantity_kind":
+            raise ValueError("quantity_kind result has the wrong dimension")
+        if self.observation_role.dimension != "observation_role":
+            raise ValueError("observation_role result has the wrong dimension")
+        unregistered = (self.quantity_kind.status == "not_registered",
+                        self.observation_role.status == "not_registered")
+        if unregistered[0] != unregistered[1]:
+            raise ValueError("both dimensions are unregistered exactly together")
         return self
 
 

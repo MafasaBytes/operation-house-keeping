@@ -39,12 +39,13 @@ from backend.model_kernel.contracts import (
     RelationshipTypeDefinition,
     RelationshipWithdrawal,
     VariableRegistration,
+    VariableSemanticDeclaration,
     VariableValueSpecification,
 )
 
 _RECORD_ADAPTER: TypeAdapter = TypeAdapter(ModelRecord)
 _RECORD_ID = re.compile(MODEL_RECORD_ID_PATTERN)
-_FILENAME = re.compile(r"^(reg|rtd|rel|rwd|vrg|vsp)_[0-9a-f]{64}\.json$")
+_FILENAME = re.compile(r"^(reg|rtd|rel|rwd|vrg|vsp|vsm)_[0-9a-f]{64}\.json$")
 
 _EMPTY: Mapping = MappingProxyType({})
 
@@ -78,6 +79,10 @@ class LoadedModel:
     current_specification_tips_by_variable: Mapping[
         str, tuple[VariableValueSpecification, ...]] = _EMPTY
     specification_superseded_by: Mapping[str, tuple[str, ...]] = _EMPTY
+    semantic_declarations: Mapping[str, VariableSemanticDeclaration] = _EMPTY
+    current_semantic_tips_by_variable_dimension: Mapping[
+        tuple[str, str], tuple[VariableSemanticDeclaration, ...]] = _EMPTY
+    semantic_superseded_by: Mapping[str, tuple[str, ...]] = _EMPTY
 
 
 def _fail(code: str, message: str) -> None:
@@ -140,6 +145,7 @@ def validate_record_collection(
     registrations: dict[str, EntityRegistration] = {}
     variable_registrations: dict[str, VariableRegistration] = {}
     specifications: dict[str, VariableValueSpecification] = {}
+    semantic_declarations: dict[str, VariableSemanticDeclaration] = {}
     types: dict[str, RelationshipTypeDefinition] = {}
     assertions: dict[str, RelationshipAssertion] = {}
     withdrawals: dict[str, RelationshipWithdrawal] = {}
@@ -169,6 +175,7 @@ def validate_record_collection(
             "entity_registration": registrations,
             "variable_registration": variable_registrations,
             "variable_value_specification": specifications,
+            "variable_semantic_declaration": semantic_declarations,
             "relationship_type_definition": types,
             "relationship_assertion": assertions,
             "relationship_withdrawal": withdrawals,
@@ -275,6 +282,61 @@ def validate_record_collection(
             _fail("MODEL_SPECIFICATION_LINEAGE_INVALID",
                   f"variable {anchor_id} has specifications but no current "
                   "tip")
+
+    # -- semantic declarations: independent multi-parent DAG per variable
+    # and semantic dimension. Competing tips remain queryable conflicts.
+    for record_id in sorted(semantic_declarations):
+        record = semantic_declarations[record_id]
+        if record.variable_anchor_id not in variable_registrations_by_anchor:
+            _fail("MODEL_REFERENCE_INVALID",
+                  f"semantic declaration {record_id} references unregistered "
+                  f"variable {record.variable_anchor_id}")
+        _check_model_record_evidence(records, record, "semantic declaration")
+        for parent_id in record.supersedes:
+            parent = semantic_declarations.get(parent_id)
+            if parent is None:
+                _fail("MODEL_REFERENCE_INVALID",
+                      f"semantic declaration {record_id} supersedes missing "
+                      f"semantic declaration {parent_id}")
+            if (parent.variable_anchor_id != record.variable_anchor_id
+                    or parent.declaration.dimension != record.declaration.dimension):
+                _fail("MODEL_SEMANTIC_LINEAGE_INVALID",
+                      f"semantic declaration {record_id} has an incompatible parent")
+    visiting, done = set(), set()
+    for start in sorted(semantic_declarations):
+        if start in done:
+            continue
+        stack = [(start, iter(semantic_declarations[start].supersedes))]
+        visiting.add(start)
+        while stack:
+            node, parents = stack[-1]
+            for parent_id in parents:
+                if parent_id in visiting:
+                    _fail("MODEL_SEMANTIC_LINEAGE_INVALID",
+                          "semantic declaration supersession cycle")
+                if parent_id not in done:
+                    visiting.add(parent_id)
+                    stack.append((parent_id, iter(
+                        semantic_declarations[parent_id].supersedes)))
+                    break
+            else:
+                stack.pop(); visiting.discard(node); done.add(node)
+    semantic_superseded_by = {record_id: () for record_id in semantic_declarations}
+    for record_id in sorted(semantic_declarations):
+        for parent_id in semantic_declarations[record_id].supersedes:
+            semantic_superseded_by[parent_id] = tuple(sorted((
+                *semantic_superseded_by[parent_id], record_id)))
+    semantic_tips: dict[tuple[str, str], tuple[VariableSemanticDeclaration, ...]] = {}
+    for record_id in sorted(semantic_declarations):
+        record = semantic_declarations[record_id]
+        if not semantic_superseded_by[record_id]:
+            key = (record.variable_anchor_id, record.declaration.dimension)
+            semantic_tips[key] = (*semantic_tips.get(key, ()), record)
+    for key in {(r.variable_anchor_id, r.declaration.dimension)
+                for r in semantic_declarations.values()}:
+        if not semantic_tips.get(key):
+            _fail("MODEL_SEMANTIC_LINEAGE_INVALID",
+                  f"semantic lineage {key[0]} {key[1]} has no current tip")
 
     # -- type lineages: invariant fields, acyclic, one current per name ---
     for record_id in sorted(types):
@@ -404,6 +466,9 @@ def validate_record_collection(
             tips_by_variable),
         specification_superseded_by=_frozen_mapping(
             specification_superseded_by),
+        semantic_declarations=_frozen_mapping(semantic_declarations),
+        current_semantic_tips_by_variable_dimension=_frozen_mapping(semantic_tips),
+        semantic_superseded_by=_frozen_mapping(semantic_superseded_by),
         superseded_by=_frozen_mapping(superseded_by),
         withdrawn_by=_frozen_mapping(withdrawn_by))
 

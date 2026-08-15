@@ -38,6 +38,8 @@ from backend.model_kernel.contracts import (
     VariableRegistrationSummary,
     VariableResult,
     VariableSpecificationResult,
+    SemanticDimensionResult,
+    VariableSemanticsResult,
 )
 from backend.model_kernel.hierarchy import HierarchyProjection, build_projection
 from backend.model_kernel.store import LoadedModel
@@ -252,6 +254,44 @@ class ModelQueries:
         return VariableSpecificationResult(
             status="specified", anchor_id=anchor_id, specification=tips[0],
             superseded_specification_ids=superseded, revision=revision)
+
+    def variable_semantics(self, anchor_id: str) -> VariableSemanticsResult:
+        anchor_id = self._require_variable_anchor_id(anchor_id)
+        revision = self.loaded.revision
+        if anchor_id not in self.loaded.variable_registrations_by_anchor:
+            absent = lambda dimension: SemanticDimensionResult(
+                dimension=dimension, status="not_registered")
+            return VariableSemanticsResult(
+                anchor_id=anchor_id, quantity_kind=absent("quantity_kind"),
+                observation_role=absent("observation_role"), revision=revision)
+
+        def dimension_result(dimension: str) -> SemanticDimensionResult:
+            tips = self.loaded.current_semantic_tips_by_variable_dimension.get(
+                (anchor_id, dimension), ())
+            superseded = tuple(sorted(
+                record_id for record_id, successors
+                in self.loaded.semantic_superseded_by.items()
+                if successors
+                and self.loaded.semantic_declarations[record_id].variable_anchor_id == anchor_id
+                and self.loaded.semantic_declarations[record_id].declaration.dimension == dimension))
+            if not tips:
+                return SemanticDimensionResult(
+                    dimension=dimension, status="not_declared",
+                    superseded_declaration_ids=superseded)
+            if len(tips) > 1:
+                return SemanticDimensionResult(
+                    dimension=dimension, status="conflicted",
+                    conflicting_declarations=tips,
+                    superseded_declaration_ids=superseded)
+            return SemanticDimensionResult(
+                dimension=dimension, status="declared", declaration=tips[0],
+                superseded_declaration_ids=superseded)
+
+        return VariableSemanticsResult(
+            anchor_id=anchor_id,
+            quantity_kind=dimension_result("quantity_kind"),
+            observation_role=dimension_result("observation_role"),
+            revision=revision)
 
     # -- relationships (strict context equality) ---------------------------
 

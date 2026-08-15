@@ -21,6 +21,7 @@ _PREFIX_BY_KIND = {
     "entity_registration": "reg",
     "variable_registration": "vrg",
     "variable_value_specification": "vsp",
+    "variable_semantic_declaration": "vsm",
     "relationship_type_definition": "rtd",
     "relationship_assertion": "rel",
     "relationship_withdrawal": "rwd",

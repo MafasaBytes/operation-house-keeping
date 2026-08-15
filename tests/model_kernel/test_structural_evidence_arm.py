@@ -77,7 +77,7 @@ class TestKR2ArmContract:
 
 class TestKR3PublicSurface:
     def test_all_has_54_names_and_every_name_resolves(self):
-        assert len(kernel.__all__) == 54
+        assert len(kernel.__all__) == 62
         assert "StructuralSourceLocatorEvidence" in kernel.__all__
         for name in kernel.__all__:
             assert getattr(kernel, name) is not None

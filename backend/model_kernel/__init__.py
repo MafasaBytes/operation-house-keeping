@@ -66,6 +66,11 @@ from backend.model_kernel.contracts import (
     VariableResult,
     VariableSpecificationResult,
     VariableValueSpecification,
+    VariableSemanticDeclaration,
+    QuantityKindReference, ObservationRoleReference,
+    QuantityKindDeclaration, ObservationRoleDeclaration,
+    SemanticDimensionDeclaration, SemanticDimensionResult,
+    VariableSemanticsResult,
     ViewIndependentContext,
 )
 from backend.model_kernel.queries import ModelQueries
@@ -75,6 +80,7 @@ __all__ = [
     # ledger record contracts
     "EntityRegistration", "VariableRegistration",
     "VariableValueSpecification",
+    "VariableSemanticDeclaration",
     "RelationshipTypeDefinition",
     "RelationshipAssertion",
     "RelationshipWithdrawal",
@@ -95,6 +101,9 @@ __all__ = [
     "StructuralSourceLocatorEvidence",
     "UnitReference", "DeclaredUnit", "UnitNotDeclared",
     "UnitDeclaration",
+    "QuantityKindReference", "ObservationRoleReference",
+    "QuantityKindDeclaration", "ObservationRoleDeclaration",
+    "SemanticDimensionDeclaration",
     "TemporalOccurrenceEvidence",
     # typed errors
     "ModelKernelError",
@@ -109,6 +118,7 @@ __all__ = [
     "RelationshipsResult",
     "RegistrationSummary", "VariableRegistrationSummary", "VariableResult",
     "VariableSpecificationResult",
+    "SemanticDimensionResult", "VariableSemanticsResult",
     "EntityResult", "EntityVariablesResult",
     "ParentResult",
     "ParentStatus",
