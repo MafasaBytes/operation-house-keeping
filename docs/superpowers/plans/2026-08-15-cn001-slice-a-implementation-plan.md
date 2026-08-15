@@ -24,22 +24,25 @@ records appended in Slice A. No `backend/constraint_evaluation/` (Slice B).
 - Red-first: run the existing test (ImportError), implement, green.
 - Existing `EntityAnchor`/`VariableAnchor` unchanged.
 
-### Commit 3 — CanonicalDecimal + ScalarComparisonPredicate
-- `backend/model_kernel/contracts.py`: `CanonicalDecimal`, `ScalarComparisonPredicate`,
-  `ConstraintPredicate`.
+### Commit 3 — CanonicalDecimal + numeric boundary predicates
+- `backend/model_kernel/contracts.py`: `CanonicalDecimal`,
+  `canonical_constraint_decimal`, `NumericBoundary`,
+  `ExactNumericLowerBound`, `ExactNumericUpperBound`,
+  `ExactNumericInterval`, `ConstraintPredicate`.
 - `backend/model_kernel/__init__.py`: exports.
 - `tests/model_kernel/test_constraint_value_contracts.py` (the existing red
   baseline; turns green here).
 
 ### Commit 4 — ConstraintRegistration + VariableConstraintDeclaration + ripple
-- `backend/model_kernel/contracts.py`: `ConstraintRegistration`,
-  `VariableConstraintDeclaration`; extend `MODEL_RECORD_ID_PATTERN`,
+- `backend/model_kernel/contracts.py`: `ConstraintSemanticSignature`,
+  `ConstraintRegistration`, `VariableConstraintDeclaration`; extend `MODEL_RECORD_ID_PATTERN`,
   `ModelRecordEvidence.record_id` pattern, `ModelRecord` union; add
   `CONSTRAINT_ANCHOR_ID_PATTERN` re-export.
 - `backend/model_kernel/canonical.py`: `_PREFIX_BY_KIND` (`crg`,`vcn`).
 - `backend/model_kernel/__init__.py`: exports.
-- Red-first tests for the record envelopes (accept/reject fields, evidence,
-  supersedes, lock-vs-predicate-variable validator).
+- Red-first tests for record envelopes, evidence, supersedes, and semantic
+  signature. Declaration lineage is keyed only by constraint anchor; predicate
+  form, boundaries, inclusivity, and tokens may change.
 - No store/ripple yet → suite still green (no `crg_`/`vcn_` in any collection).
 
 ### Commit 5 — Store: buckets, indexes, validation, evidence closure
@@ -50,11 +53,12 @@ records appended in Slice A. No `backend/constraint_evaluation/` (Slice B).
   `LoadedModel(...)` construction.
 - Red-first tests: C1–C7, D1–D13 (append/load/replay/refusal).
 
-### Commit 6 — Query: variable_constraints + result contracts
+### Commit 6 — Query: exact lookup + structured discovery
 - `backend/model_kernel/contracts.py`: `ConstraintDeclarationResult`,
   `VariableConstraintCollectionResult` (carrying full `ModelRevision`,
   membership validators).
-- `backend/model_kernel/queries.py`: `variable_constraints`.
+- `backend/model_kernel/queries.py`: `constraint_declaration`,
+  `constraints_of_variable`.
 - `backend/model_kernel/__init__.py`: exports.
 - Red-first tests: E1–E8.
 

@@ -21,12 +21,14 @@ enforced in Slice B.
 
 | ID | Behavior at the public boundary | Failure killed |
 |----|----------------------------------|----------------|
-| B1 | `CanonicalDecimal` accepts exact canonical strings (`0`,`-1`,`0.5`,`-0.25`, 128-digit) | canonical rejection |
-| B2 | `CanonicalDecimal` rejects `-0`,`+1`,`01`,`.5`,`1.`,`1.0`,`0.0`,`1.230`,`1e3`,`NaN`,` 1`, 129-digit, and non-str | alias/hostile/oversize acceptance |
-| B3 | `ScalarComparisonPredicate` accepts every one of the six operators | operator gap |
-| B4 | the predicate accepts `DeclaredUnit` and `UnitNotDeclared` | unit-shape coupling |
-| B5 | the predicate rejects `interval`,`between`,`tolerance`,`lower`,`severity`,`other_variable_anchor_id`, bad variable pattern, `threshold="60.40"`, `unit=None` | non-v1 / implicit-field drift |
-| B6 | the predicate is frozen and a `model_construct` forgery re-fails `model_validate` | predicate forgery |
+| B1 | `CanonicalDecimal` accepts canonical positive/negative integers and fractions including `0.25` and `-0.25`, through contract, builder, canonical bytes, append and load | negative sub-unit rejection |
+| B2 | direct contracts/load reject `-0`,`-0.0`,`+1`,`01`,`.5`,`1.`,`1.0`,`60.40`, exponent, whitespace, nonfinite, over-limit and non-string values | alias/hostile acceptance |
+| B3 | `canonical_constraint_decimal` normalizes string aliases (`60.40→60.4`, `-0→0`, `0e99→0`) before construction and refuses non-string/nonfinite/over-limit input | post-hash repair |
+| B4 | lower and upper predicates accept inclusive and exclusive `NumericBoundary` values | boundary-kind gap |
+| B5 | intervals accept `lower<upper` and inclusive singleton `lower==upper` | singleton rejection |
+| B6 | reversed intervals and equal intervals with either exclusive endpoint are rejected | empty predicate |
+| B7 | discriminated union rejects wrong arms, arbitrary operators, tolerance, severity, extra variables and unit/conversion fields | non-v1 drift |
+| B8 | boundaries/predicates are frozen and `model_construct` forgeries fail public revalidation | predicate forgery |
 
 ## Group C — ConstraintRegistration record (crg_)
 
@@ -46,9 +48,9 @@ enforced in Slice B.
 |----|----------------------------------|----------------|
 | D1 | a declaration builds with a content-derived `vcn_` id | envelope drift |
 | D2 | a declaration whose `con_` anchor is unregistered is refused at append | dangling identity |
-| D3 | a declaration whose `variable_anchor_id` ≠ its registration's target is refused | identity/target drift |
-| D4 | a declaration whose `predicate.variable_anchor_id` ≠ its own `variable_anchor_id` is rejected | predicate/target inconsistency |
-| D5 | a parent with a different anchor/lock/unit/operator/variable is refused (different identity) | cross-lineage supersession |
+| D3 | the registration, not the declaration or predicate, is the sole target-variable authority | duplicate target drift |
+| D4 | expected quantity-kind, observation-role and unit locks are complete exact token types but are not cross-validated against VSM/VSP at append | append-time semantic inference |
+| D5 | only a parent with a different constraint anchor is refused; predicate form, bounds, inclusivity, and expected tokens may change under the same anchor | over-constrained correction |
 | D6 | a supersession cycle is refused (`MODEL_CONSTRAINT_LINEAGE_INVALID`) | cyclic correction |
 | D7 | a self-supersede is rejected | self-correction |
 | D8 | competing current tips on one `con_` are surfaced as `conflicted`, never resolved by recency/authority/id | false winner |
@@ -56,7 +58,7 @@ enforced in Slice B.
 | D10 | superseded-but-historical declarations remain disclosed (superseded ids carried) | history erasure |
 | D11 | an explicit replay subset is membership-relative and may revive an earlier tip | non-replayable correction |
 | D12 | a `vcn_` whose `model_record` evidence is absent from the collection is refused | dangling evidence |
-| D13 | only the `threshold` may differ across a same-lineage correction (idempotent id for unchanged content) | uncontrolled duplicate |
+| D13 | identical reappend is idempotent; any immutable declaration-content edit changes its canonical id | identity drift |
 
 ## Group E — Structured discovery (query)
 
@@ -70,6 +72,7 @@ enforced in Slice B.
 | E6 | every result carries the complete `ModelRevision` (not a bare id) | revision-id-only carriage |
 | E7 | validators prove every carried registration/declaration/conflict/superseded id ∈ `revision.record_ids` | unprovable invariant |
 | E8 | the collection result's constraints are ordered by `constraint_anchor_id` | nondeterministic order |
+| E9 | exact lookup of a valid unknown `con_` returns `not_registered`; malformed/wrong-type ids fail before I/O | absent/misuse conflation |
 
 ## Group F — Structural revalidation + ledger preservation
 

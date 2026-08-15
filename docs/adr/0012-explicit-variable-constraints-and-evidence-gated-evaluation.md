@@ -34,11 +34,11 @@ and validated the lock at append; the owner correction pass and the
    lifecycle field — the association must not become an unsupported model fact
    when a declaration is later superseded.
 3. **`VariableConstraintDeclaration` (prefix `vcn_`) is the correctable numeric
-   claim.** Its lineage key is the `con_` anchor; lineage invariants are the
-   anchor, the target variable, the semantic lock (quantity kind, observation
-   role), and the predicate's unit and operator — only the `threshold` may
-   change across a supersession. The DAG is the accepted multi-parent
-   three-colour form; competing tips are `conflicted`, never resolved.
+   claim.** Its only lineage key is the `con_` anchor. Predicate form,
+   boundaries, inclusivity, and expected quantity-kind, observation-role, and
+   unit tokens may all be corrected beneath that anchor. Retargeting cannot:
+   the permanent registration owns the target. The DAG is multi-parent;
+   competing tips are `conflicted`, never resolved by ranking.
 4. **The lock is not validated against `vsm`/`vsp` at append** (the accepted
    "kernel does not cross-validate" discipline, confirmed structurally for
    `vsp` vs `vsm`). The kernel validates intra-collection consistency
@@ -46,15 +46,16 @@ and validated the lock at append; the owner correction pass and the
    the lock against declared semantics; a lock mismatch surfaces at
    evaluation (Slice B) as `not_evaluated`, never as an append-time rejection.
    The provisional "validate the lock at append" option (RE2) is overridden.
-5. **The v1 predicate is a single `ScalarComparisonPredicate`** with six
-   operators against one `CanonicalDecimal` threshold. A two-sided range is
-   two independent constraints (two anchors), never an interval predicate;
-   `interval`, `between`, `tolerance`, and `severity` are forbidden in v1.
-6. **`CanonicalDecimal` is a strict, bounded plain-number grammar** (128
-   digits each side; accepts negative fractions; rejects negative zero,
-   exponents, whitespace, aliases, and trailing fractional zero). Any accepted
-   string is already canonical, so the content-derived record id is
-   deterministic and the `Decimal.normalize()` exponent trap never arises.
+5. **The v1 predicate union is exact numeric lower bound, upper bound, and
+   interval**, each with explicit inclusive/exclusive boundaries. Inclusive
+   singleton intervals are valid; reversed and equal-open intervals are
+   rejected as empty. Equality operators, tolerance, hysteresis, formulae,
+   conversion targets, and severity are forbidden.
+6. **`CanonicalDecimal` is a strict bounded plain-number string** using the
+   governing grammar that accepts `-0.25` while rejecting negative zero,
+   exponents, whitespace, aliases, and trailing fractional zero. Direct
+   contracts/load reject aliases; a separate authoring helper may canonicalize
+   before record construction. Bounds remain strings for canonical hashing.
 7. **Both CN record kinds use the accepted kernel envelope** (`record_kind`
    Literal+default, `schema_version: Literal["1"]="1"`, `recorded_at:
    UtcDatetime`, `note: str=""`, the global kernel `_Frozen` with no
@@ -86,8 +87,10 @@ and validated the lock at append; the owner correction pass and the
     consistent number-shaped JSON); `numeric_value_out_of_bounds` is retained
     (CN adds narrower resource limits than VS). `CanonicalObservedDecimal`
     preflight-checks exponent expansion before allocation; never `float` or
-    ambient `Decimal` context; the VS strict parse helper and standard-JSON
-    whitespace handling are reused; the original evidence is preserved.
+    ambient `Decimal` context. CN owns a narrow parser protected by accepted
+    VS/ES admission and parity vectors; it neither imports nor copies private
+    VS `_parse_shape`. Standard JSON whitespace is accepted and original
+    evidence is preserved.
 12. **The vocabulary is honest by construction**: `satisfied` / `violated` /
     `not_evaluated` only. None connotes safety, normality, fault, alarm,
     diagnosis, recommended action, or control. No `severity`/`grade`/`normality`
@@ -101,7 +104,7 @@ and validated the lock at append; the owner correction pass and the
   outside `system_identity` / `model_kernel` changes.
 - `identity_binding` is unchanged — CN-001 adds no binding declaration, no
   ledger change, no behavior extension.
-- The committed demonstration grows 16 → 17 records (one `crg_`, one `vcn_`),
+- The committed demonstration grows 16 → 18 records (one `crg_`, one `vcn_`),
   all 16 pre-CN-001 records byte-frozen; the demonstration records are not
   appended in Slice A.
 - Slice B composes the accepted VS + ES results plus the Slice A

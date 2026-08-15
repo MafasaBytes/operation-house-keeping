@@ -90,56 +90,60 @@ an unsupported model fact when a declaration is superseded.
 
 ## 4. The decimal and predicate contracts (corrections 2, 4; Slice A)
 
-### 4.1 `CanonicalDecimal` (the stored authoring bound)
+### 4.1 `CanonicalDecimal` (stored declaration bounds)
 
-A strict, canonical plain-number string. It is a `StrictStr` (non-string
-inputs — `int`, `float`, `None` — are rejected, never coerced) constrained by a
-grammar that accepts negative fractional values while rejecting negative
-zero, exponents, whitespace, aliases, and trailing fractional zero. The
-grammar is bounded to **128 digits on each side of the decimal point**
-(`[0-9]{0,127}` + a mandatory final `[1-9]`), the numeric boundary for the
-authoring side:
+Every authored boundary is a `StrictStr`, never a JSON number or Python
+`Decimal`. Direct construction and load accept only this canonical plain
+grammar:
 
 ```
-^(?:0|-?(?:0\.[0-9]{0,127}[1-9]|[1-9][0-9]{0,127}(?:\.[0-9]{0,127}[1-9])?))$
+^(?:0|-?(?:0\.[0-9]*[1-9]|[1-9][0-9]*(?:\.[0-9]*[1-9])?))$
 ```
 
-Accepts: `0`, `1`, `-1`, `0.5`, `-0.5`, `-0.25`, `10.01`, `60.4`, a 128-digit
-integer, a 128-digit fraction. Rejects: `-0`, `-0.0`, `+1`, `01`, `.5`, `1.`,
-`1.0`, `0.0`, `1.230` (trailing fractional zero), `1e3`, `NaN`, `Infinity`,
-` 1`, `1 `, `1\n`, a 129-digit integer, a 129-digit fraction, and every
-non-string. Pinned by golden vectors at contract, builder, canonical-byte,
-and load boundaries. Authoring normalization is the grammar itself: any
-accepted string is already canonical, so the content-derived record id is
-deterministic (no `Decimal.normalize()` exponent trap). `CanonicalDecimal`
-is the type of every predicate bound.
+The validator applies these limits before constructing `Decimal`: at most
+386 UTF-8 bytes, 256 coefficient digits, 256 integer digits, and 128
+fractional digits. It accepts `0`, `1`, `-1`, `0.25`, `-0.25`, and `60.4`.
+It rejects `-0`, `-0.0`, `+1`, `01`, `.5`, `1.`, `1.0`, `60.40`, exponent
+notation, whitespace, trailing newlines, non-finite spellings, Unicode
+digits, and non-strings. Positive and negative sub-unit values are pinned at
+contract, builder, canonical-byte, append, and load boundaries.
 
-### 4.2 `ScalarComparisonPredicate` (the v1 predicate)
+The separate pure `canonical_constraint_decimal()` authoring helper may
+normalize strict decimal inputs before record construction (`60.40 -> 60.4`,
+`-0 -> 0`, `0e99 -> 0`). Direct contracts and load never call it and never
+repair stored bytes. It performs exact coefficient/exponent processing,
+never `float`, context-dependent `normalize`, quantization, or rounding.
 
-v1 ships exactly one predicate kind: a scalar comparison against a single
-`CanonicalDecimal` threshold under one of six operators. A two-sided range
-is two independent constraints (two anchors), never one interval predicate.
+### 4.2 v1 predicate vocabulary
 
 ```python
-# backend/model_kernel/contracts.py
-class ScalarComparisonPredicate(_Frozen):
-    kind: Literal["scalar_comparison"] = "scalar_comparison"
-    variable_anchor_id: str = Field(pattern=VARIABLE_ANCHOR_ID_PATTERN)
-    operator: Literal["less_than", "less_than_or_equal", "equal",
-                     "greater_than_or_equal", "greater_than", "not_equal"]
-    threshold: CanonicalDecimal
-    unit: UnitDeclaration        # DeclaredUnit | UnitNotDeclared
+class NumericBoundary(_Frozen):
+    value: CanonicalDecimal
+    inclusion: Literal["inclusive", "exclusive"]
 
-ConstraintPredicate = Annotated[Union[ScalarComparisonPredicate],
-                                Field(discriminator="kind")]
+class ExactNumericLowerBound(_Frozen):
+    kind: Literal["lower_bound"] = "lower_bound"
+    lower: NumericBoundary
+
+class ExactNumericUpperBound(_Frozen):
+    kind: Literal["upper_bound"] = "upper_bound"
+    upper: NumericBoundary
+
+class ExactNumericInterval(_Frozen):
+    kind: Literal["interval"] = "interval"
+    lower: NumericBoundary
+    upper: NumericBoundary
+
+ConstraintPredicate = Annotated[
+    Union[ExactNumericLowerBound, ExactNumericUpperBound,
+          ExactNumericInterval], Field(discriminator="kind")]
 ```
 
-The predicate carries the target `variable_anchor_id` and the unit; the
-semantic lock (quantity kind, observation role) lives on the declaration.
-The predicate is frozen, `extra="forbid"`, and forgery-revalidated at every
-public boundary. v1 forbids: any `interval` kind, `between`, a `tolerance`,
-`lower`/`upper` fields, `other_variable_anchor_id`, `severity`, and any field
-not declared above (the honest-minimal v1 surface).
+An interval with `lower < upper` is valid. Equal endpoints are valid only
+when both are inclusive, producing a singleton. Reversed bounds and equal
+bounds with either endpoint exclusive are rejected as empty predicates.
+There is no tolerance, equality operator, hysteresis, formula, second
+variable, severity, conversion target, or implicit unit field.
 
 ## 5. The two constraint record kinds (corrections 1, 3; amendment)
 
@@ -185,13 +189,17 @@ nonempty `note`. `supersedes=()` is not present (no lineage field at all).
 
 ### 5.2 `VariableConstraintDeclaration` (prefix `vcn_`)
 
-The correctable numeric claim of one constraint identity. The
-**lineage key is the constraint anchor id** (`con_`): corrections to one
-constraint identity supersede one another; a different identity is a
-different declaration set. The **lineage invariants** — fields that may not
-change across a supersession — are the constraint identity, the target
-variable, the semantic lock, and the predicate's unit and operator. Only the
-`threshold` may change across a correction.
+The correctable numeric claim of one constraint identity. The **only lineage
+key is the constraint anchor id** (`con_`). Predicate form, boundaries,
+inclusivity, and expected semantic tokens may all be corrected beneath the
+same anchor. Retargeting cannot: the immutable registration owns the target.
+
+```python
+class ConstraintSemanticSignature(_Frozen):
+    quantity_kind: QuantityKindReference
+    observation_role: ObservationRoleReference
+    unit: UnitReference
+```
 
 ```python
 class VariableConstraintDeclaration(_Frozen):
@@ -199,10 +207,8 @@ class VariableConstraintDeclaration(_Frozen):
     schema_version: Literal["1"] = "1"
     record_id: str = Field(pattern=r"^vcn_[0-9a-f]{64}$")
     constraint_anchor_id: str = Field(pattern=CONSTRAINT_ANCHOR_ID_PATTERN)
-    variable_anchor_id: str = Field(pattern=VARIABLE_ANCHOR_ID_PATTERN)
-    lock_quantity_kind: QuantityKindReference
-    lock_observation_role: ObservationRoleReference
-    predicate: ConstraintPredicate        # carries unit, operator, threshold, variable
+    expected_semantics: ConstraintSemanticSignature
+    predicate: ConstraintPredicate
     evidence: Annotated[tuple[EvidenceRef, ...], Field(min_length=1),
                         AfterValidator(_canonical_evidence)]
     supersedes: Annotated[tuple[str, ...],
@@ -213,19 +219,12 @@ class VariableConstraintDeclaration(_Frozen):
 
     @model_validator(mode="after")
     def _parent_ids_well_formed(self): ...   # parents are vcn_ ids; no self-supersede
-    @model_validator(mode="after")
-    def _lock_matches_predicate_variable(self):
-        # the declaration's target variable is the predicate's variable
-        if self.predicate.variable_anchor_id != self.variable_anchor_id:
-            raise ValueError(...)
 ```
 
-The declaration redundantly carries `variable_anchor_id` equal to the
-predicate's, validated by a model validator; the store separately enforces
-that it equals the target recorded by the registration (correction: the
-kernel does not cross-validate at append against `vsm`/`vsp`, but it *does*
-enforce intra-collection consistency between a declaration and its own
-registration).
+The declaration does not duplicate `variable_anchor_id`; its registration is
+the sole authoritative target. Token locks are not compared with VSP/VSM at
+append or load. A mismatch is a Slice-B `not_evaluated` result, not model
+invalidity.
 
 ## 6. Kernel ripple sites (both kinds)
 
@@ -250,8 +249,8 @@ kinds, so each site is extended for `crg_` and `vcn_` together:
    `constraint_declarations`, `current_constraint_tips_by_anchor`,
    `constraint_superseded_by`.
 9. `validate_record_collection` body (`store.py`) — §7, §8.
-10. `ModelQueries.variable_constraints` + result contracts (`queries.py`,
-    `contracts.py`) — §9.
+10. `ModelQueries.constraint_declaration` and `constraints_of_variable` +
+    result contracts (`queries.py`, `contracts.py`) — §9.
 11. `__init__.py` imports + `__all__` (`model_kernel`, `system_identity`).
 12. Evidence closure §7 — `_check_model_record_evidence` for both kinds.
 
@@ -283,15 +282,11 @@ In `validate_record_collection`, for `vcn_`, mirroring the accepted
 from `(variable, dimension)` to the **constraint anchor id**:
 
 - **Reference closure:** `constraint_anchor_id` must name a registered
-  constraint (`crg_` present with that `anchor.anchor_id`); the declaration's
-  `variable_anchor_id` must equal that registration's target; the variable
-  itself must be registered.
-- **Lineage invariants:** every parent must be a `vcn_` declaration that
-  shares the full lineage key: `constraint_anchor_id`,
-  `lock_quantity_kind`, `lock_observation_role`, the predicate's `unit` and
-  `operator`, and `variable_anchor_id`. A parent that diverges on any of
-  these is `MODEL_CONSTRAINT_LINEAGE_INVALID` — it is a different constraint
-  and must be a separate identity, not a correction.
+  constraint (`crg_` present with that `anchor.anchor_id`); that registration
+  already proves the target variable is registered.
+- **Lineage invariant:** every parent must be a `vcn_` declaration with the
+  same `constraint_anchor_id`. This is the only lineage key. Predicate form,
+  boundaries, inclusivity, and expected semantic tokens may change.
 - **Acyclicity:** iterative three-colour walk over `supersedes`;
   `MODEL_CONSTRAINT_LINEAGE_INVALID` on a cycle.
 - **Tips:** records with no successor in the collection, grouped by
@@ -310,23 +305,23 @@ from `(variable, dimension)` to the **constraint anchor id**:
 
 ## 9. Constraint discovery query (corrections 3, 4, 9)
 
-`ModelQueries.variable_constraints(variable_anchor_id)` follows the accepted
-structured-absence pattern exactly: format validation first (the only
-`raise`, `MODEL_ANCHOR_ID_INVALID`), then a `status`-bearing result — never
-an exception for absence.
+`ModelQueries.constraint_declaration(constraint_anchor_id)` supplies exact
+lookup. `ModelQueries.constraints_of_variable(variable_anchor_id)` supplies
+structured discovery. Both validate identifier format before mapping access.
 
 ```python
 class ConstraintDeclarationResult(_Frozen):
     constraint_anchor_id: str = Field(pattern=CONSTRAINT_ANCHOR_ID_PATTERN)
-    registration: ConstraintRegistration           # always present (anchor is registered)
-    status: Literal["declared", "conflicted", "not_declared"]
+    registration: ConstraintRegistration | None = None
+    status: Literal["not_registered", "not_declared", "declared", "conflicted"]
     declaration: VariableConstraintDeclaration | None = None   # iff declared
     conflicting_declarations: tuple[VariableConstraintDeclaration, ...] = ()
     superseded_declaration_ids: tuple[str, ...] = ()
     revision: ModelRevision
 
     @model_validator(mode="after")
-    def _consistent(self): ...   # declared IFF declaration; conflicted IFF >=2;
+    def _consistent(self): ...   # registration present iff not not_registered;
+                                 # declared IFF declaration; conflicted IFF >=2;
                                  # every carried id ∈ revision.record_ids
 
 class VariableConstraintCollectionResult(_Frozen):
@@ -356,6 +351,9 @@ class VariableConstraintCollectionResult(_Frozen):
   Slice B) preserves this `registered` / `not_registered` distinction through
   evaluation so an empty tuple is never ambiguous; it is specified, not
   implemented in Slice A.
+- Exact lookup of a valid unknown `con_` returns `not_registered` with no
+  registration, declarations, conflicts, or superseded ids. Malformed
+  `con_` input is typed misuse before mapping access.
 
 ## 10. The evaluation admission gate and honest vocabulary (corrections 5, 6, 8;
 Slice B)
@@ -472,7 +470,7 @@ is preserved.
 
 ## 15. Demonstration (Slice B)
 
-`models/demo-printer/records/` 16 → 17: one `crg_` (registering a `con_`
+`models/demo-printer/records/` 16 → 18: one `crg_` (registering a `con_`
 anchor targeting the hotend temperature variable) and one `vcn_` (declaring
 `operator="less_than_or_equal"`, `threshold="80"`, locking to the model's
 declared quantity kind / observation role / degree-Celsius unit). All 16
