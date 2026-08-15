@@ -83,4 +83,3 @@ ingestion-receipt axis at an explicit observation instant.
 ```bash
 .venv/bin/python -m pytest tests/source_interpretation/
 ```
-

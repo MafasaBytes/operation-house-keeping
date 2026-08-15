@@ -10,4 +10,3 @@ __all__ = [
     "CandidateSemanticCompatibility", "SemanticCompatibilityConfigurationError",
     "SemanticCompatibilityError", "SemanticCompatibilityQueries",
     "VariableSemanticCompatibilityResult", "derive_semantic_findings"]
-

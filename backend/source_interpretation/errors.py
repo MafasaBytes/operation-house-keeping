@@ -18,4 +18,3 @@ class InterpretationIntegrityError(SourceInterpretationError):
 
 class InterpretationResolutionError(SourceInterpretationError):
     """Invalid input to source-property interpretation resolution."""
-

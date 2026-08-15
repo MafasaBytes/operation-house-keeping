@@ -161,4 +161,3 @@ Those are new acceptance coverage rather than failures of a pre-existing
 pin, so they do not appear among the 14 failures above. Both binding sets
 must remain byte- and membership-identical, and no `spj` file may be
 committed.
-

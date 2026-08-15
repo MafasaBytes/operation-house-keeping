@@ -40,4 +40,3 @@ def test_all_nine_boundary_kind_pairs_are_public_pure_and_pinned(
     before = scope.model_dump_json()
     assert membership(scope, IN) == expected
     assert scope.model_dump_json() == before
-

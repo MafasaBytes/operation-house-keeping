@@ -105,4 +105,3 @@ def compute_revision_id(interpretation_set_id: str, record_ids) -> str:
     material = ("interpretations\n" + interpretation_set_id + "\n"
                 + "\n".join(sorted(record_ids)))
     return "irv_" + hashlib.sha256(material.encode("utf-8")).hexdigest()
-
