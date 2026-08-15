@@ -38,9 +38,8 @@ def test_touched_accepted_module_notes_preserve_layer_ownership():
     assert "`membership()` helper" in binding
 
 
-def test_claude_status_is_not_applied_by_group_12():
-    # The exact proposed paragraph is an owner checkpoint deliverable, not a
-    # repository mutation until approval.
-    text = Path("CLAUDE.md").read_text()
-    assert "The current milestone is SN-001" in text
-    assert "The current milestone is ES-001" not in text
+def test_claude_status_records_the_owner_approved_interim_checkpoint():
+    text = " ".join(Path("CLAUDE.md").read_text().split())
+    assert "The current milestone is ES-001" in text
+    assert ("awaiting owner-gated adversarial review and dual clean-checkout "
+            "verification (Groups 13–14)") in text

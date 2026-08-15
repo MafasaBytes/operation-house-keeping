@@ -44,16 +44,23 @@ read-only `backend/observation_compatibility/` facade that assesses
 whether an attached observation matches that specification). A model
 specification states what the model requires; a source observation states
 what a source supplied; the two are never conflated, and a model unit is
-never inherited into source evidence. The current milestone is SN-001
-(structural evidence normalization and cross-source model binding:
-payload-pinned structural claims in the read-only
-`backend/structural_evidence/` module; identity mappings as ordinary
-`BindingAssertion` records; read-only multi-set reconciliation; inert
-proposals; separately hand-authored model acceptance), implemented in
-three owner-gated slices — see
-docs/superpowers/specs/2026-08-11-sn001-structural-evidence-design.md and
-docs/adr/0010. Source structure never silently becomes model truth; names,
-labels, and part numbers are never identity or join keys. See
+never inherited into source evidence. Also accepted: SN-001 (payload-pinned
+structural claims in the read-only `backend/structural_evidence` module;
+identity mappings as ordinary `BindingAssertion` records; read-only
+multi-set reconciliation; inert proposals; separately hand-authored model
+acceptance), validated and repaired under owner mandate. The current
+milestone is ES-001 (explicit per-dimension variable semantics in
+`backend/model_kernel`; exact-locator authority interpretation in the
+append-only `backend/source_interpretation` ledger; and read-only
+`backend/semantic_compatibility` composition over the accepted
+value-compatibility result), implemented through its committed fixture and
+completion demonstration and awaiting owner-gated adversarial review and
+dual clean-checkout verification (Groups 13–14) — see
+docs/superpowers/specs/2026-08-13-es001-engineering-semantics-design.md and
+docs/adr/0011. Source interpretation is authority knowledge, never source
+evidence or identity binding; compatibility compares exact identity tokens
+only, performs no conversion or value grading, and never fills an absent
+source unit. See
 docs/superpowers/specs/ and docs/adr/ for accepted designs. The
 historical sentence "Only `data_sources` is currently in scope" in the
 Current Phase section below is superseded by this Status section; the
