@@ -22,6 +22,9 @@ FROZEN = {
     f"{RECORD_IDS[2]}.json":
     "e34c0c7bc0b16af364b1bca3d50130575b2bdd38683c4a6f1566eda7f5c103cd",
 }
+EXPECTED_AGENT_BY_RECORD = {
+    record_id: "es001_demo_fixture" for record_id in RECORD_IDS
+}
 
 
 def test_exact_revision_membership_and_explicit_replay():
@@ -44,10 +47,11 @@ def test_exhaustive_authority_dimensions_and_no_rejection():
         RECORD_IDS[1]: "quantity_kind",
         RECORD_IDS[2]: "unit",
     }
-    assert set(loaded.records) == set(expected_dimensions)
+    assert set(loaded.records) == set(expected_dimensions) == set(
+        EXPECTED_AGENT_BY_RECORD)
     for record_id, record in loaded.records.items():
         assert record.authority.kind == "test_fixture"
-        assert record.authority.agent == "es001_demo_fixture"
+        assert record.authority.agent == EXPECTED_AGENT_BY_RECORD[record_id]
         assert record.interpretation.dimension == expected_dimensions[record_id]
         assert record.supersedes == ()
         assert "authority knowledge" in record.note
@@ -73,4 +77,3 @@ def test_binding_ledgers_remain_at_accepted_membership_counts():
     assert len(list(Path("bindings/demo-printer/records").glob("*.json"))) == 6
     assert len(list(Path(
         "bindings/demo-printer-model/records").glob("*.json"))) == 5
-
