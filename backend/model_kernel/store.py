@@ -84,6 +84,22 @@ def _fail(code: str, message: str) -> None:
     raise ModelIntegrityError(code, message)
 
 
+def _check_model_record_evidence(records: Mapping, record,
+                                 kind_label: str) -> None:
+    """The UNIFORM evidence-reference closure rule (ES-001, owner-mandated
+    repair): for every evidence-bearing model claim, each EvidenceRef of
+    kind model_record must name a member of the supplied collection —
+    load, prospective append, and explicit replay subsets alike. Foreign
+    evidence arms remain declared references and are never dereferenced
+    or validated against foreign ledgers."""
+    for reference in record.evidence:
+        if (reference.kind == "model_record"
+                and reference.record_id not in records):
+            _fail("MODEL_REFERENCE_INVALID",
+                  f"{kind_label} {record.record_id} cites model-record "
+                  f"evidence {reference.record_id} absent from the revision")
+
+
 def revalidate(record) -> ModelRecord:
     """Structurally revalidate a supplied record from plain serialized field
     data at a public trust boundary.
@@ -200,6 +216,7 @@ def validate_record_collection(
             _fail("MODEL_REFERENCE_INVALID",
                   f"specification {record_id} references unregistered "
                   f"variable {record.variable_anchor_id}")
+        _check_model_record_evidence(records, record, "specification")
         for parent_id in record.supersedes:
             parent = specifications.get(parent_id)
             if parent is None:
@@ -340,12 +357,7 @@ def validate_record_collection(
                 _fail("MODEL_SUPERSEDES_INVALID",
                       "assertion supersession requires the same type "
                       "lineage, source, target, and context")
-        for reference in claim.evidence:
-            if (reference.kind == "model_record"
-                    and reference.record_id not in records):
-                _fail("MODEL_REFERENCE_INVALID",
-                      f"assertion {record_id} cites model-record evidence "
-                      f"{reference.record_id} absent from the revision")
+        _check_model_record_evidence(records, claim, "assertion")
     for claim in assertions.values():  # supersession acyclicity
         seen = set()
         cursor = claim
