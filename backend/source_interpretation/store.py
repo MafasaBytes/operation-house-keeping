@@ -290,10 +290,11 @@ class InterpretationStore:
         except (ValidationError, ValueError, OSError) as error:
             raise InterpretationIntegrityError(
                 "INTERPRETATION_RECORD_INVALID",
-                f"{path.name} is not a valid interpretation record") from error
+                "a stored file is not a valid interpretation record") from error
         if path.name != f"{record.record_id}.json" or not verify_record_id(record):
             _fail("INTERPRETATION_RECORD_HASH_MISMATCH",
-                  f"{path.name} does not match its content-derived id")
+                  f"stored record {record.record_id} does not match its "
+                  "content-derived id")
         return record
 
     def load(self) -> LoadedInterpretationSet:
@@ -307,7 +308,7 @@ class InterpretationStore:
         for path in paths:
             if not _FILENAME.fullmatch(path.name):
                 _fail("INTERPRETATION_RECORD_INVALID",
-                      f"unexpected file in the ledger: {path.name}")
+                      "the interpretation ledger contains an unexpected file")
             record = self._read_record(path)
             records[record.record_id] = record
         return validate_record_collection(self.interpretation_set_id, records,
@@ -324,7 +325,7 @@ class InterpretationStore:
             if not isinstance(record_id, str) or not _RECORD_ID.fullmatch(record_id):
                 raise InterpretationIntegrityError(
                     "INTERPRETATION_REVISION_INVALID",
-                    f"{record_id!r} is not a valid interpretation record id")
+                    "revision membership contains an invalid record id")
         if len(set(supplied)) != len(supplied):
             raise InterpretationIntegrityError(
                 "INTERPRETATION_REVISION_INVALID",
