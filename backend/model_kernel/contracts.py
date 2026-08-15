@@ -728,8 +728,15 @@ class SemanticDimensionResult(_Frozen):
         if self.status == "conflicted" and len(self.conflicting_declarations) < 2:
             raise ValueError("a conflict requires at least two declarations")
         ids = [record.record_id for record in self.conflicting_declarations]
-        if ids != sorted(ids):
-            raise ValueError("competing declarations must be canonically ordered")
+        if ids != sorted(set(ids)):
+            raise ValueError(
+                "competing declarations must be unique and canonically ordered")
+        carried = (() if self.declaration is None else (self.declaration,))
+        carried += self.conflicting_declarations
+        if any(record.declaration.dimension != self.dimension
+               for record in carried):
+            raise ValueError(
+                "carried declarations must match the result dimension")
         if not _sorted_unique(self.superseded_declaration_ids):
             raise ValueError("superseded declaration ids must be unique and sorted")
         if self.status == "not_registered" and self.superseded_declaration_ids:
@@ -753,6 +760,15 @@ class VariableSemanticsResult(_Frozen):
                         self.observation_role.status == "not_registered")
         if unregistered[0] != unregistered[1]:
             raise ValueError("both dimensions are unregistered exactly together")
+        carried = []
+        for result in (self.quantity_kind, self.observation_role):
+            if result.declaration is not None:
+                carried.append(result.declaration)
+            carried.extend(result.conflicting_declarations)
+        if any(record.variable_anchor_id != self.anchor_id
+               for record in carried):
+            raise ValueError(
+                "carried declarations must belong to the requested variable")
         return self
 
 
