@@ -706,6 +706,99 @@ class ModelRevision(_Frozen):
 
 
 # --------------------------------------------------------------- results
+class _ConstraintResultFrozen(_Frozen):
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", revalidate_instances="always")
+
+
+class ConstraintDeclarationResult(_ConstraintResultFrozen):
+    constraint_anchor_id: str = Field(pattern=CONSTRAINT_ANCHOR_ID_PATTERN)
+    status: Literal[
+        "not_registered", "not_declared", "declared", "conflicted"]
+    registration: ConstraintRegistration | None = None
+    declaration: VariableConstraintDeclaration | None = None
+    conflicting_declarations: tuple[VariableConstraintDeclaration, ...] = ()
+    superseded_declaration_ids: tuple[str, ...] = ()
+    revision: ModelRevision
+
+    @model_validator(mode="after")
+    def _coherent(self):
+        # Rebuild nested objects from serialized fields. Existing lower-layer
+        # bases remain unchanged while this new public boundary rejects forged
+        # model_construct/model_copy instances.
+        revision = ModelRevision.model_validate(self.revision.model_dump())
+        registration = self.registration
+        if registration is not None:
+            registration = ConstraintRegistration.model_validate(
+                registration.model_dump())
+        declarations = tuple(
+            VariableConstraintDeclaration.model_validate(item.model_dump())
+            for item in self.conflicting_declarations)
+        declaration = self.declaration
+        if declaration is not None:
+            declaration = VariableConstraintDeclaration.model_validate(
+                declaration.model_dump())
+
+        registered = self.status != "not_registered"
+        if registered != (registration is not None):
+            raise ValueError("registration is present exactly when registered")
+        if (self.status == "declared") != (declaration is not None):
+            raise ValueError("one declaration is carried exactly when declared")
+        if (self.status == "conflicted") != bool(declarations):
+            raise ValueError("conflicting tips are carried exactly when conflicted")
+        if self.status == "conflicted" and len(declarations) < 2:
+            raise ValueError("a constraint conflict needs at least two tips")
+        if self.status in ("not_registered", "not_declared") and (
+                declarations or self.superseded_declaration_ids):
+            raise ValueError("absence statuses carry no declaration history")
+        if registration is not None and (
+                registration.anchor.anchor_id != self.constraint_anchor_id):
+            raise ValueError("registration must belong to the requested constraint")
+        carried = (*declarations,) if declaration is None else (
+            declaration, *declarations)
+        if any(item.constraint_anchor_id != self.constraint_anchor_id
+               for item in carried):
+            raise ValueError("carried declarations must share the requested anchor")
+        conflict_ids = [item.record_id for item in declarations]
+        if conflict_ids != sorted(set(conflict_ids)):
+            raise ValueError("conflicting declarations must be unique and sorted")
+        if not _sorted_unique(self.superseded_declaration_ids):
+            raise ValueError("superseded declaration ids must be unique and sorted")
+        members = set(revision.record_ids)
+        ids = ([registration.record_id] if registration is not None else [])
+        ids.extend(item.record_id for item in carried)
+        ids.extend(self.superseded_declaration_ids)
+        if not set(ids) <= members:
+            raise ValueError("every carried constraint record must belong to revision")
+        return self
+
+
+class VariableConstraintCollectionResult(_ConstraintResultFrozen):
+    variable_anchor_id: str = Field(pattern=VARIABLE_ANCHOR_ID_PATTERN)
+    status: Literal["registered", "not_registered"]
+    constraints: tuple[ConstraintDeclarationResult, ...] = ()
+    revision: ModelRevision
+
+    @model_validator(mode="after")
+    def _coherent(self):
+        revision = ModelRevision.model_validate(self.revision.model_dump())
+        entries = tuple(ConstraintDeclarationResult.model_validate(
+            item.model_dump()) for item in self.constraints)
+        if self.status == "not_registered" and entries:
+            raise ValueError("an unregistered variable carries no constraints")
+        anchors = [item.constraint_anchor_id for item in entries]
+        if anchors != sorted(set(anchors)):
+            raise ValueError("constraints must be unique and ordered by anchor")
+        for item in entries:
+            if item.revision != revision:
+                raise ValueError("one model revision governs the collection")
+            if (item.registration is None
+                    or item.registration.variable_anchor_id
+                    != self.variable_anchor_id):
+                raise ValueError("every constraint must target the requested variable")
+        return self
+
+
 def _sorted_unique(values) -> bool:
     return list(values) == sorted(set(values))
 

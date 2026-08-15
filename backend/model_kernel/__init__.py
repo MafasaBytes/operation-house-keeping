@@ -23,6 +23,7 @@ from backend.model_kernel.contracts import (
     ChildEntry,
     ChildrenResult,
     ConstraintPredicate,
+    ConstraintDeclarationResult,
     ConstraintRegistration,
     ConstraintSemanticSignature,
     CycleReport,
@@ -70,6 +71,7 @@ from backend.model_kernel.contracts import (
     TraversalResult,
     TraversalStep,
     VariableConstraintDeclaration,
+    VariableConstraintCollectionResult,
     VariableRegistration,
     VariableRegistrationSummary,
     VariableResult,
@@ -127,6 +129,7 @@ __all__ = [
     "ModelQueryError",
     # result contracts
     "ModelRevision",
+    "ConstraintDeclarationResult", "VariableConstraintCollectionResult",
     "EvidenceDisclosure",
     "RelationshipSummary",
     "LineageConflict",

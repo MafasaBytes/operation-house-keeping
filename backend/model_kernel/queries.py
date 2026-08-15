@@ -18,6 +18,7 @@ from backend.model_kernel.contracts import (
     AssertionContext,
     ChildEntry,
     ChildrenResult,
+    ConstraintDeclarationResult,
     CycleReport,
     EntityResult,
     EntityVariablesResult,
@@ -36,6 +37,7 @@ from backend.model_kernel.contracts import (
     TraversalResult,
     TraversalStep,
     VariableRegistrationSummary,
+    VariableConstraintCollectionResult,
     VariableResult,
     VariableSpecificationResult,
     SemanticDimensionResult,
@@ -44,12 +46,14 @@ from backend.model_kernel.contracts import (
 from backend.model_kernel.hierarchy import HierarchyProjection, build_projection
 from backend.model_kernel.store import LoadedModel
 from backend.system_identity import (
+    CONSTRAINT_ANCHOR_ID_PATTERN,
     ENTITY_ANCHOR_ID_PATTERN,
     VARIABLE_ANCHOR_ID_PATTERN,
 )
 
 _ANCHOR_ID = re.compile(ENTITY_ANCHOR_ID_PATTERN)
 _VARIABLE_ANCHOR_ID = re.compile(VARIABLE_ANCHOR_ID_PATTERN)
+_CONSTRAINT_ANCHOR_ID = re.compile(CONSTRAINT_ANCHOR_ID_PATTERN)
 _CONTEXT_ADAPTER: TypeAdapter = TypeAdapter(AssertionContext)
 _LIFECYCLE_VIEWS = frozenset(typing.get_args(LifecycleView))
 
@@ -78,6 +82,14 @@ class ModelQueries:
             raise ModelQueryError(
                 "MODEL_ANCHOR_ID_INVALID",
                 f"{anchor_id!r} is not a canonical variable anchor id")
+        return anchor_id
+
+    def _require_constraint_anchor_id(self, anchor_id: str) -> str:
+        if (not isinstance(anchor_id, str)
+                or not _CONSTRAINT_ANCHOR_ID.fullmatch(anchor_id)):
+            raise ModelQueryError(
+                "MODEL_ANCHOR_ID_INVALID",
+                f"{anchor_id!r} is not a canonical constraint anchor id")
         return anchor_id
 
     def _require_view(self, view):
@@ -207,6 +219,64 @@ class ModelQueries:
             status="registered", anchor_id=anchor_id,
             registration=self._variable_summary(registration),
             revision=self.loaded.revision)
+
+    # -- constraints ------------------------------------------------------
+
+    def constraint_declaration(
+            self, constraint_anchor_id: str) -> ConstraintDeclarationResult:
+        constraint_anchor_id = self._require_constraint_anchor_id(
+            constraint_anchor_id)
+        revision = self.loaded.revision
+        registration = self.loaded.constraint_registrations_by_anchor.get(
+            constraint_anchor_id)
+        if registration is None:
+            return ConstraintDeclarationResult(
+                constraint_anchor_id=constraint_anchor_id,
+                status="not_registered", revision=revision)
+        tips = self.loaded.current_constraint_tips_by_anchor.get(
+            constraint_anchor_id, ())
+        members = tuple(
+            item for item in self.loaded.constraint_declarations.values()
+            if item.constraint_anchor_id == constraint_anchor_id)
+        superseded = tuple(sorted(
+            item.record_id for item in members
+            if self.loaded.constraint_superseded_by.get(item.record_id, ())))
+        if not tips:
+            return ConstraintDeclarationResult(
+                constraint_anchor_id=constraint_anchor_id,
+                status="not_declared", registration=registration,
+                revision=revision)
+        if len(tips) == 1:
+            return ConstraintDeclarationResult(
+                constraint_anchor_id=constraint_anchor_id,
+                status="declared", registration=registration,
+                declaration=tips[0],
+                superseded_declaration_ids=superseded,
+                revision=revision)
+        return ConstraintDeclarationResult(
+            constraint_anchor_id=constraint_anchor_id,
+            status="conflicted", registration=registration,
+            conflicting_declarations=tuple(sorted(
+                tips, key=lambda item: item.record_id)),
+            superseded_declaration_ids=superseded,
+            revision=revision)
+
+    def constraints_of_variable(
+            self, variable_anchor_id: str
+    ) -> VariableConstraintCollectionResult:
+        variable_anchor_id = self._require_variable_anchor_id(variable_anchor_id)
+        revision = self.loaded.revision
+        if variable_anchor_id not in self.loaded.variable_registrations_by_anchor:
+            return VariableConstraintCollectionResult(
+                variable_anchor_id=variable_anchor_id,
+                status="not_registered", revision=revision)
+        anchors = self.loaded.constraint_anchor_ids_by_variable.get(
+            variable_anchor_id, ())
+        entries = tuple(self.constraint_declaration(anchor_id)
+                        for anchor_id in anchors)
+        return VariableConstraintCollectionResult(
+            variable_anchor_id=variable_anchor_id, status="registered",
+            constraints=entries, revision=revision)
 
     def variables_of(self, entity_anchor_id: str) -> EntityVariablesResult:
         entity_anchor_id = self._require_anchor_id(entity_anchor_id)
