@@ -19,6 +19,8 @@ from backend.source_interpretation.canonical import (
 from backend.source_interpretation.contracts import (
     INTERPRETATION_RECORD_ID_PATTERN,
     INTERPRETATION_SET_ID_PATTERN,
+    DimensionInterpretationResolution,
+    InterpretationAssertionSummary,
     InterpretationBody,
     InterpretationClosure,
     InterpretationRecord,
@@ -26,6 +28,7 @@ from backend.source_interpretation.contracts import (
     InterpretationRetraction,
     InterpretationRevision,
     ObservationRoleInterpretation,
+    PropertyInterpretationResult,
     QuantityKindInterpretation,
     SourcePropertyInterpretation,
     UnitInterpretation,
@@ -41,14 +44,17 @@ from backend.source_interpretation.store import (
     LoadedInterpretationSet,
     validate_record_collection,
 )
+from backend.source_interpretation.resolver import InterpretationResolver
 
 __all__ = [
     "INTERPRETATION_RECORD_ID_PATTERN", "INTERPRETATION_SET_ID_PATTERN",
+    "DimensionInterpretationResolution", "InterpretationAssertionSummary",
     "InterpretationBody", "InterpretationClosure",
     "InterpretationConfigurationError", "InterpretationIntegrityError",
     "InterpretationRecord", "InterpretationRejection",
     "InterpretationResolutionError", "InterpretationRetraction",
-    "InterpretationRevision", "ObservationRoleInterpretation",
+    "InterpretationResolver", "InterpretationRevision",
+    "ObservationRoleInterpretation", "PropertyInterpretationResult",
     "QuantityKindInterpretation", "SourceInterpretationError",
     "InterpretationStore", "LoadedInterpretationSet",
     "SourcePropertyInterpretation", "UnitInterpretation", "build_record",

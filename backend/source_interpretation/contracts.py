@@ -160,13 +160,111 @@ class InterpretationRevision(_Frozen):
         return self
 
 
+InterpretationStatus = Literal[
+    "interpreted", "applicability_unknown", "outside_applicability",
+    "not_declared", "ambiguous", "conflicted", "superseded", "retracted",
+    "inactive"]
+InterpretationDimension = Literal["quantity_kind", "observation_role", "unit"]
+
+
+class InterpretationAssertionSummary(_Frozen):
+    record_id: str = Field(pattern=r"^spi_[0-9a-f]{64}$")
+    dimension: InterpretationDimension
+    interpretation: InterpretationBody
+    authority: AuthorityRef
+    declared_applies: AppliesScope
+    effective_applies: AppliesScope
+    closure_records: tuple[str, ...] = ()
+    superseded_by: tuple[str, ...] = ()
+    retracted_by: tuple[str, ...] = ()
+    active: bool
+    membership_at: Membership
+    recorded_at: UtcDatetime
+
+    @model_validator(mode="after")
+    def _consistent(self):
+        if self.dimension != self.interpretation.dimension:
+            raise ValueError("summary dimension must match its interpretation")
+        if self.active != (not self.superseded_by and not self.retracted_by):
+            raise ValueError("active is derived from lifecycle links")
+        if len(self.closure_records) > 1:
+            raise ValueError("at most one closure may be disclosed")
+        for values, prefix in ((self.closure_records, "spc"),
+                               (self.superseded_by, "spi"),
+                               (self.retracted_by, "spr")):
+            if list(values) != sorted(set(values)):
+                raise ValueError("lifecycle ids must be unique and sorted")
+            if any(not re.fullmatch(rf"^{prefix}_[0-9a-f]{{64}}$", item)
+                   for item in values):
+                raise ValueError("lifecycle id has the wrong record kind")
+        return self
+
+
+class DimensionInterpretationResolution(_Frozen):
+    dimension: InterpretationDimension
+    status: InterpretationStatus
+    interpretation: InterpretationBody | None = None
+    candidate_interpretations: tuple[InterpretationBody, ...] = ()
+    via_assertions: tuple[InterpretationAssertionSummary, ...] = ()
+    applicability_basis: Literal[
+        "declared_interval", "includes_unbounded_claim"] | None = None
+
+    @model_validator(mode="after")
+    def _consistent(self):
+        positive = self.status == "interpreted"
+        if positive != (self.interpretation is not None):
+            raise ValueError("interpretation exists exactly when interpreted")
+        if positive != (self.applicability_basis is not None):
+            raise ValueError("basis exists exactly when interpreted")
+        candidate_status = self.status in (
+            "applicability_unknown", "ambiguous", "conflicted")
+        if bool(self.candidate_interpretations) != candidate_status:
+            raise ValueError("candidate interpretations must match status")
+        bodies = (() if self.interpretation is None
+                  else (self.interpretation,)) + self.candidate_interpretations
+        if any(body.dimension != self.dimension for body in bodies):
+            raise ValueError("result carries a wrong-dimension body")
+        if any(summary.dimension != self.dimension
+               for summary in self.via_assertions):
+            raise ValueError("result carries a wrong-dimension summary")
+        from backend.source_interpretation.canonical import canonical_sort_key
+        keys = tuple(canonical_sort_key(body)
+                     for body in self.candidate_interpretations)
+        if keys != tuple(sorted(set(keys))):
+            raise ValueError("candidate bodies must be unique and sorted")
+        ids = tuple(summary.record_id for summary in self.via_assertions)
+        if ids != tuple(sorted(set(ids))):
+            raise ValueError("summaries must be unique and sorted")
+        return self
+
+
+class PropertyInterpretationResult(_Frozen):
+    subject: SourceSubjectRef
+    property: SourcePropertyRef
+    at: UtcDatetime
+    quantity_kind: DimensionInterpretationResolution
+    observation_role: DimensionInterpretationResolution
+    unit: DimensionInterpretationResolution
+    revision: InterpretationRevision
+
+    @model_validator(mode="after")
+    def _dimensions_locked(self):
+        if (self.quantity_kind.dimension != "quantity_kind"
+                or self.observation_role.dimension != "observation_role"
+                or self.unit.dimension != "unit"):
+            raise ValueError("result arms must carry their named dimensions")
+        return self
+
+
 __all__ = [
     "AppliesScope", "AuthorityRef", "CanonicalParents",
     "INTERPRETATION_RECORD_ID_PATTERN", "INTERPRETATION_SET_ID_PATTERN",
-    "InterpretationBody", "InterpretationClosure", "InterpretationRecord",
+    "DimensionInterpretationResolution", "InterpretationAssertionSummary",
+    "InterpretationBody", "InterpretationClosure", "InterpretationDimension",
+    "InterpretationRecord", "InterpretationStatus",
     "InterpretationRejection", "InterpretationRetraction",
     "InterpretationRevision", "Membership",
-    "ObservationRoleInterpretation", "QuantityKindInterpretation",
-    "SourcePropertyInterpretation", "UnitInterpretation", "UtcDatetime",
+    "ObservationRoleInterpretation", "PropertyInterpretationResult",
+    "QuantityKindInterpretation", "SourcePropertyInterpretation",
+    "UnitInterpretation", "UtcDatetime",
 ]
-

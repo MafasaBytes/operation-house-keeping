@@ -35,7 +35,11 @@ from backend.temporal_state.contracts import SourcePropertyRef, SourceSubjectRef
 
 
 def membership(scope: AppliesScope, at: datetime) -> Membership:
-    """Three-valued membership of `at` in a half-open effective scope."""
+    """Supported public pure helper for three-valued scope membership.
+
+    This function has no clock or ledger access. It preserves the accepted
+    half-open boundary behavior for every declared/unbounded/unknown pair.
+    """
     start, end = scope.start_boundary, scope.end_boundary
 
     if start.kind == "declared":

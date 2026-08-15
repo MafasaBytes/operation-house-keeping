@@ -47,6 +47,10 @@ mode.
   `resolved_target`); a differing-target UNKNOWN prevents `bound`; OUT
   assertions never compete or block; conflicts are surfaced, never
   resolved by recency or authority rank.
+- **Supported membership helper**: `identity_binding.membership(scope, at)`
+  is the public pure implementation of three-valued half-open applicability.
+  Consumers reuse it rather than copying the boundary algorithm; it performs
+  no ledger access and has no implicit clock.
 - **Subject ≠ property**: the 3-dimension subject and 6-dimension
   property locators bind independently; property results carry a
   non-recursive subject context, and a positively inconsistent
