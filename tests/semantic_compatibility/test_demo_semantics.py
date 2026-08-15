@@ -13,11 +13,12 @@ from backend.model_kernel import ModelQueries, ModelStore
 from backend.semantic_compatibility import SemanticCompatibilityQueries
 from backend.source_interpretation import InterpretationResolver, InterpretationStore
 from tests.model_kernel.test_demo_model import (
-    PRE_ES001_MEMBERSHIP, PRE_ES001_REVISION)
+    ES001_MODEL_RECORDS, PRE_ES001_MEMBERSHIP, PRE_ES001_REVISION)
 from tests.model_state.helpers import PROP_TEMP, SUBJECT
 from tests.observation_compatibility.test_demo_compatibility import (
     AS_OF, EXTRUDER, HOTEND, LATEST_CHECKSUM, LATEST_OCCURRENCE_ID,
-    LATEST_RAW_RECORD_ID, committed)
+    LATEST_RAW_RECORD_ID, SPECIFICATION_ID, committed)
+from tests.source_interpretation.test_demo_interpretations import RECORD_IDS
 
 DEMO_INTERPRETATIONS = Path("interpretations/demo-printer")
 EARLY = datetime(2026, 8, 7, 19, 0, tzinfo=UTC)
@@ -41,6 +42,10 @@ def test_complete_committed_es001_chain_and_upstream_immutability(tmp_path):
     evidence_root = temporal.store.evidence_root
     before_temporal = temporal.store.ordered_logical_dump()
     before_evidence = tree_bytes(evidence_root)
+    ledger_roots = tuple(Path(path) for path in (
+        "models/demo-printer", "bindings/demo-printer",
+        "bindings/demo-printer-model", "interpretations/demo-printer"))
+    before_ledgers = {root: tree_bytes(root) for root in ledger_roots}
 
     result = facade.variable_semantic_compatibility(
         HOTEND, as_of=AS_OF, entity_anchor_id=EXTRUDER)
@@ -61,6 +66,29 @@ def test_complete_committed_es001_chain_and_upstream_immutability(tmp_path):
         InterpretationStore(DEMO_INTERPRETATIONS).load()
     ).resolve_property_interpretations(
         SUBJECT, PROP_TEMP, at=occurrence.received_at)
+
+    # Every authority-declaration arrow in the accepted diagram is named.
+    assert result.value_compatibility.state.variable_registration.record_id == (
+        "vrg_40c8c6b984345af33de6913ca9025d60d22b0e627b110e974c78270eb941dca7")
+    assert result.value_compatibility.specification_result.specification\
+        .record_id == SPECIFICATION_ID
+    assert tuple(summary.record_id for summary in
+                 candidate.value_candidate.state_candidate.bound.resolution
+                 .via_assertions) == (
+        "iba_b1b86a4fd0c56f36aafb4574176429c0edab530dbbd5d1da954a54f2533fd90c",
+    )
+    assert {
+        result.semantics_result.quantity_kind.declaration.record_id,
+        result.semantics_result.observation_role.declaration.record_id,
+    } == set(ES001_MODEL_RECORDS)
+    interpretation_ids = {
+        summary.record_id
+        for dimension in (candidate.interpretation.quantity_kind,
+                          candidate.interpretation.observation_role,
+                          candidate.interpretation.unit)
+        for summary in dimension.via_assertions
+    }
+    assert interpretation_ids == set(RECORD_IDS)
 
     # Frozen evidence and provenance remain the accepted 60.4 chain.
     assert occurrence.value_json == "60.4"
@@ -86,6 +114,7 @@ def test_complete_committed_es001_chain_and_upstream_immutability(tmp_path):
     # byte/logically unchanged after the complete query.
     assert temporal.store.ordered_logical_dump() == before_temporal
     assert tree_bytes(evidence_root) == before_evidence
+    assert {root: tree_bytes(root) for root in ledger_roots} == before_ledgers
 
 
 def test_semantic_tokens_never_enter_committed_source_evidence_subtree(tmp_path):
@@ -95,9 +124,14 @@ def test_semantic_tokens_never_enter_committed_source_evidence_subtree(tmp_path)
     source_tree = candidate.value_candidate.state_candidate.model_dump(
         mode="json")
     text = json.dumps(source_tree, sort_keys=True)
-    for token in ("degree_celsius", "ohk-units-1", "project_local",
-                  "measured_actual", "ohk-observation-roles-1"):
+    semantic_needles = (
+        "degree_celsius", "ohk-units-1", "project_local", "measured_actual",
+        "ohk-observation-roles-1", "celsius", "Celsius", "kelvin",
+        "fahrenheit", "temperature_unit", *ES001_MODEL_RECORDS, *RECORD_IDS)
+    for token in semantic_needles:
         assert token not in text
+        assert token.encode() not in b"".join(
+            tree_bytes(temporal.store.evidence_root).values())
     assert '"declared_unit": null' in text
     assert candidate.interpretation.unit.interpretation.unit.code == (
         "degree_celsius")
