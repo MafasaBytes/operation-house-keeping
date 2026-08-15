@@ -12,8 +12,10 @@ DEMO_MODEL = Path("models/demo-printer")
 # Every HISTORICAL revision is pinned by replay over an explicit id list;
 # only the current membership is pinned by load(). A prefix filter is
 # never an acceptable membership selector.
-CURRENT_REVISION = ("mrv_702c840f7da00617feb1be252838105d8b001b2e19978842"
-                    "bdcbec56996c99ff")  # 14 records (SN-001)
+CURRENT_REVISION = ("mrv_23631989f98b678aaf1c556c345ac57a320ec266c2f712a4"
+                    "0099e8032ca8135b")  # 16 records (ES-001)
+PRE_ES001_REVISION = ("mrv_702c840f7da00617feb1be252838105d8b001b2e19978842"
+                      "bdcbec56996c99ff")  # 14 records (SN-001)
 GOLDEN_REVISION = ("mrv_25afc0ebf17ed12bd6ef0a95795798a53ef2"
                    "731983410136d3da15c4d0f98093")  # 11 records (VS-001)
 PRE_SPECIFICATION_REVISION = ("mrv_105658072294bad92f83e3d536863cb46d6d7ae83"
@@ -32,10 +34,46 @@ SN001_MODEL_RECORDS = (
     "rtd_04b8da45255190340e7366ce2a373a9b402dc32eb86b6312f382f5e37a4e81b7",
 )
 
+ES001_MODEL_RECORDS = (
+    "vsm_053882a4714f51a0e9d358b5a8598cfca856482d9af9acd0117313a9ab8d1c40",
+    "vsm_3b4b829006033604f088f2ff0e2727f4b2a1987f7d0edc5be54327562ef8791b",
+)
+
+VS001_MEMBERSHIP = (
+    "reg_5776a541a04b428f35af40203294a34a8a9978f0bdf3572a8745e6febddd5941",
+    "reg_9b5491aaa131b0df070cee792c83e002bdc4232cbbaba443f967cd3e5b780451",
+    "reg_a502243be0cb229ab386f20db6803e01329dcdd5a22f8e922f1a92555a7ba0ba",
+    "reg_c7ad4c326425439d5e2bff4d0a3dc42cf26540514ecc015d060c711943ff92c5",
+    "rel_12a2812d151da28579784518b619a2a577318a977911bcaf27093d9263d044fa",
+    "rel_3c5a723282c6fc05cd694e5a98e208840e1d897f80dc29a524c0b8d35ff34d5a",
+    "rel_a1fef969809045884d29a981df43bce332b9a8871bd2236cd1d430fd53e31a47",
+    "rtd_5330e9966910b66a2a64380a39c190e12bc3649e8192f47b2358c6a13331f2f9",
+    "rtd_a21999304a0a5458eef47b82cd06a8c055aa83d2aa90bb8b17d93590c3487f06",
+    "vrg_40c8c6b984345af33de6913ca9025d60d22b0e627b110e974c78270eb941dca7",
+    "vsp_c8e5d91d38c5e3f36d0d592737aac5ce26c03eb5d169365c38953f971ff62ba0",
+)
+
+PRE_SPECIFICATION_MEMBERSHIP = (
+    "reg_5776a541a04b428f35af40203294a34a8a9978f0bdf3572a8745e6febddd5941",
+    "reg_9b5491aaa131b0df070cee792c83e002bdc4232cbbaba443f967cd3e5b780451",
+    "reg_a502243be0cb229ab386f20db6803e01329dcdd5a22f8e922f1a92555a7ba0ba",
+    "reg_c7ad4c326425439d5e2bff4d0a3dc42cf26540514ecc015d060c711943ff92c5",
+    "rel_12a2812d151da28579784518b619a2a577318a977911bcaf27093d9263d044fa",
+    "rel_3c5a723282c6fc05cd694e5a98e208840e1d897f80dc29a524c0b8d35ff34d5a",
+    "rel_a1fef969809045884d29a981df43bce332b9a8871bd2236cd1d430fd53e31a47",
+    "rtd_5330e9966910b66a2a64380a39c190e12bc3649e8192f47b2358c6a13331f2f9",
+    "rtd_a21999304a0a5458eef47b82cd06a8c055aa83d2aa90bb8b17d93590c3487f06",
+    "vrg_40c8c6b984345af33de6913ca9025d60d22b0e627b110e974c78270eb941dca7",
+)
+
+PRE_ES001_MEMBERSHIP = tuple(sorted((*VS001_MEMBERSHIP,
+                                     *SN001_MODEL_RECORDS)))
+
 
 def eleven_ids(loaded):
-    return tuple(sorted(set(loaded.revision.record_ids)
-                        - set(SN001_MODEL_RECORDS)))
+    """The explicit VS-001 membership; ``loaded`` is API compatibility."""
+    del loaded
+    return tuple(sorted(VS001_MEMBERSHIP))
 
 
 def demo_queries():
@@ -47,7 +85,7 @@ class TestCommittedLedger:
         store = ModelStore(DEMO_MODEL)
         loaded = store.load()
         assert loaded.revision.revision_id == CURRENT_REVISION
-        assert loaded.revision.record_count == 14
+        assert loaded.revision.record_count == 16
         assert len(loaded.variable_registrations_by_anchor) == 1
         assert len(loaded.specifications) == 1
         assert len(loaded.types) == 3
@@ -57,6 +95,9 @@ class TestCommittedLedger:
         replayed = store.replay(eleven_ids(loaded))
         assert replayed.revision.revision_id == GOLDEN_REVISION
         assert replayed.revision.record_count == 11
+        pre_es001 = store.replay(PRE_ES001_MEMBERSHIP)
+        assert pre_es001.revision.revision_id == PRE_ES001_REVISION
+        assert pre_es001.revision.record_count == 14
 
     def test_fixture_authority_never_human_owner(self):
         """Mandatory regression, per-record form (AU2): every record is
@@ -64,12 +105,16 @@ class TestCommittedLedger:
         mk001_demo_fixture and the three SN-001 records to
         sn001_showcase_fixture. An unlisted record fails."""
         loaded = ModelStore(DEMO_MODEL).load()
-        expected = {record_id: ("sn001_showcase_fixture"
-                                if record_id in SN001_MODEL_RECORDS
-                                else "mk001_demo_fixture")
-                    for record_id in loaded.revision.record_ids}
+        expected = {
+            **{record_id: "mk001_demo_fixture"
+               for record_id in VS001_MEMBERSHIP},
+            **{record_id: "sn001_showcase_fixture"
+               for record_id in SN001_MODEL_RECORDS},
+            **{record_id: "es001_demo_fixture"
+               for record_id in ES001_MODEL_RECORDS},
+        }
         paths = sorted((DEMO_MODEL / "records").glob("*.json"))
-        assert len(paths) == len(expected) == 14
+        assert len(paths) == len(expected) == 16
         for path in paths:
             record = json.loads(path.read_text())
             assert record["authority"]["kind"] == "test_fixture", path.name
@@ -219,6 +264,13 @@ FROZEN_SN001_MODEL_RECORDS = {
     "b57a7afda3627f1e7ebcfc82c7baecc951610a7e0379642c63ce403e39c123e0",
 }
 
+FROZEN_ES001_MODEL_RECORDS = {
+    "vsm_053882a4714f51a0e9d358b5a8598cfca856482d9af9acd0117313a9ab8d1c40.json":
+    "371527c7bd45c3118043b3da3ab2f17bb34769eacea4dd48e84eb148c71ea33a",
+    "vsm_3b4b829006033604f088f2ff0e2727f4b2a1987f7d0edc5be54327562ef8791b.json":
+    "b04377e1a5385a2a301ef288a0a211fcf06602914a36a2da334615915659730f",
+}
+
 FROZEN_SN001_BINDING_RECORDS = {
     "bindings/demo-printer/records/iba_2061f4017a7f2355a36d30ee69a6ebc24a94de2e1db8866b4216916678b4d5aa.json":
     "2eec748ec43373b1c0bd5aa2744466f94db9c0f0d19503754077b6277c3d7a82",
@@ -238,7 +290,8 @@ class TestVm001Fixture:
         for name, digest in {**FROZEN_MK001_RECORDS,
                              **FROZEN_VM001_RECORD,
                              **FROZEN_VS001_RECORD,
-                             **FROZEN_SN001_MODEL_RECORDS}.items():
+                             **FROZEN_SN001_MODEL_RECORDS,
+                             **FROZEN_ES001_MODEL_RECORDS}.items():
             path = DEMO_MODEL / "records" / name
             assert hashlib.sha256(
                 path.read_bytes()).hexdigest() == digest, name
@@ -318,10 +371,7 @@ class TestVs001Fixture:
         SN-001 appends a `vsp_` filter would silently select 13 records
         while claiming the pre-specification revision."""
         store = ModelStore(DEMO_MODEL)
-        old_ids = [record_id for record_id
-                   in eleven_ids(store.load())
-                   if not record_id.startswith("vsp_")]
-        replayed = store.replay(old_ids)
+        replayed = store.replay(PRE_SPECIFICATION_MEMBERSHIP)
         assert replayed.revision.revision_id == PRE_SPECIFICATION_REVISION
         assert replayed.revision.record_count == 10
         result = ModelQueries(replayed).variable_value_specification(

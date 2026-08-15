@@ -1,0 +1,43 @@
+{
+  "applies": {
+    "axis": "ingestion_received_at",
+    "end_boundary": {
+      "at": "2026-08-07T21:00:00+00:00",
+      "kind": "declared"
+    },
+    "interval_semantics": "half_open",
+    "start_boundary": {
+      "at": "2026-08-07T20:00:00+00:00",
+      "kind": "declared"
+    }
+  },
+  "authority": {
+    "agent": "es001_demo_fixture",
+    "kind": "test_fixture",
+    "method": "manual_declaration"
+  },
+  "interpretation": {
+    "dimension": "unit",
+    "unit": {
+      "code": "degree_celsius",
+      "system_edition": "ohk-units-1",
+      "system_id": "project_local"
+    }
+  },
+  "note": "This interpretation is authority knowledge, never source-supplied evidence.",
+  "property": {
+    "extraction_route": "api:moonraker:v1",
+    "item_key": "printer_objects",
+    "json_pointer": "/result/status/extruder/temperature"
+  },
+  "record_id": "spi_5a4eca7a600e2f682514e574d443b22dd0110337c5097902a0920fb6a930682a",
+  "record_kind": "source_property_interpretation",
+  "recorded_at": "2026-08-13T12:00:00+00:00",
+  "schema_version": "1",
+  "subject": {
+    "adapter_id": "moonraker",
+    "source_id": "printer-1",
+    "subject_identifier": "extruder"
+  },
+  "supersedes": []
+}

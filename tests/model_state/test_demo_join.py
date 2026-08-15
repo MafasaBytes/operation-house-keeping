@@ -162,12 +162,11 @@ class TestCommittedDemoJoin:
         # vrg_/vsp_ filter would silently select 12 of 14 records while
         # this docstring claims the 9-record pre-variable revision
         from tests.model_kernel.test_demo_model import (
+            FROZEN_MK001_RECORDS,
             PRE_VARIABLE_REVISION,
-            eleven_ids,
         )
         store = ModelStore(Path("models/demo-printer"))
-        old_ids = [record_id for record_id in eleven_ids(store.load())
-                   if not record_id.startswith(("vrg_", "vsp_"))]
+        old_ids = tuple(name[:-5] for name in FROZEN_MK001_RECORDS)
         replayed = store.replay(old_ids)
         assert replayed.revision.revision_id == PRE_VARIABLE_REVISION
         assert replayed.revision.record_count == 9

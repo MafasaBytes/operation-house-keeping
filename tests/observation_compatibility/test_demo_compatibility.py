@@ -121,13 +121,11 @@ class TestCommittedDemonstration:
         # RP2/HD1: explicit membership, never a prefix filter (a vsp_
         # filter would silently select 13 of 14 records post-SN-001)
         from tests.model_kernel.test_demo_model import (
+            PRE_SPECIFICATION_MEMBERSHIP,
             PRE_SPECIFICATION_REVISION,
-            eleven_ids,
         )
         store = ModelStore(Path("models/demo-printer"))
-        old_ids = [record_id for record_id in eleven_ids(store.load())
-                   if not record_id.startswith("vsp_")]
-        replayed = store.replay(old_ids)
+        replayed = store.replay(PRE_SPECIFICATION_MEMBERSHIP)
         assert replayed.revision.revision_id == PRE_SPECIFICATION_REVISION
         assert replayed.revision.record_count == 10
         queries, _, _ = committed(tmp_path, model=replayed)
@@ -157,6 +155,6 @@ class TestCommittedDemonstration:
         from backend.model_kernel.canonical import verify_record_id
 
         loaded = ModelStore(Path("models/demo-printer")).load()
-        assert loaded.revision.record_count == 14
+        assert loaded.revision.record_count == 16
         for record in loaded.records.values():
             assert verify_record_id(record), record.record_id

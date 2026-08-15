@@ -1,0 +1,28 @@
+{
+  "authority": {
+    "agent": "es001_demo_fixture",
+    "kind": "test_fixture",
+    "method": "manual_declaration"
+  },
+  "declaration": {
+    "dimension": "observation_role",
+    "observation_role": {
+      "code": "measured_actual",
+      "system_edition": "ohk-observation-roles-1",
+      "system_id": "project_local"
+    }
+  },
+  "evidence": [
+    {
+      "kind": "owner_declaration",
+      "statement": "Owner-declared model observation role."
+    }
+  ],
+  "note": "",
+  "record_id": "vsm_053882a4714f51a0e9d358b5a8598cfca856482d9af9acd0117313a9ab8d1c40",
+  "record_kind": "variable_semantic_declaration",
+  "recorded_at": "2026-08-13T12:00:00+00:00",
+  "schema_version": "1",
+  "supersedes": [],
+  "variable_anchor_id": "var_b7e2d3c4f5a6172839405a6b7c8d9e0f"
+}
