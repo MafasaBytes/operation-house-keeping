@@ -36,6 +36,11 @@ from backend.source_interpretation.errors import (
     InterpretationResolutionError,
     SourceInterpretationError,
 )
+from backend.source_interpretation.store import (
+    InterpretationStore,
+    LoadedInterpretationSet,
+    validate_record_collection,
+)
 
 __all__ = [
     "INTERPRETATION_RECORD_ID_PATTERN", "INTERPRETATION_SET_ID_PATTERN",
@@ -45,8 +50,9 @@ __all__ = [
     "InterpretationResolutionError", "InterpretationRetraction",
     "InterpretationRevision", "ObservationRoleInterpretation",
     "QuantityKindInterpretation", "SourceInterpretationError",
+    "InterpretationStore", "LoadedInterpretationSet",
     "SourcePropertyInterpretation", "UnitInterpretation", "build_record",
     "canonical_bytes", "canonical_payload", "canonical_sort_key",
-    "compute_record_id", "compute_revision_id", "verify_record_id",
+    "compute_record_id", "compute_revision_id", "validate_record_collection",
+    "verify_record_id",
 ]
-

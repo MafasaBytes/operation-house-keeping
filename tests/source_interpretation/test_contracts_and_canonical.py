@@ -389,12 +389,14 @@ def test_public_surface_and_required_module_statement_are_pinned():
         "InterpretationBody", "InterpretationClosure",
         "InterpretationConfigurationError", "InterpretationIntegrityError",
         "InterpretationRecord", "InterpretationRejection",
-        "InterpretationResolutionError", "InterpretationRetraction",
-        "InterpretationRevision", "ObservationRoleInterpretation",
+            "InterpretationResolutionError", "InterpretationRetraction",
+            "InterpretationRevision", "InterpretationStore",
+            "LoadedInterpretationSet", "ObservationRoleInterpretation",
         "QuantityKindInterpretation", "SourceInterpretationError",
         "SourcePropertyInterpretation", "UnitInterpretation", "build_record",
         "canonical_bytes", "canonical_payload", "canonical_sort_key",
-        "compute_record_id", "compute_revision_id", "verify_record_id"}
+            "compute_record_id", "compute_revision_id",
+            "validate_record_collection", "verify_record_id"}
     assert set(module.__all__) == expected
     assert all(getattr(module, name) is not None for name in expected)
     required = """This ledger records how an identified authority interprets an exact
