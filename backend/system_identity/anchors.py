@@ -15,6 +15,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 ENTITY_ANCHOR_ID_PATTERN = r"^ent_[0-9a-f]{32}$"
 VARIABLE_ANCHOR_ID_PATTERN = r"^var_[0-9a-f]{32}$"
+CONSTRAINT_ANCHOR_ID_PATTERN = r"^con_[0-9a-f]{32}$"
 _NAME_PATTERN = r"^[a-z0-9-]+$"
 
 
@@ -44,6 +45,32 @@ class VariableAnchor(_Frozen):
 
     anchor_id: str = Field(pattern=VARIABLE_ANCHOR_ID_PATTERN)
     entity_anchor_id: str = Field(pattern=ENTITY_ANCHOR_ID_PATTERN)
+    namespace: str = Field(pattern=_NAME_PATTERN)
+    display_name: str = Field(min_length=1)
+    role_name: str | None = Field(default=None, pattern=_NAME_PATTERN)
+
+
+class ConstraintAnchor(BaseModel):
+    """One canonical constraint identity. A constraint claims exactly one
+    thing — this ID names one particular constraint — and nothing else: no
+    target variable, no unit, no predicate, no severity. The target-variable
+    association is a permanent membership claim carried by a
+    ``ConstraintRegistration`` record, never by the anchor, so it cannot
+    become an unsupported model fact when the declaration is superseded. IDs
+    are opaque (uuid4 hex); ``namespace``, ``display_name``, and
+    ``role_name`` are human context and are never used for matching.
+
+    Unlike the older ``EntityAnchor``/``VariableAnchor`` (whose behaviour is
+    unchanged), the constraint anchor re-validates any instance handed back
+    through ``model_validate``, so a ``model_construct`` forgery (a bad id,
+    namespace, or empty display name) is caught here rather than silently
+    accepted — the accepted construction-forgery discipline (acceptance row
+    A6). This applies only to this anchor; it carries no storage, I/O, or
+    authority."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid", revalidate_instances="always")
+
+    anchor_id: str = Field(pattern=CONSTRAINT_ANCHOR_ID_PATTERN)
     namespace: str = Field(pattern=_NAME_PATTERN)
     display_name: str = Field(min_length=1)
     role_name: str | None = Field(default=None, pattern=_NAME_PATTERN)
