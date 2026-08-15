@@ -1,7 +1,7 @@
 """ES-001 Group 4: model-side engineering meaning."""
 
 import json
-from datetime import UTC, datetime, timedelta, tzinfo
+from datetime import UTC, datetime, tzinfo
 
 import pytest
 from pydantic import ValidationError
@@ -18,7 +18,6 @@ from backend.model_kernel import (
     QuantityKindReference,
     VariableSemanticDeclaration,
     VariableSemanticsResult,
-    VariableValueSpecification,
     build_record,
 )
 from backend.model_kernel.canonical import canonical_payload
