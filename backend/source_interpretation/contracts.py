@@ -220,6 +220,16 @@ class DimensionInterpretationResolution(_Frozen):
             "applicability_unknown", "ambiguous", "conflicted")
         if bool(self.candidate_interpretations) != candidate_status:
             raise ValueError("candidate interpretations must match status")
+        candidate_count = len(self.candidate_interpretations)
+        if self.status == "applicability_unknown" and candidate_count != 1:
+            raise ValueError(
+                "applicability_unknown carries exactly one candidate body")
+        if self.status in ("ambiguous", "conflicted") and candidate_count < 2:
+            raise ValueError(
+                "ambiguity or conflict carries at least two candidate bodies")
+        if self.status != "not_declared" and not self.via_assertions:
+            raise ValueError(
+                "a declared resolution outcome requires explanatory assertions")
         bodies = (() if self.interpretation is None
                   else (self.interpretation,)) + self.candidate_interpretations
         if any(body.dimension != self.dimension for body in bodies):
