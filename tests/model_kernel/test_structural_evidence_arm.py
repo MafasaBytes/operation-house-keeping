@@ -77,11 +77,8 @@ class TestKR2ArmContract:
 
 class TestKR3PublicSurface:
     def test_all_has_54_names_and_every_name_resolves(self):
-        # 62 (pre-CN-001) + 4 CN-001 value contracts (CanonicalDecimal,
-        # ScalarComparisonOperator, ScalarComparisonPredicate,
-        # ConstraintPredicate) + 2 CN-001 records (ConstraintRegistration,
-        # VariableConstraintDeclaration) = 68
-        assert len(kernel.__all__) == 68
+        # 62 pre-CN + 8 decimal/predicate/signature contracts + 2 records.
+        assert len(kernel.__all__) == 72
         assert "StructuralSourceLocatorEvidence" in kernel.__all__
         for name in kernel.__all__:
             assert getattr(kernel, name) is not None

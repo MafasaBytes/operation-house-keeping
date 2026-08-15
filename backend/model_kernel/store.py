@@ -28,6 +28,7 @@ from backend.model_kernel.canonical import (
     verify_record_id,
 )
 from backend.model_kernel.contracts import (
+    ConstraintRegistration,
     EntityRegistration,
     MODEL_ID_PATTERN,
     MODEL_RECORD_ID_PATTERN,
@@ -38,6 +39,7 @@ from backend.model_kernel.contracts import (
     RelationshipAssertion,
     RelationshipTypeDefinition,
     RelationshipWithdrawal,
+    VariableConstraintDeclaration,
     VariableRegistration,
     VariableSemanticDeclaration,
     VariableValueSpecification,
@@ -83,6 +85,14 @@ class LoadedModel:
     current_semantic_tips_by_variable_dimension: Mapping[
         tuple[str, str], tuple[VariableSemanticDeclaration, ...]] = _EMPTY
     semantic_superseded_by: Mapping[str, tuple[str, ...]] = _EMPTY
+    constraint_registrations_by_anchor: Mapping[
+        str, ConstraintRegistration] = _EMPTY
+    constraint_anchor_ids_by_variable: Mapping[
+        str, tuple[str, ...]] = _EMPTY
+    constraint_declarations: Mapping[str, VariableConstraintDeclaration] = _EMPTY
+    current_constraint_tips_by_anchor: Mapping[
+        str, tuple[VariableConstraintDeclaration, ...]] = _EMPTY
+    constraint_superseded_by: Mapping[str, tuple[str, ...]] = _EMPTY
 
 
 def _fail(code: str, message: str) -> None:
@@ -146,6 +156,8 @@ def validate_record_collection(
     variable_registrations: dict[str, VariableRegistration] = {}
     specifications: dict[str, VariableValueSpecification] = {}
     semantic_declarations: dict[str, VariableSemanticDeclaration] = {}
+    constraint_registrations: dict[str, ConstraintRegistration] = {}
+    constraint_declarations: dict[str, VariableConstraintDeclaration] = {}
     types: dict[str, RelationshipTypeDefinition] = {}
     assertions: dict[str, RelationshipAssertion] = {}
     withdrawals: dict[str, RelationshipWithdrawal] = {}
@@ -176,6 +188,8 @@ def validate_record_collection(
             "variable_registration": variable_registrations,
             "variable_value_specification": specifications,
             "variable_semantic_declaration": semantic_declarations,
+            "constraint_registration": constraint_registrations,
+            "variable_constraint_declaration": constraint_declarations,
             "relationship_type_definition": types,
             "relationship_assertion": assertions,
             "relationship_withdrawal": withdrawals,
@@ -338,6 +352,94 @@ def validate_record_collection(
             _fail("MODEL_SEMANTIC_LINEAGE_INVALID",
                   f"semantic lineage {key[0]} {key[1]} has no current tip")
 
+    # -- constraints: permanent evidence-backed registration plus a
+    # multi-parent correction DAG keyed ONLY by constraint anchor id.
+    constraint_registrations_by_anchor: dict[str, ConstraintRegistration] = {}
+    constraint_anchor_ids_by_variable: dict[str, tuple[str, ...]] = {}
+    for record_id in sorted(constraint_registrations):
+        registration = constraint_registrations[record_id]
+        anchor_id = registration.anchor.anchor_id
+        existing = constraint_registrations_by_anchor.get(anchor_id)
+        if existing is not None:
+            _fail("MODEL_DUPLICATE_REGISTRATION",
+                  f"constraint {anchor_id} is registered more than once "
+                  f"({existing.record_id}, {record_id})")
+        if registration.variable_anchor_id not in variable_registrations_by_anchor:
+            _fail("MODEL_REFERENCE_INVALID",
+                  f"constraint registration {record_id} references "
+                  f"unregistered variable {registration.variable_anchor_id}")
+        _check_model_record_evidence(
+            records, registration, "constraint registration")
+        constraint_registrations_by_anchor[anchor_id] = registration
+        current = constraint_anchor_ids_by_variable.get(
+            registration.variable_anchor_id, ())
+        constraint_anchor_ids_by_variable[registration.variable_anchor_id] = (
+            *current, anchor_id)
+    constraint_anchor_ids_by_variable = {
+        variable_id: tuple(sorted(anchor_ids))
+        for variable_id, anchor_ids in constraint_anchor_ids_by_variable.items()
+    }
+
+    for record_id in sorted(constraint_declarations):
+        record = constraint_declarations[record_id]
+        if record.constraint_anchor_id not in constraint_registrations_by_anchor:
+            _fail("MODEL_REFERENCE_INVALID",
+                  f"constraint declaration {record_id} references "
+                  f"unregistered constraint {record.constraint_anchor_id}")
+        _check_model_record_evidence(
+            records, record, "constraint declaration")
+        for parent_id in record.supersedes:
+            parent = constraint_declarations.get(parent_id)
+            if parent is None:
+                _fail("MODEL_REFERENCE_INVALID",
+                      f"constraint declaration {record_id} supersedes "
+                      f"missing declaration {parent_id}")
+            if parent.constraint_anchor_id != record.constraint_anchor_id:
+                _fail("MODEL_CONSTRAINT_LINEAGE_INVALID",
+                      f"constraint declaration {record_id} has a parent "
+                      "from another constraint anchor")
+
+    visiting, done = set(), set()
+    for start in sorted(constraint_declarations):
+        if start in done:
+            continue
+        stack = [(start, iter(constraint_declarations[start].supersedes))]
+        visiting.add(start)
+        while stack:
+            node, parents = stack[-1]
+            for parent_id in parents:
+                if parent_id in visiting:
+                    _fail("MODEL_CONSTRAINT_LINEAGE_INVALID",
+                          "constraint declaration supersession cycle")
+                if parent_id not in done:
+                    visiting.add(parent_id)
+                    stack.append((parent_id, iter(
+                        constraint_declarations[parent_id].supersedes)))
+                    break
+            else:
+                stack.pop()
+                visiting.discard(node)
+                done.add(node)
+
+    constraint_superseded_by: dict[str, tuple[str, ...]] = {
+        record_id: () for record_id in constraint_declarations}
+    for record_id in sorted(constraint_declarations):
+        for parent_id in constraint_declarations[record_id].supersedes:
+            constraint_superseded_by[parent_id] = tuple(sorted((
+                *constraint_superseded_by[parent_id], record_id)))
+    constraint_tips: dict[
+        str, tuple[VariableConstraintDeclaration, ...]] = {}
+    for record_id in sorted(constraint_declarations):
+        record = constraint_declarations[record_id]
+        if not constraint_superseded_by[record_id]:
+            constraint_tips[record.constraint_anchor_id] = (
+                *constraint_tips.get(record.constraint_anchor_id, ()), record)
+    for anchor_id in {record.constraint_anchor_id
+                      for record in constraint_declarations.values()}:
+        if not constraint_tips.get(anchor_id):
+            _fail("MODEL_CONSTRAINT_LINEAGE_INVALID",
+                  f"constraint {anchor_id} has declarations but no current tip")
+
     # -- type lineages: invariant fields, acyclic, one current per name ---
     for record_id in sorted(types):
         definition = types[record_id]
@@ -469,6 +571,13 @@ def validate_record_collection(
         semantic_declarations=_frozen_mapping(semantic_declarations),
         current_semantic_tips_by_variable_dimension=_frozen_mapping(semantic_tips),
         semantic_superseded_by=_frozen_mapping(semantic_superseded_by),
+        constraint_registrations_by_anchor=_frozen_mapping(
+            constraint_registrations_by_anchor),
+        constraint_anchor_ids_by_variable=_frozen_mapping(
+            constraint_anchor_ids_by_variable),
+        constraint_declarations=_frozen_mapping(constraint_declarations),
+        current_constraint_tips_by_anchor=_frozen_mapping(constraint_tips),
+        constraint_superseded_by=_frozen_mapping(constraint_superseded_by),
         superseded_by=_frozen_mapping(superseded_by),
         withdrawn_by=_frozen_mapping(withdrawn_by))
 
