@@ -26,6 +26,14 @@ runtime model sets use the documented external verification procedure.
 
 ## Semantics worth knowing
 
+- **Variable meaning is explicit and per dimension** (ES-001):
+  `VariableSemanticDeclaration` records quantity-kind and observation-role
+  identity tokens independently. Each `(variable, dimension)` lineage is a
+  multi-parent correction DAG; conflicts remain queryable, full-tip
+  supersession converges them, and replay is membership-relative. Tokens assert
+  identity only—no ontology, dimensional algebra, convertibility, behavior, or
+  source meaning. Evidence-reference closure now applies uniformly to every
+  evidence-bearing `rel_`, `vsp_`, and `vsm_` claim.
 - **Variables are membership, not structure or state** (VM-001): a
   `VariableRegistration` embeds one canonical `VariableAnchor` verbatim.
   Ownership is identity (`anchor.entity_anchor_id` — no `variable_of`

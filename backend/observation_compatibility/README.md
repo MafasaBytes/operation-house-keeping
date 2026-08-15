@@ -25,6 +25,12 @@ rather than merely detected. The VM-001
 `VariableSpecificationResult` are carried **verbatim**; nothing is
 recomputed or re-expressed here.
 
+ES-001 composes this complete result unchanged in
+`semantic_compatibility`. VS-001 remains solely authoritative for observed
+JSON-shape and source-unit-lexeme assessment; it does not interpret a source
+property's quantity, role, or unit identity, and none of its accepted contracts
+gains semantic fields.
+
 ## Semantics worth knowing
 
 - **A specification is a model claim, not a source claim.** It states what

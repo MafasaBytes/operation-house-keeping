@@ -23,6 +23,12 @@ copied, mutated, or rewritten. No hierarchy, graph edges, fuzzy matching,
 automatic discovery, unit semantics, state inference, or interpretation
 mode.
 
+ES-001 preserves this boundary: `source_interpretation` is a separate
+authoritative ledger keyed by the same exact locators, but it never mints an
+anchor or maps a property to one. Identity binding remains the exclusive
+property-to-variable authority; interpretation only reuses the public pure
+`membership()` helper.
+
 ## Semantics worth knowing
 
 - **Ledger, not database**: one write-once JSON file per record
