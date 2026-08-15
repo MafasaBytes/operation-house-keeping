@@ -18,8 +18,7 @@ MeaningReason = Literal[
     "source_interpretation_not_declared", "source_interpretation_inapplicable",
     "source_interpretation_applicability_unknown",
     "source_interpretation_ambiguous", "source_interpretation_conflicted",
-    "source_interpretation_superseded", "source_interpretation_retracted",
-    "source_interpretation_inactive"]
+    "source_interpretation_retracted", "source_interpretation_inactive"]
 UnitReason = Literal[
     "no_observation", "observation_not_attached", "evidence_not_assessable",
     "model_specification_not_available", "model_specification_conflicted",
@@ -27,8 +26,7 @@ UnitReason = Literal[
     "source_interpretation_inapplicable",
     "source_interpretation_applicability_unknown",
     "source_interpretation_ambiguous", "source_interpretation_conflicted",
-    "source_interpretation_superseded", "source_interpretation_retracted",
-    "source_interpretation_inactive"]
+    "source_interpretation_retracted", "source_interpretation_inactive"]
 LexemeReason = Literal[
     "no_observation", "observation_not_attached", "source_unit_absent",
     "unit_interpretation_not_positive"]
@@ -41,8 +39,8 @@ SemanticFinding = Literal[
     "source_interpretation_inapplicable",
     "source_interpretation_applicability_unknown",
     "source_interpretation_ambiguous", "source_interpretation_conflicted",
-    "source_interpretation_superseded", "source_interpretation_retracted",
-    "source_interpretation_inactive", "quantity_kind_mismatch",
+    "source_interpretation_retracted", "source_interpretation_inactive",
+    "quantity_kind_mismatch",
     "observation_role_mismatch", "unit_identity_exact",
     "unit_identity_mismatch", "unit_identities_differ_conversion_not_attempted",
     "source_unit_absent_but_interpreted",
@@ -69,7 +67,6 @@ _INTERP_FINDING = {
     "source_interpretation_applicability_unknown",
     "source_interpretation_ambiguous",
     "source_interpretation_conflicted",
-    "source_interpretation_superseded",
     "source_interpretation_retracted",
     "source_interpretation_inactive",
 }
@@ -80,7 +77,6 @@ _INTERP_REASON = {
     "applicability_unknown": "source_interpretation_applicability_unknown",
     "ambiguous": "source_interpretation_ambiguous",
     "conflicted": "source_interpretation_conflicted",
-    "superseded": "source_interpretation_superseded",
     "retracted": "source_interpretation_retracted",
     "inactive": "source_interpretation_inactive",
 }

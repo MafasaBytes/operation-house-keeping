@@ -162,8 +162,7 @@ class InterpretationRevision(_Frozen):
 
 InterpretationStatus = Literal[
     "interpreted", "applicability_unknown", "outside_applicability",
-    "not_declared", "ambiguous", "conflicted", "superseded", "retracted",
-    "inactive"]
+    "not_declared", "ambiguous", "conflicted", "retracted", "inactive"]
 InterpretationDimension = Literal["quantity_kind", "observation_role", "unit"]
 
 

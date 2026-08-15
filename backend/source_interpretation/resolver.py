@@ -86,12 +86,14 @@ class _Assessment:
                 self.status = "ambiguous"
 
     def _inactive_status(self):
-        kinds = set()
-        for summary in self.summaries:
-            if summary.superseded_by and summary.retracted_by:
-                return "inactive"
-            kinds.add("superseded" if summary.superseded_by else "retracted")
-        return kinds.pop() if len(kinds) == 1 else "inactive"
+        # A finite acyclic lineage always has a current tip. If no assertion
+        # is active, every tip is retracted; superseded-only can therefore
+        # never be an aggregate state. Any superseded history makes the
+        # inactive lifecycle mixed, while root-only retractions are the
+        # reachable pure retracted outcome.
+        return ("inactive"
+                if any(summary.superseded_by for summary in self.summaries)
+                else "retracted")
 
     def candidates(self):
         if self.status in ("applicability_unknown", "ambiguous"):

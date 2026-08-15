@@ -132,6 +132,16 @@ design turn plus an owner correction pass; ten adversarial findings
     ledgers for existing truth domains; this ledger is a pre-approved
     new knowledge domain, and a replayable authoritative ledger owns its
     membership identity.
+15. **Aggregate interpretation `superseded` is removed as unreachable**
+    (owner-mandated Group-13 correction). Every finite, reference-closed,
+    acyclic supersession DAG has at least one current tip. If a declared
+    lineage has no active assertion, each tip is retracted: a root/tip-only
+    retraction resolves `retracted`, while superseded ancestors plus a
+    retracted tip resolve mixed-history `inactive`. Supersession remains
+    fully disclosed per assertion (`superseded_by`, `active=False`, lineage
+    history, and replay), but is not an aggregate status, semantic reason,
+    or finding. The committed ledgers and canonical identities are
+    unaffected.
 
 ## Consequences
 

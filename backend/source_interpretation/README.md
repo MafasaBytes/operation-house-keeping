@@ -18,6 +18,10 @@ ingestion-receipt axis at an explicit observation instant.
 - Supersession is a same-locator, same-dimension, canonically ordered
   multi-parent DAG. Current tips are membership-relative; partial convergence
   remains contention and full convergence restores one tip.
+- Supersession is lifecycle history, not an aggregate `superseded` result:
+  every finite valid DAG has a current tip. With no active tip, root/tip-only
+  retraction is `retracted`; superseded ancestors plus a retracted tip are
+  mixed-history `inactive`. Summaries retain every `superseded_by` link.
 - Retractions withdraw claims. Closures only narrow an unknown or unbounded
   end. `spj_` rejection records are standalone diagnostics and never enter
   resolution.

@@ -449,8 +449,12 @@ Per dimension (`quantity_kind`, `observation_role`, `unit`):
    never enter this set (whole-object result equality with and without
    a rejection record, pinned by test).
 2. No record ever declared for the key → `not_declared`. Records exist
-   but none active → `superseded` / `retracted` / `inactive` per the
-   accepted no-invented-precedence rule.
+   but none active → `retracted` when the governing tips are retracted
+   without supersession history, or `inactive` when superseded and
+   retracted lifecycle history is mixed. Aggregate `superseded` is
+   impossible: every finite valid DAG has a current tip. Supersession
+   remains fully disclosed per assertion through `superseded_by` and
+   `active=False`.
 3. Otherwise classify each active tip's `effective_applies` at `at`
    with the imported `identity_binding.resolver.membership(scope, at)`
    (§8) and apply the accepted eight-case classification with the
@@ -474,9 +478,8 @@ Result contracts (every one `revalidate_instances="always"`):
 ```python
 InterpretationStatus = Literal[
     "interpreted", "applicability_unknown", "outside_applicability",
-    "not_declared", "ambiguous", "conflicted", "superseded", "retracted",
-    "inactive"]
-# the accepted nine-status shape with bound→interpreted,
+    "not_declared", "ambiguous", "conflicted", "retracted", "inactive"]
+# the corrected eight-status shape with bound→interpreted,
 # unbound→not_declared renamed so an interpretation is never described
 # with binding vocabulary
 
@@ -626,8 +629,7 @@ _MeaningReason = Literal[
     "source_interpretation_applicability_unknown",
     "source_interpretation_ambiguous",
     "source_interpretation_conflicted",
-    "source_interpretation_superseded",           # F7: distinct reasons,
-    "source_interpretation_retracted",            # never one lump
+    "source_interpretation_retracted",            # root/tips retracted
     "source_interpretation_inactive"]
 
 _UnitReason = Literal[
@@ -640,7 +642,6 @@ _UnitReason = Literal[
     "source_interpretation_applicability_unknown",
     "source_interpretation_ambiguous",
     "source_interpretation_conflicted",
-    "source_interpretation_superseded",
     "source_interpretation_retracted",
     "source_interpretation_inactive"]
 
@@ -734,7 +735,6 @@ _SemanticFinding = Literal[
     "source_interpretation_applicability_unknown",
     "source_interpretation_ambiguous",
     "source_interpretation_conflicted",
-    "source_interpretation_superseded",
     "source_interpretation_retracted",
     "source_interpretation_inactive",
     "quantity_kind_mismatch", "observation_role_mismatch",
@@ -1026,8 +1026,11 @@ pattern- or vendor-scoped interpretation matching.
   accepted-module products.
 - **F6** — evidence-reference closure is uniform across `rel`, `vsp`,
   `vsm` (§7, owner-mandated repair).
-- **F7** — superseded / retracted / inactive are three distinct reasons
-  and findings, never one lump.
+- **F7 (Group-13 correction)** — aggregate `superseded` is unreachable
+  for a finite valid interpretation DAG and is not a public status,
+  reason, or finding. `retracted` and mixed-history `inactive` remain
+  distinct; supersession is disclosed per assertion through lifecycle
+  links and history, never collapsed or discarded.
 - **F8** — `InterpretationRejection` (`spj_`) exists, diagnostics-only,
   with the exact shape of §Part B; not committed to the demo set.
 - **F9** — the `irv_` hash material is domain-tagged and pinned in

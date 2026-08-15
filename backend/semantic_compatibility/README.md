@@ -9,6 +9,9 @@ The authoritative outputs are independent quantity-kind, observation-role,
 unit-identity, and interpreted-unit/source-lexeme verdicts. Each verdict has a
 validator-locked not-evaluated reason. `semantic_findings` is a sorted,
 unique, total derivation from those fields, never a second aggregate truth.
+Only reachable interpretation aggregates map to reasons and findings:
+`retracted` and mixed-history `inactive` remain distinct, while supersession
+is disclosed inside assertion summaries and has no aggregate semantic token.
 
 `declared_semantics_compatible` exists only when all eight governing clauses
 hold: observation present; attached to the requested registered variable;
