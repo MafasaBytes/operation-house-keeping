@@ -35,7 +35,7 @@ specified here only far enough to fix the contracts it will consume.
 **In scope (Slice A):** `backend/system_identity/` (the constraint anchor +
 public UUID4 minting helper) and `backend/model_kernel/` (two record kinds,
 canonical dispatch, store validation, immutable indexes, the
-`variable_constraints` query, and result contracts).
+`constraint_declaration` / `constraints_of_variable` queries, and result contracts).
 
 **Out of scope (Slice B and later), specified but not implemented now:**
 `backend/constraint_evaluation/` (the admission gate, the predicate

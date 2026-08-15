@@ -34,6 +34,15 @@ runtime model sets use the documented external verification procedure.
   identity only—no ontology, dimensional algebra, convertibility, behavior, or
   source meaning. Evidence-reference closure now applies uniformly to every
   evidence-bearing `rel_`, `vsp_`, and `vsm_` claim.
+- **Variable constraints are explicit model claims** (CN-001 Slice A): an
+  evidence-bearing permanent `ConstraintRegistration` binds one stable `con_`
+  anchor to one registered variable. Evidence-bearing
+  `VariableConstraintDeclaration` records carry exact quantity-kind, role, and
+  unit token locks plus a lower, upper, or interval decimal predicate. Their
+  multi-parent correction DAG is keyed only by constraint anchor; conflicts,
+  convergence, superseded history, and replay are membership-relative and
+  never ranked. Both `crg_` and `vcn_` model-record evidence is uniformly
+  reference-closed. Evaluation belongs to the later read-only Slice B.
 - **Variables are membership, not structure or state** (VM-001): a
   `VariableRegistration` embeds one canonical `VariableAnchor` verbatim.
   Ownership is identity (`anchor.entity_anchor_id` — no `variable_of`
@@ -131,4 +140,4 @@ typed-failure translation catches an enumerated exception set: a hostile
 in-process class whose metaclass raises outside it can still surface that
 exception, and exception `__cause__` chains can carry raw payloads into
 full tracebacks (public messages stay clean). Next milestone question:
-ports/variables/constraints layering over this kernel.
+ports and later constraint-evaluation composition over this kernel.

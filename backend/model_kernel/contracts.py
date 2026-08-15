@@ -25,7 +25,11 @@ from pydantic import (
     model_validator,
 )
 
-from backend.model_kernel.canonical import canonical_sort_key, compute_revision_id
+from backend.model_kernel.canonical import (
+    canonical_sort_key,
+    compute_revision_id,
+    verify_record_id,
+)
 from backend.system_identity import (
     CONSTRAINT_ANCHOR_ID_PATTERN,
     ENTITY_ANCHOR_ID_PATTERN,
@@ -738,6 +742,12 @@ class ConstraintDeclarationResult(_ConstraintResultFrozen):
         if declaration is not None:
             declaration = VariableConstraintDeclaration.model_validate(
                 declaration.model_dump())
+        if registration is not None and not verify_record_id(registration):
+            raise ValueError("registration content does not match its record id")
+        if declaration is not None and not verify_record_id(declaration):
+            raise ValueError("declaration content does not match its record id")
+        if any(not verify_record_id(item) for item in declarations):
+            raise ValueError("conflict content does not match its record id")
 
         registered = self.status != "not_registered"
         if registered != (registration is not None):
@@ -764,6 +774,11 @@ class ConstraintDeclarationResult(_ConstraintResultFrozen):
             raise ValueError("conflicting declarations must be unique and sorted")
         if not _sorted_unique(self.superseded_declaration_ids):
             raise ValueError("superseded declaration ids must be unique and sorted")
+        active_ids = set(conflict_ids)
+        if declaration is not None:
+            active_ids.add(declaration.record_id)
+        if active_ids.intersection(self.superseded_declaration_ids):
+            raise ValueError("current tips cannot also be disclosed as superseded")
         members = set(revision.record_ids)
         ids = ([registration.record_id] if registration is not None else [])
         ids.extend(item.record_id for item in carried)

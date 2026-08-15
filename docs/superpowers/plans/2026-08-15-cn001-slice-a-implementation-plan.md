@@ -83,7 +83,7 @@ records appended in Slice A. No `backend/constraint_evaluation/` (Slice B).
 | 7 | bucket dispatch | store.py | 2 buckets |
 | 8 | `LoadedModel` indexes | store.py | 5 indexes |
 | 9 | `validate_record_collection` | store.py | §7, §8 |
-| 10 | `variable_constraints` + results | queries.py, contracts.py | §9 |
+| 10 | `constraint_declaration` / `constraints_of_variable` + results | queries.py, contracts.py | §9 |
 | 11 | `__init__` exports | model_kernel, system_identity | new names |
 | 12 | `_check_model_record_evidence` | store.py | both kinds |
 

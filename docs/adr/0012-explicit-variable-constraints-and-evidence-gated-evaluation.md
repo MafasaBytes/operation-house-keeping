@@ -108,6 +108,6 @@ and validated the lock at append; the owner correction pass and the
   all 16 pre-CN-001 records byte-frozen; the demonstration records are not
   appended in Slice A.
 - Slice B composes the accepted VS + ES results plus the Slice A
-  `variable_constraints` query to produce `satisfied` / `violated` /
+  `constraint_declaration` / `constraints_of_variable` queries to produce `satisfied` / `violated` /
   `not_evaluated` per (constraint, candidate), with no aggregation, ranking,
   conversion, or LLM judgment.

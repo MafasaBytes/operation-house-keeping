@@ -167,6 +167,54 @@ def forged_revision(valid):
 
 
 class TestQueryResultRevisionRevalidation:
+    def test_constraint_result_rejects_stale_id_registration_model_copy(
+            self, tmp_path):
+        store = declaration_store(tmp_path)
+        declaration = constraint_declaration()
+        store.append(declaration)
+        result = ModelQueries(store.load()).constraint_declaration(CON_A)
+        forged_registration = result.registration.model_copy(update={
+            "note": "changed without recomputing record id"})
+        with pytest.raises(ValidationError):
+            ConstraintDeclarationResult(
+                **{**result.model_dump(exclude={"registration"}),
+                   "registration": forged_registration})
+
+    def test_constraint_result_rejects_stale_id_declaration_model_copy(
+            self, tmp_path):
+        store = declaration_store(tmp_path)
+        declaration = constraint_declaration()
+        store.append(declaration)
+        result = ModelQueries(store.load()).constraint_declaration(CON_A)
+        forged_declaration = result.declaration.model_copy(update={
+            "note": "changed without recomputing record id"})
+        with pytest.raises(ValidationError):
+            ConstraintDeclarationResult(
+                **{**result.model_dump(exclude={"declaration"}),
+                   "declaration": forged_declaration})
+
+    def test_declared_tip_cannot_also_be_disclosed_as_superseded(self, tmp_path):
+        store = declaration_store(tmp_path)
+        declaration = constraint_declaration()
+        store.append(declaration)
+        result = ModelQueries(store.load()).constraint_declaration(CON_A)
+        with pytest.raises(ValidationError):
+            ConstraintDeclarationResult(
+                **{**result.model_dump(exclude={"superseded_declaration_ids"}),
+                   "superseded_declaration_ids": (declaration.record_id,)})
+
+    def test_conflict_tips_cannot_also_be_disclosed_as_superseded(self, tmp_path):
+        first = constraint_declaration(note="first")
+        second = constraint_declaration(note="second")
+        store = declaration_store(tmp_path)
+        store.append(first)
+        store.append(second)
+        result = ModelQueries(store.load()).constraint_declaration(CON_A)
+        with pytest.raises(ValidationError):
+            ConstraintDeclarationResult(
+                **{**result.model_dump(exclude={"superseded_declaration_ids"}),
+                   "superseded_declaration_ids": (first.record_id,)})
+
     def test_constraint_result_rejects_model_construct_revision(self, tmp_path):
         loaded = declaration_store(tmp_path)
         declaration = constraint_declaration()
