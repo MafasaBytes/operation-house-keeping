@@ -20,6 +20,7 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
+    StrictStr,
     model_validator,
 )
 
@@ -404,6 +405,67 @@ class UnitNotDeclared(_Frozen):
 
 UnitDeclaration = Annotated[
     Union[DeclaredUnit, UnitNotDeclared], Field(discriminator="kind")]
+
+
+# ------------------------------------------------------ canonical decimal
+_CANONICAL_DECIMAL = re.compile(
+    r"^-?(?:0|[1-9][0-9]{0,127})(?:\.[0-9]{0,127}[1-9])?$")
+
+
+def _canonical_decimal(value: str) -> str:
+    """A plain, exact decimal string. Any accepted string is already
+    canonical, so the content-derived record id is deterministic and the
+    ``Decimal.normalize()`` exponent trap never arises (no ``0.0``, no
+    ``1.230``, no exponent). Bound to 128 digits each side of the point;
+    negative zero, leading zeros, a bare point, trailing fractional zeros,
+    exponents, and whitespace are refused. Non-string input is refused by
+    ``StrictStr`` before this validator runs."""
+    if not _CANONICAL_DECIMAL.fullmatch(value):
+        raise ValueError("not a canonical decimal string")
+    # a minus with no nonzero digit anywhere is negative zero ("-0"; the
+    # trailing-fractional-zero rule already rejects "-0.0", "-0.00", ...)
+    if value.startswith("-") and not any(c in "123456789" for c in value):
+        raise ValueError("negative zero is not canonical")
+    return value
+
+
+#: A scalar numeric value carried as its exact canonical decimal string.
+CanonicalDecimal = Annotated[StrictStr, AfterValidator(_canonical_decimal)]
+
+
+# ----------------------------------------------------------- v1 predicate
+ScalarComparisonOperator = Literal[
+    "less_than", "less_than_or_equal", "equal",
+    "greater_than_or_equal", "greater_than", "not_equal",
+]
+
+
+class ScalarComparisonPredicate(_Frozen):
+    """The v1 constraint predicate: one comparison operator against one
+    ``CanonicalDecimal`` threshold for one variable. A two-sided range is
+    two independent constraints (two anchors), never an interval; ``interval``,
+    ``between``, ``tolerance``, ``lower``, ``severity``, and
+    ``other_variable_anchor_id`` are forbidden extras. The unit is a model
+    declaration (``DeclaredUnit`` or explicit ``UnitNotDeclared``), never an
+    inferred/conversion target. Like ``ConstraintAnchor``, the predicate
+    re-validates any instance handed back through ``model_validate``, so a
+    ``model_construct`` forgery (a bad variable id, a non-canonical threshold)
+    re-fails (acceptance B6)."""
+
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", revalidate_instances="always")
+
+    kind: Literal["scalar_comparison"] = "scalar_comparison"
+    variable_anchor_id: str = Field(pattern=VARIABLE_ANCHOR_ID_PATTERN)
+    operator: ScalarComparisonOperator
+    threshold: CanonicalDecimal
+    unit: UnitDeclaration
+
+
+#: v1 has one predicate kind; the discriminated union leaves a closed path
+#: to a future predicate shape without re-opening the record envelope.
+ConstraintPredicate = Annotated[
+    Union[ScalarComparisonPredicate], Field(discriminator="kind")]
 
 
 def _canonical_parents(value: tuple) -> tuple:

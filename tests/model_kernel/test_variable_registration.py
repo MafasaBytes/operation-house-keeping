@@ -473,10 +473,12 @@ class TestKernelQueries:
                 call()
 
     def test_public_surface_name_count(self):
-        # 53 + StructuralSourceLocatorEvidence (SN-001, ADR-0010 d10) = 54
+        # 62 (pre-CN-001) + 4 CN-001 value contracts (CanonicalDecimal,
+        # ScalarComparisonOperator, ScalarComparisonPredicate,
+        # ConstraintPredicate) = 66
         import backend.model_kernel as kernel
 
-        assert len(kernel.__all__) == 62
+        assert len(kernel.__all__) == 66
         for name in ("VariableRegistration", "VariableRegistrationSummary",
                      "VariableResult", "EntityVariablesResult",
                      "StructuralSourceLocatorEvidence"):
