@@ -1,6 +1,6 @@
 """ES-001 Group 5: source-interpretation records and canonical identity."""
 
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone, tzinfo
 
 import pytest
 from pydantic import ValidationError
@@ -133,6 +133,62 @@ class TestRecordContracts:
             build_record(SourcePropertyInterpretation, **fields,
                          value_json="60.4")
 
+    def test_serialization_preserves_every_locator_identity_dimension(self):
+        record = interpretation()
+        restored = SourcePropertyInterpretation.model_validate_json(
+            record.model_dump_json())
+        assert restored == record
+        subject_fields = ("source_id", "adapter_id", "subject_identifier")
+        property_fields = ("extraction_route", "item_key", "json_pointer")
+        for field in subject_fields:
+            changed = record.subject.model_copy(
+                update={field: getattr(record.subject, field) + "-other"})
+            candidate = build_record(
+                SourcePropertyInterpretation,
+                **{**record.model_dump(exclude={"record_id"}),
+                   "subject": changed})
+            assert candidate.record_id != record.record_id, field
+        for field in property_fields:
+            changed = record.property.model_copy(
+                update={field: getattr(record.property, field) + "-other"})
+            candidate = build_record(
+                SourcePropertyInterpretation,
+                **{**record.model_dump(exclude={"record_id"}),
+                   "property": changed})
+            assert candidate.record_id != record.record_id, field
+
+    def test_rejection_has_exact_diagnostic_only_shape(self):
+        body = UnitInterpretation(dimension="unit", unit=UNIT)
+        rejection = build_record(
+            InterpretationRejection, subject=SUBJECT, property=PROPERTY,
+            rejected_interpretation=body, proposed_applies=APPLIES,
+            recorded_at=T0, authority=AUTHORITY, note="considered")
+        assert set(type(rejection).model_fields) == {
+            "record_kind", "schema_version", "record_id", "subject",
+            "property", "rejected_interpretation", "proposed_applies",
+            "recorded_at", "authority", "note"}
+        assert rejection.rejected_interpretation == body
+        assert rejection.subject == SUBJECT and rejection.property == PROPERTY
+        assert not any("spi" in name or name in {"target", "retracts", "closes"}
+                       for name in type(rejection).model_fields)
+
+    @pytest.mark.parametrize("field,value", [
+        ("value_json", "60.4"),
+        ("occurrence_id", "a" * 32),
+        ("received_at", T0),
+        ("raw_record_id", "b" * 32),
+        ("payload_checksum", "sha256:" + "c" * 64),
+    ])
+    def test_interpretation_contract_cannot_hold_observation_evidence(
+            self, field, value):
+        record = interpretation()
+        with pytest.raises(ValidationError):
+            SourcePropertyInterpretation(
+                **{**record.model_dump(), field: value})
+        forbidden = {"value_json", "occurrence_id", "received_at",
+                     "raw_record_id", "payload_checksum"}
+        assert forbidden.isdisjoint(SourcePropertyInterpretation.model_fields)
+
 
 class TestCanonicalIdentity:
     def test_full_sha256_identity_verifies_and_content_changes_it(self):
@@ -218,6 +274,48 @@ class TestCanonicalIdentity:
                     revision_id=revision_id, record_ids=ids,
                     record_count=count, interpretation_set_id="demo-printer")
 
+    def test_literal_record_and_revision_golden(self):
+        record = interpretation()
+        expected_bytes = (
+            b'{"applies":{"axis":"ingestion_received_at","end_boundary":'
+            b'{"at":"2026-08-13T13:00:00+00:00","kind":"declared"},'
+            b'"interval_semantics":"half_open","start_boundary":{"at":'
+            b'"2026-08-13T12:00:00+00:00","kind":"declared"}},"authority":'
+            b'{"agent":"es001_contract_fixture","kind":"test_fixture",'
+            b'"method":"manual_declaration"},"interpretation":{"dimension":'
+            b'"quantity_kind","quantity_kind":{"code":"temperature",'
+            b'"system_edition":"ohk-quantities-1","system_id":"project_local"}},'
+            b'"note":"","property":{"extraction_route":"api:moonraker:v1",'
+            b'"item_key":"printer_objects","json_pointer":'
+            b'"/result/status/extruder/temperature"},"record_kind":'
+            b'"source_property_interpretation","recorded_at":'
+            b'"2026-08-13T12:00:00+00:00","schema_version":"1","subject":'
+            b'{"adapter_id":"moonraker","source_id":"printer-1",'
+            b'"subject_identifier":"extruder"},"supersedes":[]}')
+        assert canonical_bytes(record) == expected_bytes
+        assert record.record_id == (
+            "spi_212ab144947e4f179d93ac37c7bbde622ff4a7aa004adc9ec83cb37a4aaac4a1")
+        assert compute_revision_id("demo-printer", (record.record_id,)) == (
+            "irv_d7b68fcbaf10ff2d34fac9c123c8ce57bbc9a39856424407df54f0c060e78648")
+
+    @pytest.mark.parametrize("kwargs", [
+        {"interpretation_set_id": "Demo_Printer"},
+        {"interpretation_set_id": "demo-printer\n"},
+        {"record_ids": ("not-a-record",)},
+        {"record_ids": ("spi_" + "a" * 64, "not-a-record")},
+        {"record_count": -1},
+        {"revision_id": "irv_" + "g" * 64},
+    ])
+    def test_revision_rejects_malformed_membership_inputs(self, kwargs):
+        record_id = interpretation().record_id
+        fields = dict(
+            revision_id=compute_revision_id("demo-printer", (record_id,)),
+            record_ids=(record_id,), record_count=1,
+            interpretation_set_id="demo-printer")
+        fields.update(kwargs)
+        with pytest.raises(ValidationError):
+            InterpretationRevision(**fields)
+
 
 class TestHardening:
     def test_build_record_wraps_invalid_inputs_in_typed_integrity_error(self):
@@ -236,3 +334,74 @@ class TestHardening:
                 record_id="spi_" + "0" * 64, subject=SUBJECT,
                 property=PROPERTY, interpretation=forged, applies=APPLIES,
                 recorded_at=T0, authority=AUTHORITY)
+
+
+class NoneOffset(tzinfo):
+    def utcoffset(self, dt):
+        return None
+
+
+@pytest.mark.parametrize("bad", [
+    datetime(2026, 8, 13, 12),
+    datetime(2026, 8, 13, 12, tzinfo=NoneOffset()),
+])
+@pytest.mark.parametrize("record_cls,fields", [
+    (SourcePropertyInterpretation, dict(
+        subject=SUBJECT, property=PROPERTY,
+        interpretation=QuantityKindInterpretation(
+            dimension="quantity_kind", quantity_kind=QUANTITY),
+        applies=APPLIES, supersedes=())),
+    (InterpretationRetraction, dict(retracts="spi_" + "a" * 64)),
+    (InterpretationRejection, dict(
+        subject=SUBJECT, property=PROPERTY,
+        rejected_interpretation=UnitInterpretation(dimension="unit", unit=UNIT),
+        proposed_applies=APPLIES)),
+])
+def test_every_record_kind_refuses_naive_recorded_at(
+        record_cls, fields, bad):
+    with pytest.raises(ValidationError):
+        record_cls(record_id={
+            SourcePropertyInterpretation: "spi_",
+            InterpretationRetraction: "spr_",
+            InterpretationRejection: "spj_"}[record_cls] + "0" * 64,
+            **fields, recorded_at=bad, authority=AUTHORITY)
+
+
+@pytest.mark.parametrize("bad", [
+    datetime(2026, 8, 13, 13),
+    datetime(2026, 8, 13, 13, tzinfo=NoneOffset()),
+])
+def test_closure_refuses_naive_end_and_recorded_at_independently(bad):
+    common = dict(record_id="spc_" + "0" * 64,
+                  closes="spi_" + "a" * 64, authority=AUTHORITY)
+    with pytest.raises(ValidationError):
+        InterpretationClosure(**common, end=bad, recorded_at=T0)
+    with pytest.raises(ValidationError):
+        InterpretationClosure(**common, end=T0 + timedelta(minutes=1),
+                              recorded_at=bad)
+
+
+def test_public_surface_and_required_module_statement_are_pinned():
+    import backend.source_interpretation as module
+
+    expected = {
+        "INTERPRETATION_RECORD_ID_PATTERN", "INTERPRETATION_SET_ID_PATTERN",
+        "InterpretationBody", "InterpretationClosure",
+        "InterpretationConfigurationError", "InterpretationIntegrityError",
+        "InterpretationRecord", "InterpretationRejection",
+        "InterpretationResolutionError", "InterpretationRetraction",
+        "InterpretationRevision", "ObservationRoleInterpretation",
+        "QuantityKindInterpretation", "SourceInterpretationError",
+        "SourcePropertyInterpretation", "UnitInterpretation", "build_record",
+        "canonical_bytes", "canonical_payload", "canonical_sort_key",
+        "compute_record_id", "compute_revision_id", "verify_record_id"}
+    assert set(module.__all__) == expected
+    assert all(getattr(module, name) is not None for name in expected)
+    required = """This ledger records how an identified authority interprets an exact
+source-native property. An interpretation is a claim ABOUT a source
+property, never evidence FROM the source: it is never inserted into,
+copied into, or presented as a source-supplied field, and a source that
+supplied no unit still supplied no unit. It declares no canonical
+identity, mints no anchor, and never maps a source property to a model
+variable — that decision lives exclusively in identity_binding."""
+    assert module.__doc__.strip() == required
