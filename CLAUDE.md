@@ -54,8 +54,8 @@ milestone is ES-001 (explicit per-dimension variable semantics in
 append-only `backend/source_interpretation` ledger; and read-only
 `backend/semantic_compatibility` composition over the accepted
 value-compatibility result), implemented through its committed fixture and
-completion demonstration and awaiting owner-gated adversarial review and
-dual clean-checkout verification (Groups 13–14) — see
+completion demonstration, adversarially reviewed and dual-clean-checkout
+verified; awaiting owner acceptance — see
 docs/superpowers/specs/2026-08-13-es001-engineering-semantics-design.md and
 docs/adr/0011. Source interpretation is authority knowledge, never source
 evidence or identity binding; compatibility compares exact identity tokens
