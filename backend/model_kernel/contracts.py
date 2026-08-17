@@ -625,8 +625,8 @@ class ConstraintRegistration(_Frozen):
     carries nonempty ``EvidenceRef`` evidence, canonicalized by the uniform
     rules. It has NO ``supersedes``, withdrawal, or lifecycle field: the
     target-variable association must not become an unsupported model fact
-    when a later declaration is superseded. The anchor and target variable
-    are REFERENCED by id, never embedded."""
+    when a later declaration is superseded. The complete ``ConstraintAnchor``
+    is embedded; the target variable is referenced by id, never embedded."""
 
     record_kind: Literal["constraint_registration"] = "constraint_registration"
     schema_version: Literal["1"] = "1"
