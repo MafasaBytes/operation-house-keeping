@@ -235,6 +235,25 @@ class TestContractForgery:
             r = parse_observed_decimal("1")
             ObservedDecimalResolution(status="out_of_bounds", decimal=r.decimal)
 
+    def test_non_number_lexeme_raises_validation_error_not_parity_breach(self):
+        # Direct construction with a non-number lexeme must raise a
+        # pydantic ValidationError (wrapped ValueError), not a raw
+        # NumericParityBreachError. The _locked validator catches the
+        # parity-breach integrity error and re-raises as ValueError so
+        # pydantic's normal contract applies.
+        import pydantic
+        with pytest.raises(pydantic.ValidationError):
+            CanonicalObservedDecimal(lexeme="abc", canonical="0")
+        # verify the integrity error does not leak through directly
+        from backend.constraint_evaluation import NumericParityBreachError
+        try:
+            CanonicalObservedDecimal(lexeme="abc", canonical="0")
+        except NumericParityBreachError:
+            pytest.fail("NumericParityBreachError must not leak through "
+                         "direct construction")
+        except pydantic.ValidationError:
+            pass  # expected
+
 
 class TestVsParity:
     """The CN parser must agree with the accepted VS classification on what

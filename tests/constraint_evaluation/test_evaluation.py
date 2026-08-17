@@ -134,6 +134,39 @@ class TestPrecedence:
         assert result.candidates[0].verdict == "not_evaluated"
         assert result.candidates[0].not_evaluated_reason == "no_observation"
 
+    def test_step4_observation_not_attached(self, tmp_path):
+        # divergent binding: variable anchor declaration has a different
+        # display_name than the model's VariableRegistration → anchor
+        # divergence → observation not attached
+        from backend.identity_binding.canonical import build_record as ib_build
+        from backend.identity_binding.contracts import AnchorDeclaration
+        from backend.identity_binding.store import BindingStore
+        from backend.system_identity import VariableAnchor
+        from tests.observation_compatibility.test_demo_compatibility import (
+            HOTEND as DEMO_HOTEND, EXTRUDER as DEMO_EXTRUDER)
+        bs = BindingStore(Path("bindings/demo-printer")).load()
+        committed = list(bs.records.values())
+        divergent_anchor = VariableAnchor(
+            anchor_id=DEMO_HOTEND, entity_anchor_id=DEMO_EXTRUDER,
+            namespace="demo-printer", display_name="Hotend temp (renamed)",
+            role_name=None)
+        divergent_records = []
+        for rec in committed:
+            if isinstance(rec, AnchorDeclaration) and rec.anchor_kind == "variable":
+                divergent_records.append(ib_build(
+                    AnchorDeclaration, anchor_kind="variable",
+                    anchor=divergent_anchor, recorded_at=rec.recorded_at,
+                    authority=rec.authority, note=rec.note))
+            else:
+                divergent_records.append(rec)
+        cn, _, _, _ = cn_stack(
+            tmp_path, constraint_records=default_constraint_records(),
+            binding_records=divergent_records)
+        result = cn.evaluate_constraint(CON_A, as_of=AS_OF)
+        assert result.candidates[0].verdict == "not_evaluated"
+        assert result.candidates[0].not_evaluated_reason == (
+            "observation_not_attached")
+
     def test_step5_evidence_not_assessable_value_json_malformed(self, tmp_path):
         cn, _, _, temporal = cn_stack(
             tmp_path, constraint_records=default_constraint_records())
@@ -164,6 +197,59 @@ class TestPrecedence:
         craft_value(temporal, value_json="9" * 5000, json_type="number")
         result = cn.evaluate_constraint(CON_A, as_of=LATE)
         assert result.candidates[0].not_evaluated_reason == "value_not_representable"
+
+    def test_step6_vs_shape_not_evaluated_specification_conflicted(self, tmp_path):
+        from backend.model_kernel import (
+            build_record, VariableValueSpecification, DeclaredUnit,
+            AuthorityRef, OwnerDeclarationEvidence)
+        from tests.constraint_evaluation.helpers import DEMO_UNIT
+        # append a second non-superseding VSP for HOTEND with a different
+        # value_shape → specification conflict → VS reports not_evaluated
+        auth = AuthorityRef(kind="test_fixture", agent="cn001",
+                             method="manual_declaration")
+        ev = (OwnerDeclarationEvidence(
+            kind="owner_declaration", statement="conflicting spec"),)
+        conflicting_vsp = build_record(
+            VariableValueSpecification, variable_anchor_id=HOTEND,
+            value_shape="string", nullable=False,
+            unit=DeclaredUnit(kind="declared", unit=DEMO_UNIT),
+            evidence=ev, recorded_at=T0, authority=auth, note="conflicting")
+        cn, _, _, _ = cn_stack(
+            tmp_path, constraint_records=(
+                *default_constraint_records(), conflicting_vsp))
+        result = cn.evaluate_constraint(CON_A, as_of=AS_OF)
+        assert result.candidates[0].verdict == "not_evaluated"
+        assert result.candidates[0].not_evaluated_reason == (
+            "specification_conflicted")
+
+    def test_step7_model_value_shape_not_numeric(self, tmp_path):
+        from backend.model_kernel import (
+            build_record, VariableValueSpecification, DeclaredUnit,
+            AuthorityRef, OwnerDeclarationEvidence)
+        from tests.constraint_evaluation.helpers import DEMO_UNIT
+        # supersede the demo's numeric VSP with a string VSP; a string
+        # observation passes steps 3-6 but the governing shape is not
+        # 'number' → step 7
+        vsp_id = ("vsp_c8e5d91d38c5e3f36d0d592737aac5ce26c03eb5d1"
+                  "69365c38953f971ff62ba0")
+        auth = AuthorityRef(kind="test_fixture", agent="cn001",
+                             method="manual_declaration")
+        ev = (OwnerDeclarationEvidence(
+            kind="owner_declaration", statement="string spec"),)
+        string_vsp = build_record(
+            VariableValueSpecification, variable_anchor_id=HOTEND,
+            value_shape="string", nullable=False,
+            unit=DeclaredUnit(kind="declared", unit=DEMO_UNIT),
+            evidence=ev, recorded_at=T0, authority=auth, note="string spec",
+            supersedes=(vsp_id,))
+        cn, _, _, temporal = cn_stack(
+            tmp_path, constraint_records=(
+                *default_constraint_records(), string_vsp))
+        craft_value(temporal, value_json='"hot"', json_type="string")
+        result = cn.evaluate_constraint(CON_A, as_of=LATE)
+        assert result.candidates[0].verdict == "not_evaluated"
+        assert result.candidates[0].not_evaluated_reason == (
+            "model_value_shape_not_numeric")
 
     def test_step8_does_not_satisfy_value_shape(self, tmp_path):
         cn, _, _, temporal = cn_stack(

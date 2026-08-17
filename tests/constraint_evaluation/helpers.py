@@ -150,11 +150,12 @@ def _sort_by_dependency(records):
 
 
 def cn_stack(tmp_path, *, constraint_records=(), model_records_override=None,
-             interpretations_path=DEMO_INTERPRETATIONS):
+             interpretations_path=DEMO_INTERPRETATIONS, binding_records=None):
     """Build a full CN evaluation stack in an isolated ``tmp_path`` model
     store. The committed demo records are copied; synthetic constraint
     records are appended. The committed bindings and interpretations are
-    read-only."""
+    read-only unless ``binding_records`` or ``interpretations_path`` overrides
+    them."""
     import shutil
     temporal = full_timeline_stack(tmp_path)
     dst_dir = tmp_path / "model" / "demo-printer"
@@ -173,7 +174,13 @@ def cn_stack(tmp_path, *, constraint_records=(), model_records_override=None,
     for record in constraint_records:
         dst_store.append(record)
     loaded = dst_store.load()
-    resolver = BindingResolver(BindingStore(DEMO_BINDINGS).load())
+    if binding_records is not None:
+        bstore = BindingStore(tmp_path / "bindings" / "demo-printer")
+        for record in binding_records:
+            bstore.append(record)
+        resolver = BindingResolver(bstore.load())
+    else:
+        resolver = BindingResolver(BindingStore(DEMO_BINDINGS).load())
     state = ModelStateQueries(loaded, resolver, temporal)
     values = ObservationCompatibilityQueries(state)
     interpretations = InterpretationStore(interpretations_path).load()

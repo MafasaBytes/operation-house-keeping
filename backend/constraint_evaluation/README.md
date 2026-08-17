@@ -39,30 +39,32 @@ refusal precedence is:
 3. `no_observation` — the variable has no temporal occurrence.
 4. `observation_not_attached` — the occurrence is not bound to the
    registered variable.
-5. `evidence_not_assessable` — VS reports a non-admitted reason (verbatim):
-   `json_type_unrecognized`, `shape_disagreement`,
-   `value_json_malformed`, `value_not_representable`,
-   `specification_conflicted`, `specification_not_available`.
-6. `model_value_shape_not_numeric` — the governing model VSP declares a
+5. `evidence_not_assessable` — VS reports a non-admitted
+   `evidence_consistency` reason (verbatim): `json_type_unrecognized`,
+   `shape_disagreement`, `value_json_malformed`, `value_not_representable`.
+6. VS shape not evaluated — VS reports a `value_shape_not_evaluated_reason`
+   (verbatim): `specification_conflicted`, `specification_not_available`,
+   `evidence_not_assessable`.
+7. `model_value_shape_not_numeric` — the governing model VSP declares a
    non-`number` value shape.
-7. `does_not_satisfy_value_shape` — VS reports `consistent` but the observed
+8. `does_not_satisfy_value_shape` — VS reports `consistent` but the observed
    shape is not `number`.
-8. `numeric_value_absent` — the admitted value is null (nullable null) or
+9. `numeric_value_absent` — the admitted value is null (nullable null) or
    otherwise not a parseable decimal.
-9. `declared_semantics_not_compatible` — ES reports
-   `declared_semantics_compatible` is false.
-10. `constraint_quantity_kind_lock_mismatch` — the constraint's expected
+10. `declared_semantics_not_compatible` — ES reports
+    `declared_semantics_compatible` is false.
+11. `constraint_quantity_kind_lock_mismatch` — the constraint's expected
     quantity-kind does not match the model's declared quantity-kind.
-11. `constraint_observation_role_lock_mismatch` — the constraint's expected
+12. `constraint_observation_role_lock_mismatch` — the constraint's expected
     observation-role does not match the model's declared observation-role.
-12. `constraint_unit_identity_lock_mismatch` — the constraint's expected
+13. `constraint_unit_identity_lock_mismatch` — the constraint's expected
     unit does not match the model's specified unit.
-13. `numeric_value_out_of_bounds` — the admitted decimal exceeds the CN
+14. `numeric_value_out_of_bounds` — the admitted decimal exceeds the CN
     parser's observation-specific limits.
-14. Otherwise: predicate comparison → `satisfied` or `violated`.
+15. Otherwise: predicate comparison → `satisfied` or `violated`.
 
 Authoritative model semantic tokens are not dereferenced until
-candidate-local `declared_semantics_compatible` has passed (step 9).
+candidate-local `declared_semantics_compatible` has passed (step 10).
 
 ## Observed-decimal contract
 
@@ -86,5 +88,10 @@ re-derive every candidate from the carried ES result and reject divergence.
 This detects: wrong counts or indices, candidate substitution or reordering,
 mixed anchors / variables / revisions / cutoffs, forged decimals, boundary
 relations, satisfaction, verdicts, or reasons, evaluated rows under failed
-admission, refusal rows when all gates pass, and forged nested objects via
-`model_construct` / `model_copy` / stale IDs.
+admission, and refusal rows when all gates pass. Forged inner objects
+(`CandidateConstraintEvaluation`, `BoundaryAssessment`,
+`CanonicalObservedDecimal`) constructed via `model_construct` or `model_copy`
+are revalidated when used in a normally-constructed outer result because the
+frozen base config sets `revalidate_instances="always"`. Direct
+`ConstraintEvaluationResult.model_construct` bypasses validation, as it does
+for all pydantic models; the authoritative boundary is normal construction.

@@ -91,7 +91,10 @@ class CanonicalObservedDecimal(_Frozen):
         # defense-in-depth: re-derive the canonical from the lexeme and
         # confirm it matches, so a forged canonical/lexeme pair is rejected
         # at the contract boundary
-        reparsed = _parse_only(self.lexeme)
+        try:
+            reparsed = _parse_only(self.lexeme)
+        except NumericParityBreachError:
+            raise ValueError("lexeme is not a valid JSON number")
         if reparsed is None or reparsed != self.canonical:
             raise ValueError("canonical must be the exact re-derivation "
                              "of the preserved lexeme")
