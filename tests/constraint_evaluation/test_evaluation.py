@@ -427,6 +427,11 @@ class TestComparisons:
         ("50", "50", "80", "exclusive", "exclusive", "violated"),
         ("80", "50", "80", "exclusive", "exclusive", "violated"),
         ("50.1", "50", "80", "exclusive", "exclusive", "satisfied"),
+        # mixed inclusivity
+        ("50", "50", "80", "inclusive", "exclusive", "satisfied"),
+        ("80", "50", "80", "inclusive", "exclusive", "violated"),
+        ("50", "50", "80", "exclusive", "inclusive", "violated"),
+        ("80", "50", "80", "exclusive", "inclusive", "satisfied"),
         # singleton {60} inclusive both
         ("60", "60", "60", "inclusive", "inclusive", "satisfied"),
         ("60.1", "60", "60", "inclusive", "inclusive", "violated"),
@@ -539,6 +544,22 @@ class TestDiscovery:
         assert result.status == "registered"
         assert result.evaluations == ()
         assert result.semantic_compatibility is None
+        assert result.constraint_collection.constraints == ()
+
+    def test_registered_empty_rejects_extra_es_and_wrong_revision(self, tmp_path):
+        cn, es, _, _ = cn_stack(tmp_path, constraint_records=())
+        result = cn.constraints_of_variable_evaluation(HOTEND, as_of=AS_OF)
+        payload = result.model_dump(mode="python")
+        payload["semantic_compatibility"] = es.variable_semantic_compatibility(
+            HOTEND, as_of=AS_OF)
+        with pytest.raises(Exception):
+            VariableConstraintEvaluationCollectionResult(**payload)
+        from tests.model_kernel.test_demo_model import PRE_ES001_MEMBERSHIP
+        payload = result.model_dump(mode="python")
+        payload["revision"] = ModelStore(Path("models/demo-printer")).replay(
+            PRE_ES001_MEMBERSHIP).revision
+        with pytest.raises(Exception):
+            VariableConstraintEvaluationCollectionResult(**payload)
 
 
 # ============================================================ revision coherence + replay
@@ -626,6 +647,25 @@ class TestIsolation:
             cn.constraints_of_variable_evaluation("not-a-var-id",
                                                     as_of=AS_OF)
 
+    def test_early_returns_validate_cutoff_and_selectors(self, tmp_path):
+        cn, _, _, _ = cn_stack(tmp_path, constraint_records=())
+        with pytest.raises(ConstraintEvaluationInputError):
+            cn.evaluate_constraint("con_" + "f" * 32,
+                                   as_of=AS_OF.replace(tzinfo=None))
+        with pytest.raises(ConstraintEvaluationInputError):
+            cn.constraints_of_variable_evaluation(
+                HOTEND, as_of=AS_OF, source=object())
+
+    def test_as_of_is_normalized_to_utc(self, tmp_path):
+        from datetime import timedelta, timezone
+        cn, _, _, _ = cn_stack(tmp_path, constraint_records=())
+        offset = timezone(timedelta(hours=2))
+        requested = AS_OF.astimezone(offset)
+        result = cn.constraints_of_variable_evaluation(
+            HOTEND, as_of=requested)
+        assert result.as_of.tzinfo is UTC
+        assert result.as_of == AS_OF
+
 
 # ============================================================ outer-result forgery
 
@@ -693,6 +733,40 @@ class TestOuterResultForgery:
                 ruleset_version="cn001.1",
                 semantic_compatibility=result.semantic_compatibility,
                 candidates=(forged,), revision=result.revision)
+
+    @pytest.mark.parametrize("update", [
+        {"relation": "greater"},
+        {"role": "lower"},
+        {"boundary_value": "79"},
+        {"inclusion": "exclusive"},
+    ])
+    def test_forged_boundary_facts_rejected(self, tmp_path, update):
+        result = self._green(tmp_path)
+        bad = result.candidates[0].boundary_assessments[0].model_copy(
+            update=update)
+        forged = result.candidates[0].model_copy(
+            update={"boundary_assessments": (bad,)})
+        with pytest.raises(Exception):
+            ConstraintEvaluationResult(
+                constraint_anchor_id=result.constraint_anchor_id,
+                declaration=result.declaration, as_of=result.as_of,
+                ruleset_version="cn001.1",
+                semantic_compatibility=result.semantic_compatibility,
+                candidates=(forged,), revision=result.revision)
+
+    def test_missing_duplicate_and_reordered_assessments_rejected(self, tmp_path):
+        result = self._green(tmp_path)
+        assessment = result.candidates[0].boundary_assessments[0]
+        for assessments in ((), (assessment, assessment)):
+            forged = result.candidates[0].model_copy(
+                update={"boundary_assessments": assessments})
+            with pytest.raises(Exception):
+                ConstraintEvaluationResult(
+                    constraint_anchor_id=result.constraint_anchor_id,
+                    declaration=result.declaration, as_of=result.as_of,
+                    ruleset_version="cn001.1",
+                    semantic_compatibility=result.semantic_compatibility,
+                    candidates=(forged,), revision=result.revision)
 
     def test_forged_candidate_count_rejected(self, tmp_path):
         result = self._green(tmp_path)

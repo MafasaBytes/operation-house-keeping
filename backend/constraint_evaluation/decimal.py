@@ -48,8 +48,15 @@ from backend.constraint_evaluation.errors import (
 # without relying on ambient limits.
 _LEXEME_BYTE_LIMIT = 386
 _COEFFICIENT_DIGIT_LIMIT = 256
+_EXPONENT_MAGNITUDE_LIMIT = 256
 _INTEGER_DIGIT_LIMIT = 256
 _FRACTION_DIGIT_LIMIT = 128
+
+_JSON_NUMBER = re.compile(
+    r"[ \t\r\n]*(?P<number>-?(?P<integer>0|[1-9][0-9]*)"
+    r"(?:\.(?P<fraction>[0-9]+))?"
+    r"(?:[eE](?P<exponent_sign>[+-]?)(?P<exponent>[0-9]+))?)"
+    r"[ \t\r\n]*\Z")
 
 # The canonical plain-number grammar (the accepted CanonicalDecimal
 # declaration grammar, compiled locally so this module never reaches into
@@ -130,7 +137,25 @@ def _parse_only(lexeme: str) -> str | None:
         raise ConstraintEvaluationInputError(
             "CONSTRAINT_EVALUATION_INPUT_INVALID",
             "observed lexeme must be a non-empty string")
+    # Establish JSON-number syntax before applying resource refusals.  A
+    # malformed/non-number lexeme is a parity breach even when oversized;
+    # only a valid number may honestly be reported out of bounds.  This
+    # lexical preflight allocates no expanded decimal representation.
+    match = _JSON_NUMBER.fullmatch(lexeme)
+    if match is None:
+        raise NumericParityBreachError(
+            "NUMERIC_PARITY_BREACH",
+            f"CN narrow parser rejects lexeme VS reported as a number: "
+            f"{lexeme!r}")
     if len(lexeme.encode("utf-8")) > _LEXEME_BYTE_LIMIT:
+        return None
+    coefficient_digits = len(match.group("integer")) + len(
+        match.group("fraction") or "")
+    if coefficient_digits > _COEFFICIENT_DIGIT_LIMIT:
+        return None
+    exponent_text = match.group("exponent")
+    if (exponent_text is not None
+            and int(exponent_text) > _EXPONENT_MAGNITUDE_LIMIT):
         return None
     try:
         value = json.loads(lexeme, parse_float=Decimal, parse_int=int,
@@ -169,10 +194,14 @@ def _normalize(d: Decimal) -> str | None:
 
     if d.is_zero():
         return "0"
-    sign, digits, exponent = d.as_tuple()
-    coeff_digits = len(digits)
-    if coeff_digits > _COEFFICIENT_DIGIT_LIMIT:
-        return None
+    sign, digits_tuple, exponent = d.as_tuple()
+    digits = list(digits_tuple)
+    # Expanded-output limits apply to the canonical value.  Trailing
+    # coefficient zeros disappear from that value and therefore must be
+    # trimmed before the fractional preflight.
+    while len(digits) > 1 and digits[-1] == 0:
+        digits.pop()
+        exponent += 1
     if exponent >= 0:
         int_digits = len(digits) + exponent
         frac_digits = 0

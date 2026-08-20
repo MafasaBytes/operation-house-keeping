@@ -16,7 +16,7 @@ asserts only that the admitted observed value does not satisfy the
 declared numeric predicate.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 from backend.constraint_evaluation.contracts import (
     ConstraintEvaluationResult, VariableConstraintEvaluationCollectionResult,
@@ -55,6 +55,36 @@ def _require_variable_anchor_id(anchor_id: str) -> None:
             "variable anchor id must match the var_ pattern")
 
 
+def _normalize_early_as_of(as_of: datetime) -> datetime:
+    """Validate cutoffs on paths that legitimately do not call ES."""
+    if not isinstance(as_of, datetime):
+        raise ConstraintEvaluationInputError(
+            "CONSTRAINT_EVALUATION_INPUT_INVALID",
+            "as_of must be a timezone-aware datetime")
+    if as_of.tzinfo is None or as_of.tzinfo.utcoffset(as_of) is None:
+        raise ConstraintEvaluationInputError(
+            "CONSTRAINT_EVALUATION_NAIVE_AS_OF",
+            "the query cutoff must be a timezone-aware datetime")
+    return as_of.astimezone(UTC)
+
+
+def _validate_early_selectors(entity_anchor_id, source) -> None:
+    """Reject selectors that an early no-evidence return cannot delegate."""
+    from backend.model_state import SourceSelector
+    from backend.system_identity import ENTITY_ANCHOR_ID_PATTERN
+    import re as _re
+    if entity_anchor_id is not None and (
+            not isinstance(entity_anchor_id, str)
+            or not _re.fullmatch(ENTITY_ANCHOR_ID_PATTERN, entity_anchor_id)):
+        raise ConstraintEvaluationInputError(
+            "CONSTRAINT_EVALUATION_INPUT_INVALID",
+            "entity anchor id must match the ent_ pattern")
+    if source is not None and not isinstance(source, SourceSelector):
+        raise ConstraintEvaluationInputError(
+            "CONSTRAINT_EVALUATION_INPUT_INVALID",
+            "an explicit source selector must be a SourceSelector")
+
+
 class ConstraintEvaluationQueries:
     """Read-only evaluation of declared numeric constraints against the
     evidence attached to their target variable. Composition-only:
@@ -89,6 +119,8 @@ class ConstraintEvaluationQueries:
         _require_constraint_anchor_id(constraint_anchor_id)
         declaration = self._model.constraint_declaration(constraint_anchor_id)
         if declaration.status == "not_registered":
+            as_of = _normalize_early_as_of(as_of)
+            _validate_early_selectors(entity_anchor_id, source)
             return ConstraintEvaluationResult(
                 constraint_anchor_id=constraint_anchor_id,
                 declaration=declaration, as_of=as_of,
@@ -123,16 +155,22 @@ class ConstraintEvaluationQueries:
         _require_variable_anchor_id(variable_anchor_id)
         collection = self._model.constraints_of_variable(variable_anchor_id)
         if collection.status == "not_registered":
+            as_of = _normalize_early_as_of(as_of)
+            _validate_early_selectors(entity_anchor_id, source)
             return VariableConstraintEvaluationCollectionResult(
                 variable_anchor_id=variable_anchor_id, as_of=as_of,
                 ruleset_version=_RULESET_VERSION, status="not_registered",
+                constraint_collection=collection,
                 semantic_compatibility=None, evaluations=(),
                 revision=collection.revision)
         constraints = collection.constraints
         if not constraints:
+            as_of = _normalize_early_as_of(as_of)
+            _validate_early_selectors(entity_anchor_id, source)
             return VariableConstraintEvaluationCollectionResult(
                 variable_anchor_id=variable_anchor_id, as_of=as_of,
                 ruleset_version=_RULESET_VERSION, status="registered",
+                constraint_collection=collection,
                 semantic_compatibility=None, evaluations=(),
                 revision=collection.revision)
         es = self.semantic.variable_semantic_compatibility(
@@ -144,6 +182,7 @@ class ConstraintEvaluationQueries:
         return VariableConstraintEvaluationCollectionResult(
             variable_anchor_id=variable_anchor_id, as_of=es.as_of,
             ruleset_version=_RULESET_VERSION, status="registered",
+            constraint_collection=collection,
             semantic_compatibility=es, evaluations=evaluations,
             revision=collection.revision)
 

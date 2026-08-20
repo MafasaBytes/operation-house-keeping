@@ -35,7 +35,7 @@ from backend.constraint_evaluation.decimal import (
 from backend.model_kernel import (
     ConstraintDeclarationResult, ConstraintPredicate, ConstraintSemanticSignature,
     ExactNumericInterval, ExactNumericLowerBound, ExactNumericUpperBound,
-    ModelRevision, NumericBoundary)
+    ModelRevision, NumericBoundary, VariableConstraintCollectionResult)
 from backend.observation_compatibility import CandidateValueCompatibility
 from backend.semantic_compatibility import (
     CandidateSemanticCompatibility, VariableSemanticCompatibilityResult)
@@ -369,13 +369,32 @@ class ConstraintEvaluationResult(_Frozen):
 
     @model_validator(mode="after")
     def _authoritative(self):
-        if self.declaration.constraint_anchor_id != self.constraint_anchor_id:
+        try:
+            declaration = ConstraintDeclarationResult.model_validate(
+                self.declaration.model_dump(mode="python", warnings=False))
+            revision = ModelRevision.model_validate(
+                self.revision.model_dump(mode="python", warnings=False))
+            es = (None if self.semantic_compatibility is None else
+                  VariableSemanticCompatibilityResult.model_validate(
+                      self.semantic_compatibility.model_dump(
+                          mode="python", warnings=False)))
+        except (ValueError, TypeError, AttributeError, KeyError,
+                UnicodeError, Warning) as error:
+            raise ValueError("carried lower-layer results must be structurally "
+                             "valid") from error
+        if declaration != self.declaration or revision != self.revision:
+            raise ValueError("carried declaration and revision must survive "
+                             "authoritative revalidation unchanged")
+        if es != self.semantic_compatibility:
+            raise ValueError("the carried ES result must survive authoritative "
+                             "revalidation unchanged")
+        if declaration.constraint_anchor_id != self.constraint_anchor_id:
             raise ValueError("the declaration must answer for the requested "
                              "constraint anchor")
-        if self.declaration.revision != self.revision:
+        if declaration.revision != revision:
             raise ValueError("revision must equal the carried declaration's "
                              "revision")
-        if self.declaration.status == "not_registered":
+        if declaration.status == "not_registered":
             if self.semantic_compatibility is not None or self.candidates:
                 raise ValueError("an unregistered constraint carries no ES "
                                  "result and no candidates")
@@ -383,14 +402,13 @@ class ConstraintEvaluationResult(_Frozen):
         if self.semantic_compatibility is None:
             raise ValueError("a registered constraint must carry the ES "
                              "result")
-        es = self.semantic_compatibility
         if self.as_of != es.as_of:
             raise ValueError("as_of must equal the carried ES result cutoff")
         if (es.semantics_result.revision != self.revision
                 or es.value_compatibility.state.model_revision != self.revision):
             raise ValueError("one model revision governs the declaration, "
                              "semantics, and state")
-        if es.variable_anchor_id != self.declaration.registration.variable_anchor_id:
+        if es.variable_anchor_id != declaration.registration.variable_anchor_id:
             raise ValueError("the ES result must answer for the "
                              "registration's target variable")
         if len(self.candidates) != len(es.candidates):
@@ -400,7 +418,7 @@ class ConstraintEvaluationResult(_Frozen):
                 raise ValueError("candidate indices must be contiguous and "
                                  "ordered")
             expected = derive_candidate_evaluation(
-                self.declaration, es, index)
+                declaration, es, index)
             if candidate != expected:
                 raise ValueError("each candidate evaluation must equal the "
                                  "authoritative derivation")
@@ -423,26 +441,50 @@ class VariableConstraintEvaluationCollectionResult(_Frozen):
     as_of: UtcDatetime
     ruleset_version: Literal["cn001.1"]
     status: Literal["registered", "not_registered"]
+    constraint_collection: VariableConstraintCollectionResult
     semantic_compatibility: VariableSemanticCompatibilityResult | None = None
     evaluations: tuple[ConstraintEvaluationResult, ...] = ()
     revision: ModelRevision
 
     @model_validator(mode="after")
     def _authoritative(self):
+        try:
+            collection = VariableConstraintCollectionResult.model_validate(
+                self.constraint_collection.model_dump(
+                    mode="python", warnings=False))
+            revision = ModelRevision.model_validate(
+                self.revision.model_dump(mode="python", warnings=False))
+        except (ValueError, TypeError, AttributeError, KeyError,
+                UnicodeError, Warning) as error:
+            raise ValueError("carried discovery results must be structurally "
+                             "valid") from error
+        if collection != self.constraint_collection or revision != self.revision:
+            raise ValueError("carried discovery facts must survive "
+                             "authoritative revalidation unchanged")
+        if (collection.variable_anchor_id != self.variable_anchor_id
+                or collection.status != self.status
+                or collection.revision != revision):
+            raise ValueError("anchor, status, and revision must equal the "
+                             "authoritative constraint collection")
         if self.status == "not_registered":
             if self.semantic_compatibility is not None or self.evaluations:
                 raise ValueError("an unregistered variable carries no ES "
                                  "result and no evaluations")
             return self
+        expected_anchor_ids = tuple(
+            item.constraint_anchor_id for item in collection.constraints)
         anchor_ids = tuple(ev.constraint_anchor_id for ev in self.evaluations)
+        if anchor_ids != expected_anchor_ids:
+            raise ValueError("evaluations must correspond exactly and in order "
+                             "to the discovered constraints")
         if len(set(anchor_ids)) != len(anchor_ids):
             raise ValueError("each constraint anchor appears at most once")
         if list(anchor_ids) != sorted(anchor_ids):
             raise ValueError("evaluations must be ordered by constraint "
                              "anchor id")
-        if self.evaluations and self.semantic_compatibility is None:
-            raise ValueError("a registered variable with constraints carries "
-                             "the ES result")
+        if (self.semantic_compatibility is None) != (not self.evaluations):
+            raise ValueError("the ES result is present exactly when discovered "
+                             "constraints are evaluated")
         for ev in self.evaluations:
             if ev.declaration.registration is None:
                 raise ValueError("every evaluation targets a registered "

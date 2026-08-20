@@ -273,3 +273,35 @@ class TestVsParity:
         r = parse_observed_decimal(lexeme)
         assert r.status == "admitted"
         assert r.decimal.canonical == canonical
+
+
+class TestAdversarialLimitClassification:
+    """Limits never turn malformed evidence into an honest refusal."""
+
+    @pytest.mark.parametrize("lexeme", [
+        "x" * 387,
+        '"' + "1" * 387 + '"',
+        "[" + "1" * 387 + "]",
+        "1" * 386 + "x",
+    ])
+    def test_over_limit_non_numbers_are_parity_breaches(self, lexeme):
+        with pytest.raises(NumericParityBreachError):
+            parse_observed_decimal(lexeme)
+
+    def test_zero_cannot_bypass_coefficient_limit(self):
+        assert parse_observed_decimal(
+            "0." + "0" * 256).status == "out_of_bounds"
+
+    def test_trailing_zero_is_trimmed_before_expansion_limit(self):
+        lexeme = "1." + "1" * 128 + "0"
+        result = parse_observed_decimal(lexeme)
+        assert result.status == "admitted"
+        assert result.decimal.canonical == "1." + "1" * 128
+
+    @pytest.mark.parametrize("lexeme", ["0E+256", "0E-256"])
+    def test_zero_at_explicit_exponent_limit_is_admitted(self, lexeme):
+        assert parse_observed_decimal(lexeme).status == "admitted"
+
+    @pytest.mark.parametrize("lexeme", ["0E+257", "0E-257"])
+    def test_zero_beyond_explicit_exponent_limit_is_out_of_bounds(self, lexeme):
+        assert parse_observed_decimal(lexeme).status == "out_of_bounds"

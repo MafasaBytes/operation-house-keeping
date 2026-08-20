@@ -71,8 +71,8 @@ candidate-local `declared_semantics_compatible` has passed (step 10).
 `CanonicalObservedDecimal` carries the original source `lexeme` (the exact
 `value_json` text) and a `canonical` plain-number string. The parser accepts
 exactly one JSON number, permits legal JSON whitespace, enforces a byte limit
-on the full lexeme, preserves the source lexeme unchanged, accepts bounded
-exponent notation, preflights expansion before allocation, normalizes
+on the full lexeme, preserves the source lexeme unchanged, accepts exponent
+notation with magnitude at most 256, preflights expansion before allocation, normalizes
 mathematical zero to `"0"`, never uses float or ambient Decimal rounding, and
 treats disagreement with the VS numeric classification as a typed
 parity-breach integrity error (`NumericParityBreachError`). The parser does
@@ -85,6 +85,9 @@ parse_constant=reject)` call shape.
 The result contracts (`ConstraintEvaluationResult`,
 `VariableConstraintEvaluationCollectionResult`) have validators that
 re-derive every candidate from the carried ES result and reject divergence.
+The variable-scoped result also carries the exact Slice A constraint
+collection, locking empty/non-empty discovery, ordering, target variable,
+and model revision even when no ES query is needed.
 This detects: wrong counts or indices, candidate substitution or reordering,
 mixed anchors / variables / revisions / cutoffs, forged decimals, boundary
 relations, satisfaction, verdicts, or reasons, evaluated rows under failed
