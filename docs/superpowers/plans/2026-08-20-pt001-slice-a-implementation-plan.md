@@ -1,7 +1,8 @@
 # PT-001 Slice A implementation plan
 
-Status: authorized. Slice B and Slice C remain owner-gated. No committed PT
-fixture or public PT query surface is permitted in Slice A.
+Status: PT-001 Slice A implemented and adversarially reviewed; awaiting owner
+acceptance. Slice B and Slice C remain owner-gated. No committed PT fixture or
+public PT query surface is permitted in Slice A.
 
 ## Step 1 — Persist the accepted architecture
 

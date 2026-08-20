@@ -728,3 +728,5 @@ Reasonable, reversible implementation details inside an accepted milestone do
 not require repeated confirmation.
 
 CN-001 complete, owner accepted, adversarially reviewed, and dual-clean-checkout verified.
+
+PT-001 Slice A implemented and adversarially reviewed; awaiting owner acceptance.

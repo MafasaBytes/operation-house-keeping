@@ -1,7 +1,8 @@
 # PT-001 — Explicit ports and typed interface connectivity
 
-Status: accepted design. Slice A authorized; Slices B and C require separate
-owner acceptance. No committed PT fixture is permitted in Slice A.
+Status: PT-001 Slice A implemented and adversarially reviewed; awaiting owner
+acceptance. Slices B and C require separate owner acceptance. No committed PT
+fixture is permitted in Slice A.
 
 ## Mission and boundary
 

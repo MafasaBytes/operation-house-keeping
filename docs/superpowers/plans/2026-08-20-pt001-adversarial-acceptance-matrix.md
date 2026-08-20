@@ -1,6 +1,6 @@
 # PT-001 Slice A adversarial acceptance matrix
 
-Status: accepted test contract for authorized Slice A.
+Status: PT-001 Slice A implemented and adversarially reviewed; awaiting owner acceptance.
 
 | Area | Required attack | Required result |
 |---|---|---|
