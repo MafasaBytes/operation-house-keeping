@@ -1,6 +1,6 @@
 # ADR-0012 — Explicit variable constraints and evidence-gated evaluation
 
-Status: Slices A and B accepted; Slice C awaiting owner acceptance. Spec:
+Status: CN-001 complete, owner accepted, adversarially reviewed, and dual-clean-checkout verified. Spec:
 `docs/superpowers/specs/2026-08-15-cn001-explicit-variable-constraints-and-evidence-gated-evaluation-design.md`.
 
 ## Context

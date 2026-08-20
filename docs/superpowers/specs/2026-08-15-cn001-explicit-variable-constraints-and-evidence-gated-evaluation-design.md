@@ -1,7 +1,7 @@
 # CN-001 — Explicit Variable Constraints and Evidence-Gated Evaluation
 
-Status: Slices A and B accepted; Slice C implemented and awaiting owner
-acceptance. Supersedes the
+Status: CN-001 complete, owner accepted, adversarially reviewed, and
+dual-clean-checkout verified. Supersedes the
 provisional CN-001 synthesis; this document is the implementation-ready
 specification after the owner correction pass and the
 `ConstraintRegistration`-evidence amendment (which overrides the prior

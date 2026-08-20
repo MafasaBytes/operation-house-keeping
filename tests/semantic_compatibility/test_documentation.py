@@ -38,11 +38,11 @@ def test_touched_accepted_module_notes_preserve_layer_ownership():
     assert "`membership()` helper" in binding
 
 
-def test_claude_status_preserves_es001_acceptance_and_cn001_owner_gate():
+def test_claude_status_preserves_es001_and_cn001_owner_acceptance():
     text = " ".join(Path("CLAUDE.md").read_text().split())
     assert "Also accepted: ES-001" in text
     assert ("adversarially reviewed, repaired, and dual-clean-checkout "
             "verified") in text
-    assert "CN-001 Slices A and B are owner-accepted" in text
-    assert ("CN-001 implemented, adversarially reviewed, and "
-            "dual-clean-checkout verified; awaiting owner acceptance.") in text
+    assert "CN-001 is owner accepted" in text
+    assert ("CN-001 complete, owner accepted, adversarially reviewed, and "
+            "dual-clean-checkout verified.") in text
