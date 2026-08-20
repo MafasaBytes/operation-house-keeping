@@ -60,7 +60,8 @@ dual-clean-checkout verified — see
 `docs/adr/0011`. Source interpretation is authority knowledge, never source
 evidence or identity binding; compatibility compares exact identity tokens
 only, performs no conversion or value grading, and never fills an absent
-source unit. No post-ES-001 milestone has yet been owner-approved. See
+source unit. CN-001 Slices A and B are owner-accepted; Slice C is implemented
+and remains owner-gated. See
 docs/superpowers/specs/ and docs/adr/ for accepted designs. The
 historical sentence "Only `data_sources` is currently in scope" in the
 Current Phase section below is superseded by this Status section; the
