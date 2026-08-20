@@ -10,10 +10,11 @@ per-candidate derivation.
 from backend.constraint_evaluation.contracts import (
     BoundaryAssessment,
     CandidateConstraintEvaluation,
+    ConstraintEvaluationVerdict,
+    ConstraintNotEvaluatedReason,
     ConstraintEvaluationResult,
-    NotEvaluatedReason,
+    VariableConstraintEvaluationEntry,
     VariableConstraintEvaluationCollectionResult,
-    Verdict,
     derive_candidate_evaluation)
 from backend.constraint_evaluation.decimal import (
     CanonicalObservedDecimal, ObservedDecimalResolution, parse_observed_decimal)
@@ -35,12 +36,13 @@ __all__ = [
     "ObservedDecimalResolution",
     "parse_observed_decimal",
     # vocabularies
-    "Verdict",
-    "NotEvaluatedReason",
+    "ConstraintEvaluationVerdict",
+    "ConstraintNotEvaluatedReason",
     # results
     "BoundaryAssessment",
     "CandidateConstraintEvaluation",
     "ConstraintEvaluationResult",
+    "VariableConstraintEvaluationEntry",
     "VariableConstraintEvaluationCollectionResult",
     "derive_candidate_evaluation",
     # facade

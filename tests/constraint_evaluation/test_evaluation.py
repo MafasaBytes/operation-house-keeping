@@ -53,14 +53,14 @@ class TestHappyPath:
                 predicate=ExactNumericUpperBound(
                     upper=NumericBoundary(value="80",
                                            inclusion="inclusive"))))
-        result = cn.evaluate_constraint(CON_A, as_of=AS_OF,
+        result = cn.constraint_evaluation(CON_A, as_of=AS_OF,
                                         entity_anchor_id=EXTRUDER)
         assert result.ruleset_version == "cn001.1"
-        assert result.declaration.status == "declared"
+        assert result.constraint.status == "declared"
         assert len(result.candidates) == 1
         assert result.candidates[0].verdict == "satisfied"
         assert result.candidates[0].not_evaluated_reason is None
-        assert result.candidates[0].observed_decimal.canonical == "60.4"
+        assert result.candidates[0].observed_decimal == "60.4"
         assert len(result.candidates[0].boundary_assessments) == 1
         assert result.candidates[0].boundary_assessments[0].satisfied is True
         assert result.semantic_compatibility == es.variable_semantic_compatibility(
@@ -72,22 +72,22 @@ class TestHappyPath:
                 predicate=ExactNumericUpperBound(
                     upper=NumericBoundary(value="50",
                                            inclusion="inclusive"))))
-        result = cn.evaluate_constraint(CON_A, as_of=AS_OF)
+        result = cn.constraint_evaluation(CON_A, as_of=AS_OF)
         assert result.candidates[0].verdict == "violated"
         assert result.candidates[0].boundary_assessments[0].satisfied is False
-        assert result.candidates[0].boundary_assessments[0].relation == "greater"
+        assert result.candidates[0].boundary_assessments[0].relation == "above"
 
     def test_es_result_carried_once_no_duplicate_candidate_objects(self, tmp_path):
         cn, es, _, _ = cn_stack(
             tmp_path, constraint_records=default_constraint_records())
-        result = cn.evaluate_constraint(CON_A, as_of=AS_OF)
+        result = cn.constraint_evaluation(CON_A, as_of=AS_OF)
         # the carried ES candidate object is the SAME object as the ES
         # result's candidate (no second CandidateSemanticCompatibility copy)
-        assert (result.candidates[0].candidate_index == 0)
+        assert (result.candidates[0].semantic_candidate_index == 0)
         assert (result.semantic_compatibility.candidates[0]
                 is result.semantic_compatibility.candidates[0])
         # the candidate evaluation references the ES candidate by index only
-        assert result.candidates[0].candidate_index == 0
+        assert result.candidates[0].semantic_candidate_index == 0
 
     def test_multiple_candidates_keep_order_with_opposing_outcomes(self, tmp_path):
         from backend.model_state import ModelStateQueries
@@ -144,12 +144,12 @@ class TestHappyPath:
         es = SemanticCompatibilityQueries(
             ObservationCompatibilityQueries(state),
             InterpretationResolver(istore.load()))
-        result = ConstraintEvaluationQueries(es).evaluate_constraint(
+        result = ConstraintEvaluationQueries(es).constraint_evaluation(
             CON_A, as_of=AS_OF)
 
-        assert tuple(row.candidate_index for row in result.candidates) == (0, 1)
+        assert tuple(row.semantic_candidate_index for row in result.candidates) == (0, 1)
         outcomes = tuple(
-            (row.verdict, row.observed_decimal.canonical)
+            (row.verdict, row.observed_decimal)
             for row in result.candidates)
         assert outcomes == (("satisfied", "60"), ("violated", "60.1"))
 
@@ -163,9 +163,9 @@ class TestPrecedence:
     def test_step1_not_registered(self, tmp_path):
         cn, _, _, _ = cn_stack(
             tmp_path, constraint_records=default_constraint_records())
-        result = cn.evaluate_constraint(
+        result = cn.constraint_evaluation(
             "con_" + "f" * 32, as_of=AS_OF)
-        assert result.declaration.status == "not_registered"
+        assert result.constraint.status == "not_registered"
         assert result.semantic_compatibility is None
         assert result.candidates == ()
 
@@ -173,10 +173,10 @@ class TestPrecedence:
         # registration only, no declaration
         cn, _, _, _ = cn_stack(
             tmp_path, constraint_records=(constraint_registration(),))
-        result = cn.evaluate_constraint(CON_A, as_of=AS_OF)
-        assert result.declaration.status == "not_declared"
+        result = cn.constraint_evaluation(CON_A, as_of=AS_OF)
+        assert result.constraint.status == "not_declared"
         assert result.candidates[0].verdict == "not_evaluated"
-        assert result.candidates[0].not_evaluated_reason == "not_declared"
+        assert result.candidates[0].not_evaluated_reason == "constraint_not_declared"
 
     def test_step2_conflicted(self, tmp_path):
         # two non-superseding declarations -> two tips -> conflicted
@@ -185,18 +185,18 @@ class TestPrecedence:
         decl2 = constraint_declaration(constraint_anchor_id=CON_A, note="d2")
         cn, _, _, _ = cn_stack(
             tmp_path, constraint_records=(reg, decl1, decl2))
-        result = cn.evaluate_constraint(CON_A, as_of=AS_OF)
-        assert result.declaration.status == "conflicted"
+        result = cn.constraint_evaluation(CON_A, as_of=AS_OF)
+        assert result.constraint.status == "conflicted"
         assert result.candidates[0].verdict == "not_evaluated"
-        assert result.candidates[0].not_evaluated_reason == "conflicted"
-        assert len(result.declaration.conflicting_declarations) == 2
+        assert result.candidates[0].not_evaluated_reason == "constraint_conflicted"
+        assert len(result.constraint.conflicting_declarations) == 2
 
     def test_step3_no_observation(self, tmp_path):
         cn, _, _, _ = cn_stack(
             tmp_path, constraint_records=default_constraint_records())
-        result = cn.evaluate_constraint(CON_A, as_of=EARLY)
+        result = cn.constraint_evaluation(CON_A, as_of=EARLY)
         assert result.candidates[0].verdict == "not_evaluated"
-        assert result.candidates[0].not_evaluated_reason == "no_observation"
+        assert result.candidates[0].not_evaluated_reason == "observation_absent"
 
     def test_step4_observation_not_attached(self, tmp_path):
         # divergent binding: variable anchor declaration has a different
@@ -226,7 +226,7 @@ class TestPrecedence:
         cn, _, _, _ = cn_stack(
             tmp_path, constraint_records=default_constraint_records(),
             binding_records=divergent_records)
-        result = cn.evaluate_constraint(CON_A, as_of=AS_OF)
+        result = cn.constraint_evaluation(CON_A, as_of=AS_OF)
         assert result.candidates[0].verdict == "not_evaluated"
         assert result.candidates[0].not_evaluated_reason == (
             "observation_not_attached")
@@ -235,32 +235,32 @@ class TestPrecedence:
         cn, _, _, temporal = cn_stack(
             tmp_path, constraint_records=default_constraint_records())
         craft_value(temporal, value_json="not-a-number", json_type="number")
-        result = cn.evaluate_constraint(CON_A, as_of=LATE)
+        result = cn.constraint_evaluation(CON_A, as_of=LATE)
         assert result.candidates[0].verdict == "not_evaluated"
-        assert result.candidates[0].not_evaluated_reason == "value_json_malformed"
+        assert result.candidates[0].not_evaluated_reason == "evidence_not_assessable"
 
     def test_step5_evidence_not_assessable_shape_disagreement(self, tmp_path):
         cn, _, _, temporal = cn_stack(
             tmp_path, constraint_records=default_constraint_records())
         # json_type says number but value_json is a quoted string
         craft_value(temporal, value_json='"60"', json_type="number")
-        result = cn.evaluate_constraint(CON_A, as_of=LATE)
-        assert result.candidates[0].not_evaluated_reason == "shape_disagreement"
+        result = cn.constraint_evaluation(CON_A, as_of=LATE)
+        assert result.candidates[0].not_evaluated_reason == "evidence_not_assessable"
 
     def test_step5_evidence_not_assessable_json_type_unrecognized(self, tmp_path):
         cn, _, _, temporal = cn_stack(
             tmp_path, constraint_records=default_constraint_records())
         craft_value(temporal, value_json="60", json_type="bogus_type")
-        result = cn.evaluate_constraint(CON_A, as_of=LATE)
-        assert result.candidates[0].not_evaluated_reason == "json_type_unrecognized"
+        result = cn.constraint_evaluation(CON_A, as_of=LATE)
+        assert result.candidates[0].not_evaluated_reason == "evidence_not_assessable"
 
     def test_step5_evidence_not_assessable_value_not_representable(self, tmp_path):
         cn, _, _, temporal = cn_stack(
             tmp_path, constraint_records=default_constraint_records())
         # a digit string so long it exceeds int_max_str_digits -> ValueError
         craft_value(temporal, value_json="9" * 5000, json_type="number")
-        result = cn.evaluate_constraint(CON_A, as_of=LATE)
-        assert result.candidates[0].not_evaluated_reason == "value_not_representable"
+        result = cn.constraint_evaluation(CON_A, as_of=LATE)
+        assert result.candidates[0].not_evaluated_reason == "evidence_not_assessable"
 
     def test_step6_vs_shape_not_evaluated_specification_conflicted(self, tmp_path):
         from backend.model_kernel import (
@@ -281,10 +281,10 @@ class TestPrecedence:
         cn, _, _, _ = cn_stack(
             tmp_path, constraint_records=(
                 *default_constraint_records(), conflicting_vsp))
-        result = cn.evaluate_constraint(CON_A, as_of=AS_OF)
+        result = cn.constraint_evaluation(CON_A, as_of=AS_OF)
         assert result.candidates[0].verdict == "not_evaluated"
         assert result.candidates[0].not_evaluated_reason == (
-            "specification_conflicted")
+            "value_shape_not_evaluated")
 
     def test_step7_model_value_shape_not_numeric(self, tmp_path):
         from backend.model_kernel import (
@@ -310,7 +310,7 @@ class TestPrecedence:
             tmp_path, constraint_records=(
                 *default_constraint_records(), string_vsp))
         craft_value(temporal, value_json='"hot"', json_type="string")
-        result = cn.evaluate_constraint(CON_A, as_of=LATE)
+        result = cn.constraint_evaluation(CON_A, as_of=LATE)
         assert result.candidates[0].verdict == "not_evaluated"
         assert result.candidates[0].not_evaluated_reason == (
             "model_value_shape_not_numeric")
@@ -320,9 +320,9 @@ class TestPrecedence:
             tmp_path, constraint_records=default_constraint_records())
         # observed is a string; VSP expects number -> shape_differs
         craft_value(temporal, value_json='"hot"', json_type="string")
-        result = cn.evaluate_constraint(CON_A, as_of=LATE)
+        result = cn.constraint_evaluation(CON_A, as_of=LATE)
         assert result.candidates[0].not_evaluated_reason == (
-            "does_not_satisfy_value_shape")
+            "value_shape_not_satisfied")
 
     def test_step9_numeric_value_absent_nullable_null(self, tmp_path):
         from tests.model_state.helpers import RECORDED, MODEL_AUTHORITY, resolver_with
@@ -386,7 +386,7 @@ class TestPrecedence:
         interpretations = InterpretationStore(DEMO_INTERPRETATIONS).load()
         es = SemanticCompatibilityQueries(values, InterpretationResolver(interpretations))
         cn = ConstraintEvaluationQueries(es)
-        result = cn.evaluate_constraint(CON_A, as_of=LATE)
+        result = cn.constraint_evaluation(CON_A, as_of=LATE)
         assert result.candidates[0].verdict == "not_evaluated"
         assert result.candidates[0].not_evaluated_reason == "numeric_value_absent"
 
@@ -399,7 +399,7 @@ class TestPrecedence:
             interpretations_path=tmp_path / "empty" / "demo-printer")
         # use the committed temporal so an observation exists; the empty
         # interpretation makes the ES gate fail
-        result = cn.evaluate_constraint(CON_A, as_of=AS_OF)
+        result = cn.constraint_evaluation(CON_A, as_of=AS_OF)
         assert result.candidates[0].verdict == "not_evaluated"
         assert result.candidates[0].not_evaluated_reason == (
             "declared_semantics_not_compatible")
@@ -409,33 +409,33 @@ class TestPrecedence:
             constraint_registration(),
             constraint_declaration(expected_sem_sig=expected_semantics(
                 quantity_kind=other_quantity_kind_ref()))))
-        result = cn.evaluate_constraint(CON_A, as_of=AS_OF)
+        result = cn.constraint_evaluation(CON_A, as_of=AS_OF)
         assert result.candidates[0].not_evaluated_reason == (
-            "constraint_quantity_kind_lock_mismatch")
+            "constraint_quantity_kind_mismatch")
 
     def test_step12_observation_role_lock_mismatch(self, tmp_path):
         cn, _, _, _ = cn_stack(tmp_path, constraint_records=(
             constraint_registration(),
             constraint_declaration(expected_sem_sig=expected_semantics(
                 observation_role=other_observation_role_ref()))))
-        result = cn.evaluate_constraint(CON_A, as_of=AS_OF)
+        result = cn.constraint_evaluation(CON_A, as_of=AS_OF)
         assert result.candidates[0].not_evaluated_reason == (
-            "constraint_observation_role_lock_mismatch")
+            "constraint_observation_role_mismatch")
 
     def test_step13_unit_identity_lock_mismatch(self, tmp_path):
         cn, _, _, _ = cn_stack(tmp_path, constraint_records=(
             constraint_registration(),
             constraint_declaration(expected_sem_sig=expected_semantics(
                 unit=other_unit_ref()))))
-        result = cn.evaluate_constraint(CON_A, as_of=AS_OF)
+        result = cn.constraint_evaluation(CON_A, as_of=AS_OF)
         assert result.candidates[0].not_evaluated_reason == (
-            "constraint_unit_identity_lock_mismatch")
+            "constraint_unit_identity_mismatch")
 
     def test_step14_numeric_value_out_of_bounds(self, tmp_path):
         cn, _, _, temporal = cn_stack(
             tmp_path, constraint_records=default_constraint_records())
         craft_value(temporal, value_json="1E+999", json_type="number")
-        result = cn.evaluate_constraint(CON_A, as_of=LATE)
+        result = cn.constraint_evaluation(CON_A, as_of=LATE)
         assert result.candidates[0].not_evaluated_reason == (
             "numeric_value_out_of_bounds")
 
@@ -459,7 +459,7 @@ class TestComparisons:
                     upper=NumericBoundary(value=bound,
                                            inclusion=inclusion))))
         craft_value(temporal, value_json=value, json_type="number")
-        result = cn.evaluate_constraint(CON_A, as_of=LATE)
+        result = cn.constraint_evaluation(CON_A, as_of=LATE)
         assert result.candidates[0].verdict == expected
 
     @pytest.mark.parametrize("value,bound,inclusion,expected", [
@@ -477,7 +477,7 @@ class TestComparisons:
                     lower=NumericBoundary(value=bound,
                                            inclusion=inclusion))))
         craft_value(temporal, value_json=value, json_type="number")
-        result = cn.evaluate_constraint(CON_A, as_of=LATE)
+        result = cn.constraint_evaluation(CON_A, as_of=LATE)
         assert result.candidates[0].verdict == expected
 
     @pytest.mark.parametrize("value,lo,hi,li,ui,expected", [
@@ -508,7 +508,7 @@ class TestComparisons:
                     lower=NumericBoundary(value=lo, inclusion=li),
                     upper=NumericBoundary(value=hi, inclusion=ui))))
         craft_value(temporal, value_json=value, json_type="number")
-        result = cn.evaluate_constraint(CON_A, as_of=LATE)
+        result = cn.constraint_evaluation(CON_A, as_of=LATE)
         assert result.candidates[0].verdict == expected
         # interval carries two boundary assessments
         assert len(result.candidates[0].boundary_assessments) == 2
@@ -520,9 +520,9 @@ class TestComparisons:
                     lower=NumericBoundary(value="-10",
                                            inclusion="inclusive"))))
         craft_value(temporal, value_json="-25.5", json_type="number")
-        result = cn.evaluate_constraint(CON_A, as_of=LATE)
+        result = cn.constraint_evaluation(CON_A, as_of=LATE)
         assert result.candidates[0].verdict == "violated"
-        assert result.candidates[0].observed_decimal.canonical == "-25.5"
+        assert result.candidates[0].observed_decimal == "-25.5"
 
     def test_negative_zero_normalized_to_zero(self, tmp_path):
         cn, _, _, temporal = cn_stack(
@@ -531,8 +531,8 @@ class TestComparisons:
                     lower=NumericBoundary(value="0",
                                            inclusion="inclusive"))))
         craft_value(temporal, value_json="-0", json_type="number")
-        result = cn.evaluate_constraint(CON_A, as_of=LATE)
-        assert result.candidates[0].observed_decimal.canonical == "0"
+        result = cn.constraint_evaluation(CON_A, as_of=LATE)
+        assert result.candidates[0].observed_decimal == "0"
         assert result.candidates[0].verdict == "satisfied"
 
     def test_exponent_notation_parses_to_canonical(self, tmp_path):
@@ -542,8 +542,8 @@ class TestComparisons:
                     upper=NumericBoundary(value="100",
                                            inclusion="inclusive"))))
         craft_value(temporal, value_json="6e1", json_type="number")
-        result = cn.evaluate_constraint(CON_A, as_of=LATE)
-        assert result.candidates[0].observed_decimal.canonical == "60"
+        result = cn.constraint_evaluation(CON_A, as_of=LATE)
+        assert result.candidates[0].observed_decimal == "60"
         assert result.candidates[0].verdict == "satisfied"
 
     def test_large_integer_admitted_exactly(self, tmp_path):
@@ -553,9 +553,9 @@ class TestComparisons:
                     upper=NumericBoundary(value="9" * 250,
                                            inclusion="inclusive"))))
         craft_value(temporal, value_json="1" * 200, json_type="number")
-        result = cn.evaluate_constraint(CON_A, as_of=LATE)
+        result = cn.constraint_evaluation(CON_A, as_of=LATE)
         assert result.candidates[0].verdict == "satisfied"
-        assert result.candidates[0].observed_decimal.canonical == "1" * 200
+        assert result.candidates[0].observed_decimal == "1" * 200
 
     def test_precision_sensitive_fraction(self, tmp_path):
         cn, _, _, temporal = cn_stack(
@@ -565,7 +565,7 @@ class TestComparisons:
                                            inclusion="inclusive"))))
         craft_value(temporal, value_json="0." + "0" * 99 + "1",
                     json_type="number")
-        result = cn.evaluate_constraint(CON_A, as_of=LATE)
+        result = cn.constraint_evaluation(CON_A, as_of=LATE)
         # 1e-100 < 0.001 → within the inclusive upper bound → satisfied.
         # Exact parsing preserves the 100-digit fraction without rounding.
         assert result.candidates[0].verdict == "satisfied"
@@ -577,9 +577,9 @@ class TestDiscovery:
     def test_not_registered_variable(self, tmp_path):
         cn, _, _, _ = cn_stack(
             tmp_path, constraint_records=default_constraint_records())
-        result = cn.constraints_of_variable_evaluation(
+        result = cn.variable_constraint_evaluations(
             "var_" + "f" * 32, as_of=AS_OF)
-        assert result.status == "not_registered"
+        assert result.constraint_collection.status == "not_registered"
         assert result.evaluations == ()
         assert result.semantic_compatibility is None
 
@@ -590,38 +590,32 @@ class TestDiscovery:
         decl_b = constraint_declaration(constraint_anchor_id=CON_B)
         cn, es, _, _ = cn_stack(
             tmp_path, constraint_records=(reg_a, decl_a, reg_b, decl_b))
-        result = cn.constraints_of_variable_evaluation(HOTEND, as_of=AS_OF)
-        assert result.status == "registered"
+        result = cn.variable_constraint_evaluations(HOTEND, as_of=AS_OF)
+        assert result.constraint_collection.status == "registered"
         assert len(result.evaluations) == 2
         assert result.evaluations[0].constraint_anchor_id == CON_A
         assert result.evaluations[1].constraint_anchor_id == CON_B
-        # both share the same ES result (carried once)
-        assert (result.evaluations[0].semantic_compatibility
-                == result.semantic_compatibility
-                == result.evaluations[1].semantic_compatibility)
+        # ES is carried only at the root; entries contain indices and rows.
+        assert result.semantic_compatibility is not None
+        assert all("semantic_compatibility" not in type(entry).model_fields
+                   for entry in result.evaluations)
 
     def test_registered_empty_has_no_constraints(self, tmp_path):
         # HOTEND is registered in the demo model; with no constraint records
         # appended, the collection is registered but empty.
         cn, _, _, _ = cn_stack(tmp_path, constraint_records=())
-        result = cn.constraints_of_variable_evaluation(HOTEND, as_of=AS_OF)
-        assert result.status == "registered"
+        result = cn.variable_constraint_evaluations(HOTEND, as_of=AS_OF)
+        assert result.constraint_collection.status == "registered"
         assert result.evaluations == ()
         assert result.semantic_compatibility is None
         assert result.constraint_collection.constraints == ()
 
     def test_registered_empty_rejects_extra_es_and_wrong_revision(self, tmp_path):
         cn, es, _, _ = cn_stack(tmp_path, constraint_records=())
-        result = cn.constraints_of_variable_evaluation(HOTEND, as_of=AS_OF)
+        result = cn.variable_constraint_evaluations(HOTEND, as_of=AS_OF)
         payload = result.model_dump(mode="python")
         payload["semantic_compatibility"] = es.variable_semantic_compatibility(
             HOTEND, as_of=AS_OF)
-        with pytest.raises(Exception):
-            VariableConstraintEvaluationCollectionResult(**payload)
-        from tests.model_kernel.test_demo_model import PRE_ES001_MEMBERSHIP
-        payload = result.model_dump(mode="python")
-        payload["revision"] = ModelStore(Path("models/demo-printer")).replay(
-            PRE_ES001_MEMBERSHIP).revision
         with pytest.raises(Exception):
             VariableConstraintEvaluationCollectionResult(**payload)
 
@@ -632,11 +626,10 @@ class TestRevisionCoherence:
     def test_revision_carried_and_coherent(self, tmp_path):
         cn, _, _, _ = cn_stack(
             tmp_path, constraint_records=default_constraint_records())
-        result = cn.evaluate_constraint(CON_A, as_of=AS_OF)
-        assert result.revision == result.declaration.revision
-        assert (result.revision
+        result = cn.constraint_evaluation(CON_A, as_of=AS_OF)
+        assert (result.constraint.revision
                 == result.semantic_compatibility.semantics_result.revision)
-        assert (result.revision
+        assert (result.constraint.revision
                 == result.semantic_compatibility.value_compatibility
                 .state.model_revision)
 
@@ -650,8 +643,8 @@ class TestRevisionCoherence:
                 ModelStore(Path("models/demo-printer"))
                 .replay(PRE_ES001_MEMBERSHIP).records.values()),
             constraint_records=())
-        result = cn.evaluate_constraint(CON_A, as_of=AS_OF)
-        assert result.declaration.status == "not_registered"
+        result = cn.constraint_evaluation(CON_A, as_of=AS_OF)
+        assert result.constraint.status == "not_registered"
         assert result.candidates == ()
 
 
@@ -677,8 +670,8 @@ class TestIsolation:
         before_demo_model = tree_bytes(Path("models/demo-printer"))
         before_demo_bindings = tree_bytes(Path("bindings/demo-printer"))
         before_demo_interp = tree_bytes(Path("interpretations/demo-printer"))
-        cn.evaluate_constraint(CON_A, as_of=AS_OF)
-        cn.constraints_of_variable_evaluation(HOTEND, as_of=AS_OF)
+        cn.constraint_evaluation(CON_A, as_of=AS_OF)
+        cn.variable_constraint_evaluations(HOTEND, as_of=AS_OF)
         assert tree_bytes(tmp_path / "model" / "demo-printer") == before_model
         assert temporal.store.ordered_logical_dump() == before_temporal
         assert tree_bytes(temporal.store.evidence_root) == before_evidence
@@ -695,8 +688,8 @@ class TestIsolation:
         assert not hasattr(mod, "_parse_shape")
         assert "from backend.observation_compatibility.facade" not in source
         assert "from backend.observation_compatibility import" not in source
-        # the parser uses the standard library, not VS internals
-        assert "import json" in source
+        # parsing is local bounded lexical code, not VS internals
+        assert "_JSON_NUMBER" in source
 
     def test_wrong_injected_type_raises_configuration_error(self):
         with pytest.raises(ConstraintEvaluationConfigurationError):
@@ -706,18 +699,18 @@ class TestIsolation:
         cn, _, _, _ = cn_stack(
             tmp_path, constraint_records=default_constraint_records())
         with pytest.raises(ConstraintEvaluationInputError):
-            cn.evaluate_constraint("not-a-con-id", as_of=AS_OF)
+            cn.constraint_evaluation("not-a-con-id", as_of=AS_OF)
         with pytest.raises(ConstraintEvaluationInputError):
-            cn.constraints_of_variable_evaluation("not-a-var-id",
+            cn.variable_constraint_evaluations("not-a-var-id",
                                                     as_of=AS_OF)
 
     def test_early_returns_validate_cutoff_and_selectors(self, tmp_path):
         cn, _, _, _ = cn_stack(tmp_path, constraint_records=())
         with pytest.raises(ConstraintEvaluationInputError):
-            cn.evaluate_constraint("con_" + "f" * 32,
+            cn.constraint_evaluation("con_" + "f" * 32,
                                    as_of=AS_OF.replace(tzinfo=None))
         with pytest.raises(ConstraintEvaluationInputError):
-            cn.constraints_of_variable_evaluation(
+            cn.variable_constraint_evaluations(
                 HOTEND, as_of=AS_OF, source=object())
 
     def test_as_of_is_normalized_to_utc(self, tmp_path):
@@ -725,7 +718,7 @@ class TestIsolation:
         cn, _, _, _ = cn_stack(tmp_path, constraint_records=())
         offset = timezone(timedelta(hours=2))
         requested = AS_OF.astimezone(offset)
-        result = cn.constraints_of_variable_evaluation(
+        result = cn.variable_constraint_evaluations(
             HOTEND, as_of=requested)
         assert result.as_of.tzinfo is UTC
         assert result.as_of == AS_OF
@@ -734,75 +727,38 @@ class TestIsolation:
 # ============================================================ outer-result forgery
 
 class TestOuterResultForgery:
-    """The authoritative validators re-derive every candidate and reject
-    divergence, including objects forged through ``model_construct`` or
-    ``model_copy``."""
-
     def _green(self, tmp_path):
-        cn, es, _, _ = cn_stack(
+        cn, _, _, _ = cn_stack(
             tmp_path, constraint_records=default_constraint_records(
                 predicate=ExactNumericUpperBound(
                     upper=NumericBoundary(value="80",
                                            inclusion="inclusive"))))
-        return cn.evaluate_constraint(CON_A, as_of=AS_OF)
+        return cn.constraint_evaluation(CON_A, as_of=AS_OF)
 
-    def test_forged_verdict_rejected(self, tmp_path):
-        result = self._green(tmp_path)
-        forged = result.candidates[0].model_copy(
-            update={"verdict": "violated"})
-        with pytest.raises(Exception):
-            ConstraintEvaluationResult(
-                constraint_anchor_id=result.constraint_anchor_id,
-                declaration=result.declaration, as_of=result.as_of,
-                ruleset_version="cn001.1",
-                semantic_compatibility=result.semantic_compatibility,
-                candidates=(forged,), revision=result.revision)
-
-    def test_forged_not_evaluated_reason_rejected(self, tmp_path):
-        result = self._green(tmp_path)
-        forged = result.candidates[0].model_copy(
-            update={"not_evaluated_reason": "no_observation"})
-        with pytest.raises(Exception):
-            ConstraintEvaluationResult(
-                constraint_anchor_id=result.constraint_anchor_id,
-                declaration=result.declaration, as_of=result.as_of,
-                ruleset_version="cn001.1",
-                semantic_compatibility=result.semantic_compatibility,
-                candidates=(forged,), revision=result.revision)
-
-    def test_forged_observed_decimal_rejected(self, tmp_path):
-        from backend.constraint_evaluation import CanonicalObservedDecimal
-        result = self._green(tmp_path)
-        forged_decimal = CanonicalObservedDecimal(lexeme="99", canonical="99")
-        forged = result.candidates[0].model_copy(
-            update={"observed_decimal": forged_decimal})
-        with pytest.raises(Exception):
-            ConstraintEvaluationResult(
-                constraint_anchor_id=result.constraint_anchor_id,
-                declaration=result.declaration, as_of=result.as_of,
-                ruleset_version="cn001.1",
-                semantic_compatibility=result.semantic_compatibility,
-                candidates=(forged,), revision=result.revision)
-
-    def test_forged_boundary_assessment_satisfied_rejected(self, tmp_path):
-        result = self._green(tmp_path)
-        bad_boundary = result.candidates[0].boundary_assessments[0].model_copy(
-            update={"satisfied": False})
-        forged = result.candidates[0].model_copy(
-            update={"boundary_assessments": (bad_boundary,)})
-        with pytest.raises(Exception):
-            ConstraintEvaluationResult(
-                constraint_anchor_id=result.constraint_anchor_id,
-                declaration=result.declaration, as_of=result.as_of,
-                ruleset_version="cn001.1",
-                semantic_compatibility=result.semantic_compatibility,
-                candidates=(forged,), revision=result.revision)
+    def _rebuild(self, result, candidates):
+        return ConstraintEvaluationResult(
+            constraint=result.constraint, as_of=result.as_of,
+            ruleset_version="cn001.1",
+            semantic_compatibility=result.semantic_compatibility,
+            candidates=candidates)
 
     @pytest.mark.parametrize("update", [
-        {"relation": "greater"},
-        {"role": "lower"},
-        {"boundary_value": "79"},
-        {"inclusion": "exclusive"},
+        {"verdict": "violated"},
+        {"not_evaluated_reason": "observation_absent"},
+        {"observed_decimal": "99"},
+        {"semantic_candidate_index": 5},
+    ])
+    def test_forged_candidate_fact_rejected(self, tmp_path, update):
+        result = self._green(tmp_path)
+        forged = result.candidates[0].model_copy(update=update)
+        with pytest.raises(Exception):
+            self._rebuild(result, (forged,))
+
+    @pytest.mark.parametrize("update", [
+        {"relation": "above"},
+        {"side": "lower"},
+        {"boundary": NumericBoundary(value="79", inclusion="inclusive")},
+        {"satisfied": False},
     ])
     def test_forged_boundary_facts_rejected(self, tmp_path, update):
         result = self._green(tmp_path)
@@ -811,12 +767,7 @@ class TestOuterResultForgery:
         forged = result.candidates[0].model_copy(
             update={"boundary_assessments": (bad,)})
         with pytest.raises(Exception):
-            ConstraintEvaluationResult(
-                constraint_anchor_id=result.constraint_anchor_id,
-                declaration=result.declaration, as_of=result.as_of,
-                ruleset_version="cn001.1",
-                semantic_compatibility=result.semantic_compatibility,
-                candidates=(forged,), revision=result.revision)
+            self._rebuild(result, (forged,))
 
     def test_missing_duplicate_and_reordered_assessments_rejected(self, tmp_path):
         result = self._green(tmp_path)
@@ -825,117 +776,65 @@ class TestOuterResultForgery:
             forged = result.candidates[0].model_copy(
                 update={"boundary_assessments": assessments})
             with pytest.raises(Exception):
-                ConstraintEvaluationResult(
-                    constraint_anchor_id=result.constraint_anchor_id,
-                    declaration=result.declaration, as_of=result.as_of,
-                    ruleset_version="cn001.1",
-                    semantic_compatibility=result.semantic_compatibility,
-                    candidates=(forged,), revision=result.revision)
+                self._rebuild(result, (forged,))
 
     def test_forged_candidate_count_rejected(self, tmp_path):
         result = self._green(tmp_path)
         # add a duplicate candidate -> wrong count
-        dup = result.candidates[0].model_copy(update={"candidate_index": 1})
+        dup = result.candidates[0].model_copy(update={"semantic_candidate_index": 1})
         with pytest.raises(Exception):
-            ConstraintEvaluationResult(
-                constraint_anchor_id=result.constraint_anchor_id,
-                declaration=result.declaration, as_of=result.as_of,
-                ruleset_version="cn001.1",
-                semantic_compatibility=result.semantic_compatibility,
-                candidates=(result.candidates[0], dup),
-                revision=result.revision)
-
-    def test_forged_candidate_index_reordering_rejected(self, tmp_path):
-        result = self._green(tmp_path)
-        forged = result.candidates[0].model_copy(
-            update={"candidate_index": 5})
-        with pytest.raises(Exception):
-            ConstraintEvaluationResult(
-                constraint_anchor_id=result.constraint_anchor_id,
-                declaration=result.declaration, as_of=result.as_of,
-                ruleset_version="cn001.1",
-                semantic_compatibility=result.semantic_compatibility,
-                candidates=(forged,), revision=result.revision)
+            self._rebuild(result, (result.candidates[0], dup))
 
     def test_model_construct_forgery_rejected(self, tmp_path):
         result = self._green(tmp_path)
         # model_construct bypasses validation; the outer validator must
         # re-derive and reject
         forged = CandidateConstraintEvaluation.model_construct(
-            candidate_index=0, verdict="satisfied", not_evaluated_reason=None,
+            semantic_candidate_index=0, verdict="satisfied", not_evaluated_reason=None,
             observed_decimal=result.candidates[0].observed_decimal,
             boundary_assessments=result.candidates[0].boundary_assessments)
-        # constructing the outer result re-validates and re-derives
-        ConstraintEvaluationResult(
-            constraint_anchor_id=result.constraint_anchor_id,
-            declaration=result.declaration, as_of=result.as_of,
-            ruleset_version="cn001.1",
-            semantic_compatibility=result.semantic_compatibility,
-            candidates=(forged,), revision=result.revision)
-        # if the forged candidate diverges from the re-derivation, the
-        # outer validator rejects it. A forged candidate with a wrong
-        # verdict fails:
+        self._rebuild(result, (forged,))
         forged_wrong = CandidateConstraintEvaluation.model_construct(
-            candidate_index=0, verdict="violated", not_evaluated_reason=None,
+            semantic_candidate_index=0, verdict="violated", not_evaluated_reason=None,
             observed_decimal=result.candidates[0].observed_decimal,
             boundary_assessments=result.candidates[0].boundary_assessments)
         with pytest.raises(Exception):
-            ConstraintEvaluationResult(
-                constraint_anchor_id=result.constraint_anchor_id,
-                declaration=result.declaration, as_of=result.as_of,
-                ruleset_version="cn001.1",
-                semantic_compatibility=result.semantic_compatibility,
-                candidates=(forged_wrong,), revision=result.revision)
+            self._rebuild(result, (forged_wrong,))
 
     def test_evaluated_row_under_failed_admission_rejected(self, tmp_path):
         # not_declared constraint: candidates must be not_evaluated. A forged
         # satisfied candidate under not_declared is rejected.
         cn, _, _, _ = cn_stack(
             tmp_path, constraint_records=(constraint_registration(),))
-        result = cn.evaluate_constraint(CON_A, as_of=AS_OF)
-        assert result.declaration.status == "not_declared"
-        # forge a satisfied candidate under the not_declared declaration
-        from backend.constraint_evaluation import CanonicalObservedDecimal
+        result = cn.constraint_evaluation(CON_A, as_of=AS_OF)
+        assert result.constraint.status == "not_declared"
         forged_boundary = BoundaryAssessment(
-            role="upper", boundary_value="80", inclusion="inclusive",
-            relation="less", satisfied=True)
+            side="upper",
+            boundary=NumericBoundary(value="80", inclusion="inclusive"),
+            relation="below", satisfied=True)
         satisfied = CandidateConstraintEvaluation(
-            candidate_index=0, verdict="satisfied",
-            observed_decimal=CanonicalObservedDecimal(lexeme="60.4",
-                                                       canonical="60.4"),
+            semantic_candidate_index=0, verdict="satisfied",
+            observed_decimal="60.4",
             boundary_assessments=(forged_boundary,))
         with pytest.raises(Exception):
-            ConstraintEvaluationResult(
-                constraint_anchor_id=result.constraint_anchor_id,
-                declaration=result.declaration, as_of=result.as_of,
-                ruleset_version="cn001.1",
-                semantic_compatibility=result.semantic_compatibility,
-                candidates=(satisfied,), revision=result.revision)
+            self._rebuild(result, (satisfied,))
 
     def test_forbidden_aggregate_field_rejected(self, tmp_path):
         result = self._green(tmp_path)
         # the contract has extra="forbid"; adding a severity field rejects
         with pytest.raises(Exception):
             CandidateConstraintEvaluation(
-                candidate_index=0, verdict="satisfied",
+                semantic_candidate_index=0, verdict="satisfied",
                 observed_decimal=result.candidates[0].observed_decimal,
                 boundary_assessments=result.candidates[0].boundary_assessments,
                 severity="high")  # type: ignore[call-arg]
 
-    def test_mixed_revision_rejected(self, tmp_path):
-        # a result whose declaration.revision != semantic.revision
-        cn, _, _, _ = cn_stack(
-            tmp_path, constraint_records=default_constraint_records())
-        result = cn.evaluate_constraint(CON_A, as_of=AS_OF)
-        # build a different model revision by replaying to pre-ES001
-        from tests.model_kernel.test_demo_model import PRE_ES001_MEMBERSHIP
-        replayed = ModelStore(Path("models/demo-printer")).replay(
-            PRE_ES001_MEMBERSHIP)
+    def test_stale_nested_constraint_rejected(self, tmp_path):
+        result = self._green(tmp_path)
+        forged = result.constraint.model_copy(update={"constraint_anchor_id": CON_B})
         with pytest.raises(Exception):
             ConstraintEvaluationResult(
-                constraint_anchor_id=result.constraint_anchor_id,
-                declaration=result.declaration, as_of=result.as_of,
+                constraint=forged, as_of=result.as_of,
                 ruleset_version="cn001.1",
                 semantic_compatibility=result.semantic_compatibility,
-                candidates=result.candidates,
-                revision=replayed.revision)
+                candidates=result.candidates)

@@ -10,7 +10,7 @@ propagates lower-layer typed errors unchanged.
 
 The evaluator emits exactly three verdicts (``satisfied``, ``violated``,
 ``not_evaluated``) and refuses for exactly the reasons enumerated in
-``NotEvaluatedReason``. It emits no severity, grade, normality, alarm,
+``ConstraintNotEvaluatedReason``. It emits no severity, grade, normality, alarm,
 recommendation, cause, diagnosis, or safety field, ever. ``violated``
 asserts only that the admitted observed value does not satisfy the
 declared numeric predicate.
@@ -20,7 +20,7 @@ from datetime import UTC, datetime
 
 from backend.constraint_evaluation.contracts import (
     ConstraintEvaluationResult, VariableConstraintEvaluationCollectionResult,
-    derive_candidate_evaluation)
+    VariableConstraintEvaluationEntry, derive_candidate_evaluation)
 from backend.constraint_evaluation.errors import (
     ConstraintEvaluationConfigurationError, ConstraintEvaluationInputError)
 from backend.model_kernel import ModelQueries
@@ -104,7 +104,7 @@ class ConstraintEvaluationQueries:
 
     # ----------------------------------------------------------- exact lookup
 
-    def evaluate_constraint(
+    def constraint_evaluation(
             self, constraint_anchor_id: str, *, as_of: datetime,
             entity_anchor_id: str | None = None,
             source: object | None = None,
@@ -122,11 +122,9 @@ class ConstraintEvaluationQueries:
             as_of = _normalize_early_as_of(as_of)
             _validate_early_selectors(entity_anchor_id, source)
             return ConstraintEvaluationResult(
-                constraint_anchor_id=constraint_anchor_id,
-                declaration=declaration, as_of=as_of,
+                constraint=declaration, as_of=as_of,
                 ruleset_version=_RULESET_VERSION,
-                semantic_compatibility=None, candidates=(),
-                revision=declaration.revision)
+                semantic_compatibility=None, candidates=())
         es = self.semantic.variable_semantic_compatibility(
             declaration.registration.variable_anchor_id, as_of=as_of,
             entity_anchor_id=entity_anchor_id, source=source)
@@ -134,24 +132,20 @@ class ConstraintEvaluationQueries:
             derive_candidate_evaluation(declaration, es, index)
             for index in range(len(es.candidates)))
         return ConstraintEvaluationResult(
-            constraint_anchor_id=constraint_anchor_id,
-            declaration=declaration, as_of=es.as_of,
+            constraint=declaration, as_of=es.as_of,
             ruleset_version=_RULESET_VERSION,
-            semantic_compatibility=es, candidates=candidates,
-            revision=declaration.revision)
+            semantic_compatibility=es, candidates=candidates)
 
     # --------------------------------------------------- variable-scoped discovery
 
-    def constraints_of_variable_evaluation(
+    def variable_constraint_evaluations(
             self, variable_anchor_id: str, *, as_of: datetime,
             entity_anchor_id: str | None = None,
             source: object | None = None,
     ) -> VariableConstraintEvaluationCollectionResult:
         """Discover and evaluate every constraint targeting one variable.
-        The registered / not_registered distinction is preserved so an
-        empty ``evaluations`` tuple is never ambiguous. The complete ES
-        result for the variable is carried once and shared by every
-        evaluation."""
+        The Slice A collection preserves registered/not-registered status.
+        One root ES result serves lightweight indexed constraint entries."""
         _require_variable_anchor_id(variable_anchor_id)
         collection = self._model.constraints_of_variable(variable_anchor_id)
         if collection.status == "not_registered":
@@ -159,51 +153,31 @@ class ConstraintEvaluationQueries:
             _validate_early_selectors(entity_anchor_id, source)
             return VariableConstraintEvaluationCollectionResult(
                 variable_anchor_id=variable_anchor_id, as_of=as_of,
-                ruleset_version=_RULESET_VERSION, status="not_registered",
+                ruleset_version=_RULESET_VERSION,
                 constraint_collection=collection,
-                semantic_compatibility=None, evaluations=(),
-                revision=collection.revision)
+                semantic_compatibility=None, evaluations=())
         constraints = collection.constraints
         if not constraints:
             as_of = _normalize_early_as_of(as_of)
             _validate_early_selectors(entity_anchor_id, source)
             return VariableConstraintEvaluationCollectionResult(
                 variable_anchor_id=variable_anchor_id, as_of=as_of,
-                ruleset_version=_RULESET_VERSION, status="registered",
+                ruleset_version=_RULESET_VERSION,
                 constraint_collection=collection,
-                semantic_compatibility=None, evaluations=(),
-                revision=collection.revision)
+                semantic_compatibility=None, evaluations=())
         es = self.semantic.variable_semantic_compatibility(
             variable_anchor_id, as_of=as_of, entity_anchor_id=entity_anchor_id,
             source=source)
         evaluations = tuple(
-            self._evaluation_for(declaration, es)
-            for declaration in constraints)
+            VariableConstraintEvaluationEntry(
+                constraint_index=index,
+                constraint_anchor_id=declaration.constraint_anchor_id,
+                candidates=tuple(
+                    derive_candidate_evaluation(declaration, es, candidate_index)
+                    for candidate_index in range(len(es.candidates))))
+            for index, declaration in enumerate(constraints))
         return VariableConstraintEvaluationCollectionResult(
             variable_anchor_id=variable_anchor_id, as_of=es.as_of,
-            ruleset_version=_RULESET_VERSION, status="registered",
-            constraint_collection=collection,
-            semantic_compatibility=es, evaluations=evaluations,
-            revision=collection.revision)
-
-    def _evaluation_for(self, declaration, es) -> ConstraintEvaluationResult:
-        """Build one evaluation over a pre-queried ES result. The ES result
-        is shared (carried once) across every evaluation in a collection."""
-        if declaration.status == "not_registered":
-            # constraints_of_variable only returns registered constraints,
-            # so this branch is unreachable in practice; keep it honest.
-            return ConstraintEvaluationResult(
-                constraint_anchor_id=declaration.constraint_anchor_id,
-                declaration=declaration, as_of=es.as_of,
-                ruleset_version=_RULESET_VERSION,
-                semantic_compatibility=None, candidates=(),
-                revision=declaration.revision)
-        candidates = tuple(
-            derive_candidate_evaluation(declaration, es, index)
-            for index in range(len(es.candidates)))
-        return ConstraintEvaluationResult(
-            constraint_anchor_id=declaration.constraint_anchor_id,
-            declaration=declaration, as_of=es.as_of,
             ruleset_version=_RULESET_VERSION,
-            semantic_compatibility=es, candidates=candidates,
-            revision=declaration.revision)
+            constraint_collection=collection,
+            semantic_compatibility=es, evaluations=evaluations)

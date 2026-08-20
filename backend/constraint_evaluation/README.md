@@ -1,100 +1,71 @@
 # constraint_evaluation
 
-A read-only CN-001 Slice B composition facade. It evaluates declared numeric
-constraints against the evidence attached to their target variable, building
-directly over one injected accepted ES-001 `SemanticCompatibilityQueries`
-instance and the Slice A `ModelQueries` constructed from its exact public
-loaded model. The facade owns no store, performs no writes, selects no model
-revision by `as_of`, and propagates lower-layer typed errors unchanged.
+CN-001 Slice B is a read-only composition facade over one injected
+`SemanticCompatibilityQueries`. It constructs `ModelQueries` over the exact
+loaded model already used by that semantic stack. It owns no store, performs
+no writes, and never selects a model revision using `as_of`.
 
-The evaluator emits exactly three verdicts (`satisfied`, `violated`,
-`not_evaluated`) and refuses for exactly the reasons enumerated in
-`NotEvaluatedReason`. It emits no severity, grade, normality, alarm,
-recommendation, cause, diagnosis, or safety field, ever. `violated` asserts
-only that the admitted observed value does not satisfy the declared numeric
-predicate.
+The public verdict vocabulary is `satisfied`, `violated`, and
+`not_evaluated`. The exact CN refusal vocabulary is:
 
-## Composition boundary
+1. `constraint_not_declared`
+2. `constraint_conflicted`
+3. `observation_absent`
+4. `observation_not_attached`
+5. `evidence_not_assessable`
+6. `value_shape_not_evaluated`
+7. `model_value_shape_not_numeric`
+8. `value_shape_not_satisfied`
+9. `numeric_value_absent`
+10. `declared_semantics_not_compatible`
+11. `constraint_quantity_kind_mismatch`
+12. `constraint_observation_role_mismatch`
+13. `constraint_unit_identity_mismatch`
+14. `numeric_value_out_of_bounds`
 
-The facade is constructed over one injected `SemanticCompatibilityQueries`.
-The Slice A `ModelQueries` is built over the SAME public loaded model the
-injected ES facade uses, so a constraint-declaration / membership /
-specification / semantics revision mismatch is structurally impossible rather
-than merely detected.
+An unregistered constraint has no semantic result and no candidate rows. A
+registered constraint with no active declaration uses
+`constraint_not_declared`; competing active declarations use
+`constraint_conflicted`. Detailed VS and ES findings remain unchanged in the
+single carried lower-layer result and are not copied into CN's vocabulary.
 
-The complete ES result for the variable is queried once and carried once
-across every evaluation in a collection. Each candidate evaluation refers to
-its ES candidate by contiguous zero-based index. No duplicate semantic or value
-candidate objects are constructed.
+## Observed decimal
 
-## Reachable precedence (15 steps)
+`CanonicalObservedDecimal` is a canonical plain-decimal string. The original
+`value_json` lexeme remains unchanged only in the carried ES occurrence.
+Parsing accepts one JSON number with legal JSON whitespace and uses these
+limits:
 
-`derive_candidate_evaluation` is the single authoritative per-candidate
-derivation, shared by both the facade and the outer result validators. The
-refusal precedence is:
+- stored `value_json`: 512 UTF-8 bytes;
+- mantissa coefficient: 256 digits;
+- mantissa fraction: 128 digits;
+- significant digits: 256;
+- exponent field: 4 lexical digits, including leading zeros;
+- absolute exponent: 1024;
+- expanded output: 384 digits;
+- expanded fraction: 384 digits;
+- expanded canonical string: 386 UTF-8 bytes.
 
-1. `not_declared` — the constraint anchor has no registration or no
-   declaration (conflicted declarations also land here).
-2. `conflicted` — multiple active declarations cite the same anchor.
-3. `no_observation` — the variable has no temporal occurrence.
-4. `observation_not_attached` — the occurrence is not bound to the
-   registered variable.
-5. `evidence_not_assessable` — VS reports a non-admitted
-   `evidence_consistency` reason (verbatim): `json_type_unrecognized`,
-   `shape_disagreement`, `value_json_malformed`, `value_not_representable`.
-6. VS shape not evaluated — VS reports a `value_shape_not_evaluated_reason`
-   (verbatim): `specification_conflicted`, `specification_not_available`,
-   `evidence_not_assessable`.
-7. `model_value_shape_not_numeric` — the governing model VSP declares a
-   non-`number` value shape.
-8. `does_not_satisfy_value_shape` — VS reports `consistent` but the observed
-   shape is not `number`.
-9. `numeric_value_absent` — the admitted value is null (nullable null) or
-   otherwise not a parseable decimal.
-10. `declared_semantics_not_compatible` — ES reports
-    `declared_semantics_compatible` is false.
-11. `constraint_quantity_kind_lock_mismatch` — the constraint's expected
-    quantity-kind does not match the model's declared quantity-kind.
-12. `constraint_observation_role_lock_mismatch` — the constraint's expected
-    observation-role does not match the model's declared observation-role.
-13. `constraint_unit_identity_lock_mismatch` — the constraint's expected
-    unit does not match the model's specified unit.
-14. `numeric_value_out_of_bounds` — the admitted decimal exceeds the CN
-    parser's observation-specific limits.
-15. Otherwise: predicate comparison → `satisfied` or `violated`.
+Source size, exponent field length, exponent magnitude, expanded lengths, and
+expanded byte size are preflighted before expansion. No float, ambient Decimal
+rounding, fixed-point formatting, or private VS parser is used. Numeric parity
+breaches use a fixed value-free message.
 
-Authoritative model semantic tokens are not dereferenced until
-candidate-local `declared_semantics_compatible` has passed (step 10).
+## Results and validation
 
-## Observed-decimal contract
+Exact lookup carries one `ConstraintDeclarationResult`, one ES result when the
+constraint is registered, and candidate rows indexed by
+`semantic_candidate_index`.
 
-`CanonicalObservedDecimal` carries the original source `lexeme` (the exact
-`value_json` text) and a `canonical` plain-number string. The parser accepts
-exactly one JSON number, permits legal JSON whitespace, enforces a byte limit
-on the full lexeme, preserves the source lexeme unchanged, accepts exponent
-notation with magnitude at most 256, preflights expansion before allocation, normalizes
-mathematical zero to `"0"`, never uses float or ambient Decimal rounding, and
-treats disagreement with the VS numeric classification as a typed
-parity-breach integrity error (`NumericParityBreachError`). The parser does
-not import or copy any private VS parsing code; it uses the standard
-library's `json.loads(parse_float=Decimal, parse_int=int,
-parse_constant=reject)` call shape.
+Variable discovery carries `constraint_collection` once and the ES result once
+when constraints exist. Each lightweight entry contains only
+`constraint_index`, `constraint_anchor_id`, and candidate rows. It repeats
+neither constraint declarations nor ES results.
 
-## Authoritative outer validation
-
-The result contracts (`ConstraintEvaluationResult`,
-`VariableConstraintEvaluationCollectionResult`) have validators that
-re-derive every candidate from the carried ES result and reject divergence.
-The variable-scoped result also carries the exact Slice A constraint
-collection, locking empty/non-empty discovery, ordering, target variable,
-and model revision even when no ES query is needed.
-This detects: wrong counts or indices, candidate substitution or reordering,
-mixed anchors / variables / revisions / cutoffs, forged decimals, boundary
-relations, satisfaction, verdicts, or reasons, evaluated rows under failed
-admission, and refusal rows when all gates pass. Forged inner objects
-(`CandidateConstraintEvaluation`, `BoundaryAssessment`,
-`CanonicalObservedDecimal`) constructed via `model_construct` or `model_copy`
-are revalidated when used in a normally-constructed outer result because the
-frozen base config sets `revalidate_instances="always"`. Direct
-`ConstraintEvaluationResult.model_construct` bypasses validation, as it does
-for all pydantic models; the authoritative boundary is normal construction.
+Outer validators structurally revalidate carried lower-layer objects and
+recompute every candidate row. They reject missing, duplicate, reordered, or
+substituted indices; mixed anchors, variables, cutoffs, and revisions; forged
+canonical decimals, boundaries, relations, satisfaction flags, verdicts, and
+reasons; and nested `model_construct`, `model_copy`, or stale-ID forgeries.
+`violated` means predicate falsity only and carries no safety, diagnostic,
+normality, severity, or control meaning.

@@ -1,77 +1,156 @@
-"""CN-001 Slice B observed-decimal parsing.
+"""Bounded exact JSON-number parsing for CN-001 observed values."""
 
-A narrow, bounded, exact JSON-number parser owned by the constraint
-evaluator. It is NOT the accepted VS-001 ``_parse_shape`` and it imports
-nothing private from VS: the strict ``json.loads(parse_float=Decimal,
-parse_int=int, parse_constant=reject)`` call shape is the standard
-library's accepted ingestion policy, reimplemented here so the evaluator
-never reaches into VS internals. Parity with VS is achieved by using the
-same standard-library call, never by sharing code.
-
-The parser accepts exactly one standard JSON number. Legal JSON whitespace
-(space, tab, CR, LF) around it is permitted, matching VS and standard JSON.
-Quoted numbers, booleans, ``null``, arrays, objects, trailing values,
-``NaN``, and ``Infinity`` are rejected. The byte limit applies to the
-complete stored lexeme (including whitespace). The original evidence
-lexeme is preserved unchanged on the returned ``CanonicalObservedDecimal``.
-
-``Decimal`` is used throughout; ``float`` is never used and the ambient
-``Decimal`` context is never consulted for rounding (``format(d, "f")`` is
-fixed-point and context-free). A valid admitted number that exceeds the CN
-resource limits (lexeme bytes, coefficient digits, or expanded integer/
-fraction digits) returns ``numeric_value_out_of_bounds`` — an honest
-candidate refusal, never a typed error. A disagreement with the accepted VS
-numeric classification (VS reported a consistent number but the CN narrow
-parser could not reproduce it) is a typed parity-breach integrity error,
-never an honest candidate verdict. Preflight expansion is checked before
-any allocation, so ``1E+999`` never materializes a thousand-character
-string. Mathematical zero (``-0``, ``0.0``, ``0E+99``, ``-0E-99`` …) is
-normalized to ``"0"``.
-"""
-
-import json
 import re
-from decimal import Decimal, InvalidOperation
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import (
+    AfterValidator, BaseModel, ConfigDict, StrictStr, model_validator)
 
 from backend.constraint_evaluation.errors import (
     ConstraintEvaluationInputError, NumericParityBreachError)
 
-# Resource limits. The canonical plain-number grammar is the accepted
-# CanonicalDecimal declaration grammar; the lexeme byte limit applies to
-# the complete stored lexeme (including legal JSON whitespace); the
-# coefficient/integer/fraction limits apply to the expanded canonical
-# output. These are narrower than the VS parser, which inherits the
-# standard library's defaults; they bound the evaluator's resource use
-# without relying on ambient limits.
-_LEXEME_BYTE_LIMIT = 386
-_COEFFICIENT_DIGIT_LIMIT = 256
-_EXPONENT_MAGNITUDE_LIMIT = 256
-_INTEGER_DIGIT_LIMIT = 256
-_FRACTION_DIGIT_LIMIT = 128
+_SOURCE_BYTE_LIMIT = 512
+_MANTISSA_COEFFICIENT_DIGIT_LIMIT = 256
+_MANTISSA_FRACTION_DIGIT_LIMIT = 128
+_SIGNIFICANT_DIGIT_LIMIT = 256
+_EXPONENT_DIGIT_LIMIT = 4
+_ABSOLUTE_EXPONENT_LIMIT = 1024
+_EXPANDED_DIGIT_LIMIT = 384
+_EXPANDED_FRACTION_DIGIT_LIMIT = 384
+_EXPANDED_BYTE_LIMIT = 386
 
+_PARITY_MESSAGE = (
+    "observed value disagrees with accepted VS numeric classification")
+
+# Applied only after the complete source has passed the 512-byte gate.
 _JSON_NUMBER = re.compile(
-    r"[ \t\r\n]*(?P<number>-?(?P<integer>0|[1-9][0-9]*)"
+    r"[ \t\r\n]*(?P<sign>-?)(?P<integer>0|[1-9][0-9]*)"
     r"(?:\.(?P<fraction>[0-9]+))?"
-    r"(?:[eE](?P<exponent_sign>[+-]?)(?P<exponent>[0-9]+))?)"
+    r"(?:[eE](?P<exponent_sign>[+-]?)(?P<exponent>[0-9]+))?"
     r"[ \t\r\n]*\Z")
-
-# The canonical plain-number grammar (the accepted CanonicalDecimal
-# declaration grammar, compiled locally so this module never reaches into
-# model_kernel or VS internals during parsing).
-_CANONICAL_DECIMAL = re.compile(
-    r"(?:0|-?(?:0\.[0-9]*[1-9]|[1-9][0-9]*(?:\.[0-9]*[1-9])?))")
+_CANONICAL = re.compile(
+    r"(?:0|-?(?:0\.[0-9]*[1-9]|[1-9][0-9]*(?:\.[0-9]*[1-9])?))\Z")
 
 
-class _NonFiniteConstant(ValueError):
-    """NaN/Infinity are not JSON: malformed text, not an unrepresentable
-    value. Mirrors the accepted VS rejection locally; not imported."""
+def _parity_breach() -> NumericParityBreachError:
+    return NumericParityBreachError("NUMERIC_PARITY_BREACH", _PARITY_MESSAGE)
 
 
-def _reject_constant(name: str):
-    raise _NonFiniteConstant(f"non-finite JSON constant {name!r} rejected")
+def _looks_numeric_at_bounded_prefix(lexeme: str) -> bool:
+    """Classify an already oversized source without scanning it fully."""
+    prefix = lexeme[:_SOURCE_BYTE_LIMIT + 1]
+    for character in prefix:
+        if character in " \t\r\n":
+            continue
+        return character in "-0123456789"
+    # An oversized whitespace prefix may precede a number beyond the gate;
+    # treating it as a resource refusal avoids unbounded scanning.
+    return True
+
+
+def _expanded_plain(sign: str, digits: str, exponent: int) -> str | None:
+    """Preflight canonical fixed-point expansion before allocating it."""
+    # Remove coefficient trailing zeros without Decimal/context operations.
+    trailing = len(digits) - len(digits.rstrip("0"))
+    if trailing:
+        digits = digits[:-trailing]
+        exponent += trailing
+
+    point = len(digits) + exponent
+    if point <= 0:
+        fractional_digits = -point + len(digits)
+        expanded_digits = fractional_digits
+        byte_count = len(sign) + 2 + fractional_digits  # ``-?0.`` + fraction
+        if (fractional_digits > _EXPANDED_FRACTION_DIGIT_LIMIT
+                or expanded_digits > _EXPANDED_DIGIT_LIMIT
+                or byte_count > _EXPANDED_BYTE_LIMIT):
+            return None
+        return sign + "0." + "0" * (-point) + digits
+
+    if point >= len(digits):
+        integer_digits = point
+        expanded_digits = integer_digits
+        byte_count = len(sign) + integer_digits
+        if (expanded_digits > _EXPANDED_DIGIT_LIMIT
+                or byte_count > _EXPANDED_BYTE_LIMIT):
+            return None
+        return sign + digits + "0" * (point - len(digits))
+
+    fractional_digits = len(digits) - point
+    expanded_digits = len(digits)
+    byte_count = len(sign) + len(digits) + 1
+    if (fractional_digits > _EXPANDED_FRACTION_DIGIT_LIMIT
+            or expanded_digits > _EXPANDED_DIGIT_LIMIT
+            or byte_count > _EXPANDED_BYTE_LIMIT):
+        return None
+    return sign + digits[:point] + "." + digits[point:]
+
+
+def _parse_only(lexeme: str) -> str | None:
+    if not isinstance(lexeme, str) or not lexeme:
+        raise ConstraintEvaluationInputError(
+            "CONSTRAINT_EVALUATION_INPUT_INVALID",
+            "observed value_json must be a non-empty string")
+    # ``len`` is the minimum constant-work hostile-input gate.  No regex,
+    # encoding, integer conversion, or expansion occurs for a longer source.
+    if len(lexeme) > _SOURCE_BYTE_LIMIT:
+        if _looks_numeric_at_bounded_prefix(lexeme):
+            return None
+        raise _parity_breach()
+    # Encoding at most 512 characters is bounded. A valid JSON number and
+    # its legal whitespace are ASCII, so a larger UTF-8 byte count here is
+    # necessarily a parity breach rather than a numeric resource refusal.
+    if len(lexeme.encode("utf-8")) > _SOURCE_BYTE_LIMIT:
+        raise _parity_breach()
+
+    match = _JSON_NUMBER.fullmatch(lexeme)
+    if match is None:
+        raise _parity_breach()
+
+    integer = match.group("integer")
+    fraction = match.group("fraction") or ""
+    coefficient = integer + fraction
+    if (len(coefficient) > _MANTISSA_COEFFICIENT_DIGIT_LIMIT
+            or len(fraction) > _MANTISSA_FRACTION_DIGIT_LIMIT):
+        return None
+
+    exponent_text = match.group("exponent")
+    if exponent_text is not None and len(exponent_text) > _EXPONENT_DIGIT_LIMIT:
+        return None
+    exponent_magnitude = 0 if exponent_text is None else int(exponent_text)
+    if exponent_magnitude > _ABSOLUTE_EXPONENT_LIMIT:
+        return None
+    exponent = (-exponent_magnitude
+                if match.group("exponent_sign") == "-"
+                else exponent_magnitude)
+
+    nonzero = coefficient.lstrip("0")
+    if not nonzero:
+        return "0"
+    if len(nonzero) > _SIGNIFICANT_DIGIT_LIMIT:
+        return None
+
+    # Removing lexical leading zeros shifts no mathematical exponent because
+    # they occur only in the fraction after JSON's single integer zero.
+    mathematical_exponent = exponent - len(fraction)
+    sign = "-" if match.group("sign") else ""
+    return _expanded_plain(sign, nonzero, mathematical_exponent)
+
+
+def _validate_canonical(value: str) -> str:
+    if not _CANONICAL.fullmatch(value):
+        raise ValueError("observed decimal must be canonical plain decimal")
+    raw = value.lstrip("-")
+    numeric_digits = len(raw.replace(".", "")) - (1 if raw.startswith("0.") else 0)
+    fractional_digits = len(raw.split(".", 1)[1]) if "." in raw else 0
+    if (numeric_digits > _EXPANDED_DIGIT_LIMIT
+            or fractional_digits > _EXPANDED_FRACTION_DIGIT_LIMIT
+            or len(value.encode("utf-8")) > _EXPANDED_BYTE_LIMIT):
+        raise ValueError("observed decimal exceeds canonical output limits")
+    return value
+
+
+CanonicalObservedDecimal = Annotated[StrictStr, AfterValidator(_validate_canonical)]
 
 
 class _Frozen(BaseModel):
@@ -79,42 +158,7 @@ class _Frozen(BaseModel):
                               revalidate_instances="always")
 
 
-class CanonicalObservedDecimal(_Frozen):
-    """One admitted observed numeric value: the original source lexeme,
-    preserved unchanged, and the canonical plain-number form derived from
-    it. The canonical form follows the accepted CanonicalDecimal
-    declaration grammar (no exponent, no leading zeros, no trailing zeros,
-    mathematical zero normalized to ``"0"``)."""
-
-    lexeme: str = Field(min_length=1)
-    canonical: str = Field(min_length=1)
-
-    @model_validator(mode="after")
-    def _locked(self):
-        if len(self.lexeme.encode("utf-8")) > _LEXEME_BYTE_LIMIT:
-            raise ValueError("lexeme exceeds the CN observed byte limit")
-        if not _CANONICAL_DECIMAL.fullmatch(self.canonical):
-            raise ValueError("canonical is not a canonical plain-number")
-        # defense-in-depth: re-derive the canonical from the lexeme and
-        # confirm it matches, so a forged canonical/lexeme pair is rejected
-        # at the contract boundary
-        try:
-            reparsed = _parse_only(self.lexeme)
-        except NumericParityBreachError:
-            raise ValueError("lexeme is not a valid JSON number")
-        if reparsed is None or reparsed != self.canonical:
-            raise ValueError("canonical must be the exact re-derivation "
-                             "of the preserved lexeme")
-        return self
-
-
 class ObservedDecimalResolution(_Frozen):
-    """The outcome of parsing one observed numeric lexeme: ``admitted``
-    (carry the ``CanonicalObservedDecimal``) or ``out_of_bounds`` (the
-    value is a valid JSON number but exceeds a CN resource limit). A
-    disagreement with VS raises ``NumericParityBreachError`` and never
-    reaches this type."""
-
     status: Literal["admitted", "out_of_bounds"]
     decimal: CanonicalObservedDecimal | None = None
 
@@ -125,114 +169,8 @@ class ObservedDecimalResolution(_Frozen):
         return self
 
 
-def _parse_only(lexeme: str) -> str | None:
-    """Re-derive the canonical plain-number form from one lexeme without
-    constructing the public contract. Returns ``None`` if the lexeme is a
-    valid JSON number that exceeds a CN resource limit (out_of_bounds).
-    Raises ``NumericParityBreachError`` if the lexeme is not parseable as
-    exactly one JSON number (the caller must have already established that
-    VS reported it as a consistent number)."""
-
-    if not isinstance(lexeme, str) or not lexeme:
-        raise ConstraintEvaluationInputError(
-            "CONSTRAINT_EVALUATION_INPUT_INVALID",
-            "observed lexeme must be a non-empty string")
-    # Establish JSON-number syntax before applying resource refusals.  A
-    # malformed/non-number lexeme is a parity breach even when oversized;
-    # only a valid number may honestly be reported out of bounds.  This
-    # lexical preflight allocates no expanded decimal representation.
-    match = _JSON_NUMBER.fullmatch(lexeme)
-    if match is None:
-        raise NumericParityBreachError(
-            "NUMERIC_PARITY_BREACH",
-            f"CN narrow parser rejects lexeme VS reported as a number: "
-            f"{lexeme!r}")
-    if len(lexeme.encode("utf-8")) > _LEXEME_BYTE_LIMIT:
-        return None
-    coefficient_digits = len(match.group("integer")) + len(
-        match.group("fraction") or "")
-    if coefficient_digits > _COEFFICIENT_DIGIT_LIMIT:
-        return None
-    exponent_text = match.group("exponent")
-    if (exponent_text is not None
-            and int(exponent_text) > _EXPONENT_MAGNITUDE_LIMIT):
-        return None
-    try:
-        value = json.loads(lexeme, parse_float=Decimal, parse_int=int,
-                           parse_constant=_reject_constant)
-    except (json.JSONDecodeError, _NonFiniteConstant):
-        raise NumericParityBreachError(
-            "NUMERIC_PARITY_BREACH",
-            f"CN narrow parser rejects lexeme VS reported as a number: "
-            f"{lexeme!r}")
-    except (ValueError, InvalidOperation, RecursionError):
-        raise NumericParityBreachError(
-            "NUMERIC_PARITY_BREACH",
-            f"CN narrow parser could not represent lexeme VS reported as "
-            f"a number: {lexeme!r}")
-    if isinstance(value, bool) or value is None or isinstance(
-            value, (str, list, dict)):
-        raise NumericParityBreachError(
-            "NUMERIC_PARITY_BREACH",
-            f"CN narrow parser parsed a non-number where VS reported a "
-            f"number: {lexeme!r}")
-    decimal = value if isinstance(value, Decimal) else Decimal(value)
-    if not decimal.is_finite():
-        raise NumericParityBreachError(
-            "NUMERIC_PARITY_BREACH",
-            f"CN narrow parser produced a non-finite value where VS "
-            f"reported a number: {lexeme!r}")
-    return _normalize(decimal)
-
-
-def _normalize(d: Decimal) -> str | None:
-    """Return the canonical plain-number form of one finite ``Decimal``,
-    or ``None`` if its expanded form exceeds a CN resource limit.
-    Mathematical zero is normalized to ``"0"`` (both signs, any exponent).
-    ``format(d, "f")`` is fixed-point and context-free; the ambient Decimal
-    context is never consulted for rounding."""
-
-    if d.is_zero():
-        return "0"
-    sign, digits_tuple, exponent = d.as_tuple()
-    digits = list(digits_tuple)
-    # Expanded-output limits apply to the canonical value.  Trailing
-    # coefficient zeros disappear from that value and therefore must be
-    # trimmed before the fractional preflight.
-    while len(digits) > 1 and digits[-1] == 0:
-        digits.pop()
-        exponent += 1
-    if exponent >= 0:
-        int_digits = len(digits) + exponent
-        frac_digits = 0
-    else:
-        int_digits = max(len(digits) + exponent, 0)
-        frac_digits = -exponent
-    if int_digits < 1:
-        int_digits = 1
-    if int_digits > _INTEGER_DIGIT_LIMIT or frac_digits > _FRACTION_DIGIT_LIMIT:
-        return None
-    rendered = format(d, "f")
-    if "." in rendered:
-        rendered = rendered.rstrip("0").rstrip(".")
-    if rendered in ("", "-", "-0"):
-        return "0"
-    return rendered
-
-
 def parse_observed_decimal(lexeme: str) -> ObservedDecimalResolution:
-    """Parse one observed numeric lexeme. Returns ``admitted`` (carrying a
-    ``CanonicalObservedDecimal`` whose canonical form follows the accepted
-    declaration grammar) or ``out_of_bounds`` (the value is a valid JSON
-    number but exceeds a CN resource limit). Raises
-    ``NumericParityBreachError`` if the lexeme is not parseable as exactly
-    one JSON number — this is the typed integrity failure that surfaces
-    when the CN narrow parser disagrees with the accepted VS numeric
-    classification, and it is never an honest candidate verdict."""
-
     canonical = _parse_only(lexeme)
     if canonical is None:
         return ObservedDecimalResolution(status="out_of_bounds")
-    return ObservedDecimalResolution(
-        status="admitted",
-        decimal=CanonicalObservedDecimal(lexeme=lexeme, canonical=canonical))
+    return ObservedDecimalResolution(status="admitted", decimal=canonical)
