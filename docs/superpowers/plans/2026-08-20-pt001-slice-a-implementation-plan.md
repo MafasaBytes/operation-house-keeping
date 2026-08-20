@@ -1,8 +1,8 @@
 # PT-001 Slice A implementation plan
 
-Status: PT-001 Slice A implemented and adversarially reviewed; awaiting owner
-acceptance. Slice B and Slice C remain owner-gated. No committed PT fixture or
-public PT query surface is permitted in Slice A.
+Status: PT-001 Slice A, including the qualified-token repair, is owner accepted.
+Slice B is separately authorized; Slice C remains owner-gated. Slice A appended
+no committed PT fixture and implemented no public PT query surface.
 
 ## Step 1 — Persist the accepted architecture
 
@@ -44,7 +44,7 @@ Run system-identity, model-kernel, PT, affected composition, isolation, full,
 base-only, all-extras, OCP/STEP, PDF, and loopback gates; `git diff --check`;
 branch/worktree checks. Document exact counts and limitations. Final wording:
 
-> PT-001 Slice A implemented and adversarially reviewed; awaiting owner acceptance.
+> PT-001 Slice A, including the qualified-token repair, is owner accepted.
 
 Do not start Slice B or C, append a ledger record, push, merge, rebase, reset,
 cherry-pick, or rewrite history.

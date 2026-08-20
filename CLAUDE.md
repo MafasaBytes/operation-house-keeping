@@ -729,4 +729,6 @@ not require repeated confirmation.
 
 CN-001 complete, owner accepted, adversarially reviewed, and dual-clean-checkout verified.
 
-PT-001 Slice A implemented and adversarially reviewed; awaiting owner acceptance.
+PT-001 Slice A, including its bounded qualified-token repair, is owner accepted.
+Slice B read-only port, topology, and compatibility queries are authorized;
+Slice C remains owner-gated and has not started.

@@ -1,6 +1,6 @@
 # PT-001 Slice A adversarial acceptance matrix
 
-Status: PT-001 Slice A implemented and adversarially reviewed; awaiting owner acceptance.
+Status: PT-001 Slice A, including the qualified-token repair, is owner accepted.
 
 | Area | Required attack | Required result |
 |---|---|---|

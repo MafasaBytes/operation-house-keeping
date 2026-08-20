@@ -1,6 +1,7 @@
 # ADR-0013 — Explicit ports and typed interface connectivity
 
-Status: PT-001 Slice A implemented and adversarially reviewed; awaiting owner acceptance. Slices B and C remain owner-gated.
+Status: PT-001 Slice A, including the qualified-token repair, is owner accepted.
+Slice B is authorized; Slice C remains owner-gated.
 
 ## Context
 

@@ -154,7 +154,8 @@ is O(N²) to build an N-record ledger — accepted for MK-001 scale. The
 typed-failure translation catches an enumerated exception set: a hostile
 in-process class whose metaclass raises outside it can still surface that
 exception, and exception `__cause__` chains can carry raw payloads into
-full tracebacks (public messages stay clean). PT-001 Slice A is implemented
-and awaiting owner acceptance; port queries and the bounded synthetic fixture
-remain separately gated. Richer predicates beyond CN-001's exact numeric bounds
+full tracebacks (public messages stay clean). PT-001 Slice A, including its
+qualified-token repair, is owner accepted. Slice B read-only port queries are
+authorized; the bounded synthetic fixture remains gated for Slice C. Richer
+predicates beyond CN-001's exact numeric bounds
 also remain future work.
