@@ -47,7 +47,8 @@ from backend.model_kernel.contracts import (
 
 _RECORD_ADAPTER: TypeAdapter = TypeAdapter(ModelRecord)
 _RECORD_ID = re.compile(MODEL_RECORD_ID_PATTERN)
-_FILENAME = re.compile(r"^(reg|rtd|rel|rwd|vrg|vsp|vsm|crg|vcn)_[0-9a-f]{64}\.json$")
+_FILENAME = re.compile(
+    r"^(reg|rtd|rel|rwd|vrg|vsp|vsm|crg|vcn|prg|pif|pcn|pcm|ptw)_[0-9a-f]{64}\.json$")
 
 _EMPTY: Mapping = MappingProxyType({})
 

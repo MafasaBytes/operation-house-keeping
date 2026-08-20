@@ -27,6 +27,11 @@ _PREFIX_BY_KIND = {
     "relationship_type_definition": "rtd",
     "relationship_assertion": "rel",
     "relationship_withdrawal": "rwd",
+    "port_registration": "prg",
+    "port_interface_declaration": "pif",
+    "port_connection_assertion": "pcn",
+    "port_compatibility_declaration": "pcm",
+    "port_claim_withdrawal": "ptw",
 }
 
 

@@ -284,8 +284,8 @@ class TestCanonicalIdentity:
 
         members = typing.get_args(ModelRecord)
         assert VariableValueSpecification in members
-        # 7 pre-CN-001 + crg/vcn (CN-001) = 9
-        assert len(_PREFIX_BY_KIND) == len(members) == 9
+        # 9 pre-PT-001 + five additive PT Slice A record kinds = 14.
+        assert len(_PREFIX_BY_KIND) == len(members) == 14
         for prefix in _PREFIX_BY_KIND.values():
             sample = f"{prefix}_{'0' * 64}"
             assert re.fullmatch(MODEL_RECORD_ID_PATTERN, sample)

@@ -33,16 +33,18 @@ from backend.model_kernel.canonical import (
 from backend.system_identity import (
     CONSTRAINT_ANCHOR_ID_PATTERN,
     ENTITY_ANCHOR_ID_PATTERN,
+    PORT_ANCHOR_ID_PATTERN,
     VARIABLE_ANCHOR_ID_PATTERN,
     ConstraintAnchor,
     EntityAnchor,
+    PortAnchor,
     VariableAnchor,
 )
 
 UtcDatetime = Annotated[AwareDatetime, AfterValidator(lambda v: v.astimezone(UTC))]
 
 MODEL_ID_PATTERN = r"^[a-z0-9-]+$"
-MODEL_RECORD_ID_PATTERN = r"^(reg|rtd|rel|rwd|vrg|vsp|vsm|crg|vcn)_[0-9a-f]{64}$"
+MODEL_RECORD_ID_PATTERN = r"^(reg|rtd|rel|rwd|vrg|vsp|vsm|crg|vcn|prg|pif|pcn|pcm|ptw)_[0-9a-f]{64}$"
 
 ReferentKind = Literal[
     "logical_instance", "physical_instance", "type_definition", "unknown"
@@ -106,7 +108,7 @@ class ModelRecordEvidence(_Frozen):
     # uncitable
     kind: Literal["model_record"]
     record_id: str = Field(
-        pattern=r"^(reg|rtd|rel|vrg|vsp|vsm|crg|vcn)_[0-9a-f]{64}$")
+        pattern=r"^(reg|rtd|rel|vrg|vsp|vsm|crg|vcn|prg|pif|pcn|pcm)_[0-9a-f]{64}$")
 
 
 class IdentityBindingRecordEvidence(_Frozen):
@@ -673,6 +675,229 @@ class VariableConstraintDeclaration(_Frozen):
         return self
 
 
+class InterfaceDomainToken(_Frozen):
+    """Exact interface-domain identity token; no ontology is implied."""
+
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", revalidate_instances="always")
+    token_kind: Literal["interface_domain"] = "interface_domain"
+    system_id: Literal["project_local"]
+    system_edition: LocalIdentifier
+    code: LocalIdentifier
+
+
+class InterfaceTypeToken(_Frozen):
+    """Exact interface-type identity token; no compatibility is implied."""
+
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", revalidate_instances="always")
+    token_kind: Literal["interface_type"] = "interface_type"
+    system_id: Literal["project_local"]
+    system_edition: LocalIdentifier
+    code: LocalIdentifier
+
+
+class InterfaceDomainDeclaration(_Frozen):
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", revalidate_instances="always")
+    dimension: Literal["interface_domain"] = "interface_domain"
+    value: InterfaceDomainToken
+
+
+class DirectionRoleDeclaration(_Frozen):
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", revalidate_instances="always")
+    dimension: Literal["direction_role"] = "direction_role"
+    value: Literal["input", "output", "bidirectional", "non_directional"]
+
+
+class InterfaceTypeDeclaration(_Frozen):
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", revalidate_instances="always")
+    dimension: Literal["interface_type"] = "interface_type"
+    value: InterfaceTypeToken
+
+
+PortInterfaceDeclarationBody = Annotated[
+    Union[InterfaceDomainDeclaration, DirectionRoleDeclaration,
+          InterfaceTypeDeclaration],
+    Field(discriminator="dimension"),
+]
+
+
+def _canonical_port_endpoints(value: tuple[str, ...]) -> tuple[str, ...]:
+    for endpoint in value:
+        if not isinstance(endpoint, str) or not re.fullmatch(
+                PORT_ANCHOR_ID_PATTERN, endpoint):
+            raise ValueError("a connection endpoint is not a port anchor id")
+    if len(set(value)) != len(value):
+        raise ValueError("connection endpoints must be unique")
+    if not 2 <= len(value) <= 64:
+        raise ValueError("a connection requires between 2 and 64 endpoints")
+    return tuple(sorted(value))
+
+
+CanonicalPortEndpointTuple = Annotated[
+    tuple[str, ...], AfterValidator(_canonical_port_endpoints)]
+
+
+class PortRegistration(_Frozen):
+    record_kind: Literal["port_registration"] = "port_registration"
+    schema_version: Literal["1"] = "1"
+    record_id: str = Field(pattern=r"^prg_[0-9a-f]{64}$")
+    anchor: PortAnchor
+    owner_entity_anchor_id: str = Field(pattern=ENTITY_ANCHOR_ID_PATTERN)
+    evidence: Annotated[tuple[EvidenceRef, ...], Field(min_length=1),
+                        AfterValidator(_canonical_evidence)]
+    recorded_at: UtcDatetime
+    authority: AuthorityRef
+    note: str = ""
+
+
+class PortInterfaceDeclaration(_Frozen):
+    record_kind: Literal["port_interface_declaration"] = (
+        "port_interface_declaration")
+    schema_version: Literal["1"] = "1"
+    record_id: str = Field(pattern=r"^pif_[0-9a-f]{64}$")
+    port_anchor_id: str = Field(pattern=PORT_ANCHOR_ID_PATTERN)
+    context: AssertionContext
+    declaration: PortInterfaceDeclarationBody
+    evidence: Annotated[tuple[EvidenceRef, ...], Field(min_length=1),
+                        AfterValidator(_canonical_evidence)]
+    supersedes: Annotated[tuple[str, ...],
+                          AfterValidator(_canonical_parents)] = ()
+    recorded_at: UtcDatetime
+    authority: AuthorityRef
+    note: str = ""
+
+    @model_validator(mode="after")
+    def _parent_ids_well_formed(self):
+        if any(not re.fullmatch(r"pif_[0-9a-f]{64}", parent)
+               for parent in self.supersedes):
+            raise ValueError("an interface parent is not a PIF record id")
+        if self.record_id in self.supersedes:
+            raise ValueError("an interface declaration cannot supersede itself")
+        return self
+
+
+class PortConnectionAssertion(_Frozen):
+    record_kind: Literal["port_connection_assertion"] = (
+        "port_connection_assertion")
+    schema_version: Literal["1"] = "1"
+    record_id: str = Field(pattern=r"^pcn_[0-9a-f]{64}$")
+    endpoint_port_anchor_ids: CanonicalPortEndpointTuple
+    context: AssertionContext
+    evidence: Annotated[tuple[EvidenceRef, ...], Field(min_length=1),
+                        AfterValidator(_canonical_evidence)]
+    supersedes: Annotated[tuple[str, ...],
+                          AfterValidator(_canonical_parents)] = ()
+    recorded_at: UtcDatetime
+    authority: AuthorityRef
+    note: str = ""
+
+    @model_validator(mode="after")
+    def _parent_ids_well_formed(self):
+        if any(not re.fullmatch(r"pcn_[0-9a-f]{64}", parent)
+               for parent in self.supersedes):
+            raise ValueError("a connection parent is not a PCN record id")
+        if self.record_id in self.supersedes:
+            raise ValueError("a connection assertion cannot supersede itself")
+        return self
+
+
+class PortInterfaceCitation(_Frozen):
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", revalidate_instances="always")
+    port_anchor_id: str = Field(pattern=PORT_ANCHOR_ID_PATTERN)
+    declaration_record_id: str = Field(pattern=r"^pif_[0-9a-f]{64}$")
+
+
+_PT_DIMENSION_RANK = {
+    "interface_domain": 0,
+    "direction_role": 1,
+    "interface_type": 2,
+}
+CompatibilityBasisDimension = Literal[
+    "interface_domain", "direction_role", "interface_type"]
+
+
+def _canonical_citations(
+        value: tuple[PortInterfaceCitation, ...],
+) -> tuple[PortInterfaceCitation, ...]:
+    if len(value) != 2:
+        raise ValueError("a compatibility dimension requires two citations")
+    ids = tuple(citation.port_anchor_id for citation in value)
+    if len(set(ids)) != 2:
+        raise ValueError("compatibility citations require distinct endpoints")
+    return tuple(sorted(value, key=lambda citation: citation.port_anchor_id))
+
+
+class CompatibilityDimensionBasis(_Frozen):
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", revalidate_instances="always")
+    dimension: CompatibilityBasisDimension
+    citations: Annotated[tuple[PortInterfaceCitation, ...],
+                         AfterValidator(_canonical_citations)]
+
+
+def _canonical_basis_dimensions(
+        value: tuple[CompatibilityDimensionBasis, ...],
+) -> tuple[CompatibilityDimensionBasis, ...]:
+    if not value:
+        raise ValueError("a compatibility basis requires a dimension")
+    dimensions = tuple(item.dimension for item in value)
+    if len(set(dimensions)) != len(dimensions):
+        raise ValueError("compatibility basis dimensions must be unique")
+    return tuple(sorted(value, key=lambda item: _PT_DIMENSION_RANK[item.dimension]))
+
+
+class PortCompatibilityBasis(_Frozen):
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", revalidate_instances="always")
+    statement: str = Field(min_length=1)
+    dimensions: Annotated[tuple[CompatibilityDimensionBasis, ...],
+                          AfterValidator(_canonical_basis_dimensions)]
+
+
+class PortCompatibilityDeclaration(_Frozen):
+    record_kind: Literal["port_compatibility_declaration"] = (
+        "port_compatibility_declaration")
+    schema_version: Literal["1"] = "1"
+    record_id: str = Field(pattern=r"^pcm_[0-9a-f]{64}$")
+    endpoint_port_anchor_ids: CanonicalPortEndpointTuple
+    context: AssertionContext
+    outcome: Literal["declared_compatible", "declared_incompatible"]
+    basis: PortCompatibilityBasis
+    evidence: Annotated[tuple[EvidenceRef, ...], Field(min_length=1),
+                        AfterValidator(_canonical_evidence)]
+    supersedes: Annotated[tuple[str, ...],
+                          AfterValidator(_canonical_parents)] = ()
+    recorded_at: UtcDatetime
+    authority: AuthorityRef
+    note: str = ""
+
+    @model_validator(mode="after")
+    def _pair_and_parents_are_well_formed(self):
+        if len(self.endpoint_port_anchor_ids) != 2:
+            raise ValueError("compatibility requires exactly two endpoints")
+        if any(not re.fullmatch(r"pcm_[0-9a-f]{64}", parent)
+               for parent in self.supersedes):
+            raise ValueError("a compatibility parent is not a PCM record id")
+        if self.record_id in self.supersedes:
+            raise ValueError("a compatibility declaration cannot supersede itself")
+        return self
+
+
+class PortClaimWithdrawal(_Frozen):
+    record_kind: Literal["port_claim_withdrawal"] = "port_claim_withdrawal"
+    schema_version: Literal["1"] = "1"
+    record_id: str = Field(pattern=r"^ptw_[0-9a-f]{64}$")
+    withdraws: str = Field(pattern=r"^(pif|pcn|pcm)_[0-9a-f]{64}$")
+    recorded_at: UtcDatetime
+    authority: AuthorityRef
+    note: str = ""
+
+
 
 ModelRecord = Union[
     EntityRegistration, VariableRegistration, VariableValueSpecification,
@@ -680,6 +905,8 @@ ModelRecord = Union[
     ConstraintRegistration, VariableConstraintDeclaration,
     RelationshipTypeDefinition, RelationshipAssertion,
     RelationshipWithdrawal,
+    PortRegistration, PortInterfaceDeclaration, PortConnectionAssertion,
+    PortCompatibilityDeclaration, PortClaimWithdrawal,
 ]
 
 
