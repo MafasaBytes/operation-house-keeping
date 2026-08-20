@@ -1,6 +1,12 @@
 """PT-001 Slice A red baseline for validating storage and derived indexes."""
 
 from dataclasses import FrozenInstanceError
+from datetime import timedelta
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
 from types import MappingProxyType
 
 import pytest
@@ -165,6 +171,29 @@ class TestPortInterfaceLifecycle:
                                        verify_hashes=False)
         assert error.value.error_code == "MODEL_PORT_INTERFACE_LINEAGE_INVALID"
 
+    def test_wrong_context_parent_and_partial_convergence_are_honest(
+            self, tmp_path):
+        root = interface()
+        other_context = CONTEXT.model_copy(update={"view": "as_built"})
+        wrong_context = interface(
+            context=other_context, supersedes=(root.record_id,))
+        store = append_all(base(tmp_path / "context"), root)
+        assert_atomic_rejection(store, wrong_context,
+                                "MODEL_PORT_INTERFACE_LINEAGE_INVALID")
+
+        left = interface(supersedes=(root.record_id,), note="left")
+        right = interface(
+            supersedes=(root.record_id,), note="right",
+            declaration=declaration_body().model_copy(update={
+                "value": declaration_body().value.model_copy(
+                    update={"code": "other"})}))
+        partial = interface(supersedes=(left.record_id,), note="partial")
+        loaded = append_all(base(tmp_path / "partial"), root, left, right,
+                            partial).load()
+        key = (PORT_A, CONTEXT, "interface_domain")
+        assert loaded.current_port_interface_tips_by_key[key] == tuple(
+            sorted((right, partial), key=lambda record: record.record_id))
+
 
 class TestPortConnectionLifecycle:
     def test_every_endpoint_must_be_registered(self, tmp_path):
@@ -209,6 +238,31 @@ class TestPortConnectionLifecycle:
         assert_atomic_rejection(other_store, changed,
                                 "MODEL_PORT_CONNECTION_LINEAGE_INVALID")
 
+    def test_ancestry_is_complete_and_immutable(self, tmp_path):
+        root_z = connection(note="z root")
+        root_a = connection(note="a root")
+        child = connection(supersedes=(root_z.record_id,), note="child")
+        merge = connection(supersedes=(child.record_id,), note="grandchild")
+        loaded = append_all(base(tmp_path, PORT_A, PORT_B),
+                            root_z, child, merge, root_a).load()
+        assert loaded.port_connection_ancestry_by_id[root_z.record_id] == ()
+        assert loaded.port_connection_ancestry_by_id[child.record_id] == (
+            root_z.record_id,)
+        assert loaded.port_connection_ancestry_by_id[merge.record_id] == tuple(
+            sorted((root_z.record_id, child.record_id)))
+        with pytest.raises(TypeError):
+            loaded.port_connection_ancestry_by_id[merge.record_id] = ()
+
+    def test_current_tip_root_key_iteration_is_canonical(self, tmp_path):
+        roots = tuple(connection(note=note) for note in (
+            "z root", "a root", "middle root", "another root"))
+        # Deliberately append in noncanonical order. The result's mapping
+        # iteration is public serialized order and must not inherit insertion
+        # or hash-table order.
+        loaded = append_all(base(tmp_path, PORT_A, PORT_B), *roots).load()
+        keys = tuple(loaded.current_port_connection_tips_by_root)
+        assert keys == tuple(sorted(keys))
+
 
 class TestPortCompatibilityValidation:
     def declared_pair(self, tmp_path):
@@ -251,6 +305,34 @@ class TestPortCompatibilityValidation:
         assert_atomic_rejection(dimension_store, bad,
                                 "MODEL_PORT_COMPATIBILITY_CITATION_INVALID")
 
+    def test_missing_and_duplicate_citation_record_attacks_are_rejected(
+            self, tmp_path):
+        store, pifs = self.declared_pair(tmp_path)
+        append_all(store, *pifs)
+        missing = pifs[1].record_id.replace("pif_", "pif_f")[-68:]
+        # Preserve the exact prefix/64-hex grammar while naming no member.
+        missing = "pif_" + "f" * 64
+        item = CompatibilityDimensionBasis(
+            dimension="interface_domain", citations=(
+                PortInterfaceCitation(port_anchor_id=PORT_A,
+                    declaration_record_id=pifs[0].record_id),
+                PortInterfaceCitation(port_anchor_id=PORT_B,
+                    declaration_record_id=missing)))
+        absent = compatibility(basis=PortCompatibilityBasis(
+            statement="missing citation", dimensions=(item,)))
+        assert_atomic_rejection(store, absent, "MODEL_REFERENCE_INVALID")
+
+        duplicate = CompatibilityDimensionBasis(
+            dimension="interface_domain", citations=(
+                PortInterfaceCitation(port_anchor_id=PORT_A,
+                    declaration_record_id=pifs[0].record_id),
+                PortInterfaceCitation(port_anchor_id=PORT_B,
+                    declaration_record_id=pifs[0].record_id)))
+        forged = compatibility(basis=PortCompatibilityBasis(
+            statement="same PIF cited twice", dimensions=(duplicate,)))
+        assert_atomic_rejection(
+            store, forged, "MODEL_PORT_COMPATIBILITY_CITATION_INVALID")
+
     def test_one_root_per_pair_context_and_stale_citations_remain_loadable(
             self, tmp_path):
         store, pifs = self.declared_pair(tmp_path)
@@ -267,6 +349,37 @@ class TestPortCompatibilityValidation:
         assert loaded.port_compatibility_citations[first.record_id] == tuple(
             citation.declaration_record_id
             for item in first.basis.dimensions for citation in item.citations)
+
+    @pytest.mark.parametrize("offset", [-1, 1])
+    def test_stale_pcm_validity_ignores_successor_time_file_order_and_replays(
+            self, tmp_path, offset):
+        store, pifs = self.declared_pair(tmp_path / "store")
+        pcm = pcm_from(pifs)
+        successor = interface(
+            PORT_A, supersedes=(pifs[0].record_id,),
+            recorded_at=T0 + timedelta(days=offset), note="successor")
+        append_all(store, *pifs, pcm, successor)
+        loaded = store.load()
+        assert pcm.record_id in loaded.port_compatibility_declarations
+
+        # Complete collection validity is independent of mapping/file order.
+        records = list(loaded.records.values())
+        forward = validate_record_collection(
+            "demo-printer", {r.record_id: r for r in records})
+        reverse = validate_record_collection(
+            "demo-printer", {r.record_id: r for r in reversed(records)})
+        assert forward.revision == reverse.revision == loaded.revision
+        assert forward.port_compatibility_citations == \
+            reverse.port_compatibility_citations
+
+        # Explicit membership without the successor makes citations current;
+        # including it makes them stale, but both revisions remain valid.
+        before_ids = tuple(record_id for record_id in loaded.revision.record_ids
+                           if record_id != successor.record_id)
+        before = store.replay(before_ids)
+        after = store.replay(loaded.revision.record_ids)
+        assert pcm.record_id in before.port_compatibility_declarations
+        assert pcm.record_id in after.port_compatibility_declarations
 
 
 class TestPortWithdrawalDiscipline:
@@ -316,3 +429,71 @@ def test_indexes_are_immutable_and_deterministic_across_append_order(tmp_path):
         left.port_registrations_by_anchor[PORT_C] = registration()
     with pytest.raises(FrozenInstanceError):
         left.revision = right.revision
+
+
+@pytest.mark.parametrize("factory,ports", [
+    (interface, (PORT_A,)),
+    (connection, (PORT_A, PORT_B)),
+    (compatibility, (PORT_A, PORT_B)),
+])
+def test_model_record_evidence_closure_is_independent_for_each_pt_claim(
+        tmp_path, factory, ports):
+    missing = ModelRecordEvidence(kind="model_record",
+                                  record_id="reg_" + "f" * 64)
+    record = factory(evidence=(missing,))
+    assert_atomic_rejection(base(tmp_path, *ports), record,
+                            "MODEL_REFERENCE_INVALID")
+
+
+def test_ptw_cannot_gain_a_citable_evidence_arm_at_store_boundary(tmp_path):
+    root = interface()
+    store = append_all(base(tmp_path), root)
+    event = withdrawal(root.record_id)
+    from backend.model_kernel.canonical import canonical_payload
+    payload = {**canonical_payload(event), "record_id": event.record_id,
+               "evidence": [item.model_dump(mode="json") for item in EVIDENCE]}
+    (store.records_dir / f"{event.record_id}.json").write_text(
+        json.dumps(payload, sort_keys=True), encoding="utf-8")
+    with pytest.raises(ModelIntegrityError) as error:
+        store.load()
+    assert error.value.error_code == "MODEL_RECORD_INVALID"
+
+
+def test_public_pt_index_order_is_identical_across_python_hash_seeds():
+    script = r'''
+import json, tempfile
+from pathlib import Path
+from backend.model_kernel import ModelStore
+from tests.model_kernel.builders import ENT_A, registration as entity_registration
+from tests.model_kernel.test_port_records import PORT_A, PORT_B, connection, registration
+
+root = Path(tempfile.mkdtemp()) / "demo-printer"
+store = ModelStore(root)
+store.append(entity_registration(ENT_A))
+for port in (PORT_A, PORT_B):
+    base = registration()
+    store.append(registration(anchor=base.anchor.model_copy(update={
+        "anchor_id": port, "display_name": port})))
+records = {connection(note=note) for note in ("z", "a", "m", "b")}
+for record in records:
+    store.append(record)
+loaded = store.load()
+print(json.dumps({
+    "roots": list(loaded.current_port_connection_tips_by_root),
+    "subjects": [repr(key) for key in loaded.port_connection_ids_by_subject],
+    "incident": list(loaded.port_connection_ids_by_port),
+}, separators=(",", ":")))
+'''
+    outputs = []
+    for seed in ("1", "2", "8675309"):
+        environment = os.environ.copy()
+        environment.update(PYTHONHASHSEED=seed, PYTHONDONTWRITEBYTECODE="1")
+        completed = subprocess.run(
+            [sys.executable, "-c", script], cwd=Path.cwd(), env=environment,
+            text=True, capture_output=True, check=True)
+        outputs.append(completed.stdout.strip())
+    assert outputs[0] == outputs[1] == outputs[2]
+    decoded = json.loads(outputs[0])
+    assert decoded["roots"] == sorted(decoded["roots"])
+    assert decoded["subjects"] == sorted(decoded["subjects"])
+    assert decoded["incident"] == sorted(decoded["incident"])

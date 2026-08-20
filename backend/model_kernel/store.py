@@ -111,6 +111,7 @@ class LoadedModel:
     port_interface_withdrawn_by: Mapping[str, tuple[str, ...]] = _EMPTY
     port_connections: Mapping[str, PortConnectionAssertion] = _EMPTY
     port_connection_root_by_id: Mapping[str, str] = _EMPTY
+    port_connection_ancestry_by_id: Mapping[str, tuple[str, ...]] = _EMPTY
     port_connection_ids_by_subject: Mapping[
         tuple, tuple[str, ...]] = _EMPTY
     port_connection_ids_by_port: Mapping[str, tuple[str, ...]] = _EMPTY
@@ -634,6 +635,21 @@ def validate_record_collection(
     port_connection_superseded_by, port_connection_root_by_id = _pt_dag_indexes(
         port_connections, connection_subject,
         "MODEL_PORT_CONNECTION_LINEAGE_INVALID", "port connection")
+    port_connection_ancestry_by_id: dict[str, tuple[str, ...]] = {}
+    pending_ancestry = set(port_connections)
+    while pending_ancestry:
+        for record_id in sorted(tuple(pending_ancestry)):
+            parents = port_connections[record_id].supersedes
+            if any(parent not in port_connection_ancestry_by_id
+                   for parent in parents):
+                continue
+            ancestors = {
+                ancestor
+                for parent in parents
+                for ancestor in (parent, *port_connection_ancestry_by_id[parent])
+            }
+            port_connection_ancestry_by_id[record_id] = tuple(sorted(ancestors))
+            pending_ancestry.remove(record_id)
 
     def compatibility_key(record):
         return (record.endpoint_port_anchor_ids, record.context)
@@ -750,7 +766,7 @@ def validate_record_collection(
 
     current_port_connection_tips_by_root: dict[
         str, tuple[PortConnectionAssertion, ...]] = {
-            root: () for root in set(port_connection_root_by_id.values())}
+            root: () for root in sorted(set(port_connection_root_by_id.values()))}
     for record_id in sorted(port_connections):
         if (not port_connection_superseded_by[record_id]
                 and not port_connection_withdrawn_by[record_id]):
@@ -924,6 +940,8 @@ def validate_record_collection(
         port_connections=_frozen_mapping(port_connections),
         port_connection_root_by_id=_frozen_mapping(
             port_connection_root_by_id),
+        port_connection_ancestry_by_id=_frozen_mapping(
+            port_connection_ancestry_by_id),
         port_connection_ids_by_subject=_frozen_mapping(
             port_connection_ids_by_subject),
         port_connection_ids_by_port=_frozen_mapping(

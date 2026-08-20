@@ -26,6 +26,16 @@ runtime model sets use the documented external verification procedure.
 
 ## Semantics worth knowing
 
+- **Ports are explicit model identities and claims** (PT-001 Slice A): a pure
+  `PortAnchor` is permanently registered to one entity by an evidence-bearing
+  `PortRegistration`; three independent interface dimensions, positive
+  unordered 2–64-port topology hyperedges, and explicit compatibility claims
+  use membership-relative correction DAGs and the generic PT withdrawal.
+  Duplicate endpoints are rejected, connection roots may corroborate, and PCM
+  citation validity is structural rather than chronological. Slice A adds only
+  contracts, canonicalization, validating storage, and immutable indexes: PT
+  queries, compatibility assessment, traversal, and committed fixture records
+  remain owner-gated.
 - **Variable meaning is explicit and per dimension** (ES-001):
   `VariableSemanticDeclaration` records quantity-kind and observation-role
   identity tokens independently. Each `(variable, dimension)` lineage is a
@@ -140,6 +150,7 @@ is O(N²) to build an N-record ledger — accepted for MK-001 scale. The
 typed-failure translation catches an enumerated exception set: a hostile
 in-process class whose metaclass raises outside it can still surface that
 exception, and exception `__cause__` chains can carry raw payloads into
-full tracebacks (public messages stay clean). Next milestone question:
-ports and richer domain-specific predicates beyond CN-001's exact numeric
-bounds.
+full tracebacks (public messages stay clean). PT-001 Slice A is implemented
+and awaiting owner acceptance; port queries and the bounded synthetic fixture
+remain separately gated. Richer predicates beyond CN-001's exact numeric bounds
+also remain future work.

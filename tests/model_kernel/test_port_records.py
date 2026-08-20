@@ -185,6 +185,7 @@ def test_domain_and_type_tokens_are_distinct_and_not_substitutable():
 @pytest.mark.parametrize("endpoints", [
     (PORT_A,),
     (PORT_A, PORT_A),
+    (PORT_A, PORT_B, PORT_A),
     tuple(f"prt_{index:032x}" for index in range(65)),
 ])
 def test_connection_rejects_too_few_duplicate_and_too_many_endpoints(endpoints):
