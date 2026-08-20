@@ -89,6 +89,70 @@ class TestHappyPath:
         # the candidate evaluation references the ES candidate by index only
         assert result.candidates[0].candidate_index == 0
 
+    def test_multiple_candidates_keep_order_with_opposing_outcomes(self, tmp_path):
+        from backend.model_state import ModelStateQueries
+        from backend.observation_compatibility import ObservationCompatibilityQueries
+        from backend.identity_binding.resolver import BindingResolver
+        from backend.identity_binding.store import BindingStore
+        from backend.semantic_compatibility import SemanticCompatibilityQueries
+        from backend.source_interpretation import (
+            InterpretationResolver, InterpretationStore,
+            ObservationRoleInterpretation, QuantityKindInterpretation,
+            SourcePropertyInterpretation, UnitInterpretation,
+            build_record as spi_build)
+        from tests.model_state.helpers import (
+            PROP_TARGET, PROP_TEMP, SUBJECT, hour, prop_assertion,
+            standard_bindings)
+        from tests.observation_compatibility.helpers import model_with, observed_stack
+        from tests.semantic_compatibility.test_facade import (
+            INTERP_AUTH, QUANTITY, ROLE, T0, UNIT, model_semantics)
+
+        store = model_semantics(model_with(tmp_path / "multi"))
+        store.append(constraint_registration(
+            variable_anchor_id=V1))
+        store.append(constraint_declaration(
+            expected_sem_sig=expected_semantics(
+                quantity_kind=QUANTITY, observation_role=ROLE, unit=UNIT),
+            predicate=ExactNumericUpperBound(upper=NumericBoundary(
+                value="60.05", inclusion="inclusive"))))
+        loaded = store.load()
+
+        bstore = BindingStore(tmp_path / "multi-bindings" / "demo-printer")
+        for record in (*standard_bindings(), prop_assertion(
+                prop=PROP_TARGET, note="second candidate")):
+            bstore.append(record)
+
+        istore = InterpretationStore(
+            tmp_path / "multi-interpretations" / "demo-printer")
+        for prop in (PROP_TEMP, PROP_TARGET):
+            for body in (
+                QuantityKindInterpretation(
+                    dimension="quantity_kind", quantity_kind=QUANTITY),
+                ObservationRoleInterpretation(
+                    dimension="observation_role", observation_role=ROLE),
+                UnitInterpretation(dimension="unit", unit=UNIT),
+            ):
+                istore.append(spi_build(
+                    SourcePropertyInterpretation, subject=SUBJECT,
+                    property=prop, interpretation=body, applies=hour(),
+                    supersedes=(), recorded_at=T0, authority=INTERP_AUTH,
+                    note="multi-candidate CN fixture"))
+
+        temporal = observed_stack(tmp_path / "multi-observed")
+        state = ModelStateQueries(
+            loaded, BindingResolver(bstore.load()), temporal)
+        es = SemanticCompatibilityQueries(
+            ObservationCompatibilityQueries(state),
+            InterpretationResolver(istore.load()))
+        result = ConstraintEvaluationQueries(es).evaluate_constraint(
+            CON_A, as_of=AS_OF)
+
+        assert tuple(row.candidate_index for row in result.candidates) == (0, 1)
+        outcomes = tuple(
+            (row.verdict, row.observed_decimal.canonical)
+            for row in result.candidates)
+        assert outcomes == (("satisfied", "60"), ("violated", "60.1"))
+
 
 # ============================================================ precedence
 
