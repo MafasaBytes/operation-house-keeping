@@ -32,7 +32,11 @@ runtime model sets use the documented external verification procedure.
   unordered 2–64-port topology hyperedges, and explicit compatibility claims
   use membership-relative correction DAGs and the generic PT withdrawal.
   Duplicate endpoints are rejected, connection roots may corroborate, and PCM
-  citation validity is structural rather than chronological. Slice A adds only
+  citation validity is structural rather than chronological. Domain and
+  interface-type tokens carry bounded qualified system, edition, and code
+  identifiers plus their serialized dimension discriminator. Comparison is
+  exact over all four fields; the kernel performs no vocabulary inference,
+  equivalence, or conversion. Slice A adds only
   contracts, canonicalization, validating storage, and immutable indexes: PT
   queries, compatibility assessment, traversal, and committed fixture records
   remain owner-gated.

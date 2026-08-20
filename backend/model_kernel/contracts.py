@@ -681,7 +681,7 @@ class InterfaceDomainToken(_Frozen):
     model_config = ConfigDict(
         frozen=True, extra="forbid", revalidate_instances="always")
     token_kind: Literal["interface_domain"]
-    system_id: Literal["project_local"]
+    system_id: LocalIdentifier
     system_edition: LocalIdentifier
     code: LocalIdentifier
 
@@ -692,7 +692,7 @@ class InterfaceTypeToken(_Frozen):
     model_config = ConfigDict(
         frozen=True, extra="forbid", revalidate_instances="always")
     token_kind: Literal["interface_type"]
-    system_id: Literal["project_local"]
+    system_id: LocalIdentifier
     system_edition: LocalIdentifier
     code: LocalIdentifier
 

@@ -8,6 +8,8 @@ Status: PT-001 Slice A implemented and adversarially reviewed; awaiting owner ac
 | Anchor | domain/type/state/owner fields | extra-field rejection |
 | Registration | absent owner, duplicate port registration, empty/forged evidence | collection invalid; atomic no-write |
 | Tokens | missing/wrong `token_kind`, cross-kind dict/instance/construct/copy | full reconstruction rejects |
+| Tokens | bounded qualified `system_id`: `project_local`, `iec`, `iso`, `opc-ua`, `vendor.example` | both token kinds accept and preserve the exact value |
+| Tokens | empty, uppercase, whitespace, path, Unicode, over-length, newline/partial-match `system_id` | `LocalIdentifier` rejection |
 | Tokens | otherwise identical domain/type token | different canonical bytes and PIF IDs |
 | PIF | cross-dimension body, wrong-context/key parent, cycle | collection invalid |
 | PIF | fork, partial/full convergence, withdrawal, replay revival | exact membership-relative tips/conflict |
@@ -19,12 +21,14 @@ Status: PT-001 Slice A implemented and adversarially reviewed; awaiting owner ac
 | PCN | same-root fork/convergence; cross-root or endpoint-changing parent | fork represented; invalid changes rejected |
 | PCN | parents deriving from different roots | cross-root convergence rejected |
 | PCM | permuted dimensions/citations | normative identical bytes and ID |
+| PCM | detached citation collection or reordered ownership | ordered dimension entries own exactly two endpoint citations |
 | PCM | missing, duplicate, wrong endpoint/dimension/context/member citation | collection invalid |
 | PCM | structurally valid noncurrent citation | load/replay succeeds; Slice A index retains it |
 | PCM | second parentless root for one pair/context | collection invalid |
 | Replay | earlier membership current, later membership stale structurally | both revisions load; no chronology used |
 | Replay | timestamps/file/directory/hash-seed order changes | same validation and canonical result |
 | PTW | target registration, withdrawal, non-PT, unknown, superseded, withdrawn | collection invalid |
+| PTW | renamed or alternate target field | only `withdraws` is accepted |
 | PTW | successor plus withdrawal or resurrection | collection invalid |
 | PTW | target is not an unsuperseded tip; duplicate target withdrawal | collection invalid |
 | PTW | replay omits withdrawal | target activity revives membership-relatively |

@@ -23,7 +23,10 @@ accepted record kind or implying flow, behavior, compatibility, or causality.
 4. `PortInterfaceDeclaration` (`pif_`) independently declares exactly one of
    `interface_domain`, `direction_role`, or `interface_type` under an exact
    `AssertionContext`. Domain and type tokens have distinct serialized
-   `token_kind` discriminators. Direction is one of `input`, `output`,
+   `token_kind` discriminators; their `system_id`, `system_edition`, and `code`
+   fields are bounded `LocalIdentifier` values. Comparison is exact across all
+   four serialized fields, with no vocabulary inference, equivalence, or
+   conversion. Direction is one of `input`, `output`,
    `bidirectional`, or `non_directional` and implies no flow.
 5. `PortConnectionAssertion` (`pcn_`) is a positive unordered hyperedge over
    2–64 distinct registered ports. Duplicate endpoints are rejected before the
@@ -37,7 +40,8 @@ accepted record kind or implying flow, behavior, compatibility, or causality.
    validity is membership-structural, never chronological. Slice B alone will
    compute citation staleness for its selected immutable revision.
 7. `PortClaimWithdrawal` (`ptw_`) may withdraw only `pif_`, `pcn_`, or `pcm_`.
-   It is uncitable and means only “no longer asserted in this revision.”
+   Its target field is `withdraws`, matching `RelationshipWithdrawal`. It is
+   uncitable and means only “no longer asserted in this revision.”
 8. Registration, lineage, endpoint, evidence, citation, withdrawal, and
    content-ID closure are validated for append, load, and explicit replay. All
    currentness is membership-relative; timestamps and file order never rank.

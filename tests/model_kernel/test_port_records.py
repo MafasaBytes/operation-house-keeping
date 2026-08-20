@@ -182,6 +182,60 @@ def test_domain_and_type_tokens_are_distinct_and_not_substitutable():
             system_edition="ohk-interface-domains-1", code="electrical")
 
 
+@pytest.mark.parametrize("system_id", [
+    "project_local", "iec", "iso", "opc-ua", "vendor.example",
+])
+@pytest.mark.parametrize("token_factory", [
+    kernel.InterfaceDomainToken,
+    kernel.InterfaceTypeToken,
+])
+def test_interface_tokens_accept_bounded_qualified_system_ids(
+        token_factory, system_id):
+    token_kind = (
+        "interface_domain"
+        if token_factory is kernel.InterfaceDomainToken
+        else "interface_type"
+    )
+    token = token_factory(
+        token_kind=token_kind,
+        system_id=system_id,
+        system_edition="1",
+        code="power",
+    )
+    assert token.system_id == system_id
+
+
+@pytest.mark.parametrize("system_id", [
+    "", "IEC", "has space", "path/name", "café", "a" * 129,
+    "iec\n", "iec\nignored",
+])
+@pytest.mark.parametrize("token_factory", [
+    kernel.InterfaceDomainToken,
+    kernel.InterfaceTypeToken,
+])
+def test_interface_tokens_reject_invalid_qualified_system_ids(
+        token_factory, system_id):
+    token_kind = (
+        "interface_domain"
+        if token_factory is kernel.InterfaceDomainToken
+        else "interface_type"
+    )
+    with pytest.raises(ValidationError):
+        token_factory(
+            token_kind=token_kind,
+            system_id=system_id,
+            system_edition="1",
+            code="power",
+        )
+
+
+def test_interface_token_public_field_shapes_remain_exact():
+    assert tuple(kernel.InterfaceDomainToken.model_fields) == (
+        "token_kind", "system_id", "system_edition", "code")
+    assert tuple(kernel.InterfaceTypeToken.model_fields) == (
+        "token_kind", "system_id", "system_edition", "code")
+
+
 @pytest.mark.parametrize("endpoints", [
     (PORT_A,),
     (PORT_A, PORT_A),

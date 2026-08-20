@@ -74,6 +74,12 @@ InterfaceTypeToken:   token_kind="interface_type", system_id,
                       system_edition, code
 ```
 
+All three identity components use the existing bounded `LocalIdentifier`
+contract. `system_id` admits qualified systems such as `project_local`, `iec`,
+`iso`, `opc-ua`, and `vendor.example`; it is not a project-local-only literal.
+PT-001 compares all four serialized token fields exactly and performs no
+vocabulary inference, equivalence, or conversion.
+
 `token_kind` is serialized and participates in equality, canonical bytes, and
 record ID. Body dimension must equal token kind. Direction is exactly `input`,
 `output`, `bidirectional`, or `non_directional`; it is an endpoint role only.
@@ -191,6 +197,10 @@ PortCompatibilityDeclaration:
   note: str = ""
 ```
 
+The accepted public shape places ordered `CompatibilityDimensionBasis`
+entries inside `PortCompatibilityBasis`; each entry structurally owns its two
+endpoint citations. There is no detached parallel citation collection.
+
 A citation is structurally valid when the cited PIF exists in selected
 membership, verifies its content ID, belongs to the cited endpoint and dimension,
 uses the exact PCM context, belongs to the carried revision, and occurs once.
@@ -210,6 +220,8 @@ produces compatibility or incompatibility.
 ## Withdrawal
 
 `PortClaimWithdrawal` (`ptw_`) targets exactly one `pif_`, `pcn_`, or `pcm_`.
+Its target field is `withdraws`, consistently with the accepted
+`RelationshipWithdrawal` contract.
 It carries authority, recorded time, and optional note but no evidence. It is
 excluded from citable model-record evidence. Unknown, non-PT, `prg_`, `ptw_`,
 already superseded, or already withdrawn targets are invalid. A selected
