@@ -16,6 +16,7 @@ from pydantic import BaseModel, ConfigDict, Field
 ENTITY_ANCHOR_ID_PATTERN = r"^ent_[0-9a-f]{32}$"
 VARIABLE_ANCHOR_ID_PATTERN = r"^var_[0-9a-f]{32}$"
 CONSTRAINT_ANCHOR_ID_PATTERN = r"^con_[0-9a-f]{32}$"
+PORT_ANCHOR_ID_PATTERN = r"^prt_[0-9a-f]{32}$"
 _NAME_PATTERN = r"^[a-z0-9-]+$"
 
 
@@ -71,6 +72,18 @@ class ConstraintAnchor(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid", revalidate_instances="always")
 
     anchor_id: str = Field(pattern=CONSTRAINT_ANCHOR_ID_PATTERN)
+    namespace: str = Field(pattern=_NAME_PATTERN)
+    display_name: str = Field(min_length=1)
+    role_name: str | None = Field(default=None, pattern=_NAME_PATTERN)
+
+
+class PortAnchor(BaseModel):
+    """One stable port identity and no interface or topology claim."""
+
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", revalidate_instances="always")
+
+    anchor_id: str = Field(pattern=PORT_ANCHOR_ID_PATTERN)
     namespace: str = Field(pattern=_NAME_PATTERN)
     display_name: str = Field(min_length=1)
     role_name: str | None = Field(default=None, pattern=_NAME_PATTERN)

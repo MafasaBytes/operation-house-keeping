@@ -2,11 +2,11 @@
 
 The canonical identity namespace shared between `identity_binding` and
 the model kernel: pure anchor value contracts (`EntityAnchor`,
-`VariableAnchor`, `ConstraintAnchor`) plus the pure public constraint-anchor
-UUID4 minter — no storage, no I/O, no authority,
+`VariableAnchor`, `ConstraintAnchor`, `PortAnchor`) plus pure public UUID4
+minters for constraint and port identities — no storage, no I/O, no authority,
 and no dependency on any other backend module (enforced by test).
 
-Anchor IDs are opaque (`ent_`/`var_`/`con_` + uuid4 hex) by accepted decision
+Anchor IDs are opaque (`ent_`/`var_`/`con_`/`prt_` + uuid4 hex) by accepted decision
 (ADR-0006): identity survives renames and role reassignment, and a
 replacement physical component always receives a new anchor even when
 its display name and source address are unchanged. `namespace`,
@@ -19,3 +19,5 @@ anchors, and the relation between them belongs to the future kernel.
 predicate, unit, severity, or lifecycle. `mint_constraint_anchor()` creates the
 opaque value; its first persistence is an evidence-bearing model-kernel
 `ConstraintRegistration`. CN-001 adds no identity-binding declaration.
+`PortAnchor` likewise contains no owner or interface claim; its permanent,
+evidence-bearing owner association begins at model-kernel `PortRegistration`.
