@@ -726,3 +726,5 @@ Ask for direction before:
 
 Reasonable, reversible implementation details inside an accepted milestone do
 not require repeated confirmation.
+
+CN-001 implemented, adversarially reviewed, and dual-clean-checkout verified; awaiting owner acceptance.

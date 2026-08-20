@@ -1,0 +1,44 @@
+{
+  "authority": {
+    "agent": "cn001_demo_fixture",
+    "kind": "test_fixture",
+    "method": "manual_declaration"
+  },
+  "constraint_anchor_id": "con_4b768cf843f5474cb5e564e31d239a59",
+  "evidence": [
+    {
+      "kind": "owner_declaration",
+      "statement": "This declaration is an illustrative synthetic test fixture used only to demonstrate CN-001 evaluation mechanics. It makes no claim about a real printer, safe operating limit, manufacturer specification, alarm threshold, recommended setting, or required action."
+    }
+  ],
+  "expected_semantics": {
+    "observation_role": {
+      "code": "measured_actual",
+      "system_edition": "ohk-observation-roles-1",
+      "system_id": "project_local"
+    },
+    "quantity_kind": {
+      "code": "temperature",
+      "system_edition": "ohk-quantities-1",
+      "system_id": "project_local"
+    },
+    "unit": {
+      "code": "degree_celsius",
+      "system_edition": "ohk-units-1",
+      "system_id": "project_local"
+    }
+  },
+  "note": "This declaration is an illustrative synthetic test fixture used only to demonstrate CN-001 evaluation mechanics. It makes no claim about a real printer, safe operating limit, manufacturer specification, alarm threshold, recommended setting, or required action.",
+  "predicate": {
+    "kind": "upper_bound",
+    "upper": {
+      "inclusion": "inclusive",
+      "value": "80"
+    }
+  },
+  "record_id": "vcn_2fcac4a3c7b1ce656bddac5348fce9f82d4e3b66907209603fe58eb0b5ba37ec",
+  "record_kind": "variable_constraint_declaration",
+  "recorded_at": "2026-08-20T12:00:00+00:00",
+  "schema_version": "1",
+  "supersedes": []
+}

@@ -155,6 +155,6 @@ class TestCommittedDemonstration:
         from backend.model_kernel.canonical import verify_record_id
 
         loaded = ModelStore(Path("models/demo-printer")).load()
-        assert loaded.revision.record_count == 16
+        assert loaded.revision.record_count == 18
         for record in loaded.records.values():
             assert verify_record_id(record), record.record_id

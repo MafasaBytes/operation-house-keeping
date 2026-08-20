@@ -1,7 +1,7 @@
 """CN-001 Slice B test fixtures.
 
-The committed ``models/demo-printer`` ledger stays at 16 records: no CN
-fixture records are appended to it. Constraint records are built into an
+The committed ``models/demo-printer`` ledger contains the two accepted Slice C
+fixture records. Additional constraint records are built into an
 isolated ``tmp_path`` model store that COPIES the committed demo records
 and appends synthetic ``crg_`` / ``vcn_`` records. The committed bindings,
 interpretations, and temporal stack are read-only.
@@ -150,7 +150,8 @@ def _sort_by_dependency(records):
 
 
 def cn_stack(tmp_path, *, constraint_records=(), model_records_override=None,
-             interpretations_path=DEMO_INTERPRETATIONS, binding_records=None):
+             interpretations_path=DEMO_INTERPRETATIONS, binding_records=None,
+             include_committed_constraints=False):
     """Build a full CN evaluation stack in an isolated ``tmp_path`` model
     store. The committed demo records are copied; synthetic constraint
     records are appended. The committed bindings and interpretations are
@@ -166,6 +167,13 @@ def cn_stack(tmp_path, *, constraint_records=(), model_records_override=None,
         # sort later alphabetically). Constraint records are appended
         # afterwards one at a time.
         shutil.copytree(DEMO_MODEL, dst_dir)
+        if not include_committed_constraints:
+            # Slice B fixtures retain their accepted isolated pre-CN model.
+            # Only disposable copied files are removed; the authoritative
+            # ledger is never touched.
+            for prefix in ("crg_", "vcn_"):
+                for path in (dst_dir / "records").glob(f"{prefix}*.json"):
+                    path.unlink()
         dst_store = ModelStore(dst_dir)
     else:
         dst_store = ModelStore(dst_dir)

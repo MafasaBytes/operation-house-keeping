@@ -1,8 +1,8 @@
 """CN-001 Slice B facade tests: reachable precedence, exact comparisons,
 structured discovery, isolation, and outer-result forgery rejection.
 
-The committed ``models/demo-printer`` ledger stays at 16 records. Every
-constraint fixture is built into an isolated ``tmp_path`` model store that
+The committed ``models/demo-printer`` ledger includes the bounded Slice C
+fixture. Other constraint fixtures are built into an isolated ``tmp_path`` model store that
 copies the committed demo records and appends synthetic ``crg_`` / ``vcn_``
 records. Hostile observations use Tier C crafted occurrences through the
 public writer; no private temporal internals are imported."""

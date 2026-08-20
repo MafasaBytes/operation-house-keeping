@@ -42,7 +42,8 @@ runtime model sets use the documented external verification procedure.
   multi-parent correction DAG is keyed only by constraint anchor; conflicts,
   convergence, superseded history, and replay are membership-relative and
   never ranked. Both `crg_` and `vcn_` model-record evidence is uniformly
-  reference-closed. Evaluation belongs to the later read-only Slice B.
+  reference-closed. Evaluation belongs to the read-only
+  `backend.constraint_evaluation` composition layer.
 - **Variables are membership, not structure or state** (VM-001): a
   `VariableRegistration` embeds one canonical `VariableAnchor` verbatim.
   Ownership is identity (`anchor.entity_anchor_id` — no `variable_of`
@@ -140,4 +141,5 @@ typed-failure translation catches an enumerated exception set: a hostile
 in-process class whose metaclass raises outside it can still surface that
 exception, and exception `__cause__` chains can carry raw payloads into
 full tracebacks (public messages stay clean). Next milestone question:
-ports and later constraint-evaluation composition over this kernel.
+ports and richer domain-specific predicates beyond CN-001's exact numeric
+bounds.

@@ -147,9 +147,9 @@ class TestUpstreamBoundary:
 
     def test_committed_demo_model_lives_under_models_only(self):
         model_files = list(Path("models/demo-printer/records").glob("*.json"))
-        assert len(model_files) == 16
+        assert len(model_files) == 18
         assert all(p.name.split("_")[0] in (
-            "reg", "rtd", "rel", "rwd", "vrg", "vsp", "vsm")
+            "reg", "rtd", "rel", "rwd", "vrg", "vsp", "vsm", "crg", "vcn")
                    for p in model_files)
         # no anc_ records in the model ledger; no model records in bindings
         binding_files = list(

@@ -34,6 +34,7 @@ from tests.model_kernel.test_demo_model import (
     CURRENT_REVISION,
     DEMO_MODEL,
     FROZEN_ES001_MODEL_RECORDS,
+    FROZEN_CN001_MODEL_RECORDS,
     FROZEN_MK001_RECORDS,
     FROZEN_SN001_MODEL_RECORDS,
     FROZEN_VM001_RECORD,
@@ -314,10 +315,12 @@ class TestAcceptedDemoLedgerFreeze:
             **FROZEN_VS001_RECORD,
             **FROZEN_SN001_MODEL_RECORDS,
             **FROZEN_ES001_MODEL_RECORDS,
+            **FROZEN_CN001_MODEL_RECORDS,
         }
         paths = sorted((DEMO_MODEL / "records").glob("*.json"))
         assert {path.name for path in paths} == set(expected)
-        assert not any(path.name.startswith(("crg_", "vcn_")) for path in paths)
+        assert sum(path.name.startswith("crg_") for path in paths) == 1
+        assert sum(path.name.startswith("vcn_") for path in paths) == 1
         for path in paths:
             assert hashlib.sha256(path.read_bytes()).hexdigest() == expected[path.name]
             payload = json.loads(path.read_text(encoding="utf-8"))
@@ -326,13 +329,14 @@ class TestAcceptedDemoLedgerFreeze:
     def test_revision_and_authorities_remain_exactly_accepted(self):
         model = ModelStore(DEMO_MODEL).load()
         assert model.revision.revision_id == CURRENT_REVISION
-        assert model.revision.record_count == 16
-        assert not model.constraint_registrations_by_anchor
-        assert not model.constraint_declarations
+        assert model.revision.record_count == 18
+        assert len(model.constraint_registrations_by_anchor) == 1
+        assert len(model.constraint_declarations) == 1
         expected_agents = {
             "mk001_demo_fixture": 11,
             "sn001_showcase_fixture": 3,
             "es001_demo_fixture": 2,
+            "cn001_demo_fixture": 2,
         }
         actual = {}
         for record in model.records.values():

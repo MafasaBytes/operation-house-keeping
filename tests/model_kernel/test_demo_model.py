@@ -12,8 +12,10 @@ DEMO_MODEL = Path("models/demo-printer")
 # Every HISTORICAL revision is pinned by replay over an explicit id list;
 # only the current membership is pinned by load(). A prefix filter is
 # never an acceptable membership selector.
-CURRENT_REVISION = ("mrv_23631989f98b678aaf1c556c345ac57a320ec266c2f712a4"
-                    "0099e8032ca8135b")  # 16 records (ES-001)
+PRE_CN001_REVISION = ("mrv_23631989f98b678aaf1c556c345ac57a320ec266c2f712a4"
+                      "0099e8032ca8135b")  # 16 records (ES-001)
+CURRENT_REVISION = ("mrv_919e1b36216243fd211e38a9d36556afa0d46e3660c3813"
+                    "02d271ec1fb258c51")  # 18 records (CN-001)
 PRE_ES001_REVISION = ("mrv_702c840f7da00617feb1be252838105d8b001b2e19978842"
                       "bdcbec56996c99ff")  # 14 records (SN-001)
 GOLDEN_REVISION = ("mrv_25afc0ebf17ed12bd6ef0a95795798a53ef2"
@@ -37,6 +39,11 @@ SN001_MODEL_RECORDS = (
 ES001_MODEL_RECORDS = (
     "vsm_053882a4714f51a0e9d358b5a8598cfca856482d9af9acd0117313a9ab8d1c40",
     "vsm_3b4b829006033604f088f2ff0e2727f4b2a1987f7d0edc5be54327562ef8791b",
+)
+
+CN001_MODEL_RECORDS = (
+    "crg_870fe60d91056b6b1da9e3f734e5156cbb52722f6a0fc5f366f66cd40102a3df",
+    "vcn_2fcac4a3c7b1ce656bddac5348fce9f82d4e3b66907209603fe58eb0b5ba37ec",
 )
 
 VS001_MEMBERSHIP = (
@@ -65,9 +72,13 @@ PRE_SPECIFICATION_MEMBERSHIP = (
     "rtd_a21999304a0a5458eef47b82cd06a8c055aa83d2aa90bb8b17d93590c3487f06",
     "vrg_40c8c6b984345af33de6913ca9025d60d22b0e627b110e974c78270eb941dca7",
 )
+PRE_VARIABLE_MEMBERSHIP = PRE_SPECIFICATION_MEMBERSHIP[:-1]
 
 PRE_ES001_MEMBERSHIP = tuple(sorted((*VS001_MEMBERSHIP,
                                      *SN001_MODEL_RECORDS)))
+PRE_CN001_MEMBERSHIP = tuple(sorted((*PRE_ES001_MEMBERSHIP,
+                                     *ES001_MODEL_RECORDS)))
+CN001_MEMBERSHIP = (*PRE_CN001_MEMBERSHIP, *CN001_MODEL_RECORDS)
 
 
 def eleven_ids(loaded):
@@ -85,7 +96,7 @@ class TestCommittedLedger:
         store = ModelStore(DEMO_MODEL)
         loaded = store.load()
         assert loaded.revision.revision_id == CURRENT_REVISION
-        assert loaded.revision.record_count == 16
+        assert loaded.revision.record_count == 18
         assert len(loaded.variable_registrations_by_anchor) == 1
         assert len(loaded.specifications) == 1
         assert len(loaded.types) == 3
@@ -98,6 +109,11 @@ class TestCommittedLedger:
         pre_es001 = store.replay(PRE_ES001_MEMBERSHIP)
         assert pre_es001.revision.revision_id == PRE_ES001_REVISION
         assert pre_es001.revision.record_count == 14
+        pre_cn001 = store.replay(PRE_CN001_MEMBERSHIP)
+        assert pre_cn001.revision.revision_id == PRE_CN001_REVISION
+        assert pre_cn001.revision.record_count == 16
+        current = store.replay(CN001_MEMBERSHIP)
+        assert current.revision == loaded.revision
 
     def test_fixture_authority_never_human_owner(self):
         """Mandatory regression, per-record form (AU2): every record is
@@ -112,9 +128,11 @@ class TestCommittedLedger:
                for record_id in SN001_MODEL_RECORDS},
             **{record_id: "es001_demo_fixture"
                for record_id in ES001_MODEL_RECORDS},
+            **{record_id: "cn001_demo_fixture"
+               for record_id in CN001_MODEL_RECORDS},
         }
         paths = sorted((DEMO_MODEL / "records").glob("*.json"))
-        assert len(paths) == len(expected) == 16
+        assert len(paths) == len(expected) == 18
         for path in paths:
             record = json.loads(path.read_text())
             assert record["authority"]["kind"] == "test_fixture", path.name
@@ -271,6 +289,13 @@ FROZEN_ES001_MODEL_RECORDS = {
     "b04377e1a5385a2a301ef288a0a211fcf06602914a36a2da334615915659730f",
 }
 
+FROZEN_CN001_MODEL_RECORDS = {
+    "crg_870fe60d91056b6b1da9e3f734e5156cbb52722f6a0fc5f366f66cd40102a3df.json":
+    "4eb7f531e9932a60cd73573f66323b543235bc98ac8663d4e158ef3c732e5abd",
+    "vcn_2fcac4a3c7b1ce656bddac5348fce9f82d4e3b66907209603fe58eb0b5ba37ec.json":
+    "ee99560f5272e324c13bbc8beef2a3fb28a45ba92c1aaec9ae62d0d0cbb860d1",
+}
+
 FROZEN_SN001_BINDING_RECORDS = {
     "bindings/demo-printer/records/iba_2061f4017a7f2355a36d30ee69a6ebc24a94de2e1db8866b4216916678b4d5aa.json":
     "2eec748ec43373b1c0bd5aa2744466f94db9c0f0d19503754077b6277c3d7a82",
@@ -291,7 +316,8 @@ class TestVm001Fixture:
                              **FROZEN_VM001_RECORD,
                              **FROZEN_VS001_RECORD,
                              **FROZEN_SN001_MODEL_RECORDS,
-                             **FROZEN_ES001_MODEL_RECORDS}.items():
+                             **FROZEN_ES001_MODEL_RECORDS,
+                             **FROZEN_CN001_MODEL_RECORDS}.items():
             path = DEMO_MODEL / "records" / name
             assert hashlib.sha256(
                 path.read_bytes()).hexdigest() == digest, name

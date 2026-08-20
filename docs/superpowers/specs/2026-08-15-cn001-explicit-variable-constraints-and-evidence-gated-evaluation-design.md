@@ -1,6 +1,7 @@
 # CN-001 — Explicit Variable Constraints and Evidence-Gated Evaluation
 
-Status: design (owner-gated, Slice A in progress). Supersedes the
+Status: Slices A and B accepted; Slice C implemented and awaiting owner
+acceptance. Supersedes the
 provisional CN-001 synthesis; this document is the implementation-ready
 specification after the owner correction pass and the
 `ConstraintRegistration`-evidence amendment (which overrides the prior
@@ -23,12 +24,13 @@ exactly one of three honest words: `satisfied`, `violated`, `not_evaluated`.
 `unknown` / `not_evaluated` is a valid, first-class result. No aggregation,
 ranking, conversion, dimensional algebra, or LLM judgment is ever performed.
 
-Slice A (this milestone) delivers the **model-kernel foundation**: the
+Slice A delivered the **model-kernel foundation**: the
 constraint identity anchor, the predicate and decimal contracts, the two
 constraint record kinds, every kernel ripple site, validation, and the
 read-only constraint discovery query. The evaluator facade
 (`backend/constraint_evaluation/`, ruleset `cn001.1`) is Slice B and is
-specified here only far enough to fix the contracts it will consume.
+implemented the accepted contracts. Slice C adds only the bounded committed
+fixture and recomputable evidence-to-evaluation demonstration.
 
 ## 2. Scope
 
@@ -37,21 +39,20 @@ public UUID4 minting helper) and `backend/model_kernel/` (two record kinds,
 canonical dispatch, store validation, immutable indexes, the
 `constraint_declaration` / `constraints_of_variable` queries, and result contracts).
 
-**Out of scope (Slice B and later), specified but not implemented now:**
-`backend/constraint_evaluation/` (the admission gate, the predicate
-comparison, the evaluation result contracts, `CanonicalObservedDecimal`),
-the committed demonstration records, the 3D/conversational UI, diagnosis,
-recommended actions, control, and any hardware interaction.
+**Implemented in Slice B:** `backend/constraint_evaluation/` (the admission
+gate, predicate comparison, evaluation result contracts, and
+`CanonicalObservedDecimal`). **Implemented in Slice C:** the two bounded
+committed demonstration records and recomputable demonstration. Still out of
+scope: the 3D/conversational UI, diagnosis, recommended actions, control, and
+any hardware interaction.
 
-**Unchanged (confirmed by audit):** no accepted module outside
-`system_identity` and `model_kernel` is modified. `identity_binding/`
+**Unchanged upstream authorities (confirmed by audit):** `identity_binding/`
 remains the sole property-to-variable authority and the sole binder of
 observations to variables; CN-001 adds no identity-binding declaration,
 changes no binding ledger, and extends no identity-binding behavior.
-`source_interpretation/`, `structural_evidence/`, `temporal_state/`,
-`model_state/`, `observation_compatibility/`, `semantic_compatibility/` are
-untouched. The accepted `mrv_` revision namespace admits the new record ids
-with no new revision id.
+Their ledgers and fixture bytes, together with source, temporal, structural,
+CAD, and PDF evidence, are untouched. The accepted `mrv_` revision namespace
+admits the two new record ids and deterministically yields a new revision id.
 
 ## 3. Constraint identity (corrections 1, 11; amendment)
 
@@ -468,17 +469,29 @@ is preserved.
   `not_registered`, never blocking unrelated keys or variables (failure
   isolation).
 
-## 15. Demonstration (Slice B)
+## 15. Demonstration (Slice C)
 
 `models/demo-printer/records/` 16 → 18: one `crg_` (registering a `con_`
 anchor targeting the hotend temperature variable) and one `vcn_` (declaring
-`operator="less_than_or_equal"`, `threshold="80"`, locking to the model's
+an exact inclusive upper boundary of `"80"`, locking to the model's
 declared quantity kind / observation role / degree-Celsius unit). All 16
 pre-CN-001 records byte-frozen (freeze maps). The trace: source bytes →
 occurrence → binding → model variable → semantics → constraint declaration →
 `Decimal("60.4") <= Decimal("80")` → `satisfied`. A second case `value="85"`
 → `violated` (asserting only predicate-falsity). The demonstration records are
-**not** appended in Slice A.
+**not** appended in Slice A or Slice B. Slice C appends them through the
+public minter, builder, store, and canonical serialization paths. The fixture
+authority is exactly `test_fixture/cn001_demo_fixture/manual_declaration`.
+The declaration disclaimer is:
+
+> This declaration is an illustrative synthetic test fixture used only to demonstrate CN-001 evaluation mechanics. It makes no claim about a real printer, safe operating limit, manufacturer specification, alarm threshold, recommended setting, or required action.
+
+Pinned identities are `con_4b768cf843f5474cb5e564e31d239a59`,
+`crg_870fe60d91056b6b1da9e3f734e5156cbb52722f6a0fc5f366f66cd40102a3df`,
+`vcn_2fcac4a3c7b1ce656bddac5348fce9f82d4e3b66907209603fe58eb0b5ba37ec`,
+and model revision
+`mrv_919e1b36216243fd211e38a9d36556afa0d46e3660c381302d271ec1fb258c51`.
+Historical explicit memberships still replay their original revisions.
 
 ## 16. Acceptance
 

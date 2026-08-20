@@ -1,0 +1,25 @@
+{
+  "anchor": {
+    "anchor_id": "con_4b768cf843f5474cb5e564e31d239a59",
+    "display_name": "CN-001 illustrative hotend temperature upper-bound fixture",
+    "namespace": "demo-printer",
+    "role_name": "illustrative-constraint"
+  },
+  "authority": {
+    "agent": "cn001_demo_fixture",
+    "kind": "test_fixture",
+    "method": "manual_declaration"
+  },
+  "evidence": [
+    {
+      "kind": "owner_declaration",
+      "statement": "Synthetic CN-001 demonstration-only association between the minted constraint identity and the demo hotend variable; it describes neither real equipment nor a real engineering limit."
+    }
+  ],
+  "note": "Synthetic CN-001 demonstration-only association between the minted constraint identity and the demo hotend variable; it describes neither real equipment nor a real engineering limit.",
+  "record_id": "crg_870fe60d91056b6b1da9e3f734e5156cbb52722f6a0fc5f366f66cd40102a3df",
+  "record_kind": "constraint_registration",
+  "recorded_at": "2026-08-20T12:00:00+00:00",
+  "schema_version": "1",
+  "variable_anchor_id": "var_b7e2d3c4f5a6172839405a6b7c8d9e0f"
+}

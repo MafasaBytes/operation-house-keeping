@@ -1,6 +1,6 @@
 # constraint_evaluation
 
-CN-001 Slice B is a read-only composition facade over one injected
+CN-001 provides a read-only composition facade over one injected
 `SemanticCompatibilityQueries`. It constructs `ModelQueries` over the exact
 loaded model already used by that semantic stack. It owns no store, performs
 no writes, and never selects a model revision using `as_of`.
@@ -69,3 +69,16 @@ canonical decimals, boundaries, relations, satisfaction flags, verdicts, and
 reasons; and nested `model_construct`, `model_copy`, or stale-ID forgeries.
 `violated` means predicate falsity only and carries no safety, diagnostic,
 normality, severity, or control meaning.
+
+## Demo-printer Slice C fixture
+
+The committed demo model adds exactly one `crg_` registration and one `vcn_`
+declaration under `test_fixture/cn001_demo_fixture/manual_declaration`. The
+constraint `con_4b768cf843f5474cb5e564e31d239a59` targets
+`var_b7e2d3c4f5a6172839405a6b7c8d9e0f` and declares an inclusive numeric upper
+boundary of `80`. The frozen stored value `60.4` evaluates `satisfied`; a
+separate noncommitted synthetic `85` evaluates `violated`. Both are predicate
+outcomes only, never equipment, safety, alarm, recommendation, diagnostic, or
+control claims. The deterministic demonstration is generated and checked in
+`tests/constraint_evaluation/test_demo_cn001.py` rather than committed as an
+authoritative result.

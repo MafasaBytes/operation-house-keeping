@@ -4,6 +4,8 @@ Branch `cn001` from accepted `main` at `7ffddca`. Red-first TDD: each bounded
 group is written failing first, then implemented, then committed green.
 No push, merge, reset, cherry-pick, or history rewrite. No demonstration
 records appended in Slice A. No `backend/constraint_evaluation/` (Slice B).
+Those statements describe the historical Slice A boundary; Slices B and C
+were separately owner-authorized after acceptance.
 
 ## Commit order
 
@@ -102,3 +104,16 @@ no edit.
 - Structural revalidation proven against `model_construct`, `model_copy`,
   forged nested anchors, predicates, evidence, records, revisions.
 - The full accepted suite is green.
+
+## Slice C bounded completion
+
+After owner acceptance of Slices A and B, Slice C alone may append two demo
+records: registration
+`crg_870fe60d91056b6b1da9e3f734e5156cbb52722f6a0fc5f366f66cd40102a3df`
+and declaration
+`vcn_2fcac4a3c7b1ce656bddac5348fce9f82d4e3b66907209603fe58eb0b5ba37ec`.
+The append was rehearsed in a disposable ledger, then repeated through public
+APIs. Regression coverage freezes the prior sixteen bytes, replays every
+explicit historical membership, demonstrates stored `60.4` as satisfied and
+noncommitted synthetic `85` as violated, compares exact lookup with discovery,
+and generates the same deterministic artifact in two clean columns.

@@ -1,6 +1,6 @@
 # ADR-0012 — Explicit variable constraints and evidence-gated evaluation
 
-Status: accepted (owner, 2026-08-15, Slice A). Spec:
+Status: Slices A and B accepted; Slice C awaiting owner acceptance. Spec:
 `docs/superpowers/specs/2026-08-15-cn001-explicit-variable-constraints-and-evidence-gated-evaluation-design.md`.
 
 ## Context
@@ -10,9 +10,9 @@ by declared meaning; a constraint evaluator gains a semantic admission gate
 (attached + satisfies_value_shape + declared_semantics_compatible, every
 prerequisite traceable to records); and an honest refusal vocabulary.
 Everything evaluative (ranges-as-safety, alarms, conversion, diagnosis)
-remained forbidden. CN-001 executes that unlock as two owner-gated slices:
-Slice A (the model-kernel foundation) and Slice B (the read-only evaluator
-facade). A prior provisional synthesis deferred an opaque constraint anchor
+remained forbidden. CN-001 executes that unlock as three owner-gated slices:
+Slice A (the model-kernel foundation), Slice B (the read-only evaluator
+facade), and Slice C (the bounded demonstration fixture). A prior provisional synthesis deferred an opaque constraint anchor
 and validated the lock at append; the owner correction pass and the
 `ConstraintRegistration`-evidence amendment reversed both.
 
@@ -100,7 +100,7 @@ and validated the lock at append; the owner correction pass and the
 
 - The model kernel gains two record kinds, two buckets, five immutable
   indexes, one query, and three result contracts; the accepted `mrv_`
-  revision admits `crg_`/`vcn_` with no new revision id; no accepted module
+  revision admits `crg_`/`vcn_`; no accepted module
   outside `system_identity` / `model_kernel` changes.
 - `identity_binding` is unchanged — CN-001 adds no binding declaration, no
   ledger change, no behavior extension.
@@ -111,3 +111,9 @@ and validated the lock at append; the owner correction pass and the
   `constraint_declaration` / `constraints_of_variable` queries to produce `satisfied` / `violated` /
   `not_evaluated` per (constraint, candidate), with no aggregation, ranking,
   conversion, or LLM judgment.
+- Slice C appends only the bounded demo registration and declaration. The
+  resulting 18-record revision is
+  `mrv_919e1b36216243fd211e38a9d36556afa0d46e3660c381302d271ec1fb258c51`;
+  all sixteen earlier model records and every upstream evidence ledger remain
+  byte-identical. The `60.4` and synthetic `85` demonstrations mean only
+  predicate satisfaction and predicate falsity.
