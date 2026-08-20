@@ -36,6 +36,11 @@ from backend.model_kernel.contracts import (
     ModelIntegrityError,
     ModelRecord,
     ModelRevision,
+    PortClaimWithdrawal,
+    PortCompatibilityDeclaration,
+    PortConnectionAssertion,
+    PortInterfaceDeclaration,
+    PortRegistration,
     RelationshipAssertion,
     RelationshipTypeDefinition,
     RelationshipWithdrawal,
@@ -94,6 +99,38 @@ class LoadedModel:
     current_constraint_tips_by_anchor: Mapping[
         str, tuple[VariableConstraintDeclaration, ...]] = _EMPTY
     constraint_superseded_by: Mapping[str, tuple[str, ...]] = _EMPTY
+    port_registrations_by_anchor: Mapping[str, PortRegistration] = _EMPTY
+    port_anchor_ids_by_owner: Mapping[str, tuple[str, ...]] = _EMPTY
+    port_interface_declarations: Mapping[
+        str, PortInterfaceDeclaration] = _EMPTY
+    port_interface_root_by_id: Mapping[str, str] = _EMPTY
+    port_interface_ids_by_key: Mapping[tuple, tuple[str, ...]] = _EMPTY
+    port_interface_superseded_by: Mapping[str, tuple[str, ...]] = _EMPTY
+    current_port_interface_tips_by_key: Mapping[
+        tuple, tuple[PortInterfaceDeclaration, ...]] = _EMPTY
+    port_interface_withdrawn_by: Mapping[str, tuple[str, ...]] = _EMPTY
+    port_connections: Mapping[str, PortConnectionAssertion] = _EMPTY
+    port_connection_root_by_id: Mapping[str, str] = _EMPTY
+    port_connection_ids_by_subject: Mapping[
+        tuple, tuple[str, ...]] = _EMPTY
+    port_connection_ids_by_port: Mapping[str, tuple[str, ...]] = _EMPTY
+    port_connection_superseded_by: Mapping[str, tuple[str, ...]] = _EMPTY
+    current_port_connection_tips_by_root: Mapping[
+        str, tuple[PortConnectionAssertion, ...]] = _EMPTY
+    port_connection_withdrawn_by: Mapping[str, tuple[str, ...]] = _EMPTY
+    port_compatibility_declarations: Mapping[
+        str, PortCompatibilityDeclaration] = _EMPTY
+    port_compatibility_root_by_id: Mapping[str, str] = _EMPTY
+    port_compatibility_ids_by_key: Mapping[tuple, tuple[str, ...]] = _EMPTY
+    port_compatibility_superseded_by: Mapping[str, tuple[str, ...]] = _EMPTY
+    current_port_compatibility_tips_by_key: Mapping[
+        tuple, tuple[PortCompatibilityDeclaration, ...]] = _EMPTY
+    port_compatibility_withdrawn_by: Mapping[str, tuple[str, ...]] = _EMPTY
+    port_compatibility_citations: Mapping[str, tuple[str, ...]] = _EMPTY
+    port_compatibility_ids_by_citation: Mapping[
+        str, tuple[str, ...]] = _EMPTY
+    port_claim_withdrawals: Mapping[str, PortClaimWithdrawal] = _EMPTY
+    port_withdrawals_by_target: Mapping[str, tuple[str, ...]] = _EMPTY
 
 
 def _fail(code: str, message: str) -> None:
@@ -114,6 +151,79 @@ def _check_model_record_evidence(records: Mapping, record,
             _fail("MODEL_REFERENCE_INVALID",
                   f"{kind_label} {record.record_id} cites model-record "
                   f"evidence {reference.record_id} absent from the revision")
+
+
+def _pt_dag_indexes(records: Mapping[str, object], key_of,
+                    error_code: str, label: str):
+    """Validate one PT correction DAG family without touching accepted DAGs.
+
+    A parentless claim starts a root. Corrections may merge only branches
+    derived from the same root. The caller separately decides whether several
+    roots for one semantic key are forbidden (PIF/PCM) or corroborating (PCN).
+    """
+    for record_id in sorted(records):
+        record = records[record_id]
+        for parent_id in record.supersedes:
+            parent = records.get(parent_id)
+            if parent is None:
+                _fail("MODEL_REFERENCE_INVALID",
+                      f"{label} {record_id} supersedes missing {label} "
+                      f"{parent_id}")
+            if key_of(parent) != key_of(record):
+                _fail(error_code,
+                      f"{label} {record_id} has a parent from another "
+                      "lineage")
+
+    visiting: set[str] = set()
+    done: set[str] = set()
+    for start in sorted(records):
+        if start in done:
+            continue
+        stack = [(start, iter(records[start].supersedes))]
+        visiting.add(start)
+        while stack:
+            node, parents = stack[-1]
+            for parent_id in parents:
+                if parent_id in visiting:
+                    _fail(error_code, f"{label} supersession cycle")
+                if parent_id not in done:
+                    visiting.add(parent_id)
+                    stack.append((parent_id,
+                                  iter(records[parent_id].supersedes)))
+                    break
+            else:
+                stack.pop()
+                visiting.discard(node)
+                done.add(node)
+
+    successors: dict[str, tuple[str, ...]] = {
+        record_id: () for record_id in records}
+    for record_id in sorted(records):
+        for parent_id in records[record_id].supersedes:
+            successors[parent_id] = tuple(sorted((
+                *successors[parent_id], record_id)))
+
+    roots: dict[str, str] = {}
+    pending = set(records)
+    while pending:
+        progressed = False
+        for record_id in sorted(pending):
+            parents = records[record_id].supersedes
+            if not parents:
+                roots[record_id] = record_id
+            elif all(parent_id in roots for parent_id in parents):
+                parent_roots = {roots[parent_id] for parent_id in parents}
+                if len(parent_roots) != 1:
+                    _fail(error_code,
+                          f"{label} correction crosses independent roots")
+                roots[record_id] = next(iter(parent_roots))
+            else:
+                continue
+            pending.remove(record_id)
+            progressed = True
+        if not progressed:  # defence in depth after the cycle check
+            _fail(error_code, f"{label} roots could not be derived")
+    return successors, roots
 
 
 def revalidate(record) -> ModelRecord:
@@ -159,6 +269,12 @@ def validate_record_collection(
     semantic_declarations: dict[str, VariableSemanticDeclaration] = {}
     constraint_registrations: dict[str, ConstraintRegistration] = {}
     constraint_declarations: dict[str, VariableConstraintDeclaration] = {}
+    port_registrations: dict[str, PortRegistration] = {}
+    port_interface_declarations: dict[str, PortInterfaceDeclaration] = {}
+    port_connections: dict[str, PortConnectionAssertion] = {}
+    port_compatibility_declarations: dict[
+        str, PortCompatibilityDeclaration] = {}
+    port_claim_withdrawals: dict[str, PortClaimWithdrawal] = {}
     types: dict[str, RelationshipTypeDefinition] = {}
     assertions: dict[str, RelationshipAssertion] = {}
     withdrawals: dict[str, RelationshipWithdrawal] = {}
@@ -191,6 +307,11 @@ def validate_record_collection(
             "variable_semantic_declaration": semantic_declarations,
             "constraint_registration": constraint_registrations,
             "variable_constraint_declaration": constraint_declarations,
+            "port_registration": port_registrations,
+            "port_interface_declaration": port_interface_declarations,
+            "port_connection_assertion": port_connections,
+            "port_compatibility_declaration": port_compatibility_declarations,
+            "port_claim_withdrawal": port_claim_withdrawals,
             "relationship_type_definition": types,
             "relationship_assertion": assertions,
             "relationship_withdrawal": withdrawals,
@@ -441,6 +562,214 @@ def validate_record_collection(
             _fail("MODEL_CONSTRAINT_LINEAGE_INVALID",
                   f"constraint {anchor_id} has declarations but no current tip")
 
+    # -- ports: permanent registration plus three independent PT claim
+    # families. This is deliberately separate from the accepted entity
+    # relationship and variable/constraint lifecycle implementations.
+    port_registrations_by_anchor: dict[str, PortRegistration] = {}
+    port_anchor_ids_by_owner: dict[str, tuple[str, ...]] = {}
+    for record_id in sorted(port_registrations):
+        registration = port_registrations[record_id]
+        anchor_id = registration.anchor.anchor_id
+        existing = port_registrations_by_anchor.get(anchor_id)
+        if existing is not None:
+            _fail("MODEL_DUPLICATE_REGISTRATION",
+                  f"port {anchor_id} is registered more than once "
+                  f"({existing.record_id}, {record_id})")
+        if registration.owner_entity_anchor_id not in registrations_by_anchor:
+            _fail("MODEL_REFERENCE_INVALID",
+                  f"port registration {record_id} references unregistered "
+                  f"owner entity {registration.owner_entity_anchor_id}")
+        _check_model_record_evidence(records, registration,
+                                     "port registration")
+        port_registrations_by_anchor[anchor_id] = registration
+        owner_id = registration.owner_entity_anchor_id
+        port_anchor_ids_by_owner[owner_id] = tuple(sorted((
+            *port_anchor_ids_by_owner.get(owner_id, ()), anchor_id)))
+
+    def interface_key(record):
+        return (record.port_anchor_id, record.context,
+                record.declaration.dimension)
+
+    for record_id in sorted(port_interface_declarations):
+        record = port_interface_declarations[record_id]
+        if record.port_anchor_id not in port_registrations_by_anchor:
+            _fail("MODEL_REFERENCE_INVALID",
+                  f"port interface declaration {record_id} references "
+                  f"unregistered port {record.port_anchor_id}")
+        _check_model_record_evidence(records, record,
+                                     "port interface declaration")
+    port_interface_superseded_by, port_interface_root_by_id = _pt_dag_indexes(
+        port_interface_declarations, interface_key,
+        "MODEL_PORT_INTERFACE_LINEAGE_INVALID", "port interface declaration")
+    interface_roots_by_key: dict[tuple, set[str]] = {}
+    port_interface_ids_by_key: dict[tuple, tuple[str, ...]] = {}
+    for record_id in sorted(port_interface_declarations):
+        key = interface_key(port_interface_declarations[record_id])
+        interface_roots_by_key.setdefault(key, set()).add(
+            port_interface_root_by_id[record_id])
+        port_interface_ids_by_key[key] = (
+            *port_interface_ids_by_key.get(key, ()), record_id)
+    if any(len(roots) != 1 for roots in interface_roots_by_key.values()):
+        _fail("MODEL_PORT_INTERFACE_LINEAGE_INVALID",
+              "a port interface lineage has more than one root")
+
+    def connection_subject(record):
+        return (record.endpoint_port_anchor_ids, record.context)
+
+    port_connection_ids_by_subject: dict[tuple, tuple[str, ...]] = {}
+    port_connection_ids_by_port: dict[str, tuple[str, ...]] = {}
+    for record_id in sorted(port_connections):
+        record = port_connections[record_id]
+        for port_id in record.endpoint_port_anchor_ids:
+            if port_id not in port_registrations_by_anchor:
+                _fail("MODEL_REFERENCE_INVALID",
+                      f"port connection {record_id} references unregistered "
+                      f"port {port_id}")
+            port_connection_ids_by_port[port_id] = (
+                *port_connection_ids_by_port.get(port_id, ()), record_id)
+        _check_model_record_evidence(records, record, "port connection")
+        subject = connection_subject(record)
+        port_connection_ids_by_subject[subject] = (
+            *port_connection_ids_by_subject.get(subject, ()), record_id)
+    port_connection_superseded_by, port_connection_root_by_id = _pt_dag_indexes(
+        port_connections, connection_subject,
+        "MODEL_PORT_CONNECTION_LINEAGE_INVALID", "port connection")
+
+    def compatibility_key(record):
+        return (record.endpoint_port_anchor_ids, record.context)
+
+    port_compatibility_ids_by_key: dict[tuple, tuple[str, ...]] = {}
+    compatibility_roots_by_key: dict[tuple, set[str]] = {}
+    port_compatibility_citations: dict[str, tuple[str, ...]] = {}
+    port_compatibility_ids_by_citation: dict[str, tuple[str, ...]] = {}
+    for record_id in sorted(port_compatibility_declarations):
+        record = port_compatibility_declarations[record_id]
+        for port_id in record.endpoint_port_anchor_ids:
+            if port_id not in port_registrations_by_anchor:
+                _fail("MODEL_REFERENCE_INVALID",
+                      f"port compatibility {record_id} references "
+                      f"unregistered port {port_id}")
+        _check_model_record_evidence(records, record, "port compatibility")
+        citation_ids: list[str] = []
+        for item in record.basis.dimensions:
+            cited_ports: list[str] = []
+            for citation in item.citations:
+                declaration = port_interface_declarations.get(
+                    citation.declaration_record_id)
+                if declaration is None:
+                    _fail("MODEL_REFERENCE_INVALID",
+                          f"port compatibility {record_id} cites missing "
+                          f"interface declaration "
+                          f"{citation.declaration_record_id}")
+                if (declaration.port_anchor_id != citation.port_anchor_id
+                        or declaration.port_anchor_id
+                        not in record.endpoint_port_anchor_ids
+                        or declaration.declaration.dimension != item.dimension
+                        or declaration.context != record.context):
+                    _fail("MODEL_PORT_COMPATIBILITY_CITATION_INVALID",
+                          f"port compatibility {record_id} has an "
+                          "incoherent interface citation")
+                cited_ports.append(citation.port_anchor_id)
+                citation_ids.append(citation.declaration_record_id)
+                current = port_compatibility_ids_by_citation.get(
+                    citation.declaration_record_id, ())
+                port_compatibility_ids_by_citation[
+                    citation.declaration_record_id] = tuple(sorted((
+                        *current, record_id)))
+            if tuple(cited_ports) != record.endpoint_port_anchor_ids:
+                _fail("MODEL_PORT_COMPATIBILITY_CITATION_INVALID",
+                      f"port compatibility {record_id} citations do not "
+                      "cover its exact endpoint pair")
+        port_compatibility_citations[record_id] = tuple(citation_ids)
+        key = compatibility_key(record)
+        port_compatibility_ids_by_key[key] = (
+            *port_compatibility_ids_by_key.get(key, ()), record_id)
+    (port_compatibility_superseded_by,
+     port_compatibility_root_by_id) = _pt_dag_indexes(
+        port_compatibility_declarations, compatibility_key,
+        "MODEL_PORT_COMPATIBILITY_LINEAGE_INVALID", "port compatibility")
+    for record_id in sorted(port_compatibility_declarations):
+        key = compatibility_key(port_compatibility_declarations[record_id])
+        compatibility_roots_by_key.setdefault(key, set()).add(
+            port_compatibility_root_by_id[record_id])
+    if any(len(roots) != 1 for roots in compatibility_roots_by_key.values()):
+        _fail("MODEL_PORT_COMPATIBILITY_LINEAGE_INVALID",
+              "a port compatibility lineage has more than one root")
+
+    # Withdrawals are evaluated after every successor index exists. A target
+    # cannot be withdrawn twice or both superseded and withdrawn in one
+    # selected membership; this also prevents later resurrection.
+    port_claims = {
+        **port_interface_declarations,
+        **port_connections,
+        **port_compatibility_declarations,
+    }
+    successors_by_target = {
+        **port_interface_superseded_by,
+        **port_connection_superseded_by,
+        **port_compatibility_superseded_by,
+    }
+    port_withdrawals_by_target: dict[str, tuple[str, ...]] = {
+        record_id: () for record_id in port_claims}
+    for withdrawal_id in sorted(port_claim_withdrawals):
+        withdrawal = port_claim_withdrawals[withdrawal_id]
+        target = withdrawal.withdraws
+        if target not in port_claims:
+            _fail("MODEL_PORT_WITHDRAWAL_INVALID",
+                  f"port withdrawal {withdrawal_id} targets an unknown or "
+                  "non-withdrawable claim")
+        if successors_by_target[target]:
+            _fail("MODEL_PORT_WITHDRAWAL_INVALID",
+                  f"port withdrawal {withdrawal_id} targets a superseded "
+                  "claim")
+        if port_withdrawals_by_target[target]:
+            _fail("MODEL_PORT_WITHDRAWAL_INVALID",
+                  f"port claim {target} is withdrawn more than once")
+        port_withdrawals_by_target[target] = (withdrawal_id,)
+
+    port_interface_withdrawn_by = {
+        record_id: port_withdrawals_by_target[record_id]
+        for record_id in port_interface_declarations}
+    port_connection_withdrawn_by = {
+        record_id: port_withdrawals_by_target[record_id]
+        for record_id in port_connections}
+    port_compatibility_withdrawn_by = {
+        record_id: port_withdrawals_by_target[record_id]
+        for record_id in port_compatibility_declarations}
+
+    current_port_interface_tips_by_key: dict[
+        tuple, tuple[PortInterfaceDeclaration, ...]] = {
+            key: () for key in port_interface_ids_by_key}
+    for record_id in sorted(port_interface_declarations):
+        if (not port_interface_superseded_by[record_id]
+                and not port_interface_withdrawn_by[record_id]):
+            record = port_interface_declarations[record_id]
+            key = interface_key(record)
+            current_port_interface_tips_by_key[key] = (
+                *current_port_interface_tips_by_key[key], record)
+
+    current_port_connection_tips_by_root: dict[
+        str, tuple[PortConnectionAssertion, ...]] = {
+            root: () for root in set(port_connection_root_by_id.values())}
+    for record_id in sorted(port_connections):
+        if (not port_connection_superseded_by[record_id]
+                and not port_connection_withdrawn_by[record_id]):
+            root = port_connection_root_by_id[record_id]
+            current_port_connection_tips_by_root[root] = (
+                *current_port_connection_tips_by_root[root],
+                port_connections[record_id])
+
+    current_port_compatibility_tips_by_key: dict[
+        tuple, tuple[PortCompatibilityDeclaration, ...]] = {
+            key: () for key in port_compatibility_ids_by_key}
+    for record_id in sorted(port_compatibility_declarations):
+        if (not port_compatibility_superseded_by[record_id]
+                and not port_compatibility_withdrawn_by[record_id]):
+            record = port_compatibility_declarations[record_id]
+            key = compatibility_key(record)
+            current_port_compatibility_tips_by_key[key] = (
+                *current_port_compatibility_tips_by_key[key], record)
+
     # -- type lineages: invariant fields, acyclic, one current per name ---
     for record_id in sorted(types):
         definition = types[record_id]
@@ -579,6 +908,51 @@ def validate_record_collection(
         constraint_declarations=_frozen_mapping(constraint_declarations),
         current_constraint_tips_by_anchor=_frozen_mapping(constraint_tips),
         constraint_superseded_by=_frozen_mapping(constraint_superseded_by),
+        port_registrations_by_anchor=_frozen_mapping(
+            port_registrations_by_anchor),
+        port_anchor_ids_by_owner=_frozen_mapping(port_anchor_ids_by_owner),
+        port_interface_declarations=_frozen_mapping(
+            port_interface_declarations),
+        port_interface_root_by_id=_frozen_mapping(port_interface_root_by_id),
+        port_interface_ids_by_key=_frozen_mapping(port_interface_ids_by_key),
+        port_interface_superseded_by=_frozen_mapping(
+            port_interface_superseded_by),
+        current_port_interface_tips_by_key=_frozen_mapping(
+            current_port_interface_tips_by_key),
+        port_interface_withdrawn_by=_frozen_mapping(
+            port_interface_withdrawn_by),
+        port_connections=_frozen_mapping(port_connections),
+        port_connection_root_by_id=_frozen_mapping(
+            port_connection_root_by_id),
+        port_connection_ids_by_subject=_frozen_mapping(
+            port_connection_ids_by_subject),
+        port_connection_ids_by_port=_frozen_mapping(
+            port_connection_ids_by_port),
+        port_connection_superseded_by=_frozen_mapping(
+            port_connection_superseded_by),
+        current_port_connection_tips_by_root=_frozen_mapping(
+            current_port_connection_tips_by_root),
+        port_connection_withdrawn_by=_frozen_mapping(
+            port_connection_withdrawn_by),
+        port_compatibility_declarations=_frozen_mapping(
+            port_compatibility_declarations),
+        port_compatibility_root_by_id=_frozen_mapping(
+            port_compatibility_root_by_id),
+        port_compatibility_ids_by_key=_frozen_mapping(
+            port_compatibility_ids_by_key),
+        port_compatibility_superseded_by=_frozen_mapping(
+            port_compatibility_superseded_by),
+        current_port_compatibility_tips_by_key=_frozen_mapping(
+            current_port_compatibility_tips_by_key),
+        port_compatibility_withdrawn_by=_frozen_mapping(
+            port_compatibility_withdrawn_by),
+        port_compatibility_citations=_frozen_mapping(
+            port_compatibility_citations),
+        port_compatibility_ids_by_citation=_frozen_mapping(
+            port_compatibility_ids_by_citation),
+        port_claim_withdrawals=_frozen_mapping(port_claim_withdrawals),
+        port_withdrawals_by_target=_frozen_mapping(
+            port_withdrawals_by_target),
         superseded_by=_frozen_mapping(superseded_by),
         withdrawn_by=_frozen_mapping(withdrawn_by))
 
