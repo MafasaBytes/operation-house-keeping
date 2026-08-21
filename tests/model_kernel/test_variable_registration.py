@@ -474,10 +474,10 @@ class TestKernelQueries:
                 call()
 
     def test_public_surface_name_count(self):
-        # 74 pre-PT + thirteen PT Slice A record/support contracts.
+        # 74 pre-PT + thirteen Slice A + twelve Slice B result contracts.
         import backend.model_kernel as kernel
 
-        assert len(kernel.__all__) == 87
+        assert len(kernel.__all__) == 99
         for name in ("VariableRegistration", "VariableRegistrationSummary",
                      "VariableResult", "EntityVariablesResult",
                      "StructuralSourceLocatorEvidence"):

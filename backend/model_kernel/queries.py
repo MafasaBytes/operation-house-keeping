@@ -44,16 +44,26 @@ from backend.model_kernel.contracts import (
     VariableSemanticsResult,
 )
 from backend.model_kernel.hierarchy import HierarchyProjection, build_projection
+from backend.model_kernel.port_results import (
+    ConnectionRootResult, ContainingConnectionsResult, EndpointInterfaceResult,
+    EntityPortsResult,
+    ExactConnectionsResult, IncidentConnectionsResult,
+    InterfaceCompatibilityResult, InterfaceDimensionResult, ModelQueryMaterial, PortAssertionResult,
+    PortInterfaceResult, PortResult,
+)
 from backend.model_kernel.store import LoadedModel
 from backend.system_identity import (
     CONSTRAINT_ANCHOR_ID_PATTERN,
     ENTITY_ANCHOR_ID_PATTERN,
+    PORT_ANCHOR_ID_PATTERN,
     VARIABLE_ANCHOR_ID_PATTERN,
 )
 
 _ANCHOR_ID = re.compile(ENTITY_ANCHOR_ID_PATTERN)
 _VARIABLE_ANCHOR_ID = re.compile(VARIABLE_ANCHOR_ID_PATTERN)
 _CONSTRAINT_ANCHOR_ID = re.compile(CONSTRAINT_ANCHOR_ID_PATTERN)
+_PORT_ANCHOR_ID = re.compile(PORT_ANCHOR_ID_PATTERN)
+_PORT_RECORD_ID = re.compile(r"^(?:prg|pif|pcn|pcm|ptw)_[0-9a-f]{64}$")
 _CONTEXT_ADAPTER: TypeAdapter = TypeAdapter(AssertionContext)
 _LIFECYCLE_VIEWS = frozenset(typing.get_args(LifecycleView))
 
@@ -91,6 +101,30 @@ class ModelQueries:
                 "MODEL_ANCHOR_ID_INVALID",
                 f"{anchor_id!r} is not a canonical constraint anchor id")
         return anchor_id
+
+    def _require_port_anchor_id(self, anchor_id: str) -> str:
+        if (not isinstance(anchor_id, str)
+                or not _PORT_ANCHOR_ID.fullmatch(anchor_id)):
+            raise ModelQueryError("MODEL_ANCHOR_ID_INVALID",
+                                  f"{anchor_id!r} is not a canonical port anchor id")
+        return anchor_id
+
+    def _require_port_record_id(self, record_id: str) -> str:
+        if (not isinstance(record_id, str)
+                or not _PORT_RECORD_ID.fullmatch(record_id)):
+            raise ModelQueryError("MODEL_RECORD_ID_INVALID",
+                                  f"{record_id!r} is not a PT record id")
+        return record_id
+
+    def _material(self) -> ModelQueryMaterial:
+        return ModelQueryMaterial(
+            revision=self.loaded.revision,
+            records=tuple(self.loaded.records[record_id]
+                          for record_id in self.loaded.revision.record_ids))
+
+    def _record_index(self) -> dict[str, int]:
+        return {record_id: index for index, record_id
+                in enumerate(self.loaded.revision.record_ids)}
 
     def _require_view(self, view):
         """Validate the lifecycle view BEFORE evaluation — never at result
@@ -586,6 +620,340 @@ class ModelQueries:
         return TraversalResult(
             status="partial" if blocks else "complete",
             steps=tuple(steps), blocked=blocks, **common)
+
+    # -- PT-001 ports and topology -----------------------------------------
+
+    def port(self, port_anchor_id: str) -> PortResult:
+        port_anchor_id = self._require_port_anchor_id(port_anchor_id)
+        registration = self.loaded.port_registrations_by_anchor.get(port_anchor_id)
+        indices = self._record_index()
+        return PortResult(
+            material=self._material(), port_anchor_id=port_anchor_id,
+            status="registered" if registration is not None else "not_registered",
+            registration_index=(None if registration is None
+                                else indices[registration.record_id]),
+            owner_registration_index=(None if registration is None else
+                indices[self.loaded.registrations_by_anchor[
+                    registration.owner_entity_anchor_id].record_id]))
+
+    def ports_of_entity(self, entity_anchor_id: str) -> EntityPortsResult:
+        entity_anchor_id = self._require_anchor_id(entity_anchor_id)
+        registered = entity_anchor_id in self.loaded.registrations_by_anchor
+        indices = self._record_index()
+        anchors = self.loaded.port_anchor_ids_by_owner.get(entity_anchor_id, ())
+        return EntityPortsResult(
+            material=self._material(), entity_anchor_id=entity_anchor_id,
+            status="registered" if registered else "not_registered",
+            entity_registration_index=(
+                indices[self.loaded.registrations_by_anchor[
+                    entity_anchor_id].record_id] if registered else None),
+            port_registration_indices=tuple(
+                indices[self.loaded.port_registrations_by_anchor[a].record_id]
+                for a in anchors) if registered else ())
+
+    def port_interface(self, port_anchor_id: str, *, context) -> PortInterfaceResult:
+        port_anchor_id = self._require_port_anchor_id(port_anchor_id)
+        context = self._require_context(context)
+        registered = port_anchor_id in self.loaded.port_registrations_by_anchor
+        material = self._material()
+        indices = self._record_index()
+        rows = []
+        for dimension in ("interface_domain", "direction_role", "interface_type"):
+            key = (port_anchor_id, context, dimension)
+            ids = self.loaded.port_interface_ids_by_key.get(key, ()) if registered else ()
+            tips = self.loaded.current_port_interface_tips_by_key.get(key, ()) if ids else ()
+            withdrawals = tuple(sorted(
+                withdrawal_id for record_id in ids
+                for withdrawal_id in self.loaded.port_interface_withdrawn_by[record_id]))
+            if not registered:
+                status = "port_not_registered"
+            elif not ids:
+                status = "not_declared"
+            elif len(tips) == 1:
+                status = "declared"
+            elif len(tips) > 1:
+                status = "conflicted"
+            else:
+                status = "inactive"
+            rows.append(InterfaceDimensionResult(
+                dimension=dimension, status=status,
+                lineage_health=(
+                    "healthy" if status == "declared" else
+                    "conflicted" if status == "conflicted" else
+                    "inactive" if status == "inactive" else
+                    "not_applicable"),
+                lineage_record_indices=tuple(indices[i] for i in ids),
+                current_tip_indices=tuple(indices[r.record_id] for r in tips),
+                withdrawal_indices=tuple(indices[i] for i in withdrawals),
+                declaration_index=(indices[tips[0].record_id]
+                                   if status == "declared" else None),
+                conflicting_declaration_indices=(
+                    tuple(indices[r.record_id] for r in tips)
+                    if status == "conflicted" else ()),
+                superseded_declaration_indices=(
+                    tuple(indices[i] for i in ids
+                          if self.loaded.port_interface_superseded_by[i])
+                    if registered else ()),
+                inactive_declaration_indices=(
+                    tuple(indices[i] for i in ids)
+                    if status == "inactive" else ())))
+        return PortInterfaceResult(
+            material=material, port_anchor_id=port_anchor_id,
+            status="registered" if registered else "not_registered",
+            context=context, dimensions=tuple(rows))
+
+    def port_assertion(self, record_id: str) -> PortAssertionResult:
+        record_id = self._require_port_record_id(record_id)
+        material = self._material()
+        indices = self._record_index()
+        record = self.loaded.records.get(record_id)
+        if record is None or record.record_kind not in {
+                "port_registration", "port_interface_declaration",
+                "port_connection_assertion", "port_compatibility_declaration",
+                "port_claim_withdrawal"}:
+            return PortAssertionResult(material=material, record_id=record_id,
+                                       status="not_found")
+        if record.record_kind in {"port_registration", "port_claim_withdrawal"}:
+            return PortAssertionResult(material=material, record_id=record_id,
+                                       status="found", record_index=indices[record_id])
+        if record.record_kind == "port_interface_declaration":
+            roots = self.loaded.port_interface_root_by_id
+            successors = self.loaded.port_interface_superseded_by
+            withdrawn = self.loaded.port_interface_withdrawn_by
+            current_by_root = {
+                root: tuple(item for item in self.loaded.port_interface_declarations.values()
+                            if roots[item.record_id] == root
+                            and not successors[item.record_id]
+                            and not withdrawn[item.record_id])
+                for root in set(roots.values())}
+        elif record.record_kind == "port_connection_assertion":
+            roots = self.loaded.port_connection_root_by_id
+            successors = self.loaded.port_connection_superseded_by
+            withdrawn = self.loaded.port_connection_withdrawn_by
+            current_by_root = self.loaded.current_port_connection_tips_by_root
+        else:
+            roots = self.loaded.port_compatibility_root_by_id
+            successors = self.loaded.port_compatibility_superseded_by
+            withdrawn = self.loaded.port_compatibility_withdrawn_by
+            current_by_root = {
+                root: tuple(item for item in self.loaded.port_compatibility_declarations.values()
+                            if roots[item.record_id] == root
+                            and not successors[item.record_id]
+                            and not withdrawn[item.record_id])
+                for root in set(roots.values())}
+        root = roots[record_id]
+        tips = current_by_root[root]
+        health = "inactive" if not tips else ("conflicted" if len(tips) > 1 else "healthy")
+        activity = ("superseded" if successors[record_id] else
+                    "withdrawn" if withdrawn[record_id] else "current")
+        return PortAssertionResult(
+            material=material, record_id=record_id, status="found",
+            record_index=indices[record_id], activity=activity,
+            lineage_health=health, root_record_index=indices[root],
+            successor_indices=tuple(indices[i] for i in successors[record_id]),
+            withdrawal_indices=tuple(indices[i] for i in withdrawn[record_id]))
+
+    def _require_endpoint_set(self, endpoint_ids, *, minimum: int = 2):
+        if not isinstance(endpoint_ids, (tuple, list)):
+            raise ModelQueryError("MODEL_PORT_ENDPOINTS_INVALID",
+                                  "port endpoints must be a bounded collection")
+        try:
+            values = tuple(self._require_port_anchor_id(value)
+                           for value in endpoint_ids)
+        except ModelQueryError as error:
+            raise ModelQueryError("MODEL_PORT_ENDPOINTS_INVALID",
+                                  "port endpoints are invalid") from error
+        if not minimum <= len(values) <= 64 or len(set(values)) != len(values):
+            raise ModelQueryError("MODEL_PORT_ENDPOINTS_INVALID",
+                                  "port endpoints must be unique and bounded")
+        return tuple(sorted(values))
+
+    def _connection_result_parts(self, roots, requested):
+        indices = self._record_index()
+        entries = []
+        for position, root_id in enumerate(sorted(roots)):
+            lineage_ids = tuple(sorted(
+                record_id for record_id, candidate_root
+                in self.loaded.port_connection_root_by_id.items()
+                if candidate_root == root_id))
+            tips = self.loaded.current_port_connection_tips_by_root[root_id]
+            withdrawals = tuple(sorted(
+                withdrawal_id for record_id in lineage_ids
+                for withdrawal_id in self.loaded.port_connection_withdrawn_by[record_id]))
+            health = "inactive" if not tips else ("conflicted" if len(tips) > 1 else "healthy")
+            entries.append(ConnectionRootResult(
+                root_index=position, root_record_index=indices[root_id],
+                lineage_record_indices=tuple(indices[i] for i in lineage_ids),
+                current_tip_indices=tuple(indices[r.record_id] for r in tips),
+                withdrawal_indices=tuple(indices[i] for i in withdrawals),
+                lineage_health=health,
+                exact_endpoint_set=(self.loaded.port_connections[root_id].endpoint_port_anchor_ids
+                                    == requested)))
+        status = ("unknown" if not entries else
+                  "asserted" if any(entry.current_tip_indices for entry in entries)
+                  else "inactive")
+        return status, tuple(entries)
+
+    def connections_exact(self, endpoint_port_anchor_ids, *, context):
+        requested = self._require_endpoint_set(endpoint_port_anchor_ids)
+        context = self._require_context(context)
+        ids = self.loaded.port_connection_ids_by_subject.get((requested, context), ())
+        roots = {self.loaded.port_connection_root_by_id[i] for i in ids}
+        status, entries = self._connection_result_parts(roots, requested)
+        return ExactConnectionsResult(material=self._material(), context=context,
+                                      status=status, roots=entries,
+                                      requested_port_anchor_ids=requested)
+
+    def connections_of_port(self, port_anchor_id: str, *, context):
+        port_anchor_id = self._require_port_anchor_id(port_anchor_id)
+        context = self._require_context(context)
+        ids = tuple(i for i in self.loaded.port_connection_ids_by_port.get(port_anchor_id, ())
+                    if self.loaded.port_connections[i].context == context)
+        roots = {self.loaded.port_connection_root_by_id[i] for i in ids}
+        status, entries = self._connection_result_parts(roots, (port_anchor_id,))
+        return IncidentConnectionsResult(
+            material=self._material(), context=context, status=status,
+            roots=entries, port_anchor_id=port_anchor_id,
+            port_status=("registered" if port_anchor_id in self.loaded.port_registrations_by_anchor
+                         else "not_registered"))
+
+    def connections_containing(self, requested_port_anchor_ids, *, context):
+        requested = self._require_endpoint_set(requested_port_anchor_ids)
+        context = self._require_context(context)
+        wanted = set(requested)
+        roots = {self.loaded.port_connection_root_by_id[record_id]
+                 for record_id, record in self.loaded.port_connections.items()
+                 if record.context == context
+                 and wanted.issubset(record.endpoint_port_anchor_ids)}
+        status, entries = self._connection_result_parts(roots, requested)
+        return ContainingConnectionsResult(
+            material=self._material(), context=context, status=status,
+            roots=entries, requested_port_anchor_ids=requested,
+            unregistered_port_anchor_ids=tuple(
+                p for p in requested
+                if p not in self.loaded.port_registrations_by_anchor))
+
+    def interface_compatibility(self, left_port_anchor_id: str,
+                                right_port_anchor_id: str, *, context):
+        left_port_anchor_id = self._require_port_anchor_id(left_port_anchor_id)
+        right_port_anchor_id = self._require_port_anchor_id(right_port_anchor_id)
+        if left_port_anchor_id == right_port_anchor_id:
+            raise ModelQueryError("MODEL_PORT_ENDPOINTS_INVALID",
+                                  "compatibility requires distinct endpoints")
+        context = self._require_context(context)
+        pair = tuple(sorted((left_port_anchor_id, right_port_anchor_id)))
+        material = self._material()
+        indices = self._record_index()
+        left_full = self.port_interface(left_port_anchor_id, context=context)
+        right_full = self.port_interface(right_port_anchor_id, context=context)
+        left = EndpointInterfaceResult(
+            port_anchor_id=left_port_anchor_id, status=left_full.status,
+            port_registration_index=left_full.material.revision.record_ids.index(
+                self.loaded.port_registrations_by_anchor[
+                    left_port_anchor_id].record_id)
+                if left_full.status == "registered" else None,
+            owner_registration_index=(indices[
+                self.loaded.registrations_by_anchor[
+                    self.loaded.port_registrations_by_anchor[
+                        left_port_anchor_id].owner_entity_anchor_id].record_id]
+                if left_full.status == "registered" else None),
+            dimensions=tuple(InterfaceDimensionResult.model_validate(
+                row.model_dump()) for row in left_full.dimensions))
+        right = EndpointInterfaceResult(
+            port_anchor_id=right_port_anchor_id, status=right_full.status,
+            port_registration_index=right_full.material.revision.record_ids.index(
+                self.loaded.port_registrations_by_anchor[
+                    right_port_anchor_id].record_id)
+                if right_full.status == "registered" else None,
+            owner_registration_index=(indices[
+                self.loaded.registrations_by_anchor[
+                    self.loaded.port_registrations_by_anchor[
+                        right_port_anchor_id].owner_entity_anchor_id].record_id]
+                if right_full.status == "registered" else None),
+            dimensions=tuple(InterfaceDimensionResult.model_validate(
+                row.model_dump()) for row in right_full.dimensions))
+
+        def token_relation(position):
+            lrow, rrow = left.dimensions[position], right.dimensions[position]
+            statuses = {lrow.status, rrow.status}
+            if "port_not_registered" in statuses:
+                return "not_declared"
+            if "conflicted" in statuses:
+                return "conflicted"
+            if "inactive" in statuses:
+                return "inactive"
+            if statuses != {"declared"}:
+                return "not_declared"
+            lvalue = self.loaded.records[
+                material.revision.record_ids[lrow.declaration_index]].declaration.value
+            rvalue = self.loaded.records[
+                material.revision.record_ids[rrow.declaration_index]].declaration.value
+            return "token_identical" if lvalue == rvalue else "token_different"
+
+        domain_relation = token_relation(0)
+        interface_type_relation = token_relation(2)
+        ldir, rdir = left.dimensions[1], right.dimensions[1]
+        if ldir.status != "declared" or rdir.status != "declared":
+            direction = "indeterminate"
+        else:
+            lv = material.records[ldir.declaration_index].declaration.value
+            rv = material.records[rdir.declaration_index].declaration.value
+            if lv == rv == "non_directional":
+                direction = "not_applicable"
+            elif "non_directional" in (lv, rv):
+                direction = "indeterminate"
+            elif lv == rv and lv in ("input", "output"):
+                direction = "inadmissible"
+            else:
+                direction = "admissible"
+
+        key = (pair, context)
+        pcm_ids = self.loaded.port_compatibility_ids_by_key.get(key, ())
+        tips = self.loaded.current_port_compatibility_tips_by_key.get(key, ())
+        stale_ids = tuple(sorted({citation_id
+            for tip in tips
+            for citation_id in self.loaded.port_compatibility_citations[tip.record_id]
+            if citation_id not in {
+                item.record_id for dimension in (
+                    self.loaded.port_interface_declarations[citation_id].declaration.dimension,)
+                for item in self.loaded.current_port_interface_tips_by_key.get((
+                    self.loaded.port_interface_declarations[citation_id].port_anchor_id,
+                    context, dimension), ())}}))
+        explicit_index = None
+        conflicting = ()
+        if not pcm_ids:
+            explicit = "not_declared"
+        elif not tips:
+            explicit = "inactive"
+        elif len(tips) > 1:
+            explicit = "conflicted"
+            conflicting = tuple(indices[item.record_id] for item in tips)
+        else:
+            explicit_index = indices[tips[0].record_id]
+            explicit = "stale" if stale_ids else tips[0].outcome
+        if explicit in ("declared_compatible", "declared_incompatible") and direction in (
+                "admissible", "inadmissible"):
+            compatible = explicit == "declared_compatible"
+            admissible = direction == "admissible"
+            consistency = "consistent" if compatible == admissible else "inconsistent"
+        else:
+            consistency = "indeterminate"
+        return InterfaceCompatibilityResult(
+            material=material,
+            requested_left_port_anchor_id=left_port_anchor_id,
+            requested_right_port_anchor_id=right_port_anchor_id,
+            endpoint_port_anchor_ids=pair, context=context,
+            endpoint_registration_status=(left.status, right.status),
+            left_interface=left, right_interface=right,
+            domain_relation=domain_relation,
+            interface_type_relation=interface_type_relation,
+            direction_relation=direction, explicit_status=explicit,
+            explicit_declaration_index=explicit_index,
+            conflicting_explicit_declaration_indices=conflicting,
+            pcm_lineage_record_indices=tuple(indices[i] for i in pcm_ids),
+            current_pcm_tip_indices=tuple(indices[i.record_id] for i in tips),
+            stale_citation_indices=tuple(indices[i] for i in stale_ids),
+            consistency=consistency)
 
     # -- health ------------------------------------------------------------
 

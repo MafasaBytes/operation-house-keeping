@@ -292,10 +292,11 @@ cross-finding behavior is already fixed for that later slice:
   non-directional or unavailable declarations are `indeterminate`;
 - explicit compatibility status is `not_declared`, the unique declared outcome,
   `conflicted`, `inactive`, or `stale`;
-- cross-finding consistency is `inconsistent` only for
-  declared-compatible plus directionally inadmissible, `consistent` for either
-  outcome with every other determinate direction result, and `indeterminate`
-  without a unique outcome or determinate/applicable direction result.
+- cross-finding consistency is `consistent` for declared-compatible plus
+  admissible and declared-incompatible plus inadmissible; it is `inconsistent`
+  for declared-compatible plus inadmissible and declared-incompatible plus
+  admissible; it is `indeterminate` without a unique outcome or a
+  determinate/applicable direction result.
 
 These deterministic findings never prove mateability, correctness, activity,
 flow, safety, or causality. Slice B results must carry one revision, one exact

@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
+import backend.model_kernel as kernel
 from backend.model_kernel import ModelQueries
 from tests.model_kernel.test_port_compatibility_queries import assessment, pif
 from tests.model_kernel.test_port_queries import world
@@ -28,6 +29,30 @@ def test_port_result_rejects_wrong_index_omitted_material_and_revision(tmp_path)
     with pytest.raises(ValidationError):
         reconstruct(result, lambda p: p["material"]["revision"].update(
             record_count=p["material"]["revision"]["record_count"] + 1))
+
+
+def test_slice_b_public_result_field_sets_are_exact():
+    expected = {
+        kernel.ModelQueryMaterial: {"revision", "records"},
+        kernel.PortResult: {"material", "port_anchor_id", "status",
+                            "registration_index", "owner_registration_index"},
+        kernel.EntityPortsResult: {"material", "entity_anchor_id", "status",
+                                  "entity_registration_index",
+                                  "port_registration_indices"},
+        kernel.InterfaceDimensionResult: {
+            "dimension", "status", "lineage_health",
+            "lineage_record_indices", "current_tip_indices",
+            "withdrawal_indices", "declaration_index",
+            "conflicting_declaration_indices",
+            "superseded_declaration_indices",
+            "inactive_declaration_indices"},
+        kernel.ConnectionRootResult: {
+            "root_index", "root_record_index", "lineage_record_indices",
+            "current_tip_indices", "withdrawal_indices", "lineage_health",
+            "exact_endpoint_set"},
+    }
+    for contract, fields in expected.items():
+        assert set(contract.model_fields) == fields
 
 
 def test_interface_result_rejects_missing_reordered_duplicate_and_forged_rows(
@@ -91,6 +116,46 @@ def test_model_construct_and_model_copy_results_do_not_bypass_revalidation(
     for hostile in (forged, copied):
         with pytest.raises(ValidationError):
             type(result).model_validate(hostile)
+
+
+def test_material_rejects_reordered_duplicate_and_stale_nested_records(tmp_path):
+    result = ModelQueries(world(tmp_path).load()).port(PORT_A)
+    mutations = (
+        lambda p: p["material"].update(
+            records=list(reversed(p["material"]["records"]))),
+        lambda p: p["material"].update(
+            records=p["material"]["records"] + p["material"]["records"][:1]),
+        lambda p: p["material"]["records"][0].update(
+            note="forged with stale content-derived id"),
+    )
+    for mutate in mutations:
+        with pytest.raises(ValidationError):
+            reconstruct(result, mutate)
+
+
+def test_assertion_and_topology_reject_context_endpoint_and_status_forgery(
+        tmp_path):
+    claim = connection()
+    queries = ModelQueries(world(tmp_path, claim).load())
+    assertion = queries.port_assertion(claim.record_id)
+    with pytest.raises(ValidationError):
+        reconstruct(assertion, lambda p: p.update(activity="withdrawn"))
+    topology = queries.connections_exact((PORT_A, PORT_B), context=CONTEXT)
+    with pytest.raises(ValidationError):
+        reconstruct(topology, lambda p: p.update(
+            requested_port_anchor_ids=(PORT_A, "prt_" + "3" * 32)))
+    with pytest.raises(ValidationError):
+        reconstruct(topology, lambda p: p.update(context={
+            "kind": "lifecycle_view", "view": "as_built"}))
+
+
+def test_port_assertion_result_rejects_non_pt_record_identity(tmp_path):
+    result = ModelQueries(world(tmp_path).load()).port_assertion(
+        "pif_" + "9" * 64)
+    payload = result.model_dump(mode="python")
+    payload["record_id"] = "reg_" + "9" * 64
+    with pytest.raises(ValidationError):
+        type(result).model_validate(payload)
 
 
 def test_material_serializes_every_complete_record_object_exactly_once(tmp_path):

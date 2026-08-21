@@ -161,12 +161,15 @@ def test_hostile_on_disk_pt_record_fails_load_all_or_nothing(tmp_path):
     assert error.value.error_code == "MODEL_RECORD_INVALID"
 
 
-def test_slice_a_adds_no_queries_module_store_or_relationship_port_endpoint():
+def test_slice_b_adds_queries_without_store_or_relationship_port_endpoint():
     assert not any(path.name.startswith(("port_", "connectivity"))
                    for path in Path("backend").iterdir())
-    for name in ("port", "ports_of_entity", "connections_of_port",
-                 "connection", "interface_compatibility"):
-        assert not hasattr(ModelQueries, name)
+    for name in ("port", "ports_of_entity", "port_interface",
+                 "connections_exact", "connections_of_port",
+                 "connections_containing", "port_assertion",
+                 "interface_compatibility"):
+        assert hasattr(ModelQueries, name)
+    assert not hasattr(ModelQueries, "connection")
     assert "source_anchor_id" in RelationshipAssertion.model_fields
     assert "target_anchor_id" in RelationshipAssertion.model_fields
     assert "endpoint_port_anchor_ids" not in RelationshipAssertion.model_fields

@@ -319,7 +319,7 @@ def test_records_forbid_unaccepted_identity_state_flow_and_safety_fields(
         factory(**extra)
 
 
-def test_model_kernel_public_exports_add_exactly_the_accepted_slice_a_names():
+def test_model_kernel_public_exports_add_exactly_the_accepted_pt_names():
     added = {
         "PortRegistration", "InterfaceDomainToken", "InterfaceTypeToken",
         "InterfaceDomainDeclaration", "DirectionRoleDeclaration",
@@ -327,6 +327,12 @@ def test_model_kernel_public_exports_add_exactly_the_accepted_slice_a_names():
         "PortConnectionAssertion", "PortInterfaceCitation",
         "CompatibilityDimensionBasis", "PortCompatibilityBasis",
         "PortCompatibilityDeclaration", "PortClaimWithdrawal",
+        "ModelQueryMaterial", "PortResult", "EntityPortsResult",
+        "InterfaceDimensionResult", "PortInterfaceResult",
+        "PortAssertionResult", "ConnectionRootResult",
+        "ExactConnectionsResult", "IncidentConnectionsResult",
+        "ContainingConnectionsResult", "EndpointInterfaceResult",
+        "InterfaceCompatibilityResult",
     }
     old = {
         "EntityRegistration", "VariableRegistration",

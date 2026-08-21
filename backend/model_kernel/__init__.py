@@ -99,6 +99,13 @@ from backend.model_kernel.contracts import (
     canonical_constraint_decimal,
 )
 from backend.model_kernel.queries import ModelQueries
+from backend.model_kernel.port_results import (
+    ConnectionRootResult, ContainingConnectionsResult, EndpointInterfaceResult,
+    EntityPortsResult,
+    ExactConnectionsResult, IncidentConnectionsResult,
+    InterfaceCompatibilityResult, InterfaceDimensionResult, ModelQueryMaterial, PortAssertionResult,
+    PortInterfaceResult, PortResult,
+)
 from backend.model_kernel.store import LoadedModel, ModelStore
 
 __all__ = [
@@ -169,6 +176,12 @@ __all__ = [
     "CycleReport",
     "ParentConflictReport",
     "HierarchyHealth",
+    "ModelQueryMaterial", "PortResult", "EntityPortsResult",
+    "InterfaceDimensionResult", "PortInterfaceResult",
+    "PortAssertionResult", "ConnectionRootResult",
+    "ExactConnectionsResult", "IncidentConnectionsResult",
+    "ContainingConnectionsResult",
+    "EndpointInterfaceResult", "InterfaceCompatibilityResult",
     # operations
     "build_record",
     "ModelStore",

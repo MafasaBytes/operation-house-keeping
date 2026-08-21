@@ -55,6 +55,8 @@ def test_port_distinguishes_unknown_from_registered_and_carries_revision(tmp_pat
     assert present.status == "registered"
     assert present.material.records[present.registration_index] == \
         loaded.port_registrations_by_anchor[PORT_A]
+    assert present.material.records[
+        present.owner_registration_index].anchor.anchor_id == ENT_A
     assert present.material.revision is loaded.revision
 
 
@@ -94,7 +96,7 @@ def test_port_interface_returns_all_dimensions_and_distinguishes_absence(
         "interface_domain", "direction_role", "interface_type")
     assert tuple(item.dimension for item in empty.dimensions) == (
         "interface_domain", "direction_role", "interface_type")
-    assert all(item.status == "not_registered" for item in absent.dimensions)
+    assert all(item.status == "port_not_registered" for item in absent.dimensions)
     assert all(item.status == "not_declared" for item in empty.dimensions)
     assert all(item.declaration_index is None for item in (*absent.dimensions,
                                                             *empty.dimensions))
@@ -110,6 +112,7 @@ def test_port_interface_discloses_unique_conflicted_and_inactive_lifecycle(
     outer = ModelQueries(conflicted).port_interface(PORT_A, context=CONTEXT)
     result = outer.dimensions[0]
     assert outer.status == "registered" and result.status == "conflicted"
+    assert result.lineage_health == "conflicted"
     assert result.declaration_index is None
     assert tuple(outer.material.records[index]
                  for index in result.conflicting_declaration_indices) == tuple(
@@ -123,6 +126,7 @@ def test_port_interface_discloses_unique_conflicted_and_inactive_lifecycle(
     outer = ModelQueries(inactive).port_interface(PORT_A, context=CONTEXT)
     result = outer.dimensions[0]
     assert result.status == "inactive"
+    assert result.lineage_health == "inactive"
     assert result.declaration_index is None
     assert tuple(outer.material.records[index].record_id
                  for index in result.inactive_declaration_indices) == (
