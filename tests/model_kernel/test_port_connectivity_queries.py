@@ -158,6 +158,29 @@ def test_topology_inputs_are_bounded_and_typed(tmp_path, method, args):
             *args, context=CONTEXT)
 
 
+def test_endpoint_count_is_preflighted_before_identifier_scanning(
+        tmp_path, monkeypatch):
+    queries = ModelQueries(world(tmp_path).load())
+    calls = 0
+    original = queries._require_port_anchor_id
+
+    def counted(value):
+        nonlocal calls
+        calls += 1
+        return original(value)
+
+    monkeypatch.setattr(queries, "_require_port_anchor_id", counted)
+    valid = tuple(f"prt_{index:032x}" for index in range(64))
+    queries.connections_containing(valid, context=CONTEXT)
+    assert calls == 64
+
+    calls = 0
+    with pytest.raises(ModelQueryError) as error:
+        queries.connections_exact(valid + ("not-even-scanned",), context=CONTEXT)
+    assert "MODEL_PORT_ENDPOINTS_INVALID" in str(error.value)
+    assert calls == 0
+
+
 def test_context_is_exact_and_never_unioned(tmp_path):
     claim = connection()
     queries = ModelQueries(world(tmp_path, claim).load())

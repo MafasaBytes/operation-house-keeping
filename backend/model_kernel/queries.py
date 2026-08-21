@@ -760,13 +760,16 @@ class ModelQueries:
         if not isinstance(endpoint_ids, (tuple, list)):
             raise ModelQueryError("MODEL_PORT_ENDPOINTS_INVALID",
                                   "port endpoints must be a bounded collection")
+        if not minimum <= len(endpoint_ids) <= 64:
+            raise ModelQueryError("MODEL_PORT_ENDPOINTS_INVALID",
+                                  "port endpoints must be unique and bounded")
         try:
             values = tuple(self._require_port_anchor_id(value)
                            for value in endpoint_ids)
         except ModelQueryError as error:
             raise ModelQueryError("MODEL_PORT_ENDPOINTS_INVALID",
                                   "port endpoints are invalid") from error
-        if not minimum <= len(values) <= 64 or len(set(values)) != len(values):
+        if len(set(values)) != len(values):
             raise ModelQueryError("MODEL_PORT_ENDPOINTS_INVALID",
                                   "port endpoints must be unique and bounded")
         return tuple(sorted(values))
