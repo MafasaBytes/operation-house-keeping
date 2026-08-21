@@ -1,7 +1,8 @@
 # ADR-0013 — Explicit ports and typed interface connectivity
 
 Status: PT-001 Slice A, including the qualified-token repair, is owner accepted.
-Slice B is authorized; Slice C remains owner-gated.
+PT-001 Slice B implemented and adversarially reviewed; awaiting owner acceptance.
+Slice C remains owner-gated.
 
 ## Context
 
@@ -38,8 +39,8 @@ accepted record kind or implying flow, behavior, compatibility, or causality.
    `declared_compatible` or `declared_incompatible` claim for one unordered pair
    and exact context. Its nonempty basis cites one PIF per endpoint for every
    selected dimension in the normative dimension/endpoint order. Citation
-   validity is membership-structural, never chronological. Slice B alone will
-   compute citation staleness for its selected immutable revision.
+   validity is membership-structural, never chronological. Slice B computes
+   citation staleness for its selected immutable revision.
 7. `PortClaimWithdrawal` (`ptw_`) may withdraw only `pif_`, `pcn_`, or `pcm_`.
    Its target field is `withdraws`, matching `RelationshipWithdrawal`. It is
    uncitable and means only “no longer asserted in this revision.”
@@ -47,9 +48,10 @@ accepted record kind or implying flow, behavior, compatibility, or causality.
    content-ID closure are validated for append, load, and explicit replay. All
    currentness is membership-relative; timestamps and file order never rank.
 9. PT-001 has no negative topology, traversal, flow, behavior, variable-port
-   association, diagnosis, safety judgment, control, or committed fixture in
-   Slice A. Slice B adds read-only queries only after owner acceptance. Slice C
-   may append exactly ten synthetic demo records only after a second owner gate.
+   association, diagnosis, safety judgment, control, or committed fixture.
+   Slice B adds read-only queries directly to `ModelQueries`; it adds no store,
+   composition module, or writes. Slice C may append exactly ten synthetic demo
+   records only after its owner gate.
 
 ## Consequences
 

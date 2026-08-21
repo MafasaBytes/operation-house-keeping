@@ -1,8 +1,8 @@
 # PT-001 — Explicit ports and typed interface connectivity
 
 Status: PT-001 Slice A, including the qualified-token repair, is owner accepted.
-Slice B is authorized; Slice C remains owner-gated. No committed PT fixture is
-permitted before Slice C.
+PT-001 Slice B implemented and adversarially reviewed; awaiting owner acceptance.
+Slice C remains owner-gated. No committed PT fixture is permitted before Slice C.
 
 ## Mission and boundary
 
@@ -133,7 +133,7 @@ Independent roots over the same endpoint set/context corroborate. Correction
 parents must have one derived root and preserve endpoints/context; cross-root
 supersession is invalid. Changing subject requires withdrawal and a new root.
 
-There are no negative topology claims. With future Slice B queries: no lineage
+There are no negative topology claims. In Slice B queries: no lineage
 means `unknown`; any current tip means aggregate `asserted`, including a forked
 root; lineages but no current tips means `inactive`. Lineage health is separately
 `healthy`, `conflicted`, or `inactive`. Nothing means disconnected.
@@ -205,7 +205,7 @@ A citation is structurally valid when the cited PIF exists in selected
 membership, verifies its content ID, belongs to the cited endpoint and dimension,
 uses the exact PCM context, belongs to the carried revision, and occurs once.
 Append, load, and replay do not require it to be current. A structurally valid
-stale PCM remains loadable. Slice B will expose the unique PCM outcome only when
+stale PCM remains loadable. Slice B exposes the unique PCM outcome only when
 every citation is the unique active current PIF; otherwise it reports `stale`.
 No time, append order, file order, directory state, or hidden history participates.
 
@@ -269,12 +269,12 @@ keys, successors, tips, and withdrawals; PCN roots, ancestry, subjects, incident
 ports, successors, tips, and withdrawals; PCM keys, successors, tips,
 withdrawals, citations and reverse citations; and withdrawals by target.
 
-## Deferred query semantics
+## Read-only query semantics
 
-Slice B, not Slice A, will add exact port/interface disclosure, exact endpoint
-set, incident, shared-superset, assertion disclosure, and multidimensional
-compatibility queries. It will add no traversal. Direction comparison and
-cross-finding behavior is already fixed for that later slice:
+Slice B adds exact port/interface disclosure, exact endpoint-set, incident,
+shared-superset, assertion disclosure, and multidimensional compatibility
+queries directly to `ModelQueries`. It adds no traversal, store, or write path.
+Direction comparison and cross-finding behavior is:
 
 - exact-set lookup matches only the identical canonical hyperedge;
 - incident lookup returns every hyperedge containing one requested port;
@@ -299,8 +299,9 @@ cross-finding behavior is already fixed for that later slice:
   determinate/applicable direction result.
 
 These deterministic findings never prove mateability, correctness, activity,
-flow, safety, or causality. Slice B results must carry one revision, one exact
-context, authoritative declarations/evidence once, and reject mixed, reordered,
+flow, safety, or causality. Slice B results carry the complete selected model
+membership once, one revision, and one exact context. Their validators rebuild
+the authoritative PT state without store access and reject mixed, reordered,
 substituted, stale-ID, `model_construct`, and `model_copy` forgeries.
 
 ## Historical replay and exclusions

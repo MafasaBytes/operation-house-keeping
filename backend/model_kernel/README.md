@@ -155,7 +155,12 @@ typed-failure translation catches an enumerated exception set: a hostile
 in-process class whose metaclass raises outside it can still surface that
 exception, and exception `__cause__` chains can carry raw payloads into
 full tracebacks (public messages stay clean). PT-001 Slice A, including its
-qualified-token repair, is owner accepted. Slice B read-only port queries are
-authorized; the bounded synthetic fixture remains gated for Slice C. Richer
+qualified-token repair, is owner accepted. PT-001 Slice B read-only port,
+interface, exact/incident/shared topology, assertion, and multidimensional
+compatibility queries are implemented and adversarially reviewed, awaiting
+owner acceptance. They operate only over an injected `LoadedModel`, carry the
+complete selected membership once for authoritative reconstruction, and perform
+no traversal, store access, or writes. The bounded synthetic fixture remains
+gated for Slice C. Richer
 predicates beyond CN-001's exact numeric bounds
 also remain future work.
