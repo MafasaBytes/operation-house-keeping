@@ -8,7 +8,7 @@ import pytest
 from pydantic import ValidationError
 
 import backend.model_kernel as kernel
-from backend.model_kernel import ModelQueries
+from backend.model_kernel import ModelQueries, ModelQueryError
 from tests.model_kernel.test_port_compatibility_queries import assessment, pif
 from tests.model_kernel.test_port_queries import world
 from tests.model_kernel.test_port_records import CONTEXT, PORT_A, PORT_B, connection
@@ -50,6 +50,37 @@ def test_slice_b_public_result_field_sets_are_exact():
             "root_index", "root_record_index", "lineage_record_indices",
             "current_tip_indices", "withdrawal_indices", "lineage_health",
             "exact_endpoint_set"},
+        kernel.ConnectionSubjectResult: {
+            "subject_index", "endpoint_port_anchor_ids", "conclusion",
+            "root_indices"},
+        kernel.PortInterfaceResult: {
+            "material", "port_anchor_id", "status", "context", "dimensions"},
+        kernel.EndpointInterfaceResult: {
+            "port_anchor_id", "status", "port_registration_index",
+            "owner_registration_index", "dimensions"},
+        kernel.PortAssertionResult: {
+            "material", "record_id", "status", "record_index", "activity",
+            "lineage_health", "root_record_index", "successor_indices",
+            "withdrawal_indices"},
+        kernel.ExactConnectionsResult: {
+            "material", "context", "status", "roots", "subjects",
+            "requested_port_anchor_ids", "unregistered_port_anchor_ids"},
+        kernel.IncidentConnectionsResult: {
+            "material", "context", "status", "roots", "subjects",
+            "port_anchor_id", "port_status"},
+        kernel.ContainingConnectionsResult: {
+            "material", "context", "status", "roots", "subjects",
+            "requested_port_anchor_ids", "unregistered_port_anchor_ids"},
+        kernel.InterfaceCompatibilityResult: {
+            "material", "requested_left_port_anchor_id",
+            "requested_right_port_anchor_id", "endpoint_port_anchor_ids",
+            "context", "endpoint_registration_status", "left_interface",
+            "right_interface", "domain_relation", "interface_type_relation",
+            "direction_relation", "explicit_status",
+            "explicit_declaration_index",
+            "conflicting_explicit_declaration_indices",
+            "pcm_lineage_record_indices", "current_pcm_tip_indices",
+            "stale_citation_indices", "consistency"},
     }
     for contract, fields in expected.items():
         assert set(contract.model_fields) == fields
@@ -177,6 +208,25 @@ def test_material_serializes_every_complete_record_object_exactly_once(tmp_path)
                    for item in objects) == 1
 
 
+@pytest.mark.parametrize("index", [-1, True, "0", 999999])
+def test_material_record_lookup_rejects_invalid_indices_typed(tmp_path, index):
+    material = ModelQueries(world(tmp_path).load()).port(PORT_A).material
+    with pytest.raises(ModelQueryError):
+        material.record_at(index)
+
+
+def test_nested_context_copy_forgery_rejects_at_query_and_result_boundaries(
+        tmp_path):
+    queries = ModelQueries(world(tmp_path).load())
+    forged_context = CONTEXT.model_copy(update={"view": "bogus"})
+    with pytest.raises(ModelQueryError):
+        queries.port_interface(PORT_A, context=forged_context)
+    result = queries.connections_exact((PORT_A, PORT_B), context=CONTEXT)
+    hostile = result.model_copy(update={"context": forged_context})
+    with pytest.raises(ValidationError):
+        type(result).model_validate(hostile)
+
+
 def test_slice_b_adds_queries_only_no_store_module_traversal_or_upper_import():
     assert not any(path.name.startswith(("port_", "connectivity"))
                    for path in Path("backend").iterdir())
@@ -197,3 +247,22 @@ def test_slice_b_adds_queries_only_no_store_module_traversal_or_upper_import():
             "backend.constraint_evaluation"))
     text = query_source.read_text(encoding="utf-8")
     assert "ModelStore(" not in text
+
+
+def test_malformed_topology_and_compatibility_inputs_precede_index_access(
+        tmp_path):
+    from dataclasses import replace
+    from tests.model_kernel.test_port_queries import ExplodingMapping
+
+    loaded = world(tmp_path).load()
+    poisoned = replace(
+        loaded,
+        port_registrations_by_anchor=ExplodingMapping(),
+        port_connection_ids_by_subject=ExplodingMapping(),
+        port_compatibility_ids_by_key=ExplodingMapping())
+    queries = ModelQueries(poisoned)
+    with pytest.raises(ModelQueryError):
+        queries.connections_exact((PORT_A, PORT_A), context=CONTEXT)
+    with pytest.raises(ModelQueryError):
+        queries.interface_compatibility(
+            "prt_NOT_HEX", PORT_B, context=CONTEXT)

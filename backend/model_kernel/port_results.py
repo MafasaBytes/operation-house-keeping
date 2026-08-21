@@ -7,12 +7,27 @@ only indices into that immutable, fully revalidated collection.
 import re
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, model_validator
+from pydantic import (
+    BaseModel, ConfigDict, Field, PrivateAttr, TypeAdapter, ValidationError,
+    model_validator,
+)
 
 from backend.model_kernel.contracts import (
     AssertionContext, ENTITY_ANCHOR_ID_PATTERN,
-    PORT_ANCHOR_ID_PATTERN, ModelIntegrityError, ModelRecord, ModelRevision,
+    PORT_ANCHOR_ID_PATTERN, ModelIntegrityError, ModelQueryError, ModelRecord,
+    ModelRevision,
 )
+
+_CONTEXT_ADAPTER = TypeAdapter(AssertionContext)
+
+
+def _validated_context(value) -> AssertionContext:
+    try:
+        payload = value.model_dump(mode="python") if hasattr(
+            value, "model_dump") else value
+        return _CONTEXT_ADAPTER.validate_python(payload)
+    except (ValidationError, ValueError, TypeError, AttributeError) as error:
+        raise ValueError("carried assertion context is invalid") from error
 
 
 class _Result(BaseModel):
@@ -49,8 +64,11 @@ class ModelQueryMaterial(_Result):
         return self
 
     def record_at(self, index: int):
-        if not isinstance(index, int) or isinstance(index, bool):
-            raise TypeError("record index must be an integer")
+        if (not isinstance(index, int) or isinstance(index, bool)
+                or not 0 <= index < len(self.records)):
+            raise ModelQueryError(
+                "MODEL_RECORD_INDEX_INVALID",
+                "record index must identify one carried model record")
         return self.records[index]
 
     def loaded(self):
@@ -176,14 +194,13 @@ class InterfaceDimensionResult(_Result):
 
     @property
     def superseded_declaration_ids(self):
-        tips = set(self.current_tip_indices)
         return tuple(self._material.record_at(i).record_id
-                     for i in self.lineage_record_indices if i not in tips)
+                     for i in self.superseded_declaration_indices)
 
     @property
     def inactive_declaration_ids(self):
         return tuple(self._material.record_at(i).record_id
-                     for i in self.lineage_record_indices) if self.status == "inactive" else ()
+                     for i in self.inactive_declaration_indices)
 
     @property
     def withdrawal_ids(self):
@@ -201,12 +218,13 @@ class PortInterfaceResult(_WithMaterial):
     @model_validator(mode="after")
     def _bind(self):
         loaded = self.material.loaded()
+        context = _validated_context(self.context)
         registered = self.port_anchor_id in loaded.port_registrations_by_anchor
         ids_to_index = {value: index for index, value
                         in enumerate(self.material.revision.record_ids)}
         expected = []
         for dimension in ("interface_domain", "direction_role", "interface_type"):
-            key = (self.port_anchor_id, self.context, dimension)
+            key = (self.port_anchor_id, context, dimension)
             ids = loaded.port_interface_ids_by_key.get(key, ()) if registered else ()
             tips = loaded.current_port_interface_tips_by_key.get(key, ()) if ids else ()
             withdrawals = tuple(sorted(w for record_id in ids
@@ -233,8 +251,9 @@ class PortInterfaceResult(_WithMaterial):
                 superseded_declaration_indices=(tuple(
                     ids_to_index[i] for i in ids
                     if loaded.port_interface_superseded_by[i]) if registered else ()),
-                inactive_declaration_indices=(tuple(ids_to_index[i] for i in ids)
-                                              if status == "inactive" else ())))
+                inactive_declaration_indices=tuple(
+                    ids_to_index[i] for i in ids
+                    if loaded.port_interface_withdrawn_by[i])))
         if self.status != ("registered" if registered else "not_registered"):
             raise ValueError("interface port status is forged")
         if tuple(row.model_dump() for row in self.dimensions) != tuple(expected):
@@ -360,24 +379,38 @@ class ConnectionRootResult(_Result):
         return tuple(self._material.record_at(i) for i in self.withdrawal_indices)
 
 
+class ConnectionSubjectResult(_Result):
+    subject_index: int = Field(ge=0)
+    endpoint_port_anchor_ids: tuple[str, ...]
+    conclusion: Literal["asserted", "inactive"]
+    root_indices: tuple[int, ...]
+
+
 class _ConnectionsResult(_WithMaterial):
     context: AssertionContext
     status: Literal["unknown", "asserted", "inactive"]
     roots: tuple[ConnectionRootResult, ...] = ()
+    subjects: tuple[ConnectionSubjectResult, ...] = ()
 
     @model_validator(mode="after")
     def _bind(self):
         loaded = self.material.loaded()
+        context = _validated_context(self.context)
         ids_to_index = {value: index for index, value
                         in enumerate(self.material.revision.record_ids)}
         if isinstance(self, ExactConnectionsResult):
             _validate_endpoint_subject(self.requested_port_anchor_ids)
             selected = loaded.port_connection_ids_by_subject.get(
-                (self.requested_port_anchor_ids, self.context), ())
+                (self.requested_port_anchor_ids, context), ())
             requested = self.requested_port_anchor_ids
+            expected_missing = tuple(
+                port_id for port_id in requested
+                if port_id not in loaded.port_registrations_by_anchor)
+            if self.unregistered_port_anchor_ids != expected_missing:
+                raise ValueError("exact endpoint registration status is forged")
         elif isinstance(self, IncidentConnectionsResult):
             selected = tuple(i for i in loaded.port_connection_ids_by_port.get(
-                self.port_anchor_id, ()) if loaded.port_connections[i].context == self.context)
+                self.port_anchor_id, ()) if loaded.port_connections[i].context == context)
             requested = (self.port_anchor_id,)
             expected_port = ("registered" if self.port_anchor_id
                              in loaded.port_registrations_by_anchor else "not_registered")
@@ -388,7 +421,7 @@ class _ConnectionsResult(_WithMaterial):
             requested = self.requested_port_anchor_ids
             wanted = set(requested)
             selected = tuple(i for i, record in loaded.port_connections.items()
-                             if record.context == self.context
+                             if record.context == context
                              and wanted.issubset(record.endpoint_port_anchor_ids))
             expected_missing = tuple(p for p in requested
                                      if p not in loaded.port_registrations_by_anchor)
@@ -414,8 +447,26 @@ class _ConnectionsResult(_WithMaterial):
         expected_status = ("unknown" if not expected_rows else "asserted"
                            if any(row["current_tip_indices"] for row in expected_rows)
                            else "inactive")
+        roots_by_subject = {}
+        for root_position, root_id in enumerate(root_ids):
+            subject = loaded.port_connections[root_id].endpoint_port_anchor_ids
+            roots_by_subject.setdefault(subject, []).append(root_position)
+        expected_subjects = tuple(
+            dict(
+                subject_index=position,
+                endpoint_port_anchor_ids=subject,
+                conclusion=("asserted" if any(
+                    expected_rows[root_index]["current_tip_indices"]
+                    for root_index in root_indices) else "inactive"),
+                root_indices=tuple(root_indices),
+            )
+            for position, (subject, root_indices) in enumerate(
+                sorted(roots_by_subject.items()))
+        )
         if self.status != expected_status or tuple(
-                row.model_dump() for row in self.roots) != tuple(expected_rows):
+                row.model_dump() for row in self.roots) != tuple(expected_rows) \
+                or tuple(row.model_dump() for row in self.subjects) != \
+                expected_subjects:
             raise ValueError("connection disclosure is forged")
         for row in self.roots:
             object.__setattr__(row, "_material", self.material)
@@ -424,6 +475,7 @@ class _ConnectionsResult(_WithMaterial):
 
 class ExactConnectionsResult(_ConnectionsResult):
     requested_port_anchor_ids: tuple[str, ...]
+    unregistered_port_anchor_ids: tuple[str, ...] = ()
 
 
 class IncidentConnectionsResult(_ConnectionsResult):
@@ -465,12 +517,13 @@ class InterfaceCompatibilityResult(_WithMaterial):
     @model_validator(mode="after")
     def _bind(self):
         loaded = self.material.loaded()
+        context = _validated_context(self.context)
         from backend.model_kernel.queries import ModelQueries
         queries = ModelQueries(loaded)
         expected_left = queries.port_interface(
-            self.requested_left_port_anchor_id, context=self.context)
+            self.requested_left_port_anchor_id, context=context)
         expected_right = queries.port_interface(
-            self.requested_right_port_anchor_id, context=self.context)
+            self.requested_right_port_anchor_id, context=context)
         if self.endpoint_port_anchor_ids != tuple(sorted((
                 self.requested_left_port_anchor_id,
                 self.requested_right_port_anchor_id))):
@@ -529,16 +582,20 @@ class InterfaceCompatibilityResult(_WithMaterial):
         indices = {value: index for index, value
                    in enumerate(self.material.revision.record_ids)}
         pcm_ids = loaded.port_compatibility_ids_by_key.get(
-            (self.endpoint_port_anchor_ids, self.context), ())
+            (self.endpoint_port_anchor_ids, context), ())
         tips = loaded.current_port_compatibility_tips_by_key.get(
-            (self.endpoint_port_anchor_ids, self.context), ())
-        stale_ids = tuple(sorted({citation_id for tip in tips
-            for citation_id in loaded.port_compatibility_citations[tip.record_id]
-            if citation_id not in {item.record_id for item in
-                loaded.current_port_interface_tips_by_key.get((
-                    loaded.port_interface_declarations[citation_id].port_anchor_id,
-                    self.context,
-                    loaded.port_interface_declarations[citation_id].declaration.dimension), ())}}))
+            (self.endpoint_port_anchor_ids, context), ())
+        stale_ids = []
+        for tip in tips:
+            for citation_id in loaded.port_compatibility_citations[tip.record_id]:
+                citation = loaded.port_interface_declarations[citation_id]
+                current = loaded.current_port_interface_tips_by_key.get((
+                    citation.port_anchor_id, context,
+                    citation.declaration.dimension), ())
+                if (len(current) != 1
+                        or current[0].record_id != citation_id):
+                    stale_ids.append(citation_id)
+        stale_ids = tuple(sorted(set(stale_ids)))
         if not pcm_ids:
             explicit, declaration_index, conflicts = "not_declared", None, ()
         elif not tips:

@@ -100,7 +100,8 @@ from backend.model_kernel.contracts import (
 )
 from backend.model_kernel.queries import ModelQueries
 from backend.model_kernel.port_results import (
-    ConnectionRootResult, ContainingConnectionsResult, EndpointInterfaceResult,
+    ConnectionRootResult, ConnectionSubjectResult,
+    ContainingConnectionsResult, EndpointInterfaceResult,
     EntityPortsResult,
     ExactConnectionsResult, IncidentConnectionsResult,
     InterfaceCompatibilityResult, InterfaceDimensionResult, ModelQueryMaterial, PortAssertionResult,
@@ -179,6 +180,7 @@ __all__ = [
     "ModelQueryMaterial", "PortResult", "EntityPortsResult",
     "InterfaceDimensionResult", "PortInterfaceResult",
     "PortAssertionResult", "ConnectionRootResult",
+    "ConnectionSubjectResult",
     "ExactConnectionsResult", "IncidentConnectionsResult",
     "ContainingConnectionsResult",
     "EndpointInterfaceResult", "InterfaceCompatibilityResult",

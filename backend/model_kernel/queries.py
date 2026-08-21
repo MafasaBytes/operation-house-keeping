@@ -45,7 +45,8 @@ from backend.model_kernel.contracts import (
 )
 from backend.model_kernel.hierarchy import HierarchyProjection, build_projection
 from backend.model_kernel.port_results import (
-    ConnectionRootResult, ContainingConnectionsResult, EndpointInterfaceResult,
+    ConnectionRootResult, ConnectionSubjectResult, ContainingConnectionsResult,
+    EndpointInterfaceResult,
     EntityPortsResult,
     ExactConnectionsResult, IncidentConnectionsResult,
     InterfaceCompatibilityResult, InterfaceDimensionResult, ModelQueryMaterial, PortAssertionResult,
@@ -143,8 +144,10 @@ class ModelQueries:
         matching never compares against raw input; malformed context is a
         typed error, never a silently empty answer."""
         try:
-            return _CONTEXT_ADAPTER.validate_python(context)
-        except ValidationError as error:
+            payload = context.model_dump(mode="python") if hasattr(
+                context, "model_dump") else context
+            return _CONTEXT_ADAPTER.validate_python(payload)
+        except (ValidationError, ValueError, TypeError, AttributeError) as error:
             raise ModelQueryError(
                 "MODEL_CONTEXT_INVALID",
                 "context must be a lifecycle_view or view_independent "
@@ -695,8 +698,8 @@ class ModelQueries:
                           if self.loaded.port_interface_superseded_by[i])
                     if registered else ()),
                 inactive_declaration_indices=(
-                    tuple(indices[i] for i in ids)
-                    if status == "inactive" else ())))
+                    tuple(indices[i] for i in ids
+                          if self.loaded.port_interface_withdrawn_by[i]))))
         return PortInterfaceResult(
             material=material, port_anchor_id=port_anchor_id,
             status="registered" if registered else "not_registered",
@@ -792,17 +795,37 @@ class ModelQueries:
         status = ("unknown" if not entries else
                   "asserted" if any(entry.current_tip_indices for entry in entries)
                   else "inactive")
-        return status, tuple(entries)
+        roots_by_subject = {}
+        for root_index, root_id in enumerate(sorted(roots)):
+            subject = self.loaded.port_connections[
+                root_id].endpoint_port_anchor_ids
+            roots_by_subject.setdefault(subject, []).append(root_index)
+        subjects = tuple(ConnectionSubjectResult(
+            subject_index=subject_index,
+            endpoint_port_anchor_ids=subject,
+            conclusion=("asserted" if any(
+                entries[root_index].current_tip_indices
+                for root_index in root_indices) else "inactive"),
+            root_indices=tuple(root_indices),
+        ) for subject_index, (subject, root_indices) in enumerate(
+            sorted(roots_by_subject.items())))
+        return status, tuple(entries), subjects
 
     def connections_exact(self, endpoint_port_anchor_ids, *, context):
         requested = self._require_endpoint_set(endpoint_port_anchor_ids)
         context = self._require_context(context)
         ids = self.loaded.port_connection_ids_by_subject.get((requested, context), ())
         roots = {self.loaded.port_connection_root_by_id[i] for i in ids}
-        status, entries = self._connection_result_parts(roots, requested)
+        status, entries, subjects = self._connection_result_parts(
+            roots, requested)
         return ExactConnectionsResult(material=self._material(), context=context,
                                       status=status, roots=entries,
-                                      requested_port_anchor_ids=requested)
+                                      subjects=subjects,
+                                      requested_port_anchor_ids=requested,
+                                      unregistered_port_anchor_ids=tuple(
+                                          port_id for port_id in requested
+                                          if port_id not in
+                                          self.loaded.port_registrations_by_anchor))
 
     def connections_of_port(self, port_anchor_id: str, *, context):
         port_anchor_id = self._require_port_anchor_id(port_anchor_id)
@@ -810,10 +833,11 @@ class ModelQueries:
         ids = tuple(i for i in self.loaded.port_connection_ids_by_port.get(port_anchor_id, ())
                     if self.loaded.port_connections[i].context == context)
         roots = {self.loaded.port_connection_root_by_id[i] for i in ids}
-        status, entries = self._connection_result_parts(roots, (port_anchor_id,))
+        status, entries, subjects = self._connection_result_parts(
+            roots, (port_anchor_id,))
         return IncidentConnectionsResult(
             material=self._material(), context=context, status=status,
-            roots=entries, port_anchor_id=port_anchor_id,
+            roots=entries, subjects=subjects, port_anchor_id=port_anchor_id,
             port_status=("registered" if port_anchor_id in self.loaded.port_registrations_by_anchor
                          else "not_registered"))
 
@@ -825,10 +849,12 @@ class ModelQueries:
                  for record_id, record in self.loaded.port_connections.items()
                  if record.context == context
                  and wanted.issubset(record.endpoint_port_anchor_ids)}
-        status, entries = self._connection_result_parts(roots, requested)
+        status, entries, subjects = self._connection_result_parts(
+            roots, requested)
         return ContainingConnectionsResult(
             material=self._material(), context=context, status=status,
-            roots=entries, requested_port_anchor_ids=requested,
+            roots=entries, subjects=subjects,
+            requested_port_anchor_ids=requested,
             unregistered_port_anchor_ids=tuple(
                 p for p in requested
                 if p not in self.loaded.port_registrations_by_anchor))
@@ -910,15 +936,18 @@ class ModelQueries:
         key = (pair, context)
         pcm_ids = self.loaded.port_compatibility_ids_by_key.get(key, ())
         tips = self.loaded.current_port_compatibility_tips_by_key.get(key, ())
-        stale_ids = tuple(sorted({citation_id
-            for tip in tips
-            for citation_id in self.loaded.port_compatibility_citations[tip.record_id]
-            if citation_id not in {
-                item.record_id for dimension in (
-                    self.loaded.port_interface_declarations[citation_id].declaration.dimension,)
-                for item in self.loaded.current_port_interface_tips_by_key.get((
-                    self.loaded.port_interface_declarations[citation_id].port_anchor_id,
-                    context, dimension), ())}}))
+        stale_ids = []
+        for tip in tips:
+            for citation_id in self.loaded.port_compatibility_citations[
+                    tip.record_id]:
+                citation = self.loaded.port_interface_declarations[citation_id]
+                current = self.loaded.current_port_interface_tips_by_key.get((
+                    citation.port_anchor_id, context,
+                    citation.declaration.dimension), ())
+                if (len(current) != 1
+                        or current[0].record_id != citation_id):
+                    stale_ids.append(citation_id)
+        stale_ids = tuple(sorted(set(stale_ids)))
         explicit_index = None
         conflicting = ()
         if not pcm_ids:

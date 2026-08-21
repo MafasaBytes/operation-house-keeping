@@ -80,6 +80,18 @@ def test_registered_empty_is_distinct_from_unknown_port_input(tmp_path):
     assert registered.status == unknown.status == "unknown"
 
 
+def test_exact_discloses_unregistered_endpoints_separately_from_unknown_claim(
+        tmp_path):
+    queries = ModelQueries(world(tmp_path).load())
+    registered = queries.connections_exact(
+        (PORT_A, PORT_B), context=CONTEXT)
+    missing = queries.connections_exact(
+        (PORT_A, UNKNOWN_PORT), context=CONTEXT)
+    assert registered.status == missing.status == "unknown"
+    assert registered.unregistered_port_anchor_ids == ()
+    assert missing.unregistered_port_anchor_ids == (UNKNOWN_PORT,)
+
+
 def test_root_entries_separate_corroboration_conflict_and_activity(tmp_path):
     corroborating = connection(note="other root")
     root = connection(note="forked root")
@@ -93,6 +105,10 @@ def test_root_entries_separate_corroboration_conflict_and_activity(tmp_path):
         range(len(result.roots)))
     assert root_ids(result) == tuple(sorted(
         (corroborating.record_id, root.record_id)))
+    assert len(result.subjects) == 1
+    assert result.subjects[0].endpoint_port_anchor_ids == (PORT_A, PORT_B)
+    assert result.subjects[0].conclusion == "asserted"
+    assert result.subjects[0].root_indices == (0, 1)
     fork = next(item for item in result.roots
                 if result.material.records[
                     item.root_record_index].record_id == root.record_id)

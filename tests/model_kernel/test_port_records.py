@@ -330,6 +330,7 @@ def test_model_kernel_public_exports_add_exactly_the_accepted_pt_names():
         "ModelQueryMaterial", "PortResult", "EntityPortsResult",
         "InterfaceDimensionResult", "PortInterfaceResult",
         "PortAssertionResult", "ConnectionRootResult",
+        "ConnectionSubjectResult",
         "ExactConnectionsResult", "IncidentConnectionsResult",
         "ContainingConnectionsResult", "EndpointInterfaceResult",
         "InterfaceCompatibilityResult",

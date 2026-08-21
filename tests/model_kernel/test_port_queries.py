@@ -133,6 +133,48 @@ def test_port_interface_discloses_unique_conflicted_and_inactive_lifecycle(
                      root.record_id,)
     assert tuple(outer.material.records[index].record_id
                  for index in result.withdrawal_indices) == (event.record_id,)
+    assert result.superseded_declaration_ids == ()
+    assert result.inactive_declaration_ids == (root.record_id,)
+
+
+def test_withdrawn_fork_tip_is_inactive_but_not_superseded(tmp_path):
+    root = interface()
+    left = interface(supersedes=(root.record_id,), note="left")
+    right = interface(supersedes=(root.record_id,), note="right")
+    event = withdrawal(left.record_id)
+    outer = ModelQueries(world(tmp_path, root, left, right, event).load()
+                         ).port_interface(PORT_A, context=CONTEXT)
+    result = outer.dimensions[0]
+    assert result.status == "declared"
+    assert result.superseded_declaration_ids == (root.record_id,)
+    assert result.inactive_declaration_ids == (left.record_id,)
+
+
+def test_interface_queries_replay_supersession_and_withdrawal_membership(
+        tmp_path):
+    root = interface()
+    child = interface(supersedes=(root.record_id,), note="current child")
+    store = world(tmp_path / "successor", root, child)
+    current = ModelQueries(store.load()).port_interface(
+        PORT_A, context=CONTEXT).dimensions[0]
+    historical_ids = tuple(record_id for record_id in store.load().revision.record_ids
+                           if record_id != child.record_id)
+    historical = ModelQueries(store.replay(historical_ids)).port_interface(
+        PORT_A, context=CONTEXT).dimensions[0]
+    assert current.declaration.record_id == child.record_id
+    assert historical.declaration.record_id == root.record_id
+
+    event = withdrawal(root.record_id)
+    withdrawn_store = world(tmp_path / "withdrawal", root, event)
+    assert ModelQueries(withdrawn_store.load()).port_interface(
+        PORT_A, context=CONTEXT).dimensions[0].status == "inactive"
+    revived_ids = tuple(record_id for record_id
+                        in withdrawn_store.load().revision.record_ids
+                        if record_id != event.record_id)
+    revived = ModelQueries(withdrawn_store.replay(revived_ids)).port_interface(
+        PORT_A, context=CONTEXT).dimensions[0]
+    assert revived.status == "declared"
+    assert revived.declaration.record_id == root.record_id
 
 
 @pytest.mark.parametrize("factory,kind", [
@@ -168,6 +210,24 @@ def test_port_assertion_not_found_is_structured(tmp_path):
     assert result.material.revision == loaded.revision
 
 
+def test_port_assertion_discloses_pcm_and_ptw_without_reclassifying_events(
+        tmp_path):
+    from tests.model_kernel.test_port_store import pcm_from
+
+    pifs = (interface(), interface(PORT_B))
+    pcm = pcm_from(pifs)
+    event = withdrawal(pcm.record_id)
+    queries = ModelQueries(world(tmp_path, *pifs, pcm, event).load())
+    declaration = queries.port_assertion(pcm.record_id)
+    assert declaration.status == "found"
+    assert declaration.record.record_kind == "port_compatibility_declaration"
+    assert declaration.activity == "withdrawn"
+    event_result = queries.port_assertion(event.record_id)
+    assert event_result.status == "found"
+    assert event_result.record.record_kind == "port_claim_withdrawal"
+    assert event_result.activity is None and event_result.lineage_health is None
+
+
 def test_port_assertion_reports_superseded_withdrawn_and_conflicted_root(
         tmp_path):
     root = connection()
@@ -189,6 +249,7 @@ def test_port_assertion_reports_superseded_withdrawn_and_conflicted_root(
     assert result.lineage_health == "inactive"
     assert tuple(result.material.records[index].record_id
                  for index in result.withdrawal_indices) == (event.record_id,)
+
 
 
 @pytest.mark.parametrize("method,bad", [

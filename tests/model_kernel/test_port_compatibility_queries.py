@@ -13,6 +13,7 @@ from tests.model_kernel.test_port_records import (
     PORT_B,
     declaration_body,
     interface,
+    withdrawal,
 )
 from tests.model_kernel.test_port_store import pcm_from
 
@@ -96,6 +97,27 @@ def test_missing_conflicted_and_inactive_direction_are_indeterminate(tmp_path):
                           pif(PORT_B, "direction_role", "input"))
     assert conflict.direction_relation == "indeterminate"
     assert conflict.left_interface.dimensions[1].status == "conflicted"
+    current = pif(PORT_A, "direction_role", "input")
+    event = withdrawal(current.record_id)
+    inactive = assessment(
+        tmp_path / "inactive", current, event,
+        pif(PORT_B, "direction_role", "output"))
+    assert inactive.left_interface.dimensions[1].status == "inactive"
+    assert inactive.direction_relation == "indeterminate"
+
+
+def test_token_relations_disclose_conflicted_and_inactive_dimensions(tmp_path):
+    root = pif(PORT_A, "interface_domain")
+    left = pif(PORT_A, "interface_domain", supersedes=(root.record_id,),
+               note="left")
+    right = pif(PORT_A, "interface_domain", supersedes=(root.record_id,),
+                note="right")
+    peer = pif(PORT_B, "interface_domain")
+    assert assessment(tmp_path / "conflict", root, left, right, peer
+                      ).domain_relation == "conflicted"
+    event = withdrawal(root.record_id)
+    assert assessment(tmp_path / "inactive", root, event, peer
+                      ).domain_relation == "inactive"
 
 
 def test_explicit_status_not_declared_unique_conflicted_inactive_and_stale(
@@ -128,6 +150,46 @@ def test_explicit_status_not_declared_unique_conflicted_inactive_and_stale(
     assert tuple(stale.material.records[index].record_id
                  for index in stale.stale_citation_indices) == (
                      pifs[0].record_id,)
+
+    event = withdrawal(pcm.record_id)
+    inactive = assessment(tmp_path / "inactive", *pifs, pcm, event)
+    assert inactive.explicit_status == "inactive"
+    assert inactive.explicit_declaration_index is None
+
+
+def test_pcm_is_stale_when_cited_pif_is_one_tip_of_a_conflicted_lineage(
+        tmp_path):
+    root = pif(PORT_A, "interface_domain")
+    cited = pif(PORT_A, "interface_domain", supersedes=(root.record_id,),
+                note="cited tip")
+    competing = pif(PORT_A, "interface_domain", supersedes=(root.record_id,),
+                    value=declaration_body("interface_domain").value.model_copy(
+                        update={"code": "competing"}), note="competing tip")
+    peer = pif(PORT_B, "interface_domain")
+    pcm = pcm_from((cited, peer))
+    result = assessment(tmp_path, root, cited, competing, peer, pcm)
+    assert result.left_interface.dimensions[0].status == "conflicted"
+    assert result.explicit_status == "stale"
+    assert tuple(result.material.records[index].record_id
+                 for index in result.stale_citation_indices) == (
+                     cited.record_id,)
+
+
+def test_pcm_staleness_is_selected_membership_replayable(tmp_path):
+    pifs = (pif(PORT_A, "interface_domain"),
+            pif(PORT_B, "interface_domain"))
+    pcm = pcm_from(pifs)
+    successor = pif(PORT_A, "interface_domain",
+                    supersedes=(pifs[0].record_id,), note="later correction")
+    store = world(tmp_path, *pifs, pcm, successor)
+    assert ModelQueries(store.load()).interface_compatibility(
+        PORT_A, PORT_B, context=CONTEXT).explicit_status == "stale"
+    earlier_ids = tuple(record_id for record_id in store.load().revision.record_ids
+                        if record_id != successor.record_id)
+    earlier = ModelQueries(store.replay(earlier_ids)).interface_compatibility(
+        PORT_A, PORT_B, context=CONTEXT)
+    assert earlier.explicit_status == "declared_compatible"
+    assert earlier.material.records[earlier.explicit_declaration_index] == pcm
 
 
 @pytest.mark.parametrize("outcome,direction,expected", [
