@@ -52,6 +52,18 @@ accepted record kind or implying flow, behavior, compatibility, or causality.
    Slice B adds read-only queries directly to `ModelQueries`; it adds no store,
    composition module, or writes. Slice C may append exactly ten synthetic demo
    records only after its owner gate.
+10. Slice B's normative results are `PortLookupResult`, `EntityPortsResult`,
+    `PortInterfaceResult`, `ExactConnectionSetResult`, `PortConnectionsResult`,
+    `SharedConnectionsResult`, `PortAssertionDisclosureResult`, and
+    `InterfaceCompatibilityResult`. Exact/shared topology disclose endpoint
+    admission independently from `unknown | asserted | inactive`; incident
+    topology discloses port registration independently from that conclusion.
+    Entity ownership absence is `owner_not_registered`. Compatibility endpoint
+    admission is one requested-order aggregate (`both_registered`,
+    `left_not_registered`, `right_not_registered`, or `both_not_registered`).
+    Assertion lookup, assertion activity, and containing-lineage health remain
+    separate. Implementation-oriented pre-acceptance result names are not
+    public aliases.
 
 ## Consequences
 

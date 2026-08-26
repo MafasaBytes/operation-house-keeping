@@ -274,6 +274,33 @@ withdrawals, citations and reverse citations; and withdrawals by target.
 Slice B adds exact port/interface disclosure, exact endpoint-set, incident,
 shared-superset, assertion disclosure, and multidimensional compatibility
 queries directly to `ModelQueries`. It adds no traversal, store, or write path.
+The normative method/result surface is:
+
+```text
+port()                    -> PortLookupResult
+ports_of_entity()         -> EntityPortsResult
+port_interface()          -> PortInterfaceResult
+connections_exact()       -> ExactConnectionSetResult
+connections_of_port()     -> PortConnectionsResult
+connections_containing()  -> SharedConnectionsResult
+port_assertion()          -> PortAssertionDisclosureResult
+interface_compatibility() -> InterfaceCompatibilityResult
+```
+
+`EntityPortsResult` distinguishes `owner_not_registered` from `registered`,
+including registered owners with an empty port collection. Exact and shared
+topology separately disclose admission (`endpoint_not_registered | admitted`)
+and conclusion (`unknown | asserted | inactive`). Incident topology separately
+discloses port membership (`port_not_registered | registered`) and the same
+topology conclusion. Assertion lookup (`not_found | found`), assertion activity
+(`current | superseded | withdrawn`), and containing-lineage health
+(`healthy | conflicted | inactive`) are independent findings. Compatibility
+endpoint admission is the single requested-order aggregate
+`both_registered | left_not_registered | right_not_registered |
+both_not_registered`; it does not replace the two complete endpoint
+disclosures. These named vocabularies and result names are the public contract;
+the superseded implementation-oriented result names are not aliases.
+
 Direction comparison and cross-finding behavior is:
 
 - exact-set lookup matches only the identical canonical hyperedge;

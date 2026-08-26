@@ -68,7 +68,7 @@ def test_ports_of_entity_distinguishes_unknown_owner_from_registered_empty(
     unknown = queries.ports_of_entity("ent_" + "9" * 32)
     assert registered.status == "registered" and \
         registered.port_registration_indices == ()
-    assert unknown.status == "not_registered" and \
+    assert unknown.status == "owner_not_registered" and \
         unknown.port_registration_indices == ()
     assert registered.material.revision == unknown.material.revision == loaded.revision
 

@@ -158,7 +158,13 @@ full tracebacks (public messages stay clean). PT-001 Slice A, including its
 qualified-token repair, is owner accepted. PT-001 Slice B read-only port,
 interface, exact/incident/shared topology, assertion, and multidimensional
 compatibility queries are implemented and adversarially reviewed, awaiting
-owner acceptance. They operate only over an injected `LoadedModel`, carry the
+owner acceptance. Their public results are `PortLookupResult`,
+`EntityPortsResult`, `PortInterfaceResult`, `ExactConnectionSetResult`,
+`PortConnectionsResult`, `SharedConnectionsResult`,
+`PortAssertionDisclosureResult`, and `InterfaceCompatibilityResult`.
+Topology admission, topology conclusion, port/owner registration, assertion
+activity, lineage health, and compatibility endpoint admission are separate
+typed findings. The queries operate only over an injected `LoadedModel`, carry the
 complete selected membership once for authoritative reconstruction, and perform
 no traversal, store access, or writes. The bounded synthetic fixture remains
 gated for Slice C. Richer

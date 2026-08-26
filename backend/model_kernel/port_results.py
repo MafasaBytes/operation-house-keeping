@@ -20,6 +20,26 @@ from backend.model_kernel.contracts import (
 
 _CONTEXT_ADAPTER = TypeAdapter(AssertionContext)
 
+PortLookupStatus = Literal["not_registered", "registered"]
+EntityPortsStatus = Literal["owner_not_registered", "registered"]
+TopologyAdmissionStatus = Literal["endpoint_not_registered", "admitted"]
+TopologyConclusion = Literal["unknown", "asserted", "inactive"]
+PortConnectionsStatus = Literal["port_not_registered", "registered"]
+PortAssertionLookupStatus = Literal["not_found", "found"]
+AssertionActivity = Literal["current", "superseded", "withdrawn"]
+ContainingLineageHealth = Literal["healthy", "conflicted", "inactive"]
+CompatibilityEndpointStatus = Literal[
+    "both_registered", "left_not_registered", "right_not_registered",
+    "both_not_registered",
+]
+ExplicitCompatibilityStatus = Literal[
+    "not_declared", "declared_compatible", "declared_incompatible",
+    "conflicted", "inactive", "stale",
+]
+CrossFindingConsistency = Literal[
+    "consistent", "inconsistent", "indeterminate",
+]
+
 
 def _validated_context(value) -> AssertionContext:
     try:
@@ -98,9 +118,9 @@ def _validate_endpoint_subject(values: tuple[str, ...]) -> None:
         raise ValueError("endpoint subject contains an invalid port id")
 
 
-class PortResult(_WithMaterial):
+class PortLookupResult(_WithMaterial):
     port_anchor_id: str = Field(pattern=PORT_ANCHOR_ID_PATTERN)
-    status: Literal["registered", "not_registered"]
+    status: PortLookupStatus
     registration_index: int | None = Field(default=None, ge=0)
     owner_registration_index: int | None = Field(default=None, ge=0)
 
@@ -134,7 +154,7 @@ class PortResult(_WithMaterial):
 
 class EntityPortsResult(_WithMaterial):
     entity_anchor_id: str = Field(pattern=ENTITY_ANCHOR_ID_PATTERN)
-    status: Literal["registered", "not_registered"]
+    status: EntityPortsStatus
     entity_registration_index: int | None = Field(default=None, ge=0)
     port_registration_indices: tuple[int, ...] = ()
 
@@ -158,7 +178,8 @@ class EntityPortsResult(_WithMaterial):
         entity_index = (self.material.revision.record_ids.index(
             loaded.registrations_by_anchor[self.entity_anchor_id].record_id)
             if registered else None)
-        if self.status != ("registered" if registered else "not_registered"):
+        if self.status != ("registered" if registered else
+                           "owner_not_registered"):
             raise ValueError("entity ownership status is forged")
         if self.entity_registration_index != entity_index:
             raise ValueError("entity registration index is forged")
@@ -272,13 +293,13 @@ class EndpointInterfaceResult(_Result):
                       InterfaceDimensionResult]
 
 
-class PortAssertionResult(_WithMaterial):
+class PortAssertionDisclosureResult(_WithMaterial):
     record_id: str = Field(
         pattern=r"^(prg|pif|pcn|pcm|ptw)_[0-9a-f]{64}$")
-    status: Literal["found", "not_found"]
+    status: PortAssertionLookupStatus
     record_index: int | None = Field(default=None, ge=0)
-    activity: Literal["current", "superseded", "withdrawn"] | None = None
-    lineage_health: Literal["healthy", "conflicted", "inactive"] | None = None
+    activity: AssertionActivity | None = None
+    lineage_health: ContainingLineageHealth | None = None
     root_record_index: int | None = Field(default=None, ge=0)
     successor_indices: tuple[int, ...] = ()
     withdrawal_indices: tuple[int, ...] = ()
@@ -359,7 +380,7 @@ class ConnectionRootResult(_Result):
     lineage_record_indices: tuple[int, ...]
     current_tip_indices: tuple[int, ...]
     withdrawal_indices: tuple[int, ...]
-    lineage_health: Literal["healthy", "conflicted", "inactive"]
+    lineage_health: ContainingLineageHealth
     exact_endpoint_set: bool
 
     @property
@@ -388,7 +409,7 @@ class ConnectionSubjectResult(_Result):
 
 class _ConnectionsResult(_WithMaterial):
     context: AssertionContext
-    status: Literal["unknown", "asserted", "inactive"]
+    conclusion: TopologyConclusion
     roots: tuple[ConnectionRootResult, ...] = ()
     subjects: tuple[ConnectionSubjectResult, ...] = ()
 
@@ -398,7 +419,7 @@ class _ConnectionsResult(_WithMaterial):
         context = _validated_context(self.context)
         ids_to_index = {value: index for index, value
                         in enumerate(self.material.revision.record_ids)}
-        if isinstance(self, ExactConnectionsResult):
+        if isinstance(self, ExactConnectionSetResult):
             _validate_endpoint_subject(self.requested_port_anchor_ids)
             selected = loaded.port_connection_ids_by_subject.get(
                 (self.requested_port_anchor_ids, context), ())
@@ -408,15 +429,20 @@ class _ConnectionsResult(_WithMaterial):
                 if port_id not in loaded.port_registrations_by_anchor)
             if self.unregistered_port_anchor_ids != expected_missing:
                 raise ValueError("exact endpoint registration status is forged")
-        elif isinstance(self, IncidentConnectionsResult):
+            expected_admission = (
+                "endpoint_not_registered" if expected_missing else "admitted")
+            if self.admission_status != expected_admission:
+                raise ValueError("exact topology admission status is forged")
+        elif isinstance(self, PortConnectionsResult):
             selected = tuple(i for i in loaded.port_connection_ids_by_port.get(
                 self.port_anchor_id, ()) if loaded.port_connections[i].context == context)
             requested = (self.port_anchor_id,)
             expected_port = ("registered" if self.port_anchor_id
-                             in loaded.port_registrations_by_anchor else "not_registered")
-            if self.port_status != expected_port:
+                             in loaded.port_registrations_by_anchor else
+                             "port_not_registered")
+            if self.status != expected_port:
                 raise ValueError("incident port status is forged")
-        else:
+        elif isinstance(self, SharedConnectionsResult):
             _validate_endpoint_subject(self.requested_port_anchor_ids)
             requested = self.requested_port_anchor_ids
             wanted = set(requested)
@@ -427,6 +453,12 @@ class _ConnectionsResult(_WithMaterial):
                                      if p not in loaded.port_registrations_by_anchor)
             if self.unregistered_port_anchor_ids != expected_missing:
                 raise ValueError("shared endpoint registration status is forged")
+            expected_admission = (
+                "endpoint_not_registered" if expected_missing else "admitted")
+            if self.admission_status != expected_admission:
+                raise ValueError("shared topology admission status is forged")
+        else:
+            raise ValueError("unsupported connection result contract")
         root_ids = sorted({loaded.port_connection_root_by_id[i] for i in selected})
         expected_rows = []
         for position, root_id in enumerate(root_ids):
@@ -444,9 +476,10 @@ class _ConnectionsResult(_WithMaterial):
                                 "conflicted" if len(tips) > 1 else "healthy"),
                 exact_endpoint_set=(loaded.port_connections[root_id].endpoint_port_anchor_ids
                                     == requested)))
-        expected_status = ("unknown" if not expected_rows else "asserted"
-                           if any(row["current_tip_indices"] for row in expected_rows)
-                           else "inactive")
+        expected_conclusion = ("unknown" if not expected_rows else "asserted"
+                               if any(row["current_tip_indices"]
+                                      for row in expected_rows)
+                               else "inactive")
         roots_by_subject = {}
         for root_position, root_id in enumerate(root_ids):
             subject = loaded.port_connections[root_id].endpoint_port_anchor_ids
@@ -463,7 +496,7 @@ class _ConnectionsResult(_WithMaterial):
             for position, (subject, root_indices) in enumerate(
                 sorted(roots_by_subject.items()))
         )
-        if self.status != expected_status or tuple(
+        if self.conclusion != expected_conclusion or tuple(
                 row.model_dump() for row in self.roots) != tuple(expected_rows) \
                 or tuple(row.model_dump() for row in self.subjects) != \
                 expected_subjects:
@@ -473,17 +506,19 @@ class _ConnectionsResult(_WithMaterial):
         return self
 
 
-class ExactConnectionsResult(_ConnectionsResult):
+class ExactConnectionSetResult(_ConnectionsResult):
+    admission_status: TopologyAdmissionStatus
     requested_port_anchor_ids: tuple[str, ...]
     unregistered_port_anchor_ids: tuple[str, ...] = ()
 
 
-class IncidentConnectionsResult(_ConnectionsResult):
+class PortConnectionsResult(_ConnectionsResult):
     port_anchor_id: str = Field(pattern=PORT_ANCHOR_ID_PATTERN)
-    port_status: Literal["registered", "not_registered"]
+    status: PortConnectionsStatus
 
 
-class ContainingConnectionsResult(_ConnectionsResult):
+class SharedConnectionsResult(_ConnectionsResult):
+    admission_status: TopologyAdmissionStatus
     requested_port_anchor_ids: tuple[str, ...]
     unregistered_port_anchor_ids: tuple[str, ...] = ()
 
@@ -493,9 +528,7 @@ class InterfaceCompatibilityResult(_WithMaterial):
     requested_right_port_anchor_id: str = Field(pattern=PORT_ANCHOR_ID_PATTERN)
     endpoint_port_anchor_ids: tuple[str, str]
     context: AssertionContext
-    endpoint_registration_status: tuple[
-        Literal["registered", "not_registered"],
-        Literal["registered", "not_registered"]]
+    endpoint_registration_status: CompatibilityEndpointStatus
     left_interface: EndpointInterfaceResult
     right_interface: EndpointInterfaceResult
     domain_relation: Literal["token_identical", "token_different",
@@ -504,15 +537,13 @@ class InterfaceCompatibilityResult(_WithMaterial):
                                     "not_declared", "conflicted", "inactive"]
     direction_relation: Literal["admissible", "inadmissible",
                                 "not_applicable", "indeterminate"]
-    explicit_status: Literal["not_declared", "declared_compatible",
-                             "declared_incompatible", "conflicted",
-                             "inactive", "stale"]
+    explicit_status: ExplicitCompatibilityStatus
     explicit_declaration_index: int | None = Field(default=None, ge=0)
     conflicting_explicit_declaration_indices: tuple[int, ...] = ()
     pcm_lineage_record_indices: tuple[int, ...] = ()
     current_pcm_tip_indices: tuple[int, ...] = ()
     stale_citation_indices: tuple[int, ...] = ()
-    consistency: Literal["consistent", "inconsistent", "indeterminate"]
+    consistency: CrossFindingConsistency
 
     @model_validator(mode="after")
     def _bind(self):
@@ -530,8 +561,14 @@ class InterfaceCompatibilityResult(_WithMaterial):
             raise ValueError("compatibility endpoint pair is forged")
         if self.requested_left_port_anchor_id == self.requested_right_port_anchor_id:
             raise ValueError("compatibility endpoints must be distinct")
-        if self.endpoint_registration_status != (
-                expected_left.status, expected_right.status):
+        left_registered = expected_left.status == "registered"
+        right_registered = expected_right.status == "registered"
+        expected_endpoint_status = (
+            "both_registered" if left_registered and right_registered else
+            "left_not_registered" if not left_registered and right_registered else
+            "right_not_registered" if left_registered and not right_registered else
+            "both_not_registered")
+        if self.endpoint_registration_status != expected_endpoint_status:
             raise ValueError("compatibility registration status is forged")
         for supplied, expected in ((self.left_interface, expected_left),
                                    (self.right_interface, expected_right)):

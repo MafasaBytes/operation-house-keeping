@@ -45,12 +45,12 @@ from backend.model_kernel.contracts import (
 )
 from backend.model_kernel.hierarchy import HierarchyProjection, build_projection
 from backend.model_kernel.port_results import (
-    ConnectionRootResult, ConnectionSubjectResult, ContainingConnectionsResult,
+    ConnectionRootResult, ConnectionSubjectResult, SharedConnectionsResult,
     EndpointInterfaceResult,
     EntityPortsResult,
-    ExactConnectionsResult, IncidentConnectionsResult,
-    InterfaceCompatibilityResult, InterfaceDimensionResult, ModelQueryMaterial, PortAssertionResult,
-    PortInterfaceResult, PortResult,
+    ExactConnectionSetResult, PortConnectionsResult,
+    InterfaceCompatibilityResult, InterfaceDimensionResult, ModelQueryMaterial,
+    PortAssertionDisclosureResult, PortInterfaceResult, PortLookupResult,
 )
 from backend.model_kernel.store import LoadedModel
 from backend.system_identity import (
@@ -626,11 +626,11 @@ class ModelQueries:
 
     # -- PT-001 ports and topology -----------------------------------------
 
-    def port(self, port_anchor_id: str) -> PortResult:
+    def port(self, port_anchor_id: str) -> PortLookupResult:
         port_anchor_id = self._require_port_anchor_id(port_anchor_id)
         registration = self.loaded.port_registrations_by_anchor.get(port_anchor_id)
         indices = self._record_index()
-        return PortResult(
+        return PortLookupResult(
             material=self._material(), port_anchor_id=port_anchor_id,
             status="registered" if registration is not None else "not_registered",
             registration_index=(None if registration is None
@@ -646,7 +646,7 @@ class ModelQueries:
         anchors = self.loaded.port_anchor_ids_by_owner.get(entity_anchor_id, ())
         return EntityPortsResult(
             material=self._material(), entity_anchor_id=entity_anchor_id,
-            status="registered" if registered else "not_registered",
+            status="registered" if registered else "owner_not_registered",
             entity_registration_index=(
                 indices[self.loaded.registrations_by_anchor[
                     entity_anchor_id].record_id] if registered else None),
@@ -705,7 +705,7 @@ class ModelQueries:
             status="registered" if registered else "not_registered",
             context=context, dimensions=tuple(rows))
 
-    def port_assertion(self, record_id: str) -> PortAssertionResult:
+    def port_assertion(self, record_id: str) -> PortAssertionDisclosureResult:
         record_id = self._require_port_record_id(record_id)
         material = self._material()
         indices = self._record_index()
@@ -714,11 +714,12 @@ class ModelQueries:
                 "port_registration", "port_interface_declaration",
                 "port_connection_assertion", "port_compatibility_declaration",
                 "port_claim_withdrawal"}:
-            return PortAssertionResult(material=material, record_id=record_id,
-                                       status="not_found")
+            return PortAssertionDisclosureResult(
+                material=material, record_id=record_id, status="not_found")
         if record.record_kind in {"port_registration", "port_claim_withdrawal"}:
-            return PortAssertionResult(material=material, record_id=record_id,
-                                       status="found", record_index=indices[record_id])
+            return PortAssertionDisclosureResult(
+                material=material, record_id=record_id,
+                status="found", record_index=indices[record_id])
         if record.record_kind == "port_interface_declaration":
             roots = self.loaded.port_interface_root_by_id
             successors = self.loaded.port_interface_superseded_by
@@ -749,7 +750,7 @@ class ModelQueries:
         health = "inactive" if not tips else ("conflicted" if len(tips) > 1 else "healthy")
         activity = ("superseded" if successors[record_id] else
                     "withdrawn" if withdrawn[record_id] else "current")
-        return PortAssertionResult(
+        return PortAssertionDisclosureResult(
             material=material, record_id=record_id, status="found",
             record_index=indices[record_id], activity=activity,
             lineage_health=health, root_record_index=indices[root],
@@ -814,37 +815,48 @@ class ModelQueries:
             sorted(roots_by_subject.items())))
         return status, tuple(entries), subjects
 
-    def connections_exact(self, endpoint_port_anchor_ids, *, context):
+    def connections_exact(
+            self, endpoint_port_anchor_ids, *, context
+    ) -> ExactConnectionSetResult:
         requested = self._require_endpoint_set(endpoint_port_anchor_ids)
         context = self._require_context(context)
         ids = self.loaded.port_connection_ids_by_subject.get((requested, context), ())
         roots = {self.loaded.port_connection_root_by_id[i] for i in ids}
-        status, entries, subjects = self._connection_result_parts(
+        conclusion, entries, subjects = self._connection_result_parts(
             roots, requested)
-        return ExactConnectionsResult(material=self._material(), context=context,
-                                      status=status, roots=entries,
-                                      subjects=subjects,
-                                      requested_port_anchor_ids=requested,
-                                      unregistered_port_anchor_ids=tuple(
-                                          port_id for port_id in requested
-                                          if port_id not in
-                                          self.loaded.port_registrations_by_anchor))
+        missing = tuple(
+            port_id for port_id in requested
+            if port_id not in self.loaded.port_registrations_by_anchor)
+        return ExactConnectionSetResult(
+            material=self._material(), context=context,
+            admission_status=("endpoint_not_registered" if missing else
+                              "admitted"),
+            conclusion=conclusion, roots=entries, subjects=subjects,
+            requested_port_anchor_ids=requested,
+            unregistered_port_anchor_ids=missing)
 
-    def connections_of_port(self, port_anchor_id: str, *, context):
+    def connections_of_port(
+            self, port_anchor_id: str, *, context
+    ) -> PortConnectionsResult:
         port_anchor_id = self._require_port_anchor_id(port_anchor_id)
         context = self._require_context(context)
         ids = tuple(i for i in self.loaded.port_connection_ids_by_port.get(port_anchor_id, ())
                     if self.loaded.port_connections[i].context == context)
         roots = {self.loaded.port_connection_root_by_id[i] for i in ids}
-        status, entries, subjects = self._connection_result_parts(
+        conclusion, entries, subjects = self._connection_result_parts(
             roots, (port_anchor_id,))
-        return IncidentConnectionsResult(
-            material=self._material(), context=context, status=status,
+        return PortConnectionsResult(
+            material=self._material(), context=context,
+            status=("registered" if port_anchor_id
+                    in self.loaded.port_registrations_by_anchor else
+                    "port_not_registered"),
+            conclusion=conclusion,
             roots=entries, subjects=subjects, port_anchor_id=port_anchor_id,
-            port_status=("registered" if port_anchor_id in self.loaded.port_registrations_by_anchor
-                         else "not_registered"))
+        )
 
-    def connections_containing(self, requested_port_anchor_ids, *, context):
+    def connections_containing(
+            self, requested_port_anchor_ids, *, context
+    ) -> SharedConnectionsResult:
         requested = self._require_endpoint_set(requested_port_anchor_ids)
         context = self._require_context(context)
         wanted = set(requested)
@@ -852,18 +864,23 @@ class ModelQueries:
                  for record_id, record in self.loaded.port_connections.items()
                  if record.context == context
                  and wanted.issubset(record.endpoint_port_anchor_ids)}
-        status, entries, subjects = self._connection_result_parts(
+        conclusion, entries, subjects = self._connection_result_parts(
             roots, requested)
-        return ContainingConnectionsResult(
-            material=self._material(), context=context, status=status,
+        missing = tuple(
+            port_id for port_id in requested
+            if port_id not in self.loaded.port_registrations_by_anchor)
+        return SharedConnectionsResult(
+            material=self._material(), context=context,
+            admission_status=("endpoint_not_registered" if missing else
+                              "admitted"),
+            conclusion=conclusion,
             roots=entries, subjects=subjects,
             requested_port_anchor_ids=requested,
-            unregistered_port_anchor_ids=tuple(
-                p for p in requested
-                if p not in self.loaded.port_registrations_by_anchor))
+            unregistered_port_anchor_ids=missing)
 
     def interface_compatibility(self, left_port_anchor_id: str,
-                                right_port_anchor_id: str, *, context):
+                                right_port_anchor_id: str, *, context
+                                ) -> InterfaceCompatibilityResult:
         left_port_anchor_id = self._require_port_anchor_id(left_port_anchor_id)
         right_port_anchor_id = self._require_port_anchor_id(right_port_anchor_id)
         if left_port_anchor_id == right_port_anchor_id:
@@ -975,7 +992,14 @@ class ModelQueries:
             requested_left_port_anchor_id=left_port_anchor_id,
             requested_right_port_anchor_id=right_port_anchor_id,
             endpoint_port_anchor_ids=pair, context=context,
-            endpoint_registration_status=(left.status, right.status),
+            endpoint_registration_status=(
+                "both_registered"
+                if left.status == right.status == "registered" else
+                "left_not_registered"
+                if left.status != "registered" and right.status == "registered" else
+                "right_not_registered"
+                if left.status == "registered" and right.status != "registered" else
+                "both_not_registered"),
             left_interface=left, right_interface=right,
             domain_relation=domain_relation,
             interface_type_relation=interface_type_relation,

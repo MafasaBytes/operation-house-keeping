@@ -20,7 +20,7 @@ def test_connections_exact_matches_only_identical_canonical_hyperedge(tmp_path):
     queries = ModelQueries(world(
         tmp_path, pair, triple, ports=(PORT_A, PORT_B, PORT_C)).load())
     result = queries.connections_exact((PORT_B, PORT_A), context=CONTEXT)
-    assert result.status == "asserted"
+    assert result.conclusion == "asserted"
     assert result.requested_port_anchor_ids == (PORT_A, PORT_B)
     assert root_ids(result) == (pair.record_id,)
     assert triple.record_id not in result.revision.record_ids or \
@@ -34,7 +34,7 @@ def test_connections_of_port_returns_every_incident_hyperedge_once(tmp_path):
     result = ModelQueries(world(
         tmp_path, ab, abc, bc, ports=(PORT_A, PORT_B, PORT_C)).load()
     ).connections_of_port(PORT_A, context=CONTEXT)
-    assert result.status == "asserted"
+    assert result.conclusion == "asserted"
     assert result.port_anchor_id == PORT_A
     assert root_ids(result) == tuple(sorted(
         (ab.record_id, abc.record_id)))
@@ -50,7 +50,7 @@ def test_connections_containing_requires_complete_requested_set(tmp_path):
     result = ModelQueries(world(
         tmp_path, ab, abc, ac, ports=(PORT_A, PORT_B, PORT_C)).load()
     ).connections_containing((PORT_B, PORT_A), context=CONTEXT)
-    assert result.status == "asserted"
+    assert result.conclusion == "asserted"
     assert result.requested_port_anchor_ids == (PORT_A, PORT_B)
     assert root_ids(result) == tuple(sorted(
         (ab.record_id, abc.record_id)))
@@ -66,7 +66,7 @@ def test_no_lineage_is_unknown_not_absent_or_disconnected(
         tmp_path, method, args):
     result = getattr(ModelQueries(world(tmp_path).load()), method)(
         *args, context=CONTEXT)
-    assert result.status == "unknown"
+    assert result.conclusion == "unknown"
     assert result.roots == ()
     assert not hasattr(result, "disconnected")
 
@@ -75,9 +75,9 @@ def test_registered_empty_is_distinct_from_unknown_port_input(tmp_path):
     queries = ModelQueries(world(tmp_path).load())
     registered = queries.connections_of_port(PORT_A, context=CONTEXT)
     unknown = queries.connections_of_port(UNKNOWN_PORT, context=CONTEXT)
-    assert registered.port_status == "registered"
-    assert unknown.port_status == "not_registered"
-    assert registered.status == unknown.status == "unknown"
+    assert registered.status == "registered"
+    assert unknown.status == "port_not_registered"
+    assert registered.conclusion == unknown.conclusion == "unknown"
 
 
 def test_exact_discloses_unregistered_endpoints_separately_from_unknown_claim(
@@ -87,7 +87,9 @@ def test_exact_discloses_unregistered_endpoints_separately_from_unknown_claim(
         (PORT_A, PORT_B), context=CONTEXT)
     missing = queries.connections_exact(
         (PORT_A, UNKNOWN_PORT), context=CONTEXT)
-    assert registered.status == missing.status == "unknown"
+    assert registered.conclusion == missing.conclusion == "unknown"
+    assert registered.admission_status == "admitted"
+    assert missing.admission_status == "endpoint_not_registered"
     assert registered.unregistered_port_anchor_ids == ()
     assert missing.unregistered_port_anchor_ids == (UNKNOWN_PORT,)
 
@@ -100,7 +102,7 @@ def test_root_entries_separate_corroboration_conflict_and_activity(tmp_path):
     loaded = world(tmp_path / "active", corroborating, root, left, right).load()
     result = ModelQueries(loaded).connections_exact(
         (PORT_A, PORT_B), context=CONTEXT)
-    assert result.status == "asserted"
+    assert result.conclusion == "asserted"
     assert tuple(entry.root_index for entry in result.roots) == tuple(
         range(len(result.roots)))
     assert root_ids(result) == tuple(sorted(
@@ -125,7 +127,7 @@ def test_root_entries_separate_corroboration_conflict_and_activity(tmp_path):
     inactive = ModelQueries(world(
         tmp_path / "inactive", inactive_root, event).load()
     ).connections_exact((PORT_A, PORT_B), context=CONTEXT)
-    assert inactive.status == "inactive"
+    assert inactive.conclusion == "inactive"
     assert inactive.roots[0].lineage_health == "inactive"
     assert inactive.roots[0].current_tip_indices == ()
     assert tuple(inactive.material.records[index]
@@ -185,7 +187,7 @@ def test_context_is_exact_and_never_unioned(tmp_path):
     claim = connection()
     queries = ModelQueries(world(tmp_path, claim).load())
     assert queries.connections_exact(
-        (PORT_A, PORT_B), context=CONTEXT).status == "asserted"
+        (PORT_A, PORT_B), context=CONTEXT).conclusion == "asserted"
     other = CONTEXT.model_copy(update={"view": "as_built"})
     assert queries.connections_exact(
-        (PORT_A, PORT_B), context=other).status == "unknown"
+        (PORT_A, PORT_B), context=other).conclusion == "unknown"

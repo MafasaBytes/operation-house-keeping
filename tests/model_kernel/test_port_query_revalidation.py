@@ -34,7 +34,7 @@ def test_port_result_rejects_wrong_index_omitted_material_and_revision(tmp_path)
 def test_slice_b_public_result_field_sets_are_exact():
     expected = {
         kernel.ModelQueryMaterial: {"revision", "records"},
-        kernel.PortResult: {"material", "port_anchor_id", "status",
+        kernel.PortLookupResult: {"material", "port_anchor_id", "status",
                             "registration_index", "owner_registration_index"},
         kernel.EntityPortsResult: {"material", "entity_anchor_id", "status",
                                   "entity_registration_index",
@@ -58,18 +58,20 @@ def test_slice_b_public_result_field_sets_are_exact():
         kernel.EndpointInterfaceResult: {
             "port_anchor_id", "status", "port_registration_index",
             "owner_registration_index", "dimensions"},
-        kernel.PortAssertionResult: {
+        kernel.PortAssertionDisclosureResult: {
             "material", "record_id", "status", "record_index", "activity",
             "lineage_health", "root_record_index", "successor_indices",
             "withdrawal_indices"},
-        kernel.ExactConnectionsResult: {
-            "material", "context", "status", "roots", "subjects",
+        kernel.ExactConnectionSetResult: {
+            "material", "context", "admission_status", "conclusion",
+            "roots", "subjects",
             "requested_port_anchor_ids", "unregistered_port_anchor_ids"},
-        kernel.IncidentConnectionsResult: {
-            "material", "context", "status", "roots", "subjects",
-            "port_anchor_id", "port_status"},
-        kernel.ContainingConnectionsResult: {
-            "material", "context", "status", "roots", "subjects",
+        kernel.PortConnectionsResult: {
+            "material", "context", "status", "conclusion", "roots",
+            "subjects", "port_anchor_id"},
+        kernel.SharedConnectionsResult: {
+            "material", "context", "admission_status", "conclusion",
+            "roots", "subjects",
             "requested_port_anchor_ids", "unregistered_port_anchor_ids"},
         kernel.InterfaceCompatibilityResult: {
             "material", "requested_left_port_anchor_id",
