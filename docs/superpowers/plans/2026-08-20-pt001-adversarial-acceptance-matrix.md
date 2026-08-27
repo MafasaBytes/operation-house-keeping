@@ -2,8 +2,8 @@
 
 Status: PT-001 Slice A, including the qualified-token repair, is owner accepted.
 Slice B, including its public-contract repair, is owner accepted at
-`ec9ea7d8c20016e267fae16a2554d5e7f1a0ebce`. Slice C is authorized and in
-progress.
+`ec9ea7d8c20016e267fae16a2554d5e7f1a0ebce`. Slice C is implemented and
+adversarially reviewed; awaiting owner acceptance.
 
 | Area | Required attack | Required result |
 |---|---|---|

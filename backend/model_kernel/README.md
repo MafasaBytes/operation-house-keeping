@@ -159,7 +159,8 @@ qualified-token repair, is owner accepted. PT-001 Slice B read-only port,
 interface, exact/incident/shared topology, assertion, and multidimensional
 compatibility queries, including their public-contract repair, are owner
 accepted at `ec9ea7d8c20016e267fae16a2554d5e7f1a0ebce`. Slice C is authorized
-and in progress. Their public results are `PortLookupResult`,
+and implemented under its bounded fixture gate; awaiting owner acceptance.
+Their public results are `PortLookupResult`,
 `EntityPortsResult`, `PortInterfaceResult`, `ExactConnectionSetResult`,
 `PortConnectionsResult`, `SharedConnectionsResult`,
 `PortAssertionDisclosureResult`, and `InterfaceCompatibilityResult`.
@@ -168,6 +169,6 @@ activity, lineage health, and compatibility endpoint admission are separate
 typed findings. The queries operate only over an injected `LoadedModel`, carry the
 complete selected membership once for authoritative reconstruction, and perform
 no traversal, store access, or writes. The bounded synthetic fixture is limited
-to the authorized Slice C demonstration. Richer
+to the implemented Slice C demonstration. Richer
 predicates beyond CN-001's exact numeric bounds
 also remain future work.

@@ -1,8 +1,4 @@
-"""PT-001 Slice C golden fixture, replay, query, and integrity contract.
-
-The artifact byte/hash golden is intentionally deferred until the artifact is
-authored and independently regenerated.  These tests do not invent that pin.
-"""
+"""PT-001 Slice C golden fixture, replay, query, and integrity contract."""
 
 from collections import Counter
 import hashlib
@@ -412,6 +408,15 @@ def test_connection_compatibility_and_all_public_lookups_agree():
     assert compatibility.material.records[
         compatibility.explicit_declaration_index].record_id == \
         PT001_MODEL_RECORDS[-1]
+    for index, record_id in enumerate(PT001_MODEL_RECORDS):
+        disclosure = queries.port_assertion(record_id)
+        assert disclosure.status == "found"
+        if index < 2:
+            assert disclosure.activity is None
+            assert disclosure.lineage_health is None
+        else:
+            assert disclosure.activity == "current"
+            assert disclosure.lineage_health == "healthy"
 
 
 def test_pcm_basis_is_complete_ordered_current_and_evidence_backed():

@@ -731,5 +731,5 @@ CN-001 complete, owner accepted, adversarially reviewed, and dual-clean-checkout
 
 PT-001 Slice A, including its bounded qualified-token repair, is owner accepted.
 PT-001 Slice B, including its public-contract repair, is owner accepted at
-`ec9ea7d8c20016e267fae16a2554d5e7f1a0ebce`. Slice C is authorized and in
-progress.
+`ec9ea7d8c20016e267fae16a2554d5e7f1a0ebce`. Slice C is implemented and
+adversarially reviewed; awaiting owner acceptance.

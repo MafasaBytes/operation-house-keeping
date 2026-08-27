@@ -2,8 +2,9 @@
 
 Status: PT-001 Slice A, including the qualified-token repair, is owner accepted.
 PT-001 Slice B, including the public-contract repair, is owner accepted at
-`ec9ea7d8c20016e267fae16a2554d5e7f1a0ebce`. Slice C is authorized and in
-progress under its bounded ten-record fixture gate.
+`ec9ea7d8c20016e267fae16a2554d5e7f1a0ebce`. Slice C is implemented and
+adversarially reviewed under its bounded ten-record fixture gate; awaiting owner
+acceptance.
 
 ## Mission and boundary
 
