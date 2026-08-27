@@ -22,6 +22,7 @@ from pydantic import (
     ConfigDict,
     Field,
     StrictStr,
+    field_validator,
     model_validator,
 )
 
@@ -44,7 +45,7 @@ from backend.system_identity import (
 UtcDatetime = Annotated[AwareDatetime, AfterValidator(lambda v: v.astimezone(UTC))]
 
 MODEL_ID_PATTERN = r"^[a-z0-9-]+$"
-MODEL_RECORD_ID_PATTERN = r"^(reg|rtd|rel|rwd|vrg|vsp|vsm|crg|vcn|prg|pif|pcn|pcm|ptw)_[0-9a-f]{64}$"
+MODEL_RECORD_ID_PATTERN = r"^(reg|rtd|rel|rwd|vrg|vsp|vsm|crg|vcn|prg|pif|pcn|pcm|ptw|vpa|vpw)_[0-9a-f]{64}$"
 
 ReferentKind = Literal[
     "logical_instance", "physical_instance", "type_definition", "unknown"
@@ -108,7 +109,7 @@ class ModelRecordEvidence(_Frozen):
     # uncitable
     kind: Literal["model_record"]
     record_id: str = Field(
-        pattern=r"^(reg|rtd|rel|vrg|vsp|vsm|crg|vcn|prg|pif|pcn|pcm)_[0-9a-f]{64}$")
+        pattern=r"^(reg|rtd|rel|vrg|vsp|vsm|crg|vcn|prg|pif|pcn|pcm|vpa)_[0-9a-f]{64}$")
 
 
 class IdentityBindingRecordEvidence(_Frozen):
@@ -898,6 +899,92 @@ class PortClaimWithdrawal(_Frozen):
     note: str = ""
 
 
+class VariablePortAssociation(_Frozen):
+    """A positive, evidence-backed variable-to-port association claim.
+
+    Endpoint registration and exact same-owner admission are collection
+    invariants, not duplicated fields. The claim says nothing about an
+    observation at a port, transport, flow, topology, compatibility,
+    behaviour, control, causality, correctness, or safety.
+    """
+
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", revalidate_instances="always")
+
+    record_kind: Literal["variable_port_association"] = (
+        "variable_port_association")
+    schema_version: Literal["1"] = "1"
+    record_id: str = Field(pattern=r"^vpa_[0-9a-f]{64}$")
+    variable_anchor_id: str = Field(pattern=VARIABLE_ANCHOR_ID_PATTERN)
+    port_anchor_id: str = Field(pattern=PORT_ANCHOR_ID_PATTERN)
+    context: AssertionContext
+    evidence: Annotated[tuple[EvidenceRef, ...], Field(min_length=1),
+                        AfterValidator(_canonical_evidence)]
+    supersedes: Annotated[tuple[str, ...],
+                          AfterValidator(_canonical_parents)] = ()
+    recorded_at: UtcDatetime
+    authority: AuthorityRef
+    note: str = ""
+
+    @field_validator("context", mode="before")
+    @classmethod
+    def _reconstruct_context(cls, value):
+        if isinstance(value, BaseModel):
+            return value.model_dump(mode="python", warnings=False)
+        return value
+
+    @field_validator("evidence", mode="before")
+    @classmethod
+    def _reconstruct_evidence(cls, value):
+        if isinstance(value, (tuple, list)):
+            return tuple(
+                item.model_dump(mode="python", warnings=False)
+                if isinstance(item, BaseModel) else item
+                for item in value)
+        return value
+
+    @field_validator("authority", mode="before")
+    @classmethod
+    def _reconstruct_authority(cls, value):
+        if isinstance(value, BaseModel):
+            return value.model_dump(mode="python", warnings=False)
+        return value
+
+    @model_validator(mode="after")
+    def _parent_ids_well_formed(self):
+        if any(not re.fullmatch(r"vpa_[0-9a-f]{64}", parent)
+               for parent in self.supersedes):
+            raise ValueError(
+                "a variable-port parent is not a VPA record id")
+        if self.record_id in self.supersedes:
+            raise ValueError(
+                "a variable-port association cannot supersede itself")
+        return self
+
+
+class VariablePortAssociationWithdrawal(_Frozen):
+    """Membership-relative retraction of one positive VPA claim."""
+
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", revalidate_instances="always")
+
+    record_kind: Literal["variable_port_association_withdrawal"] = (
+        "variable_port_association_withdrawal")
+    schema_version: Literal["1"] = "1"
+    record_id: str = Field(pattern=r"^vpw_[0-9a-f]{64}$")
+    withdraws: str = Field(pattern=r"^vpa_[0-9a-f]{64}$")
+    recorded_at: UtcDatetime
+    authority: AuthorityRef
+    note: str = ""
+
+    @field_validator("authority", mode="before")
+    @classmethod
+    def _reconstruct_authority(cls, value):
+        if isinstance(value, BaseModel):
+            return value.model_dump(mode="python", warnings=False)
+        return value
+
+
 
 ModelRecord = Union[
     EntityRegistration, VariableRegistration, VariableValueSpecification,
@@ -907,6 +994,7 @@ ModelRecord = Union[
     RelationshipWithdrawal,
     PortRegistration, PortInterfaceDeclaration, PortConnectionAssertion,
     PortCompatibilityDeclaration, PortClaimWithdrawal,
+    VariablePortAssociation, VariablePortAssociationWithdrawal,
 ]
 
 

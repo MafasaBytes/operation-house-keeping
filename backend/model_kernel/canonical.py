@@ -32,6 +32,8 @@ _PREFIX_BY_KIND = {
     "port_connection_assertion": "pcn",
     "port_compatibility_declaration": "pcm",
     "port_claim_withdrawal": "ptw",
+    "variable_port_association": "vpa",
+    "variable_port_association_withdrawal": "vpw",
 }
 
 
