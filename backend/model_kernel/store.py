@@ -14,6 +14,7 @@ codes — never absolute paths.
 import json
 import os
 import re
+import stat
 import warnings
 from dataclasses import dataclass
 from pathlib import Path
@@ -1229,6 +1230,20 @@ class ModelStore:
     # -- load / replay -----------------------------------------------------
 
     def _read_record(self, path: Path) -> ModelRecord:
+        # Ledger members are ordinary files owned by this store boundary.
+        # A validly named symlink must never import bytes from elsewhere.
+        # The store is explicitly single-writer; this pre-read check does not
+        # claim protection against a concurrent hostile filesystem race.
+        try:
+            mode = path.stat(follow_symlinks=False).st_mode
+        except OSError as error:
+            raise ModelIntegrityError(
+                "MODEL_RECORD_INVALID",
+                f"{path.name} is not a readable model record file") from error
+        if not stat.S_ISREG(mode):
+            raise ModelIntegrityError(
+                "MODEL_RECORD_INVALID",
+                f"{path.name} is not an ordinary model record file")
         try:
             record = _RECORD_ADAPTER.validate_json(
                 path.read_text(encoding="utf-8"))
