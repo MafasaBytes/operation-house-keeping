@@ -477,6 +477,40 @@ def test_mandatory_disclaimer_and_warnings_are_exact_in_all_three_surfaces():
         assert warning in artifact
 
 
+def test_pt001_final_owner_acceptance_status_is_exact():
+    status_paths = (
+        Path("CLAUDE.md"),
+        Path("backend/model_kernel/README.md"),
+        Path("docs/adr/0013-explicit-ports-and-typed-interface-connectivity.md"),
+        Path(
+            "docs/superpowers/specs/"
+            "2026-08-20-pt001-explicit-ports-and-connectivity-design.md"),
+        Path(
+            "docs/superpowers/plans/"
+            "2026-08-20-pt001-slice-a-implementation-plan.md"),
+        Path(
+            "docs/superpowers/plans/"
+            "2026-08-20-pt001-adversarial-acceptance-matrix.md"),
+    )
+    required = (
+        "PT-001 complete, owner accepted, adversarially reviewed, and "
+        "dual-clean-checkout verified.",
+        "Slice A is owner accepted.",
+        "The qualified-token repair is owner accepted.",
+        "Slice B is owner accepted.",
+        "The public-contract repair is owner accepted.",
+        "Slice C is owner accepted.",
+        "The model ledger contains exactly 28 records.",
+        FINAL_REVISION,
+        ARTIFACT_SHA256,
+    )
+    for path in status_paths:
+        text = " ".join(path.read_text(encoding="utf-8").split())
+        for statement in required:
+            assert statement in text, (path, statement)
+        assert "awaiting owner acceptance" not in text
+
+
 def test_current_results_reject_fixture_specific_forgery_and_reordering():
     queries = ModelQueries(ModelStore(DEMO_MODEL).load())
     exact = queries.connections_exact(ENDPOINTS, context=CONTEXT)

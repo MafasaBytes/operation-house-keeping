@@ -729,7 +729,12 @@ not require repeated confirmation.
 
 CN-001 complete, owner accepted, adversarially reviewed, and dual-clean-checkout verified.
 
-PT-001 Slice A, including its bounded qualified-token repair, is owner accepted.
-PT-001 Slice B, including its public-contract repair, is owner accepted at
-`ec9ea7d8c20016e267fae16a2554d5e7f1a0ebce`. Slice C is implemented and
-adversarially reviewed; awaiting owner acceptance.
+PT-001 complete, owner accepted, adversarially reviewed, and
+dual-clean-checkout verified. Slice A is owner accepted. The qualified-token
+repair is owner accepted. Slice B is owner accepted. The public-contract repair
+is owner accepted. The accepted Slice B HEAD is
+`ec9ea7d8c20016e267fae16a2554d5e7f1a0ebce`. Slice C is owner accepted. The
+model ledger contains exactly 28 records. The final model revision is
+`mrv_c6244b6dc41de599de9894b55f4064e41ba5260e7d00f50bffc1e1e63da560a2`.
+The deterministic artifact SHA-256 is
+`53dd32846956d10331dfca8fc370ef7d7019325904a062db5f037605aa4cf3d8`.

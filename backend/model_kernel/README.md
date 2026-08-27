@@ -154,12 +154,15 @@ is O(N²) to build an N-record ledger — accepted for MK-001 scale. The
 typed-failure translation catches an enumerated exception set: a hostile
 in-process class whose metaclass raises outside it can still surface that
 exception, and exception `__cause__` chains can carry raw payloads into
-full tracebacks (public messages stay clean). PT-001 Slice A, including its
-qualified-token repair, is owner accepted. PT-001 Slice B read-only port,
-interface, exact/incident/shared topology, assertion, and multidimensional
-compatibility queries, including their public-contract repair, are owner
-accepted at `ec9ea7d8c20016e267fae16a2554d5e7f1a0ebce`. Slice C is authorized
-and implemented under its bounded fixture gate; awaiting owner acceptance.
+full tracebacks (public messages stay clean). PT-001 complete, owner accepted,
+adversarially reviewed, and dual-clean-checkout verified. Slice A is owner
+accepted. The qualified-token repair is owner accepted. Slice B is owner
+accepted. The public-contract repair is owner accepted. The accepted Slice B
+HEAD is `ec9ea7d8c20016e267fae16a2554d5e7f1a0ebce`. Slice C is owner accepted.
+The model ledger contains exactly 28 records. The final model revision is
+`mrv_c6244b6dc41de599de9894b55f4064e41ba5260e7d00f50bffc1e1e63da560a2`.
+The deterministic artifact SHA-256 is
+`53dd32846956d10331dfca8fc370ef7d7019325904a062db5f037605aa4cf3d8`.
 Their public results are `PortLookupResult`,
 `EntityPortsResult`, `PortInterfaceResult`, `ExactConnectionSetResult`,
 `PortConnectionsResult`, `SharedConnectionsResult`,
