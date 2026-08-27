@@ -1,8 +1,9 @@
 # PT-001 — Explicit ports and typed interface connectivity
 
 Status: PT-001 Slice A, including the qualified-token repair, is owner accepted.
-PT-001 Slice B implemented and adversarially reviewed; awaiting owner acceptance.
-Slice C remains owner-gated. No committed PT fixture is permitted before Slice C.
+PT-001 Slice B, including the public-contract repair, is owner accepted at
+`ec9ea7d8c20016e267fae16a2554d5e7f1a0ebce`. Slice C is authorized and in
+progress under its bounded ten-record fixture gate.
 
 ## Mission and boundary
 

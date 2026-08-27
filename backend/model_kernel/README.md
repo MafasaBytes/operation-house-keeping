@@ -36,10 +36,10 @@ runtime model sets use the documented external verification procedure.
   interface-type tokens carry bounded qualified system, edition, and code
   identifiers plus their serialized dimension discriminator. Comparison is
   exact over all four fields; the kernel performs no vocabulary inference,
-  equivalence, or conversion. Slice A adds only
-  contracts, canonicalization, validating storage, and immutable indexes: PT
-  queries, compatibility assessment, traversal, and committed fixture records
-  remain owner-gated.
+  equivalence, or conversion. Slice A adds contracts, canonicalization,
+  validating storage, and immutable indexes; Slice B adds the accepted
+  read-only PT queries. Traversal remains excluded. The bounded ten-record
+  synthetic fixture is authorized only in Slice C.
 - **Variable meaning is explicit and per dimension** (ES-001):
   `VariableSemanticDeclaration` records quantity-kind and observation-role
   identity tokens independently. Each `(variable, dimension)` lineage is a
@@ -157,8 +157,9 @@ exception, and exception `__cause__` chains can carry raw payloads into
 full tracebacks (public messages stay clean). PT-001 Slice A, including its
 qualified-token repair, is owner accepted. PT-001 Slice B read-only port,
 interface, exact/incident/shared topology, assertion, and multidimensional
-compatibility queries are implemented and adversarially reviewed, awaiting
-owner acceptance. Their public results are `PortLookupResult`,
+compatibility queries, including their public-contract repair, are owner
+accepted at `ec9ea7d8c20016e267fae16a2554d5e7f1a0ebce`. Slice C is authorized
+and in progress. Their public results are `PortLookupResult`,
 `EntityPortsResult`, `PortInterfaceResult`, `ExactConnectionSetResult`,
 `PortConnectionsResult`, `SharedConnectionsResult`,
 `PortAssertionDisclosureResult`, and `InterfaceCompatibilityResult`.
@@ -166,7 +167,7 @@ Topology admission, topology conclusion, port/owner registration, assertion
 activity, lineage health, and compatibility endpoint admission are separate
 typed findings. The queries operate only over an injected `LoadedModel`, carry the
 complete selected membership once for authoritative reconstruction, and perform
-no traversal, store access, or writes. The bounded synthetic fixture remains
-gated for Slice C. Richer
+no traversal, store access, or writes. The bounded synthetic fixture is limited
+to the authorized Slice C demonstration. Richer
 predicates beyond CN-001's exact numeric bounds
 also remain future work.
