@@ -1,0 +1,29 @@
+{
+  "anchor": {
+    "anchor_id": "prt_91a3d6db9df440e1a09dbdb185c7b182",
+    "display_name": "PT-001 synthetic extruder-unit interface",
+    "namespace": "demo-printer",
+    "role_name": "pt001-extruder-interface"
+  },
+  "authority": {
+    "agent": "pt001_demo_fixture",
+    "kind": "test_fixture",
+    "method": "manual_declaration"
+  },
+  "evidence": [
+    {
+      "kind": "model_record",
+      "record_id": "reg_9b5491aaa131b0df070cee792c83e002bdc4232cbbaba443f967cd3e5b780451"
+    },
+    {
+      "kind": "owner_declaration",
+      "statement": "PT-001 fixture authority declares this opaque synthetic interface locus to be permanently owned by the existing synthetic extruder-unit entity; illustrative fixture only."
+    }
+  ],
+  "note": "PT-001 bounded synthetic demonstration.",
+  "owner_entity_anchor_id": "ent_a3f1c2d4e5b6478899aa0b1c2d3e4f50",
+  "record_id": "prg_c06e49bef910d073a6af206d884a1bb68c0b9baa1cdb1d698d0c35c61025e057",
+  "record_kind": "port_registration",
+  "recorded_at": "2026-08-27T12:00:00+00:00",
+  "schema_version": "1"
+}

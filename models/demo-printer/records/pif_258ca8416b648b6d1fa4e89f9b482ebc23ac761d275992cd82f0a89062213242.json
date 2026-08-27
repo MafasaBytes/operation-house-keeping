@@ -1,0 +1,32 @@
+{
+  "authority": {
+    "agent": "pt001_demo_fixture",
+    "kind": "test_fixture",
+    "method": "manual_declaration"
+  },
+  "context": {
+    "kind": "lifecycle_view",
+    "view": "as_designed"
+  },
+  "declaration": {
+    "dimension": "direction_role",
+    "value": "output"
+  },
+  "evidence": [
+    {
+      "kind": "model_record",
+      "record_id": "prg_c37057871b41bf873e317abde29dbba764be4974e195e21261d26942e5833af9"
+    },
+    {
+      "kind": "owner_declaration",
+      "statement": "PT-001 fixture authority declares the synthetic endpoint direction role; the role proves no flow, activity, influence, causality, or control."
+    }
+  ],
+  "note": "PT-001 bounded synthetic demonstration.",
+  "port_anchor_id": "prt_c1d68d104a73405a950556b55f6a4d34",
+  "record_id": "pif_258ca8416b648b6d1fa4e89f9b482ebc23ac761d275992cd82f0a89062213242",
+  "record_kind": "port_interface_declaration",
+  "recorded_at": "2026-08-27T12:00:00+00:00",
+  "schema_version": "1",
+  "supersedes": []
+}

@@ -1,0 +1,51 @@
+{
+  "authority": {
+    "agent": "pt001_demo_fixture",
+    "kind": "test_fixture",
+    "method": "manual_declaration"
+  },
+  "context": {
+    "kind": "lifecycle_view",
+    "view": "as_designed"
+  },
+  "endpoint_port_anchor_ids": [
+    "prt_91a3d6db9df440e1a09dbdb185c7b182",
+    "prt_c1d68d104a73405a950556b55f6a4d34"
+  ],
+  "evidence": [
+    {
+      "kind": "model_record",
+      "record_id": "pif_258ca8416b648b6d1fa4e89f9b482ebc23ac761d275992cd82f0a89062213242"
+    },
+    {
+      "kind": "model_record",
+      "record_id": "pif_80ce1f623bcec03fa2de7d6a40828a779d9005198b6629bb1839f3cf41e63e84"
+    },
+    {
+      "kind": "model_record",
+      "record_id": "pif_bd6972d529c96a1cf0f19c9876b0703d8e9335e7ae374006b9ecbd63b1a3cdd0"
+    },
+    {
+      "kind": "model_record",
+      "record_id": "pif_e4fb4c31e5ce7d9530a42107b552acfede86d0d55f066fa8c43d1f813d7a3abf"
+    },
+    {
+      "kind": "model_record",
+      "record_id": "pif_ee957851ecd834be8a4db14a5c0bc25070a1b2987979f6519ca28ab7bfb8ff70"
+    },
+    {
+      "kind": "model_record",
+      "record_id": "pif_f914972ae11f391fe17ff42a0521c02eca08d1d61072afc1eb684ed0e9792717"
+    },
+    {
+      "kind": "owner_declaration",
+      "statement": "PT-001 fixture authority positively declares these ports to participate in one common synthetic interface connection in the as-designed context; this is not a real printer wiring, flow, state, behavior, safety, or causal claim."
+    }
+  ],
+  "note": "Positive synthetic topology only; no activity or flow is asserted.",
+  "record_id": "pcn_4861ecf058add8a45686c9b9c4f2e28085f60575705d6d06f1890b8ef11f1726",
+  "record_kind": "port_connection_assertion",
+  "recorded_at": "2026-08-27T12:00:00+00:00",
+  "schema_version": "1",
+  "supersedes": []
+}

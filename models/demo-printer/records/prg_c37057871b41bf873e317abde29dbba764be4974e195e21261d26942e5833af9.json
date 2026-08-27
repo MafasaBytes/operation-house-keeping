@@ -1,0 +1,29 @@
+{
+  "anchor": {
+    "anchor_id": "prt_c1d68d104a73405a950556b55f6a4d34",
+    "display_name": "PT-001 synthetic subsystem interface",
+    "namespace": "demo-printer",
+    "role_name": "pt001-subsystem-interface"
+  },
+  "authority": {
+    "agent": "pt001_demo_fixture",
+    "kind": "test_fixture",
+    "method": "manual_declaration"
+  },
+  "evidence": [
+    {
+      "kind": "model_record",
+      "record_id": "reg_5776a541a04b428f35af40203294a34a8a9978f0bdf3572a8745e6febddd5941"
+    },
+    {
+      "kind": "owner_declaration",
+      "statement": "PT-001 fixture authority declares this opaque synthetic interface locus to be permanently owned by the existing synthetic extrusion subsystem entity; illustrative fixture only."
+    }
+  ],
+  "note": "PT-001 bounded synthetic demonstration.",
+  "owner_entity_anchor_id": "ent_1a2b3c4d5e6f708192a3b4c5d6e7f809",
+  "record_id": "prg_c37057871b41bf873e317abde29dbba764be4974e195e21261d26942e5833af9",
+  "record_kind": "port_registration",
+  "recorded_at": "2026-08-27T12:00:00+00:00",
+  "schema_version": "1"
+}

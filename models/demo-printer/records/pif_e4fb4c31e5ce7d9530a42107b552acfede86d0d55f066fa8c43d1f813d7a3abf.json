@@ -1,0 +1,37 @@
+{
+  "authority": {
+    "agent": "pt001_demo_fixture",
+    "kind": "test_fixture",
+    "method": "manual_declaration"
+  },
+  "context": {
+    "kind": "lifecycle_view",
+    "view": "as_designed"
+  },
+  "declaration": {
+    "dimension": "interface_domain",
+    "value": {
+      "code": "synthetic-exchange",
+      "system_edition": "pt001-demo-1",
+      "system_id": "project_local",
+      "token_kind": "interface_domain"
+    }
+  },
+  "evidence": [
+    {
+      "kind": "model_record",
+      "record_id": "prg_c37057871b41bf873e317abde29dbba764be4974e195e21261d26942e5833af9"
+    },
+    {
+      "kind": "owner_declaration",
+      "statement": "PT-001 fixture authority declares the synthetic interface-domain token for this port; token identity is exact only and proves no compatibility or operation."
+    }
+  ],
+  "note": "PT-001 bounded synthetic demonstration.",
+  "port_anchor_id": "prt_c1d68d104a73405a950556b55f6a4d34",
+  "record_id": "pif_e4fb4c31e5ce7d9530a42107b552acfede86d0d55f066fa8c43d1f813d7a3abf",
+  "record_kind": "port_interface_declaration",
+  "recorded_at": "2026-08-27T12:00:00+00:00",
+  "schema_version": "1",
+  "supersedes": []
+}

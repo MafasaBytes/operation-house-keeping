@@ -341,6 +341,41 @@ after two owner gates, may rehearse then append exactly 2 `prg_`, 6 `pif_`, 1
 `pcn_`, and 1 `pcm_`, evolving the demo model 18→28 while freezing every prior
 byte.
 
+### Slice C bounded synthetic fixture
+
+Slice C uses the already-registered synthetic extrusion subsystem
+`ent_1a2b3c4d5e6f708192a3b4c5d6e7f809` and extruder-unit instance
+`ent_a3f1c2d4e5b6478899aa0b1c2d3e4f50` as illustrative owners. Their frozen port
+anchors are respectively `prt_c1d68d104a73405a950556b55f6a4d34` and
+`prt_91a3d6db9df440e1a09dbdb185c7b182`. Ownership is recorded only by the two
+permanent `prg_` records; neither anchor embeds it.
+
+The append is exactly two `prg_`, three `pif_` per port, one two-endpoint positive
+`pcn_`, and one `pcm_`. Every claim uses exact `as_designed` context, where
+applicable, and authority `test_fixture / pt001_demo_fixture /
+manual_declaration`. The two ports carry identical qualified project-local
+domain (`synthetic-exchange`) and type (`synthetic-interface`) tokens under
+edition `pt001-demo-1`, with complementary `output` and `input` endpoint roles.
+The PCM outcome is `declared_compatible` and its basis cites both current PIFs
+for all three dimensions in normative dimension/endpoint order.
+
+The authoritative rehearsal was performed on a disposable copy through the
+public minter, builder, model store, replay, load, and query APIs. The exact
+rehearsed records were then appended through `ModelStore.append` without
+reminting or rebuilding. The accepted eighteen-record revision remains
+`mrv_919e1b36216243fd211e38a9d36556afa0d46e3660c381302d271ec1fb258c51`;
+the explicit twenty-eight-record revision is
+`mrv_c6244b6dc41de599de9894b55f4064e41ba5260e7d00f50bffc1e1e63da560a2`.
+
+> This is an illustrative synthetic PT-001 fixture. It does not describe or claim any real printer wiring, connector, protocol, pinout, electrical design, behavior, operating activity, flow, influence, causality, safety property, correctness, or operating condition.
+
+Geometry does not create these ports. CAD does not establish this connection.
+Moonraker does not establish this connection. Token equality does not establish
+compatibility. Direction admissibility does not establish flow. Explicit
+compatibility remains a declared synthetic claim. The query result
+`consistent` means only that the explicit declaration does not contradict the
+bounded direction table; it does not prove real-world compatibility.
+
 PT-001 excludes connection absence, observed state, flow, equations, behavior,
 causality, diagnosis, impact, traversal, planning, safety, control, variable-port
 association, connection identity, parallel identical-connection distinction,

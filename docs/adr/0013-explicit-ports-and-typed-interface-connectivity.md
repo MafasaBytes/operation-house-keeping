@@ -65,6 +65,12 @@ accepted record kind or implying flow, behavior, compatibility, or causality.
     Assertion lookup, assertion activity, and containing-lineage health remain
     separate. Implementation-oriented pre-acceptance result names are not
     public aliases.
+11. Slice C appends exactly two `prg_`, six `pif_`, one positive two-port
+    `pcn_`, and one `pcm_` to the synthetic demo model after a public-API-only
+    disposable rehearsal. It freezes all prior bytes and the explicit
+    eighteen-record historical membership. Its deterministic disclosure is a
+    test-owned documentation artifact, not a runtime renderer or new model
+    record.
 
 ## Consequences
 
@@ -74,3 +80,12 @@ record kinds and immutable indexes but keeps its dependency boundary of
 evidence declares the same enduring interface locus; names, ownership, firmware
 addresses, connector types, geometry, CAD paths, and source identifiers never
 prove continuity. Replacing the owning entity always requires new port anchors.
+
+The Slice C fixture is governed by this mandatory disclaimer:
+
+> This is an illustrative synthetic PT-001 fixture. It does not describe or claim any real printer wiring, connector, protocol, pinout, electrical design, behavior, operating activity, flow, influence, causality, safety property, correctness, or operating condition.
+
+Geometry does not create its ports; CAD and Moonraker do not establish its
+connection; token equality does not establish compatibility; direction
+admissibility does not establish flow; and explicit compatibility remains a
+declared synthetic claim.

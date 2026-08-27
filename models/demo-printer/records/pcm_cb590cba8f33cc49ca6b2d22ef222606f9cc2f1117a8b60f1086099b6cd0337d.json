@@ -1,0 +1,96 @@
+{
+  "authority": {
+    "agent": "pt001_demo_fixture",
+    "kind": "test_fixture",
+    "method": "manual_declaration"
+  },
+  "basis": {
+    "dimensions": [
+      {
+        "citations": [
+          {
+            "declaration_record_id": "pif_ee957851ecd834be8a4db14a5c0bc25070a1b2987979f6519ca28ab7bfb8ff70",
+            "port_anchor_id": "prt_91a3d6db9df440e1a09dbdb185c7b182"
+          },
+          {
+            "declaration_record_id": "pif_e4fb4c31e5ce7d9530a42107b552acfede86d0d55f066fa8c43d1f813d7a3abf",
+            "port_anchor_id": "prt_c1d68d104a73405a950556b55f6a4d34"
+          }
+        ],
+        "dimension": "interface_domain"
+      },
+      {
+        "citations": [
+          {
+            "declaration_record_id": "pif_80ce1f623bcec03fa2de7d6a40828a779d9005198b6629bb1839f3cf41e63e84",
+            "port_anchor_id": "prt_91a3d6db9df440e1a09dbdb185c7b182"
+          },
+          {
+            "declaration_record_id": "pif_258ca8416b648b6d1fa4e89f9b482ebc23ac761d275992cd82f0a89062213242",
+            "port_anchor_id": "prt_c1d68d104a73405a950556b55f6a4d34"
+          }
+        ],
+        "dimension": "direction_role"
+      },
+      {
+        "citations": [
+          {
+            "declaration_record_id": "pif_f914972ae11f391fe17ff42a0521c02eca08d1d61072afc1eb684ed0e9792717",
+            "port_anchor_id": "prt_91a3d6db9df440e1a09dbdb185c7b182"
+          },
+          {
+            "declaration_record_id": "pif_bd6972d529c96a1cf0f19c9876b0703d8e9335e7ae374006b9ecbd63b1a3cdd0",
+            "port_anchor_id": "prt_c1d68d104a73405a950556b55f6a4d34"
+          }
+        ],
+        "dimension": "interface_type"
+      }
+    ],
+    "statement": "Synthetic fixture authority declares compatibility on the cited interface-domain, direction-role, and interface-type declarations; this is a declaration only, not an engineering conclusion."
+  },
+  "context": {
+    "kind": "lifecycle_view",
+    "view": "as_designed"
+  },
+  "endpoint_port_anchor_ids": [
+    "prt_91a3d6db9df440e1a09dbdb185c7b182",
+    "prt_c1d68d104a73405a950556b55f6a4d34"
+  ],
+  "evidence": [
+    {
+      "kind": "model_record",
+      "record_id": "pif_258ca8416b648b6d1fa4e89f9b482ebc23ac761d275992cd82f0a89062213242"
+    },
+    {
+      "kind": "model_record",
+      "record_id": "pif_80ce1f623bcec03fa2de7d6a40828a779d9005198b6629bb1839f3cf41e63e84"
+    },
+    {
+      "kind": "model_record",
+      "record_id": "pif_bd6972d529c96a1cf0f19c9876b0703d8e9335e7ae374006b9ecbd63b1a3cdd0"
+    },
+    {
+      "kind": "model_record",
+      "record_id": "pif_e4fb4c31e5ce7d9530a42107b552acfede86d0d55f066fa8c43d1f813d7a3abf"
+    },
+    {
+      "kind": "model_record",
+      "record_id": "pif_ee957851ecd834be8a4db14a5c0bc25070a1b2987979f6519ca28ab7bfb8ff70"
+    },
+    {
+      "kind": "model_record",
+      "record_id": "pif_f914972ae11f391fe17ff42a0521c02eca08d1d61072afc1eb684ed0e9792717"
+    },
+    {
+      "kind": "owner_declaration",
+      "statement": "PT-001 fixture authority declares synthetic compatibility for this exact pair and cited dimensions; it is not inferred from token identity or direction and proves no real-world compatibility, operation, correctness, or safety."
+    }
+  ],
+  "note": "Explicit synthetic compatibility declaration only.",
+  "outcome": "declared_compatible",
+  "record_id": "pcm_cb590cba8f33cc49ca6b2d22ef222606f9cc2f1117a8b60f1086099b6cd0337d",
+  "record_kind": "port_compatibility_declaration",
+  "recorded_at": "2026-08-27T12:00:00+00:00",
+  "schema_version": "1",
+  "supersedes": []
+}
