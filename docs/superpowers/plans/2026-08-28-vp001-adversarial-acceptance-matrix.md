@@ -1,7 +1,7 @@
 # VP-001 — adversarial acceptance matrix
 
-Status: normative Slice A matrix. Slice B/C/D entries pin later boundaries but
-do not authorize their implementation.
+Status: Slice A exercised and adversarially reviewed; awaiting owner acceptance.
+Slice B/C/D entries pin later boundaries but do not authorize implementation.
 
 ## A. Public contract and canonical identity
 

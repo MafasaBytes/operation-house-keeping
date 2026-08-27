@@ -200,6 +200,26 @@ def test_slice_b_c_d_and_upper_layer_imports_are_absent():
         "backend.data_sources")) for name in imports)
 
 
+def test_slice_a_status_documentation_records_the_owner_stop():
+    status = (
+        "VP-001 Slice A implemented and adversarially reviewed; awaiting "
+        "owner acceptance.")
+    for path in (
+        Path("CLAUDE.md"),
+        Path("backend/model_kernel/README.md"),
+        Path("docs/adr/0014-explicit-variable-port-association.md"),
+        Path("docs/superpowers/specs/"
+             "2026-08-28-vp001-explicit-variable-port-association-design.md"),
+    ):
+        assert status in path.read_text(encoding="utf-8")
+    specification = Path(
+        "docs/superpowers/specs/"
+        "2026-08-28-vp001-explicit-variable-port-association-design.md"
+    ).read_text(encoding="utf-8")
+    assert "Slices B, C, and D remain separately owner-gated" in specification
+    assert "demo ledger remains exactly 28 records" in specification
+
+
 def test_vp_index_order_is_independent_of_python_hash_seed():
     script = r'''
 import json

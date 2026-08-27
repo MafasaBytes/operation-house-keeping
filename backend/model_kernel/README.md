@@ -26,6 +26,16 @@ runtime model sets use the documented external verification procedure.
 
 ## Semantics worth knowing
 
+- **Variable-to-port association is explicit** (VP-001 Slice A): an
+  evidence-bearing `VariablePortAssociation` relates one registered variable
+  to one registered port in an exact assertion context only when both are owned
+  by the exact same registered entity. Shared ownership never creates the
+  claim. Independent roots corroborate; correction forks and convergence remain
+  within one root; `VariablePortAssociationWithdrawal` retracts only a current
+  positive tip membership-relatively. The claim says nothing about observation
+  location, ownership transfer, values passing through a port, topology,
+  compatibility, flow, behavior, control, causality, correctness, or safety.
+  Slice A adds no query, model-state composition, or fixture record.
 - **Ports are explicit model identities and claims** (PT-001 Slice A): a pure
   `PortAnchor` is permanently registered to one entity by an evidence-bearing
   `PortRegistration`; three independent interface dimensions, positive
@@ -175,3 +185,7 @@ no traversal, store access, or writes. The bounded synthetic fixture is limited
 to the implemented Slice C demonstration. Richer
 predicates beyond CN-001's exact numeric bounds
 also remain future work.
+
+VP-001 Slice A implemented and adversarially reviewed; awaiting owner acceptance.
+Slices B, C, and D remain separately owner-gated. The demo ledger remains the
+accepted 28-record PT-001 revision with no committed `vpa_` or `vpw_` record.

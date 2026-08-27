@@ -1,6 +1,6 @@
 # ADR-0014 — Explicit variable-to-port association
 
-Status: accepted architecture. VP-001 Slice A is authorized and in progress;
+Status: VP-001 Slice A implemented and adversarially reviewed; awaiting owner acceptance.
 Slices B, C, and D remain separately owner-gated.
 
 ## Context

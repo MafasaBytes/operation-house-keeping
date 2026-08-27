@@ -1,8 +1,8 @@
 # VP-001 — Explicit variable-to-port association
 
-Status: final architecture owner adjudicated. Slice A is authorized and in
-progress. Slices B, C, and D remain separately owner-gated. No VP fixture record
-is permitted in Slice A.
+Status: VP-001 Slice A implemented and adversarially reviewed; awaiting owner acceptance.
+Slices B, C, and D remain separately owner-gated. No VP fixture record is
+permitted in Slice A.
 
 ## Mission and boundary
 
