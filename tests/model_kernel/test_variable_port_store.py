@@ -1,6 +1,7 @@
 """VP-001 Slice A validating-store, lifecycle, and index red baseline."""
 
 from dataclasses import FrozenInstanceError
+from datetime import timedelta
 from pathlib import Path
 
 import pytest
@@ -14,7 +15,7 @@ from tests.model_kernel.builders import (
 )
 from tests.model_kernel.test_port_records import registration as port_registration
 from tests.model_kernel.test_variable_port_records import (
-    CONTEXT, EVIDENCE, PORT, VARIABLE, association, withdrawal,
+    CONTEXT, EVIDENCE, PORT, T0, VARIABLE, association, withdrawal,
 )
 
 
@@ -235,3 +236,53 @@ def test_replay_omitting_successor_revives_parent_and_contexts_are_separate(
     assert historical.variable_port_association_ids_by_subject[
         (VARIABLE, PORT, type(CONTEXT).model_validate(OTHER_CONTEXT))] == (
             other.record_id,)
+
+
+def test_every_vp_index_is_immutable_and_keys_are_sorted(tmp_path):
+    first = association(note="z root")
+    second = association(context=OTHER_CONTEXT, note="a root")
+    event = withdrawal(first.record_id)
+    loaded = append_all(base(tmp_path), first, second, event).load()
+    reloaded = ModelStore(tmp_path / "demo-printer").load()
+    names = (
+        "variable_port_associations",
+        "variable_port_association_withdrawals",
+        "variable_port_association_root_by_id",
+        "variable_port_association_ancestry_by_id",
+        "variable_port_association_ids_by_subject",
+        "variable_port_association_ids_by_variable_context",
+        "variable_port_association_ids_by_port_context",
+        "variable_port_association_superseded_by",
+        "current_variable_port_association_tips_by_root",
+        "variable_port_association_withdrawn_by",
+        "variable_port_association_withdrawals_by_target",
+    )
+    for name in names:
+        mapping = getattr(loaded, name)
+        assert tuple(mapping) == tuple(getattr(reloaded, name))
+        with pytest.raises(TypeError):
+            mapping[next(iter(mapping), "forged")] = ()
+
+
+def test_recorded_at_never_ranks_lineage_or_withdrawal(tmp_path):
+    later_root = association(recorded_at=T0 + timedelta(days=5), note="root")
+    earlier_child = association(
+        supersedes=(later_root.record_id,), recorded_at=T0, note="child")
+    still_earlier_withdrawal = withdrawal(
+        earlier_child.record_id, recorded_at=T0 - timedelta(days=5))
+    loaded = append_all(base(tmp_path), later_root, earlier_child,
+                        still_earlier_withdrawal).load()
+    assert loaded.current_variable_port_association_tips_by_root[
+        later_root.record_id] == ()
+
+
+def test_replay_omitting_withdrawal_reactivates_tip(tmp_path):
+    root = association(note="root")
+    event = withdrawal(root.record_id)
+    store = append_all(base(tmp_path), root, event)
+    without_event = store.replay(tuple(
+        record_id for record_id in store.load().revision.record_ids
+        if record_id != event.record_id))
+    assert tuple(item.record_id for item in
+                 without_event.current_variable_port_association_tips_by_root[
+                     root.record_id]) == (root.record_id,)

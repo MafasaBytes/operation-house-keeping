@@ -3,7 +3,10 @@
 import ast
 import hashlib
 import json
+import os
 from pathlib import Path
+import subprocess
+import sys
 
 import pytest
 
@@ -62,6 +65,63 @@ def test_hostile_on_disk_record_and_filename_content_mismatch_fail_typed(
         other.load()
     assert error.value.error_code in {
         "MODEL_RECORD_KEY_MISMATCH", "MODEL_RECORD_HASH_MISMATCH"}
+
+
+def test_nested_authority_and_hostile_vpw_file_fail_typed(tmp_path):
+    hostile_authority = association().authority.model_copy(
+        update={"kind": "future_authority"})
+    for forged in (
+        association().model_copy(update={"authority": hostile_authority}),
+        withdrawal().model_copy(update={"authority": hostile_authority}),
+    ):
+        with pytest.raises(ModelIntegrityError) as error:
+            base(tmp_path / forged.record_kind).append(forged)
+        assert error.value.error_code == "MODEL_RECORD_INVALID"
+
+    store = base(tmp_path / "vpw-file")
+    target = association()
+    store.append(target)
+    event = withdrawal(target.record_id)
+    payload = event.model_dump(mode="json")
+    payload["authority"]["kind"] = "future_authority"
+    (store.records_dir / f"{event.record_id}.json").write_text(
+        json.dumps(payload), encoding="utf-8")
+    with pytest.raises(ModelIntegrityError) as error:
+        store.load()
+    assert error.value.error_code == "MODEL_RECORD_INVALID"
+
+
+def _replace_with_external_symlink(store, record, outside):
+    path = store.records_dir / f"{record.record_id}.json"
+    outside.write_bytes(path.read_bytes())
+    path.unlink()
+    path.symlink_to(outside)
+
+
+def test_load_refuses_validly_named_external_record_symlink_but_file_twin_loads(
+        tmp_path):
+    store = base(tmp_path / "load")
+    claim = association()
+    store.append(claim)
+    assert store.load().records[claim.record_id] == claim
+    _replace_with_external_symlink(store, claim, tmp_path / "outside-load.json")
+    with pytest.raises(ModelIntegrityError) as error:
+        store.load()
+    assert error.value.error_code == "MODEL_RECORD_INVALID"
+
+
+def test_replay_refuses_validly_named_external_record_symlink_but_file_twin(
+        tmp_path):
+    store = base(tmp_path / "replay")
+    claim = association()
+    store.append(claim)
+    membership = store.load().revision.record_ids
+    assert store.replay(membership).records[claim.record_id] == claim
+    _replace_with_external_symlink(
+        store, claim, tmp_path / "outside-replay.json")
+    with pytest.raises(ModelIntegrityError) as error:
+        store.replay(membership)
+    assert error.value.error_code == "MODEL_RECORD_INVALID"
 
 
 def test_cycle_is_rejected_even_for_crafted_records_without_hash_verification(
@@ -138,3 +198,34 @@ def test_slice_b_c_d_and_upper_layer_imports_are_absent():
         "backend.model_state", "backend.temporal_state",
         "backend.identity_binding", "backend.structural_evidence",
         "backend.data_sources")) for name in imports)
+
+
+def test_vp_index_order_is_independent_of_python_hash_seed():
+    script = r'''
+import json
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from tests.model_kernel.test_variable_port_records import association, withdrawal
+from tests.model_kernel.test_variable_port_store import append_all, base
+with TemporaryDirectory() as directory:
+    root = association(note="root")
+    left = association(supersedes=(root.record_id,), note="left")
+    right = association(supersedes=(root.record_id,), note="right")
+    event = withdrawal(left.record_id)
+    loaded = append_all(base(Path(directory)), root, right, left, event).load()
+    print(json.dumps({
+        "records": list(loaded.variable_port_associations),
+        "roots": list(loaded.current_variable_port_association_tips_by_root),
+        "tips": {key: [item.record_id for item in value] for key, value in
+                 loaded.current_variable_port_association_tips_by_root.items()},
+        "ancestry": dict(loaded.variable_port_association_ancestry_by_id),
+    }, sort_keys=True))
+'''
+    outputs = []
+    for seed in ("1", "2", "999"):
+        environment = dict(os.environ, PYTHONHASHSEED=seed,
+                           PYTHONDONTWRITEBYTECODE="1")
+        outputs.append(subprocess.run(
+            [sys.executable, "-c", script], cwd=Path.cwd(), env=environment,
+            check=True, capture_output=True, text=True).stdout)
+    assert outputs[0] == outputs[1] == outputs[2]
