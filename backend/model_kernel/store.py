@@ -45,6 +45,8 @@ from backend.model_kernel.contracts import (
     RelationshipTypeDefinition,
     RelationshipWithdrawal,
     VariableConstraintDeclaration,
+    VariablePortAssociation,
+    VariablePortAssociationWithdrawal,
     VariableRegistration,
     VariableSemanticDeclaration,
     VariableValueSpecification,
@@ -132,6 +134,27 @@ class LoadedModel:
         str, tuple[str, ...]] = _EMPTY
     port_claim_withdrawals: Mapping[str, PortClaimWithdrawal] = _EMPTY
     port_withdrawals_by_target: Mapping[str, tuple[str, ...]] = _EMPTY
+    variable_port_associations: Mapping[
+        str, VariablePortAssociation] = _EMPTY
+    variable_port_association_withdrawals: Mapping[
+        str, VariablePortAssociationWithdrawal] = _EMPTY
+    variable_port_association_root_by_id: Mapping[str, str] = _EMPTY
+    variable_port_association_ancestry_by_id: Mapping[
+        str, tuple[str, ...]] = _EMPTY
+    variable_port_association_ids_by_subject: Mapping[
+        tuple, tuple[str, ...]] = _EMPTY
+    variable_port_association_ids_by_variable_context: Mapping[
+        tuple, tuple[str, ...]] = _EMPTY
+    variable_port_association_ids_by_port_context: Mapping[
+        tuple, tuple[str, ...]] = _EMPTY
+    variable_port_association_superseded_by: Mapping[
+        str, tuple[str, ...]] = _EMPTY
+    current_variable_port_association_tips_by_root: Mapping[
+        str, tuple[VariablePortAssociation, ...]] = _EMPTY
+    variable_port_association_withdrawn_by: Mapping[
+        str, tuple[str, ...]] = _EMPTY
+    variable_port_association_withdrawals_by_target: Mapping[
+        str, tuple[str, ...]] = _EMPTY
 
 
 def _fail(code: str, message: str) -> None:
@@ -276,6 +299,9 @@ def validate_record_collection(
     port_compatibility_declarations: dict[
         str, PortCompatibilityDeclaration] = {}
     port_claim_withdrawals: dict[str, PortClaimWithdrawal] = {}
+    variable_port_associations: dict[str, VariablePortAssociation] = {}
+    variable_port_association_withdrawals: dict[
+        str, VariablePortAssociationWithdrawal] = {}
     types: dict[str, RelationshipTypeDefinition] = {}
     assertions: dict[str, RelationshipAssertion] = {}
     withdrawals: dict[str, RelationshipWithdrawal] = {}
@@ -313,6 +339,9 @@ def validate_record_collection(
             "port_connection_assertion": port_connections,
             "port_compatibility_declaration": port_compatibility_declarations,
             "port_claim_withdrawal": port_claim_withdrawals,
+            "variable_port_association": variable_port_associations,
+            "variable_port_association_withdrawal": (
+                variable_port_association_withdrawals),
             "relationship_type_definition": types,
             "relationship_assertion": assertions,
             "relationship_withdrawal": withdrawals,
@@ -786,6 +815,129 @@ def validate_record_collection(
             current_port_compatibility_tips_by_key[key] = (
                 *current_port_compatibility_tips_by_key[key], record)
 
+    # -- explicit variable-to-port associations --------------------------
+    # This positive claim family reuses the PT multi-root DAG mechanics
+    # because its correction semantics match exactly. It remains separate
+    # from entity relationships, variable identity, PT claims, and state.
+    def variable_port_subject(record):
+        return (record.variable_anchor_id, record.port_anchor_id,
+                record.context)
+
+    variable_port_association_ids_by_subject: dict[
+        tuple, tuple[str, ...]] = {}
+    variable_port_association_ids_by_variable_context: dict[
+        tuple, tuple[str, ...]] = {}
+    variable_port_association_ids_by_port_context: dict[
+        tuple, tuple[str, ...]] = {}
+
+    for record_id in sorted(variable_port_associations):
+        record = variable_port_associations[record_id]
+        variable_registration = variable_registrations_by_anchor.get(
+            record.variable_anchor_id)
+        if variable_registration is None:
+            _fail("MODEL_REFERENCE_INVALID",
+                  f"variable-port association {record_id} references "
+                  f"unregistered variable {record.variable_anchor_id}")
+        port_registration = port_registrations_by_anchor.get(
+            record.port_anchor_id)
+        if port_registration is None:
+            _fail("MODEL_REFERENCE_INVALID",
+                  f"variable-port association {record_id} references "
+                  f"unregistered port {record.port_anchor_id}")
+        variable_owner_id = variable_registration.anchor.entity_anchor_id
+        port_owner_id = port_registration.owner_entity_anchor_id
+        # Both owner registrations are already closure-validated by their
+        # accepted registration families. Equality is an admission invariant,
+        # never a source of an inferred association.
+        if variable_owner_id != port_owner_id:
+            _fail("MODEL_REFERENCE_INVALID",
+                  f"variable-port association {record_id} has endpoints "
+                  "owned by different entities")
+        _check_model_record_evidence(
+            records, record, "variable-port association")
+
+        subject = variable_port_subject(record)
+        variable_port_association_ids_by_subject[subject] = (
+            *variable_port_association_ids_by_subject.get(subject, ()),
+            record_id)
+        variable_key = (record.variable_anchor_id, record.context)
+        variable_port_association_ids_by_variable_context[variable_key] = (
+            *variable_port_association_ids_by_variable_context.get(
+                variable_key, ()), record_id)
+        port_key = (record.port_anchor_id, record.context)
+        variable_port_association_ids_by_port_context[port_key] = (
+            *variable_port_association_ids_by_port_context.get(port_key, ()),
+            record_id)
+
+    (variable_port_association_superseded_by,
+     variable_port_association_root_by_id) = _pt_dag_indexes(
+        variable_port_associations, variable_port_subject,
+        "MODEL_VARIABLE_PORT_LINEAGE_INVALID", "variable-port association")
+
+    variable_port_association_ancestry_by_id: dict[
+        str, tuple[str, ...]] = {}
+    pending_variable_port_ancestry = set(variable_port_associations)
+    while pending_variable_port_ancestry:
+        progressed = False
+        for record_id in sorted(tuple(pending_variable_port_ancestry)):
+            parents = variable_port_associations[record_id].supersedes
+            if any(parent not in variable_port_association_ancestry_by_id
+                   for parent in parents):
+                continue
+            ancestors = {
+                ancestor
+                for parent in parents
+                for ancestor in (
+                    parent,
+                    *variable_port_association_ancestry_by_id[parent])
+            }
+            variable_port_association_ancestry_by_id[record_id] = tuple(
+                sorted(ancestors))
+            pending_variable_port_ancestry.remove(record_id)
+            progressed = True
+        if not progressed:  # defence in depth after DAG validation
+            _fail("MODEL_VARIABLE_PORT_LINEAGE_INVALID",
+                  "variable-port association ancestry could not be derived")
+
+    # Withdrawals are validated only after the complete successor graph is
+    # known. Any unsuperseded current fork tip may be withdrawn; siblings do
+    # not block the event and may leave the root healthy afterward.
+    variable_port_association_withdrawals_by_target: dict[
+        str, tuple[str, ...]] = {}
+    for withdrawal_id in sorted(variable_port_association_withdrawals):
+        withdrawal = variable_port_association_withdrawals[withdrawal_id]
+        target = withdrawal.withdraws
+        if target not in variable_port_associations:
+            _fail("MODEL_REFERENCE_INVALID",
+                  f"variable-port withdrawal {withdrawal_id} targets "
+                  "a missing association")
+        if variable_port_association_superseded_by[target]:
+            _fail("MODEL_VARIABLE_PORT_WITHDRAWAL_INVALID",
+                  f"variable-port withdrawal {withdrawal_id} targets "
+                  "a superseded association")
+        if target in variable_port_association_withdrawals_by_target:
+            _fail("MODEL_VARIABLE_PORT_WITHDRAWAL_INVALID",
+                  f"variable-port association {target} is withdrawn "
+                  "more than once")
+        variable_port_association_withdrawals_by_target[target] = (
+            withdrawal_id,)
+
+    variable_port_association_withdrawn_by = {
+        record_id: variable_port_association_withdrawals_by_target.get(
+            record_id, ())
+        for record_id in variable_port_associations}
+    current_variable_port_association_tips_by_root: dict[
+        str, tuple[VariablePortAssociation, ...]] = {
+            root: () for root in sorted(
+                set(variable_port_association_root_by_id.values()))}
+    for record_id in sorted(variable_port_associations):
+        if (not variable_port_association_superseded_by[record_id]
+                and not variable_port_association_withdrawn_by[record_id]):
+            root = variable_port_association_root_by_id[record_id]
+            current_variable_port_association_tips_by_root[root] = (
+                *current_variable_port_association_tips_by_root[root],
+                variable_port_associations[record_id])
+
     # -- type lineages: invariant fields, acyclic, one current per name ---
     for record_id in sorted(types):
         definition = types[record_id]
@@ -971,6 +1123,28 @@ def validate_record_collection(
         port_claim_withdrawals=_frozen_mapping(port_claim_withdrawals),
         port_withdrawals_by_target=_frozen_mapping(
             port_withdrawals_by_target),
+        variable_port_associations=_frozen_mapping(
+            variable_port_associations),
+        variable_port_association_withdrawals=_frozen_mapping(
+            variable_port_association_withdrawals),
+        variable_port_association_root_by_id=_frozen_mapping(
+            variable_port_association_root_by_id),
+        variable_port_association_ancestry_by_id=_frozen_mapping(
+            variable_port_association_ancestry_by_id),
+        variable_port_association_ids_by_subject=_frozen_mapping(
+            variable_port_association_ids_by_subject),
+        variable_port_association_ids_by_variable_context=_frozen_mapping(
+            variable_port_association_ids_by_variable_context),
+        variable_port_association_ids_by_port_context=_frozen_mapping(
+            variable_port_association_ids_by_port_context),
+        variable_port_association_superseded_by=_frozen_mapping(
+            variable_port_association_superseded_by),
+        current_variable_port_association_tips_by_root=_frozen_mapping(
+            current_variable_port_association_tips_by_root),
+        variable_port_association_withdrawn_by=_frozen_mapping(
+            variable_port_association_withdrawn_by),
+        variable_port_association_withdrawals_by_target=_frozen_mapping(
+            variable_port_association_withdrawals_by_target),
         superseded_by=_frozen_mapping(superseded_by),
         withdrawn_by=_frozen_mapping(withdrawn_by))
 
