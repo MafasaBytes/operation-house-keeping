@@ -205,13 +205,16 @@ def test_slice_a_status_documentation_records_the_owner_stop():
         "VP-001 Slice A implemented and adversarially reviewed; awaiting "
         "owner acceptance.")
     for path in (
-        Path("CLAUDE.md"),
-        Path("backend/model_kernel/README.md"),
         Path("docs/adr/0014-explicit-variable-port-association.md"),
         Path("docs/superpowers/specs/"
              "2026-08-28-vp001-explicit-variable-port-association-design.md"),
     ):
         assert status in path.read_text(encoding="utf-8")
+    for path in (Path("CLAUDE.md"), Path("backend/model_kernel/README.md")):
+        text = " ".join(path.read_text(encoding="utf-8").split())
+        assert (
+            "VP-001 Slice A has been implemented and adversarially reviewed; "
+            "owner validation is pending.") in text
     specification = Path(
         "docs/superpowers/specs/"
         "2026-08-28-vp001-explicit-variable-port-association-design.md"

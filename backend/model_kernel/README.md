@@ -186,6 +186,7 @@ to the implemented Slice C demonstration. Richer
 predicates beyond CN-001's exact numeric bounds
 also remain future work.
 
-VP-001 Slice A implemented and adversarially reviewed; awaiting owner acceptance.
+VP-001 Slice A has been implemented and adversarially reviewed; owner validation
+is pending.
 Slices B, C, and D remain separately owner-gated. The demo ledger remains the
 accepted 28-record PT-001 revision with no committed `vpa_` or `vpw_` record.

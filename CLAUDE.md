@@ -739,7 +739,8 @@ model ledger contains exactly 28 records. The final model revision is
 The deterministic artifact SHA-256 is
 `53dd32846956d10331dfca8fc370ef7d7019325904a062db5f037605aa4cf3d8`.
 
-VP-001 Slice A implemented and adversarially reviewed; awaiting owner acceptance.
+VP-001 Slice A has been implemented and adversarially reviewed; owner validation
+is pending.
 Slice A adds only the explicit `vpa_` association claim, dedicated `vpw_`
 withdrawal event, canonical/store validation, immutable indexes, builders,
 exports, replay, and tests. Slices B, C, and D remain separately owner-gated;
