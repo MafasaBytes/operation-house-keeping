@@ -16,6 +16,7 @@ from tests.model_kernel.test_demo_model import (
     FROZEN_SN001_MODEL_RECORDS, FROZEN_VM001_RECORD,
     FROZEN_VS001_RECORD, PRE_CN001_MEMBERSHIP, PRE_CN001_REVISION,
     PRE_ES001_MEMBERSHIP, PRE_ES001_REVISION, PRE_SPECIFICATION_MEMBERSHIP,
+    PRE_PT001_REVISION,
     PRE_SPECIFICATION_REVISION, PRE_VARIABLE_MEMBERSHIP,
     PRE_VARIABLE_REVISION, VS001_MEMBERSHIP, GOLDEN_REVISION)
 from tests.observation_compatibility.test_demo_compatibility import (
@@ -44,8 +45,8 @@ WARNING = (
     "Constraint verdicts are exact predicate outcomes only; they express no "
     "safety, alarm, severity, diagnosis, control, or recommended action."
 )
-ARTIFACT_BYTES = 37886
-ARTIFACT_SHA256 = "0061dd735a241168fa0eb7e15fb92a35743c35357bf5d701c5220f31ec0a786c"
+ARTIFACT_BYTES = 40726
+ARTIFACT_SHA256 = "b549a063310e941734aa8787f9ae4bb5f27e967c7452c08243eeb195dfe832b4"
 
 
 def _loaded_declaration():
@@ -118,7 +119,7 @@ class TestCommittedLedger:
     def test_exact_two_record_append_identity_authority_and_content(self):
         loaded = ModelStore(DEMO_MODEL).load()
         assert loaded.revision.revision_id == CURRENT_REVISION
-        assert loaded.revision.record_count == 18
+        assert loaded.revision.record_count == 28
         assert len(loaded.constraint_registrations_by_anchor) == 1
         assert len(loaded.constraint_declarations) == 1
         result = _loaded_declaration()
@@ -176,7 +177,8 @@ class TestCommittedLedger:
         assert absent.status == "not_registered"
         assert not historical.constraint_registrations_by_anchor
         assert not historical.constraint_declarations
-        assert store.replay(CN001_MEMBERSHIP).revision.revision_id == CURRENT_REVISION
+        assert store.replay(CN001_MEMBERSHIP).revision.revision_id == (
+            PRE_PT001_REVISION)
 
     def test_every_explicit_pre_cn_membership_has_no_constraint_artifact(self):
         store = ModelStore(DEMO_MODEL)

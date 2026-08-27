@@ -14,8 +14,10 @@ DEMO_MODEL = Path("models/demo-printer")
 # never an acceptable membership selector.
 PRE_CN001_REVISION = ("mrv_23631989f98b678aaf1c556c345ac57a320ec266c2f712a4"
                       "0099e8032ca8135b")  # 16 records (ES-001)
-CURRENT_REVISION = ("mrv_919e1b36216243fd211e38a9d36556afa0d46e3660c3813"
-                    "02d271ec1fb258c51")  # 18 records (CN-001)
+PRE_PT001_REVISION = ("mrv_919e1b36216243fd211e38a9d36556afa0d46e3660c3813"
+                      "02d271ec1fb258c51")  # 18 records (CN-001)
+CURRENT_REVISION = ("mrv_c6244b6dc41de599de9894b55f4064e41ba5260e7d00f50"
+                    "bffc1e1e63da560a2")  # 28 records (PT-001)
 PRE_ES001_REVISION = ("mrv_702c840f7da00617feb1be252838105d8b001b2e19978842"
                       "bdcbec56996c99ff")  # 14 records (SN-001)
 GOLDEN_REVISION = ("mrv_25afc0ebf17ed12bd6ef0a95795798a53ef2"
@@ -44,6 +46,19 @@ ES001_MODEL_RECORDS = (
 CN001_MODEL_RECORDS = (
     "crg_870fe60d91056b6b1da9e3f734e5156cbb52722f6a0fc5f366f66cd40102a3df",
     "vcn_2fcac4a3c7b1ce656bddac5348fce9f82d4e3b66907209603fe58eb0b5ba37ec",
+)
+
+PT001_MODEL_RECORDS = (
+    "prg_c37057871b41bf873e317abde29dbba764be4974e195e21261d26942e5833af9",
+    "prg_c06e49bef910d073a6af206d884a1bb68c0b9baa1cdb1d698d0c35c61025e057",
+    "pif_e4fb4c31e5ce7d9530a42107b552acfede86d0d55f066fa8c43d1f813d7a3abf",
+    "pif_258ca8416b648b6d1fa4e89f9b482ebc23ac761d275992cd82f0a89062213242",
+    "pif_bd6972d529c96a1cf0f19c9876b0703d8e9335e7ae374006b9ecbd63b1a3cdd0",
+    "pif_ee957851ecd834be8a4db14a5c0bc25070a1b2987979f6519ca28ab7bfb8ff70",
+    "pif_80ce1f623bcec03fa2de7d6a40828a779d9005198b6629bb1839f3cf41e63e84",
+    "pif_f914972ae11f391fe17ff42a0521c02eca08d1d61072afc1eb684ed0e9792717",
+    "pcn_4861ecf058add8a45686c9b9c4f2e28085f60575705d6d06f1890b8ef11f1726",
+    "pcm_cb590cba8f33cc49ca6b2d22ef222606f9cc2f1117a8b60f1086099b6cd0337d",
 )
 
 VS001_MEMBERSHIP = (
@@ -79,6 +94,7 @@ PRE_ES001_MEMBERSHIP = tuple(sorted((*VS001_MEMBERSHIP,
 PRE_CN001_MEMBERSHIP = tuple(sorted((*PRE_ES001_MEMBERSHIP,
                                      *ES001_MODEL_RECORDS)))
 CN001_MEMBERSHIP = (*PRE_CN001_MEMBERSHIP, *CN001_MODEL_RECORDS)
+PT001_MEMBERSHIP = tuple(sorted((*CN001_MEMBERSHIP, *PT001_MODEL_RECORDS)))
 
 
 def eleven_ids(loaded):
@@ -96,7 +112,7 @@ class TestCommittedLedger:
         store = ModelStore(DEMO_MODEL)
         loaded = store.load()
         assert loaded.revision.revision_id == CURRENT_REVISION
-        assert loaded.revision.record_count == 18
+        assert loaded.revision.record_count == 28
         assert len(loaded.variable_registrations_by_anchor) == 1
         assert len(loaded.specifications) == 1
         assert len(loaded.types) == 3
@@ -112,7 +128,10 @@ class TestCommittedLedger:
         pre_cn001 = store.replay(PRE_CN001_MEMBERSHIP)
         assert pre_cn001.revision.revision_id == PRE_CN001_REVISION
         assert pre_cn001.revision.record_count == 16
-        current = store.replay(CN001_MEMBERSHIP)
+        pre_pt001 = store.replay(CN001_MEMBERSHIP)
+        assert pre_pt001.revision.revision_id == PRE_PT001_REVISION
+        assert pre_pt001.revision.record_count == 18
+        current = store.replay(PT001_MEMBERSHIP)
         assert current.revision == loaded.revision
 
     def test_fixture_authority_never_human_owner(self):
@@ -130,9 +149,11 @@ class TestCommittedLedger:
                for record_id in ES001_MODEL_RECORDS},
             **{record_id: "cn001_demo_fixture"
                for record_id in CN001_MODEL_RECORDS},
+            **{record_id: "pt001_demo_fixture"
+               for record_id in PT001_MODEL_RECORDS},
         }
         paths = sorted((DEMO_MODEL / "records").glob("*.json"))
-        assert len(paths) == len(expected) == 18
+        assert len(paths) == len(expected) == 28
         for path in paths:
             record = json.loads(path.read_text())
             assert record["authority"]["kind"] == "test_fixture", path.name
@@ -294,6 +315,29 @@ FROZEN_CN001_MODEL_RECORDS = {
     "4eb7f531e9932a60cd73573f66323b543235bc98ac8663d4e158ef3c732e5abd",
     "vcn_2fcac4a3c7b1ce656bddac5348fce9f82d4e3b66907209603fe58eb0b5ba37ec.json":
     "ee99560f5272e324c13bbc8beef2a3fb28a45ba92c1aaec9ae62d0d0cbb860d1",
+}
+
+FROZEN_PT001_MODEL_RECORDS = {
+    "prg_c06e49bef910d073a6af206d884a1bb68c0b9baa1cdb1d698d0c35c61025e057.json":
+    "f18118ea2922886bd0467f49f98831bff5311cf6fe7b2de8397e15063e8cc7a1",
+    "prg_c37057871b41bf873e317abde29dbba764be4974e195e21261d26942e5833af9.json":
+    "48317dc20c5fd413922276547d72d65ab7d960f72a5dcab889b70fb33e6908e1",
+    "pif_258ca8416b648b6d1fa4e89f9b482ebc23ac761d275992cd82f0a89062213242.json":
+    "5acebfdd5576182d697316da0550b464ed39c6ba79ef4ed49061f709b3bac9d0",
+    "pif_80ce1f623bcec03fa2de7d6a40828a779d9005198b6629bb1839f3cf41e63e84.json":
+    "4e2b34994ee183626cb81640bb6a111862e355d89247e330415fe24bb9f803fd",
+    "pif_bd6972d529c96a1cf0f19c9876b0703d8e9335e7ae374006b9ecbd63b1a3cdd0.json":
+    "1b7b715fb222e54dd57c98c261a8d4b6d9f41c364bb8888d426a8a69f147628d",
+    "pif_e4fb4c31e5ce7d9530a42107b552acfede86d0d55f066fa8c43d1f813d7a3abf.json":
+    "d87bc2f9d56655c39b331941ac359fb5053e0e3b8da665d23e8567d3df01e742",
+    "pif_ee957851ecd834be8a4db14a5c0bc25070a1b2987979f6519ca28ab7bfb8ff70.json":
+    "26d870f81772c59b01a84fc4d51111122c6da45ed5c9975719be3774d1106bf1",
+    "pif_f914972ae11f391fe17ff42a0521c02eca08d1d61072afc1eb684ed0e9792717.json":
+    "c07f4ff6311608081fe64a33fa4f0d532dc097add9173b72477c3f72a85b6b05",
+    "pcn_4861ecf058add8a45686c9b9c4f2e28085f60575705d6d06f1890b8ef11f1726.json":
+    "8715960e849d805a3d130924e75f0e7f197eb3349d4f2023525a4b1f31121c86",
+    "pcm_cb590cba8f33cc49ca6b2d22ef222606f9cc2f1117a8b60f1086099b6cd0337d.json":
+    "b26e7da81e25ecce083f405c2498bf6a04d1c3f150db290d78ba6558287ce21b",
 }
 
 FROZEN_SN001_BINDING_RECORDS = {

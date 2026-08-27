@@ -36,6 +36,7 @@ from tests.model_kernel.test_demo_model import (
     FROZEN_ES001_MODEL_RECORDS,
     FROZEN_CN001_MODEL_RECORDS,
     FROZEN_MK001_RECORDS,
+    FROZEN_PT001_MODEL_RECORDS,
     FROZEN_SN001_MODEL_RECORDS,
     FROZEN_VM001_RECORD,
     FROZEN_VS001_RECORD,
@@ -316,6 +317,7 @@ class TestAcceptedDemoLedgerFreeze:
             **FROZEN_SN001_MODEL_RECORDS,
             **FROZEN_ES001_MODEL_RECORDS,
             **FROZEN_CN001_MODEL_RECORDS,
+            **FROZEN_PT001_MODEL_RECORDS,
         }
         paths = sorted((DEMO_MODEL / "records").glob("*.json"))
         assert {path.name for path in paths} == set(expected)
@@ -329,7 +331,7 @@ class TestAcceptedDemoLedgerFreeze:
     def test_revision_and_authorities_remain_exactly_accepted(self):
         model = ModelStore(DEMO_MODEL).load()
         assert model.revision.revision_id == CURRENT_REVISION
-        assert model.revision.record_count == 18
+        assert model.revision.record_count == 28
         assert len(model.constraint_registrations_by_anchor) == 1
         assert len(model.constraint_declarations) == 1
         expected_agents = {
@@ -337,6 +339,7 @@ class TestAcceptedDemoLedgerFreeze:
             "sn001_showcase_fixture": 3,
             "es001_demo_fixture": 2,
             "cn001_demo_fixture": 2,
+            "pt001_demo_fixture": 10,
         }
         actual = {}
         for record in model.records.values():

@@ -175,12 +175,15 @@ def test_slice_b_adds_queries_without_store_or_relationship_port_endpoint():
     assert "endpoint_port_anchor_ids" not in RelationshipAssertion.model_fields
 
 
-def test_demo_ledger_remains_the_byte_frozen_eighteen_record_cn_revision():
+def test_demo_ledger_is_the_byte_frozen_twenty_eight_record_pt_revision():
     paths = sorted((DEMO_MODEL / "records").glob("*.json"))
-    assert len(paths) == 18
+    assert len(paths) == 28
     assert ModelStore(DEMO_MODEL).load().revision.revision_id == CURRENT_REVISION
-    assert not any(path.name.startswith(
-        ("prg_", "pif_", "pcn_", "pcm_", "ptw_")) for path in paths)
+    assert sum(path.name.startswith("prg_") for path in paths) == 2
+    assert sum(path.name.startswith("pif_") for path in paths) == 6
+    assert sum(path.name.startswith("pcn_") for path in paths) == 1
+    assert sum(path.name.startswith("pcm_") for path in paths) == 1
+    assert not any(path.name.startswith("ptw_") for path in paths)
     # Pin one digest over the entire accepted file-name/byte sequence so any
     # mutation, addition, deletion, or reorder changes this guard.
     digest = hashlib.sha256()
@@ -188,4 +191,4 @@ def test_demo_ledger_remains_the_byte_frozen_eighteen_record_cn_revision():
         digest.update(path.name.encode())
         digest.update(b"\0")
         digest.update(path.read_bytes())
-    assert digest.hexdigest() == "62802b5728396049e8874d48b987d3cda4ba0250cb720599bc1df81ae50f067d"
+    assert digest.hexdigest() == "69610f79d7ee99c5131a1345d7f5ce31fe8d9a451b0f28e7cdee349c8454adc5"
