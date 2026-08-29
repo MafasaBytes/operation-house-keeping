@@ -1,9 +1,9 @@
 # ADR-0015 — Explicit behavior declarations and evidence-gated evaluation
 
 Status: BH-001 corrected final design and Slice A owner accepted. Slice A is
-accepted at `57edec37b40c5da0c300cc1333fbb3cf5d7bb41a`. Slice B is
-owner-authorized but not yet implemented. Slices C and D remain separately
-owner-gated and unstarted.
+accepted at `57edec37b40c5da0c300cc1333fbb3cf5d7bb41a`. Slice B is implemented
+and adversarially reviewed; awaiting owner acceptance. Slices C and D remain
+separately owner-gated and unstarted.
 
 Accepted base: `main` at
 `46c04ed6f6f09b254b2f52f07611e2efbdd1d4f6`.
@@ -111,8 +111,9 @@ composition.
     admission, lifecycle indexes, builders, exports, replay, adversarial tests,
     and documentation only. It adds no kernel query or result contract, no
     evaluator, no observation selection or comparison, and no fixture record.
-15. Slice B may add exactly the four accepted read-only kernel queries only
-    after Slice A owner acceptance. Slice C may then add the separate read-only
+15. Slice B adds exactly the four accepted read-only kernel queries after
+    Slice A owner acceptance. It is implemented and adversarially reviewed;
+    awaiting owner acceptance. Slice C may then add the separate read-only
     `backend.behavior_evaluation` composition with explicit source selectors,
     exact same-acquisition-envelope admission, and the public bounded CN
     exact-number parser. Slice D remains a separately gated declaration-only

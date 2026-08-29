@@ -1,6 +1,7 @@
 """BH-001 Slice B exact public query and result contracts (red first)."""
 
 import inspect
+from pathlib import Path
 from typing import get_args
 
 import backend.model_kernel as kernel
@@ -128,3 +129,21 @@ def test_slice_b_exports_no_evaluator_port_or_outcome_surface():
         "BehaviorValidity", "BehaviorHealth", "BehaviorOutcome",
     }
     assert forbidden.isdisjoint(kernel.__all__)
+
+
+def test_slice_b_documentation_status_is_exact_and_slice_c_d_are_unstarted():
+    status = "Slice B is implemented and adversarially reviewed; awaiting owner acceptance."
+    paths = (
+        Path("CLAUDE.md"),
+        Path("backend/model_kernel/README.md"),
+        Path("docs/adr/0015-explicit-behavior-declarations-and-evidence-gated-evaluation.md"),
+        Path("docs/superpowers/specs/2026-08-29-bh001-explicit-behavior-and-evidence-gated-evaluation-design.md"),
+        Path("docs/superpowers/plans/2026-08-29-bh001-slice-b-implementation-plan.md"),
+        Path("docs/superpowers/plans/2026-08-29-bh001-slice-b-adversarial-acceptance-matrix.md"),
+    )
+    for path in paths:
+        text = path.read_text(encoding="utf-8")
+        normalized = " ".join(text.split())
+        assert status in normalized, path
+        assert "Slices C and D" in normalized, path
+        assert "unstarted" in normalized or "have not started" in normalized, path

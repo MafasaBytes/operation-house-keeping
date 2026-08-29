@@ -815,5 +815,7 @@ context-specific. Cross-owner registration is permitted only by an explicit
 claim, while shared ownership, names, hierarchy, ports, VPA, topology,
 semantics, constraints, and observations create no behavior. Slice A adds no
 behavior query, evaluator, numeric comparison, state composition, or demo
-record. Slice B is owner-authorized but not yet implemented. Slices C and D
-have not started.
+record. Slice B is implemented and adversarially reviewed; awaiting owner
+acceptance. It adds exactly the four read-only model-kernel queries and their
+authoritatively revalidated carry-once result contracts. Slices C and D have
+not started.

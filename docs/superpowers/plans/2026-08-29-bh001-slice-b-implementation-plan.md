@@ -3,8 +3,9 @@
 Status: Slice A implementation owner accepted at
 `57edec37b40c5da0c300cc1333fbb3cf5d7bb41a`, with acceptance recorded by the
 separate administrative commit
-`c39c674a95ad04c68250e23e86b169399a9547dd`. Slice B is owner-authorized and
-planned here before production code. Slices C and D remain unstarted.
+`c39c674a95ad04c68250e23e86b169399a9547dd`. Slice B is implemented and
+adversarially reviewed; awaiting owner acceptance. Slices C and D remain
+unstarted.
 
 Slice B starting HEAD: `c39c674a95ad04c68250e23e86b169399a9547dd`.
 

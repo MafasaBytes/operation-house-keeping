@@ -26,7 +26,7 @@ runtime model sets use the documented external verification procedure.
 
 ## Semantics worth knowing
 
-- **Behavior is explicit model knowledge** (BH-001 Slice A): an
+- **Behavior is explicit model knowledge** (BH-001 Slices A and B): an
   evidence-bearing permanent `BehaviorRegistration` binds one stable `bhv_`
   identity to exactly two distinct, unordered, role-free registered variables
   and the sole v1 family `exact_numeric_equality`. Cross-owner pairs are
@@ -36,9 +36,18 @@ runtime model sets use the documented external verification procedure.
   and `same_acquisition_cohort` as a future evaluation basis. Corrections form
   membership-relative multi-root DAGs keyed by behavior anchor and exact
   context; same-root forks remain visible, cross-root convergence is rejected,
-  and `BehaviorRuleWithdrawal` retracts only a current tip. Slice A adds no
-  query, evaluation, numeric comparison, port/VPA meaning, causality, flow,
-  control, safety claim, or fixture record.
+  and `BehaviorRuleWithdrawal` retracts only a current tip. Slice B adds
+  exactly `behavior()`, `behavior_declaration()`,
+  `behaviors_involving_variable()`, and `behavior_assertion()` as read-only
+  queries over injected `LoadedModel` material. Their carry-once results
+  disclose permanent registration, exact-context lifecycle, same-root fork
+  conflict, identical-effective-body independent-root corroboration,
+  cross-root disagreement, inactivity, ancestry, withdrawals, and historical
+  revival without selecting a winner or inferring behavior. Authoritative
+  result validation reconstructs records, membership, indices, lifecycle,
+  effective-body grouping, and deterministic ordering without a store or
+  filesystem. Slices A and B add no evaluation, numeric comparison, port/VPA
+  meaning, causality, flow, control, safety claim, or fixture record.
 - **Variable-to-port association is explicit** (VP-001 Slices A and B): an
   evidence-bearing `VariablePortAssociation` relates one registered variable
   to one registered port in an exact assertion context only when both are owned
@@ -229,5 +238,5 @@ The accepted PT artifact SHA-256 is
 BH-001's corrected final design and Slice A are owner accepted. Slice A is
 accepted at `57edec37b40c5da0c300cc1333fbb3cf5d7bb41a`. The current committed demo
 remains the accepted 29-record VP revision and contains zero `brg_`, `bhd_`, or
-`bhw_` records. Slice B is owner-authorized but not yet implemented. Slices C
-and D have not started.
+`bhw_` records. Slice B is implemented and adversarially reviewed; awaiting
+owner acceptance. Slices C and D have not started.
