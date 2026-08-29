@@ -11,7 +11,9 @@ from backend.model_kernel.canonical import canonical_payload
 from backend.model_kernel.contracts import RelationshipAssertion
 from backend.model_kernel.store import validate_record_collection
 from tests.model_kernel.builders import ENT_A, registration as entity_registration
-from tests.model_kernel.test_demo_model import CURRENT_REVISION, DEMO_MODEL
+from tests.model_kernel.test_demo_model import (
+    DEMO_MODEL, PRE_VP001_REVISION, PT001_MEMBERSHIP,
+)
 from tests.model_kernel.test_port_records import (
     PORT_A,
     PORT_B,
@@ -175,10 +177,12 @@ def test_slice_b_adds_queries_without_store_or_relationship_port_endpoint():
     assert "endpoint_port_anchor_ids" not in RelationshipAssertion.model_fields
 
 
-def test_demo_ledger_is_the_byte_frozen_twenty_eight_record_pt_revision():
-    paths = sorted((DEMO_MODEL / "records").glob("*.json"))
+def test_demo_pt_membership_is_the_byte_frozen_twenty_eight_record_revision():
+    paths = [DEMO_MODEL / "records" / f"{record_id}.json"
+             for record_id in PT001_MEMBERSHIP]
     assert len(paths) == 28
-    assert ModelStore(DEMO_MODEL).load().revision.revision_id == CURRENT_REVISION
+    assert ModelStore(DEMO_MODEL).replay(
+        PT001_MEMBERSHIP).revision.revision_id == PRE_VP001_REVISION
     assert sum(path.name.startswith("prg_") for path in paths) == 2
     assert sum(path.name.startswith("pif_") for path in paths) == 6
     assert sum(path.name.startswith("pcn_") for path in paths) == 1

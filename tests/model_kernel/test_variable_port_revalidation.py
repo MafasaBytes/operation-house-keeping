@@ -16,9 +16,11 @@ from tests.model_kernel.test_demo_model import (
     CN001_MEMBERSHIP, CURRENT_REVISION, FROZEN_CN001_MODEL_RECORDS,
     FROZEN_ES001_MODEL_RECORDS, FROZEN_MK001_RECORDS,
     FROZEN_PT001_MODEL_RECORDS, FROZEN_SN001_MODEL_RECORDS,
-    FROZEN_VM001_RECORD, FROZEN_VS001_RECORD, PRE_CN001_MEMBERSHIP,
+    FROZEN_VM001_RECORD, FROZEN_VP001_MODEL_RECORDS,
+    FROZEN_VS001_RECORD, PRE_CN001_MEMBERSHIP,
     PRE_ES001_MEMBERSHIP, PRE_SPECIFICATION_MEMBERSHIP,
-    PRE_VARIABLE_MEMBERSHIP, PT001_MEMBERSHIP, VS001_MEMBERSHIP,
+    PRE_VARIABLE_MEMBERSHIP, PRE_VP001_REVISION, PT001_MEMBERSHIP,
+    VP001_MEMBERSHIP, VP001_MODEL_RECORDS, VS001_MEMBERSHIP,
 )
 from tests.model_kernel.test_demo_pt001 import (
     ARTIFACT_BYTES, ARTIFACT_SHA256, _artifact_bytes,
@@ -154,14 +156,18 @@ def test_all_explicit_histories_replay_with_empty_immutable_vp_indexes():
         assert loaded.variable_port_association_ids_by_subject == {}
         with pytest.raises(TypeError):
             loaded.variable_port_associations["forged"] = association()
-    assert store.replay(PT001_MEMBERSHIP).revision.revision_id == CURRENT_REVISION
+    assert store.replay(PT001_MEMBERSHIP).revision.revision_id == \
+        PRE_VP001_REVISION
 
 
-def test_demo_28_bytes_revision_and_artifact_are_frozen_without_vp_fixture():
+def test_demo_28_predecessors_and_pt_artifact_are_frozen_after_vp_append():
     paths = sorted((DEMO_MODEL / "records").glob("*.json"))
-    assert len(paths) == 28
-    assert not any(path.name.startswith(("vpa_", "vpw_")) for path in paths)
+    assert len(paths) == 29
+    assert [path.stem for path in paths if path.name.startswith("vpa_")] == \
+        list(VP001_MODEL_RECORDS)
+    assert not any(path.name.startswith("vpw_") for path in paths)
     assert ModelStore(DEMO_MODEL).load().revision.revision_id == CURRENT_REVISION
+    assert ModelStore(DEMO_MODEL).load().revision.record_ids == VP001_MEMBERSHIP
     frozen = {
         **FROZEN_MK001_RECORDS, **FROZEN_VM001_RECORD,
         **FROZEN_VS001_RECORD, **FROZEN_SN001_MODEL_RECORDS,
@@ -172,12 +178,15 @@ def test_demo_28_bytes_revision_and_artifact_are_frozen_without_vp_fixture():
     for filename, digest in frozen.items():
         assert hashlib.sha256((DEMO_MODEL / "records" / filename).read_bytes(
         )).hexdigest() == digest
+    for filename, digest in FROZEN_VP001_MODEL_RECORDS.items():
+        assert hashlib.sha256((DEMO_MODEL / "records" / filename).read_bytes(
+        )).hexdigest() == digest
     artifact = _artifact_bytes()
     assert len(artifact) == ARTIFACT_BYTES
     assert hashlib.sha256(artifact).hexdigest() == ARTIFACT_SHA256
 
 
-def test_slice_b_is_present_while_c_d_and_upper_layer_imports_are_absent():
+def test_slices_b_c_d_are_present_without_kernel_import_or_store_leakage():
     for method in (
         "variable_port_association", "ports_associated_with_variable",
         "variables_associated_with_port", "variable_port_assertion",
@@ -186,8 +195,9 @@ def test_slice_b_is_present_while_c_d_and_upper_layer_imports_are_absent():
     assert not hasattr(ModelQueries, "associated_port_variable_state")
     assert not Path("backend/variable_port_association").exists()
     assert not Path("backend/variable_port_state").exists()
-    assert not any(path.name.startswith(("vpa_", "vpw_"))
-                   for path in (DEMO_MODEL / "records").glob("*.json"))
+    fixture_paths = tuple((DEMO_MODEL / "records").glob("*.json"))
+    assert sum(path.name.startswith("vpa_") for path in fixture_paths) == 1
+    assert not any(path.name.startswith("vpw_") for path in fixture_paths)
     tree = ast.parse(Path("backend/model_kernel/store.py").read_text())
     imports = []
     for node in ast.walk(tree):

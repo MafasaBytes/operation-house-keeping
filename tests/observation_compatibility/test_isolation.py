@@ -128,7 +128,7 @@ class TestLedgerVocabulary:
 
     def test_committed_model_ledger_has_no_source_or_value_vocabulary(self):
         records = sorted(Path("models/demo-printer/records").glob("*.json"))
-        assert len(records) == 28
+        assert len(records) == 29
         for path in records:
             text = json.dumps(json.loads(path.read_text()))
             for needle in ("source_id", "adapter_id", "json_pointer",

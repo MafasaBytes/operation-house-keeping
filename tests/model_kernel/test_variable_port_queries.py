@@ -295,7 +295,12 @@ def test_assertion_activity_is_independent_of_containing_root_health(tmp_path):
 
 
 def test_demo_pt_semantics_and_shared_owner_do_not_infer_vp_association():
-    loaded = ModelStore(DEMO_MODEL).load()
+    # The non-inference claim is historical and therefore replays the exact
+    # accepted PT membership.  Loading current membership after Slice D would
+    # dishonestly include the independently declared VPA.
+    from tests.model_kernel.test_demo_model import PT001_MEMBERSHIP
+
+    loaded = ModelStore(DEMO_MODEL).replay(PT001_MEMBERSHIP)
     queries = ModelQueries(loaded)
     exact_result = queries.variable_port_association(
         DEMO_VARIABLE, DEMO_PORT, context=CONTEXT)

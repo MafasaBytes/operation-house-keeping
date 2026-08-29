@@ -9,7 +9,10 @@ import pytest
 from pydantic import ValidationError
 
 import backend.model_state as model_state
-from tests.model_kernel.test_demo_model import CURRENT_REVISION
+from tests.model_kernel.test_demo_model import (
+    CURRENT_REVISION, PRE_VP001_REVISION, PT001_MEMBERSHIP,
+    VP001_MEMBERSHIP, VP001_MODEL_RECORDS,
+)
 from tests.model_kernel.test_demo_pt001 import (
     ARTIFACT_BYTES, ARTIFACT_SHA256, _artifact_bytes,
 )
@@ -246,10 +249,17 @@ def test_slice_c_import_direction_read_only_scope_and_non_inference_words():
 
 def test_committed_ledgers_and_accepted_pt_artifact_remain_unchanged():
     paths = sorted((DEMO / "records").glob("*.json"))
-    assert len(paths) == 28
-    assert not any(path.name.startswith(("vpa_", "vpw_")) for path in paths)
+    assert len(paths) == 29
+    assert [path.stem for path in paths if path.name.startswith("vpa_")] == \
+        list(VP001_MODEL_RECORDS)
+    assert not any(path.name.startswith("vpw_") for path in paths)
     from backend.model_kernel import ModelStore
-    assert ModelStore(DEMO).load().revision.revision_id == CURRENT_REVISION
+    store = ModelStore(DEMO)
+    assert store.load().revision.revision_id == CURRENT_REVISION
+    assert store.load().revision.record_ids == VP001_MEMBERSHIP
+    historical = store.replay(PT001_MEMBERSHIP)
+    assert historical.revision.revision_id == PRE_VP001_REVISION
+    assert not historical.variable_port_associations
     artifact = _artifact_bytes()
     assert len(artifact) == ARTIFACT_BYTES
     assert hashlib.sha256(artifact).hexdigest() == ARTIFACT_SHA256

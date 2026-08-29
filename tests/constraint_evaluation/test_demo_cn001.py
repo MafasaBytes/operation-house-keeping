@@ -45,8 +45,11 @@ WARNING = (
     "Constraint verdicts are exact predicate outcomes only; they express no "
     "safety, alarm, severity, diagnosis, control, or recommended action."
 )
-ARTIFACT_BYTES = 40726
-ARTIFACT_SHA256 = "b549a063310e941734aa8787f9ae4bb5f27e967c7452c08243eeb195dfe832b4"
+# The artifact is a current-model disclosure. Slice D adds one independently
+# scoped VPA to that explicit model revision without changing the constraint,
+# state, semantic, binding, interpretation, or temporal findings.
+ARTIFACT_BYTES = 41010
+ARTIFACT_SHA256 = "161a7beba5b836246f8d0500bd286cff488cc18b037997a6d02548e7c107a5d9"
 
 
 def _loaded_declaration():
@@ -119,7 +122,7 @@ class TestCommittedLedger:
     def test_exact_two_record_append_identity_authority_and_content(self):
         loaded = ModelStore(DEMO_MODEL).load()
         assert loaded.revision.revision_id == CURRENT_REVISION
-        assert loaded.revision.record_count == 28
+        assert loaded.revision.record_count == 29
         assert len(loaded.constraint_registrations_by_anchor) == 1
         assert len(loaded.constraint_declarations) == 1
         result = _loaded_declaration()

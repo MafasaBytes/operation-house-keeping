@@ -251,7 +251,7 @@ def _artifact_bytes():
 
 
 def test_exact_ten_record_append_and_golden_identity_pins():
-    loaded = ModelStore(DEMO_MODEL).load()
+    loaded = ModelStore(DEMO_MODEL).replay(PT001_MEMBERSHIP)
     assert loaded.revision.revision_id == FINAL_REVISION
     assert loaded.revision.record_count == 28
     assert loaded.revision.record_ids == PT001_MEMBERSHIP
