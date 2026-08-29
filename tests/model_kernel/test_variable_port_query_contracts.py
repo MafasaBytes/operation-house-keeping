@@ -35,18 +35,18 @@ RESULT_FIELDS = {
 
 
 ALIASES = {
-    "VariablePortEndpointStatus": {
+    "VariablePortEndpointStatus": (
         "both_registered", "variable_not_registered", "port_not_registered",
-        "both_not_registered"},
-    "VariablePortOwnerAlignment": {
-        "not_evaluated", "same_owner", "different_owners"},
-    "VariablePortAssociationConclusion": {
-        "not_evaluated", "not_declared", "asserted", "inactive"},
-    "VariablePortLineageSummary": {
-        "not_applicable", "healthy", "conflicted", "inactive"},
-    "VariablePortsStatus": {"variable_not_registered", "registered"},
-    "PortVariablesStatus": {"port_not_registered", "registered"},
-    "VariablePortAssertionLookupStatus": {"not_found", "found"},
+        "both_not_registered"),
+    "VariablePortOwnerAlignment": (
+        "not_evaluated", "same_owner", "different_owners"),
+    "VariablePortAssociationConclusion": (
+        "not_evaluated", "not_declared", "asserted", "inactive"),
+    "VariablePortLineageSummary": (
+        "not_applicable", "healthy", "conflicted", "inactive"),
+    "VariablePortsStatus": ("variable_not_registered", "registered"),
+    "PortVariablesStatus": ("port_not_registered", "registered"),
+    "VariablePortAssertionLookupStatus": ("not_found", "found"),
 }
 
 
@@ -56,16 +56,39 @@ def test_exact_public_result_names_fields_and_exports():
         assert set(contract.model_fields) == fields
         assert name in kernel.__all__
     assert {name for name in kernel.__all__ if name.startswith("VariablePort")
-            or name == "PortVariablesResult"} == (
+            or name.startswith("PortVariables")} == (
                 set(RESULT_FIELDS) | set(ALIASES) | {
                     "VariablePortAssociation",
                     "VariablePortAssociationWithdrawal"})
+    assert len(kernel.__all__) == 126
+    assert len(kernel.__all__) == len(set(kernel.__all__))
 
 
 def test_exact_named_literal_vocabularies_are_public():
     for name, values in ALIASES.items():
-        assert set(get_args(getattr(kernel, name))) == values
+        assert get_args(getattr(kernel, name)) == values
         assert name in kernel.__all__
+
+    annotated_fields = (
+        (kernel.VariablePortAssociationResult, "endpoint_status",
+         kernel.VariablePortEndpointStatus),
+        (kernel.VariablePortAssociationResult, "owner_alignment",
+         kernel.VariablePortOwnerAlignment),
+        (kernel.VariablePortAssociationResult, "conclusion",
+         kernel.VariablePortAssociationConclusion),
+        (kernel.VariablePortAssociationResult, "lineage_summary",
+         kernel.VariablePortLineageSummary),
+        (kernel.VariablePortAssociationEntry, "conclusion",
+         kernel.VariablePortAssociationConclusion),
+        (kernel.VariablePortAssociationEntry, "lineage_summary",
+         kernel.VariablePortLineageSummary),
+        (kernel.VariablePortsResult, "status", kernel.VariablePortsStatus),
+        (kernel.PortVariablesResult, "status", kernel.PortVariablesStatus),
+        (kernel.VariablePortAssertionDisclosureResult, "lookup_status",
+         kernel.VariablePortAssertionLookupStatus),
+    )
+    for contract, field, alias in annotated_fields:
+        assert contract.model_fields[field].annotation == alias
 
 
 def test_exact_query_signatures_and_return_annotations():

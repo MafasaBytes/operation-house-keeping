@@ -341,6 +341,13 @@ def test_model_kernel_public_exports_include_accepted_pt_and_vp_slice_a_names():
         "SharedConnectionsResult", "EndpointInterfaceResult",
         "InterfaceCompatibilityResult",
         "VariablePortAssociation", "VariablePortAssociationWithdrawal",
+        "VariablePortEndpointStatus", "VariablePortOwnerAlignment",
+        "VariablePortAssociationConclusion", "VariablePortLineageSummary",
+        "VariablePortsStatus", "PortVariablesStatus",
+        "VariablePortAssertionLookupStatus",
+        "VariablePortAssociationRootResult", "VariablePortAssociationResult",
+        "VariablePortAssociationEntry", "VariablePortsResult",
+        "PortVariablesResult", "VariablePortAssertionDisclosureResult",
     }
     old = {
         "EntityRegistration", "VariableRegistration",

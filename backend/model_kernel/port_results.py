@@ -5,10 +5,11 @@ only indices into that immutable, fully revalidated collection.
 """
 
 import re
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import (
-    BaseModel, ConfigDict, Field, PrivateAttr, TypeAdapter, ValidationError,
+    BaseModel, ConfigDict, Field, PrivateAttr, StrictInt, TypeAdapter,
+    ValidationError,
     model_validator,
 )
 
@@ -55,6 +56,8 @@ VariablePortLineageSummary = Literal[
 VariablePortsStatus = Literal["variable_not_registered", "registered"]
 PortVariablesStatus = Literal["port_not_registered", "registered"]
 VariablePortAssertionLookupStatus = Literal["not_found", "found"]
+
+_VariablePortIndex = Annotated[StrictInt, Field(ge=0)]
 
 
 def _validated_context(value) -> AssertionContext:
@@ -393,10 +396,10 @@ class VariablePortAssociationRootResult(_Result):
     """One correction root, carrying indices into the outer material only."""
 
     _material: ModelQueryMaterial = PrivateAttr()
-    root_record_index: int = Field(ge=0)
-    lineage_record_indices: tuple[int, ...]
-    current_tip_indices: tuple[int, ...]
-    withdrawal_indices: tuple[int, ...]
+    root_record_index: _VariablePortIndex
+    lineage_record_indices: tuple[_VariablePortIndex, ...]
+    current_tip_indices: tuple[_VariablePortIndex, ...]
+    withdrawal_indices: tuple[_VariablePortIndex, ...]
     lineage_health: ContainingLineageHealth
 
     @property
@@ -479,10 +482,10 @@ class VariablePortAssociationResult(_WithMaterial):
     context: AssertionContext
     endpoint_status: VariablePortEndpointStatus
     owner_alignment: VariablePortOwnerAlignment
-    variable_registration_index: int | None = Field(default=None, ge=0)
-    variable_owner_registration_index: int | None = Field(default=None, ge=0)
-    port_registration_index: int | None = Field(default=None, ge=0)
-    port_owner_registration_index: int | None = Field(default=None, ge=0)
+    variable_registration_index: _VariablePortIndex | None = None
+    variable_owner_registration_index: _VariablePortIndex | None = None
+    port_registration_index: _VariablePortIndex | None = None
+    port_owner_registration_index: _VariablePortIndex | None = None
     conclusion: VariablePortAssociationConclusion
     lineage_summary: VariablePortLineageSummary
     roots: tuple[VariablePortAssociationRootResult, ...] = ()
@@ -573,15 +576,15 @@ class VariablePortAssociationResult(_WithMaterial):
 
 class VariablePortAssociationEntry(_Result):
     _material: ModelQueryMaterial = PrivateAttr()
-    entry_index: int = Field(ge=0)
+    entry_index: _VariablePortIndex
     variable_anchor_id: str = Field(pattern=VARIABLE_ANCHOR_ID_PATTERN)
     port_anchor_id: str = Field(pattern=PORT_ANCHOR_ID_PATTERN)
-    variable_registration_index: int = Field(ge=0)
-    variable_owner_registration_index: int = Field(ge=0)
-    port_registration_index: int = Field(ge=0)
-    port_owner_registration_index: int = Field(ge=0)
-    conclusion: Literal["asserted", "inactive"]
-    lineage_summary: Literal["healthy", "conflicted", "inactive"]
+    variable_registration_index: _VariablePortIndex
+    variable_owner_registration_index: _VariablePortIndex
+    port_registration_index: _VariablePortIndex
+    port_owner_registration_index: _VariablePortIndex
+    conclusion: VariablePortAssociationConclusion
+    lineage_summary: VariablePortLineageSummary
     roots: tuple[VariablePortAssociationRootResult, ...]
 
     @property
@@ -649,8 +652,8 @@ class VariablePortsResult(_WithMaterial):
     variable_anchor_id: str = Field(pattern=VARIABLE_ANCHOR_ID_PATTERN)
     context: AssertionContext
     status: VariablePortsStatus
-    variable_registration_index: int | None = Field(default=None, ge=0)
-    owner_registration_index: int | None = Field(default=None, ge=0)
+    variable_registration_index: _VariablePortIndex | None = None
+    owner_registration_index: _VariablePortIndex | None = None
     entries: tuple[VariablePortAssociationEntry, ...] = ()
 
     @property
@@ -704,8 +707,8 @@ class PortVariablesResult(_WithMaterial):
     port_anchor_id: str = Field(pattern=PORT_ANCHOR_ID_PATTERN)
     context: AssertionContext
     status: PortVariablesStatus
-    port_registration_index: int | None = Field(default=None, ge=0)
-    owner_registration_index: int | None = Field(default=None, ge=0)
+    port_registration_index: _VariablePortIndex | None = None
+    owner_registration_index: _VariablePortIndex | None = None
     entries: tuple[VariablePortAssociationEntry, ...] = ()
 
     @property
@@ -756,12 +759,12 @@ class PortVariablesResult(_WithMaterial):
 class VariablePortAssertionDisclosureResult(_WithMaterial):
     record_id: str = Field(pattern=r"^(?:vpa|vpw)_[0-9a-f]{64}$")
     lookup_status: VariablePortAssertionLookupStatus
-    record_index: int | None = Field(default=None, ge=0)
+    record_index: _VariablePortIndex | None = None
     activity: AssertionActivity | None = None
     containing_lineage_health: ContainingLineageHealth | None = None
-    root_record_index: int | None = Field(default=None, ge=0)
-    successor_indices: tuple[int, ...] = ()
-    withdrawal_indices: tuple[int, ...] = ()
+    root_record_index: _VariablePortIndex | None = None
+    successor_indices: tuple[_VariablePortIndex, ...] = ()
+    withdrawal_indices: tuple[_VariablePortIndex, ...] = ()
 
     @property
     def record(self):

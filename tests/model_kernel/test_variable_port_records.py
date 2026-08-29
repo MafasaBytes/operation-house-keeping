@@ -152,21 +152,18 @@ def test_model_record_union_revalidates_hostile_nested_context_and_evidence():
         TypeAdapter(kernel.ModelRecord).validate_python(forged)
 
 
-def test_slice_a_exports_exactly_two_vp_names_and_no_reserved_query_surface():
-    assert len(kernel.__all__) == 113
+def test_vp_public_surface_includes_accepted_slice_a_and_b_names_only():
+    assert len(kernel.__all__) == 126
     assert {name for name in kernel.__all__ if "VariablePort" in name} == {
-        "VariablePortAssociation", "VariablePortAssociationWithdrawal"}
+        "VariablePortAssociation", "VariablePortAssociationWithdrawal",
+        "VariablePortEndpointStatus", "VariablePortOwnerAlignment",
+        "VariablePortAssociationConclusion", "VariablePortLineageSummary",
+        "VariablePortsStatus", "VariablePortAssertionLookupStatus",
+        "VariablePortAssociationRootResult", "VariablePortAssociationResult",
+        "VariablePortAssociationEntry", "VariablePortsResult",
+        "VariablePortAssertionDisclosureResult"}
     assert kernel.VariablePortAssociation is not None
     assert kernel.VariablePortAssociationWithdrawal is not None
-    for forbidden in (
-        "VariablePortAssociationResult", "VariablePortsResult",
-        "PortVariablesResult", "VariablePortAssertionDisclosureResult",
-        "AssociatedPortVariableStateResult",
-    ):
+    for forbidden in ("AssociatedPortVariableStateResult",):
         assert forbidden not in kernel.__all__
         assert not hasattr(kernel, forbidden)
-    for method in (
-        "variable_port_association", "ports_associated_with_variable",
-        "variables_associated_with_port", "variable_port_assertion",
-    ):
-        assert not hasattr(kernel.ModelQueries, method)

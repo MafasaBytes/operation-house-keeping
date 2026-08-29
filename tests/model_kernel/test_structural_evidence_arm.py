@@ -77,8 +77,8 @@ class TestKR2ArmContract:
 
 class TestKR3PublicSurface:
     def test_all_has_exact_names_and_every_name_resolves(self):
-        # 111 accepted PT names plus two VP Slice A records.
-        assert len(kernel.__all__) == 113
+        # 113 accepted Slice A names plus thirteen VP Slice B query names.
+        assert len(kernel.__all__) == 126
         assert "StructuralSourceLocatorEvidence" in kernel.__all__
         for name in kernel.__all__:
             assert getattr(kernel, name) is not None

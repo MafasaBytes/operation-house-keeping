@@ -177,12 +177,13 @@ def test_demo_28_bytes_revision_and_artifact_are_frozen_without_vp_fixture():
     assert hashlib.sha256(artifact).hexdigest() == ARTIFACT_SHA256
 
 
-def test_slice_b_c_d_and_upper_layer_imports_are_absent():
+def test_slice_b_is_present_while_c_d_and_upper_layer_imports_are_absent():
     for method in (
         "variable_port_association", "ports_associated_with_variable",
         "variables_associated_with_port", "variable_port_assertion",
     ):
-        assert not hasattr(ModelQueries, method)
+        assert hasattr(ModelQueries, method)
+    assert not hasattr(ModelQueries, "associated_port_variable_state")
     assert not Path("backend/variable_port_association").exists()
     assert not Path("backend/variable_port_state").exists()
     assert not any(path.name.startswith(("vpa_", "vpw_"))
