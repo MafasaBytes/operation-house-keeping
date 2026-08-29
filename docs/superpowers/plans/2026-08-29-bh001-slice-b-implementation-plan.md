@@ -4,8 +4,9 @@ Status: Slice A implementation owner accepted at
 `57edec37b40c5da0c300cc1333fbb3cf5d7bb41a`, with acceptance recorded by the
 separate administrative commit
 `c39c674a95ad04c68250e23e86b169399a9547dd`. Slice B is owner accepted at
-`05177f7306ce745d093bd5f11abafc13a6274d0f`. Slice C is owner-authorized but
-not yet implemented. Slice D remains unstarted.
+`05177f7306ce745d093bd5f11abafc13a6274d0f`. BH-001 Slices A and B are owner
+accepted. Slice C is implemented and adversarially reviewed; awaiting owner
+acceptance. Slice D has not started.
 
 Slice B starting HEAD: `c39c674a95ad04c68250e23e86b169399a9547dd`.
 

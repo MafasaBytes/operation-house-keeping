@@ -131,8 +131,10 @@ def test_slice_b_exports_no_evaluator_port_or_outcome_surface():
     assert forbidden.isdisjoint(kernel.__all__)
 
 
-def test_slice_b_documentation_status_is_exact_and_slice_c_d_are_unstarted():
-    status = "Slice B is implemented and adversarially reviewed; awaiting owner acceptance."
+def test_slice_b_acceptance_and_slice_c_review_status_are_exact():
+    slice_c_status = (
+        "Slice C is implemented and adversarially reviewed; awaiting owner "
+        "acceptance. Slice D has not started.")
     paths = (
         Path("CLAUDE.md"),
         Path("backend/model_kernel/README.md"),
@@ -144,6 +146,5 @@ def test_slice_b_documentation_status_is_exact_and_slice_c_d_are_unstarted():
     for path in paths:
         text = path.read_text(encoding="utf-8")
         normalized = " ".join(text.split())
-        assert status in normalized, path
-        assert "Slices C and D" in normalized, path
-        assert "unstarted" in normalized or "have not started" in normalized, path
+        assert "05177f7306ce745d093bd5f11abafc13a6274d0f" in normalized, path
+        assert slice_c_status in normalized, path
