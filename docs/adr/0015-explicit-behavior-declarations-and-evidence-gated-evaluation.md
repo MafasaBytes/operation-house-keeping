@@ -1,7 +1,8 @@
 # ADR-0015 — Explicit behavior declarations and evidence-gated evaluation
 
-Status: BH-001 corrected final design owner accepted. Slice A is authorized;
-Slices B, C, and D remain separately owner-gated and unstarted.
+Status: BH-001 corrected final design owner accepted. Slice A is implemented
+and adversarially reviewed; awaiting owner acceptance. Slices B, C, and D
+remain separately owner-gated and unstarted.
 
 Accepted base: `main` at
 `46c04ed6f6f09b254b2f52f07611e2efbdd1d4f6`.

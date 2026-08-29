@@ -1,7 +1,8 @@
 # BH-001 Slice A — identity and kernel record foundation implementation plan
 
-Status: corrected final BH-001 design owner accepted. Slice A is authorized;
-Slices B, C, and D are owner-gated and must remain unstarted.
+Status: corrected final BH-001 design owner accepted. Slice A is implemented
+and adversarially reviewed; awaiting owner acceptance. Slices B, C, and D are
+owner-gated and remain unstarted.
 
 Accepted repository base: `main` at
 `46c04ed6f6f09b254b2f52f07611e2efbdd1d4f6`.

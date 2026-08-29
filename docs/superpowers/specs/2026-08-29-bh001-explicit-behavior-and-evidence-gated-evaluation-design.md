@@ -1,6 +1,7 @@
 # BH-001 — Explicit Behavior Declarations and Evidence-Gated Evaluation
 
-Status: corrected final synthesis, design-only, awaiting owner review.
+Status: corrected final synthesis owner accepted. Slice A is implemented and
+adversarially reviewed; awaiting owner acceptance. Slices B-D have not started.
 
 Repository baseline: `main` at
 `46c04ed6f6f09b254b2f52f07611e2efbdd1d4f6`.
@@ -1539,6 +1540,10 @@ Implement only:
 
 Do not add kernel query methods, query result contracts, evaluator code, or
 fixtures. Stop for owner acceptance.
+
+Implementation status: implemented and adversarially reviewed; awaiting owner
+acceptance. No Slice B query surface, Slice C evaluator, or Slice D fixture was
+started.
 
 ### 26.2 Slice B — read-only kernel queries
 

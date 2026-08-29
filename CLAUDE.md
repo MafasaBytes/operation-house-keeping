@@ -804,3 +804,15 @@ the deterministic VP artifact SHA-256 is
 `a150e10317982ccc6330fa17a921128d3cf31ee9d6b710ef0ad8ea23f63e4ea3`.
 The accepted PT artifact SHA-256 is
 `53dd32846956d10331dfca8fc370ef7d7019325904a062db5f037605aa4cf3d8`.
+
+BH-001's corrected final design is owner accepted. Slice A is implemented and
+adversarially reviewed; awaiting owner acceptance. It adds only the opaque
+`BehaviorAnchor` identity and the evidence-backed `brg_`/`bhd_`/`bhw_`
+model-ledger foundation for an unordered, role-free pair of variables under
+the exact `exact_numeric_equality` rule family. Registration is permanent;
+declaration correction and withdrawal are membership-relative and
+context-specific. Cross-owner registration is permitted only by an explicit
+claim, while shared ownership, names, hierarchy, ports, VPA, topology,
+semantics, constraints, and observations create no behavior. Slice A adds no
+behavior query, evaluator, numeric comparison, state composition, or demo
+record. Slices B-D have not started.

@@ -26,6 +26,19 @@ runtime model sets use the documented external verification procedure.
 
 ## Semantics worth knowing
 
+- **Behavior is explicit model knowledge** (BH-001 Slice A): an
+  evidence-bearing permanent `BehaviorRegistration` binds one stable `bhv_`
+  identity to exactly two distinct, unordered, role-free registered variables
+  and the sole v1 family `exact_numeric_equality`. Cross-owner pairs are
+  permitted only through that explicit claim; common ownership creates
+  nothing. Evidence-bearing `BehaviorRuleDeclaration` records carry exact
+  `AssertionContext`, participant semantic locks, the minimal equality rule,
+  and `same_acquisition_cohort` as a future evaluation basis. Corrections form
+  membership-relative multi-root DAGs keyed by behavior anchor and exact
+  context; same-root forks remain visible, cross-root convergence is rejected,
+  and `BehaviorRuleWithdrawal` retracts only a current tip. Slice A adds no
+  query, evaluation, numeric comparison, port/VPA meaning, causality, flow,
+  control, safety claim, or fixture record.
 - **Variable-to-port association is explicit** (VP-001 Slices A and B): an
   evidence-bearing `VariablePortAssociation` relates one registered variable
   to one registered port in an exact assertion context only when both are owned
@@ -212,3 +225,8 @@ the deterministic VP artifact SHA-256 is
 `a150e10317982ccc6330fa17a921128d3cf31ee9d6b710ef0ad8ea23f63e4ea3`.
 The accepted PT artifact SHA-256 is
 `53dd32846956d10331dfca8fc370ef7d7019325904a062db5f037605aa4cf3d8`.
+
+BH-001's corrected final design is owner accepted. Slice A is implemented and
+adversarially reviewed; awaiting owner acceptance. The current committed demo
+remains the accepted 29-record VP revision and contains zero `brg_`, `bhd_`, or
+`bhw_` records. Slices B-D have not started.

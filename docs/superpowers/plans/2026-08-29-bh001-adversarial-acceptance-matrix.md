@@ -1,7 +1,8 @@
 # BH-001 — Adversarial Acceptance Matrix
 
-Status: Slice A red-first matrix. BH-001 design is owner accepted. Slice A is
-authorized; Slices B, C, and D are not started.
+Status: BH-001 design is owner accepted. Slice A is implemented and
+adversarially reviewed against this red-first matrix; awaiting owner
+acceptance. Slices B, C, and D are not started.
 
 Authoritative specification:
 `docs/superpowers/specs/2026-08-29-bh001-explicit-behavior-and-evidence-gated-evaluation-design.md`
@@ -103,9 +104,9 @@ Slice A isolation gates.
 
 | ID | Attack or assertion | Required result |
 |---|---|---|
-| C01 | Exact BRG golden vector | `brg_61285ea3c60f8cc319033ede3174f75c365411a68afafa968025cb7ff34de701` |
-| C02 | Exact BHD golden vector | `bhd_11a3ee92737da6a921052f2c92ca9c340840933ee99b7f2a408a2c58df38ea30` |
-| C03 | Exact BHW golden vector | `bhw_f422bbc75529292e1909843d77adb5c93a6a012629c154494c96c514c84f8974` |
+| C01 | Exact BRG golden vector | `brg_ecd5a9b669f91dca639fde20202ce4f3c4ff17006d7f0ffd23f09ed44f1f9e3e` |
+| C02 | Exact BHD golden vector | `bhd_9e3af9219521d1b3c5dfd5d41ae359dc8d3fb4c5db4b002586998e52f0a823eb` |
+| C03 | Exact BHW golden vector | `bhw_4c2456b2a6473f6a37c47b9aadedc10b1a8610c80e6650ba70cdbd7b2dd938f6` |
 | C04 | Malformed `brg_`/`bhd_`/`bhw_` ID or filename | Typed rejection |
 | C05 | Record kind/prefix substitution | Union rejection |
 | C06 | Mutated content under stale record ID | Hash rejection |
@@ -117,6 +118,14 @@ Slice A isolation gates.
 | C12 | BRG and BHD as `ModelRecordEvidence` | Structurally citable; membership closure enforced |
 | C13 | BHW as evidence | Structurally uncitable |
 | C14 | Existing record kind canonical bytes or hash changes | Preservation failure |
+
+The initial handwritten C01-C03 placeholders used variable-registration
+citations that were not produced by the matrix's own frozen synthetic
+builders. The red-first reproduction exposed that contradiction before the
+golden column could pass. The vectors above are the measured public-builder
+identities over the fully pinned canonical inputs in
+`tests/model_kernel/bh001_slice_a_helpers.py`; the tests pin the complete
+canonical bytes as well as these IDs. No existing record vector changed.
 
 ## 6. Registration and declaration admission
 
