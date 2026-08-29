@@ -15,8 +15,8 @@ data_sources → temporal_state ─┐
 Spec: `docs/superpowers/specs/2026-08-09-vm001-model-state-design.md`;
 decisions: `docs/adr/0008-model-state-composition-facade.md`.
 
-VP-001 Slices A and B are owner accepted. Slice C is implemented and
-adversarially reviewed; awaiting owner acceptance. Slice D has not started.
+VP-001 Slices A, B, and C are owner accepted. Slice D is authorized and in
+progress.
 Slice B is owner accepted at
 `81179700513bb671cf9955c6a5d7163e3bcc7e1b`. Slice C adds only
 `associated_port_variable_state()`: displaying variable state beside a port is

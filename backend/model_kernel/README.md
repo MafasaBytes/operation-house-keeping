@@ -188,8 +188,8 @@ to the implemented Slice C demonstration. Richer
 predicates beyond CN-001's exact numeric bounds
 also remain future work.
 
-VP-001 Slices A and B are owner accepted. Slice C is implemented and
-adversarially reviewed; awaiting owner acceptance. Slice D has not started.
+VP-001 Slices A, B, and C are owner accepted. Slice D is authorized and in
+progress.
 Slice A is accepted at
 `60b739182e423a05eac7f3c531145d90c65fe9bc`; it adds only role-free positive
 associations with strict same-owner admission, independent corroborating roots,

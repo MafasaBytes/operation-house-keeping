@@ -201,7 +201,7 @@ def test_slice_b_is_present_while_c_d_and_upper_layer_imports_are_absent():
         "backend.data_sources")) for name in imports)
 
 
-def test_slice_c_status_records_review_and_preserves_prior_acceptance():
+def test_slice_c_owner_acceptance_authorizes_slice_d_without_fixture_yet():
     accepted = (
         "Slice B is owner accepted at "
         "`81179700513bb671cf9955c6a5d7163e3bcc7e1b`.")
@@ -215,13 +215,12 @@ def test_slice_c_status_records_review_and_preserves_prior_acceptance():
     for path in surfaces:
         text = " ".join(path.read_text(encoding="utf-8").split())
         assert accepted in text
-        assert "VP-001 Slices A and B are owner accepted" in text
-        assert "Slice D has not started" in text
+        assert "VP-001 Slices A, B, and C are owner accepted" in text
+        assert "Slice D is authorized and in progress" in text
 
-    reviewed = (
-        "VP-001 Slices A and B are owner accepted. Slice C is implemented "
-        "and adversarially reviewed; awaiting owner acceptance. Slice D has "
-        "not started.")
+    accepted = (
+        "VP-001 Slices A, B, and C are owner accepted. Slice D is authorized "
+        "and in progress.")
     reviewed_surfaces = (
         Path("CLAUDE.md"),
         Path("backend/model_state/README.md"),
@@ -236,7 +235,7 @@ def test_slice_c_status_records_review_and_preserves_prior_acceptance():
     )
     for path in reviewed_surfaces:
         text = " ".join(path.read_text(encoding="utf-8").split())
-        assert reviewed in text
+        assert accepted in text
         assert ("displaying variable state beside a port is not a claim that "
                 "an observation occurred at the port" in text.lower())
 

@@ -1,7 +1,7 @@
 # VP-001 — adversarial acceptance matrix
 
-Status: VP-001 Slices A and B are owner accepted. Slice C is implemented and
-adversarially reviewed; awaiting owner acceptance. Slice D has not started.
+Status: VP-001 Slices A, B, and C are owner accepted. Slice D is authorized and
+in progress.
 Slice A is owner accepted at
 `60b739182e423a05eac7f3c531145d90c65fe9bc`; Slice B is owner accepted at
 `81179700513bb671cf9955c6a5d7163e3bcc7e1b`.
