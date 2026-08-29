@@ -1,0 +1,33 @@
+{
+  "authority": {
+    "agent": "vp001_demo_fixture",
+    "kind": "test_fixture",
+    "method": "manual_declaration"
+  },
+  "context": {
+    "kind": "lifecycle_view",
+    "view": "as_designed"
+  },
+  "evidence": [
+    {
+      "kind": "model_record",
+      "record_id": "prg_c06e49bef910d073a6af206d884a1bb68c0b9baa1cdb1d698d0c35c61025e057"
+    },
+    {
+      "kind": "model_record",
+      "record_id": "vrg_40c8c6b984345af33de6913ca9025d60d22b0e627b110e974c78270eb941dca7"
+    },
+    {
+      "kind": "owner_declaration",
+      "statement": "VP-001 fixture authority explicitly declares that the existing synthetic hotend-temperature variable and the existing synthetic extruder-unit interface are associated in the as-designed lifecycle view; illustrative fixture only."
+    }
+  ],
+  "note": "VP-001 bounded synthetic demonstration.",
+  "port_anchor_id": "prt_91a3d6db9df440e1a09dbdb185c7b182",
+  "record_id": "vpa_f6443787fc9665e24cae80a5ba0650d0bda8abefe87cb60427c8b39068932e49",
+  "record_kind": "variable_port_association",
+  "recorded_at": "2026-08-29T12:00:00+00:00",
+  "schema_version": "1",
+  "supersedes": [],
+  "variable_anchor_id": "var_b7e2d3c4f5a6172839405a6b7c8d9e0f"
+}
