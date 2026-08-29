@@ -107,7 +107,8 @@ def test_exact_four_query_signatures_and_no_aliases():
             ("self", "record_id"), "BehaviorAssertionDisclosureResult"),
     }
     public = {name for name, member in inspect.getmembers(
-        kernel.ModelQueries, inspect.isfunction) if "behavior" in name}
+        kernel.ModelQueries, inspect.isfunction)
+        if not name.startswith("_") and "behavior" in name}
     assert public == set(expected)
     for name, (parameters, return_name) in expected.items():
         signature = inspect.signature(getattr(kernel.ModelQueries, name))

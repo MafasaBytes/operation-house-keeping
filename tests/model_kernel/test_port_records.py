@@ -351,6 +351,13 @@ def test_model_kernel_public_exports_include_accepted_pt_and_vp_slice_a_names():
         "BehaviorRegistration", "BehaviorRuleDeclaration",
         "BehaviorRuleWithdrawal", "BehaviorVariableSemanticLock",
         "ExactNumericEqualityRule",
+        "BehaviorLookupStatus", "BehaviorDeclarationConclusion",
+        "BehaviorRuleLineageSummary", "BehaviorAgreementFinding",
+        "VariableBehaviorsStatus", "BehaviorAssertionLookupStatus",
+        "BehaviorEffectiveBodyGroupResult", "BehaviorRuleRootResult",
+        "BehaviorLookupResult", "BehaviorRuleResult",
+        "VariableBehaviorEntry", "VariableBehaviorsResult",
+        "BehaviorAssertionDisclosureResult",
     }
     old = {
         "EntityRegistration", "VariableRegistration",

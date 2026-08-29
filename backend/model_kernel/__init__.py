@@ -106,6 +106,21 @@ from backend.model_kernel.contracts import (
     canonical_constraint_decimal,
 )
 from backend.model_kernel.queries import ModelQueries
+from backend.model_kernel.behavior_results import (
+    BehaviorAgreementFinding,
+    BehaviorAssertionDisclosureResult,
+    BehaviorAssertionLookupStatus,
+    BehaviorDeclarationConclusion,
+    BehaviorEffectiveBodyGroupResult,
+    BehaviorLookupResult,
+    BehaviorLookupStatus,
+    BehaviorRuleLineageSummary,
+    BehaviorRuleResult,
+    BehaviorRuleRootResult,
+    VariableBehaviorEntry,
+    VariableBehaviorsResult,
+    VariableBehaviorsStatus,
+)
 from backend.model_kernel.port_results import (
     AssertionActivity,
     CompatibilityEndpointStatus,
@@ -238,6 +253,12 @@ __all__ = [
     "VariablePortAssociationResult", "VariablePortAssociationEntry",
     "VariablePortsResult", "PortVariablesResult",
     "VariablePortAssertionDisclosureResult",
+    "BehaviorLookupStatus", "BehaviorDeclarationConclusion",
+    "BehaviorRuleLineageSummary", "BehaviorAgreementFinding",
+    "VariableBehaviorsStatus", "BehaviorAssertionLookupStatus",
+    "BehaviorEffectiveBodyGroupResult", "BehaviorRuleRootResult",
+    "BehaviorLookupResult", "BehaviorRuleResult", "VariableBehaviorEntry",
+    "VariableBehaviorsResult", "BehaviorAssertionDisclosureResult",
     # operations
     "build_record",
     "ModelStore",

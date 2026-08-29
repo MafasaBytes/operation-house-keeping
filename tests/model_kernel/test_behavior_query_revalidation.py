@@ -135,6 +135,24 @@ def test_nested_construct_and_copy_forgery_is_revalidated(tmp_path):
             type(result).model_validate(hostile)
 
 
+def test_malformed_nested_collections_raise_typed_validation_errors(tmp_path):
+    result, _, _ = conflict_result(tmp_path)
+    for field in ("roots", "effective_body_groups"):
+        payload = result.model_dump(mode="python")
+        payload[field] = None
+        with pytest.raises(ValidationError):
+            type(result).model_validate(payload)
+
+    reverse = kernel.ModelQueries(world(
+        tmp_path / "reverse", behavior_declaration()).load()
+                                  ).behaviors_involving_variable(
+                                      VAR_A, context=AS_DESIGNED)
+    payload = reverse.model_dump(mode="python")
+    payload["entries"] = None
+    with pytest.raises(ValidationError):
+        type(reverse).model_validate(payload)
+
+
 def test_every_behavior_index_rejects_boolean_and_coercion(tmp_path):
     result, _, _ = conflict_result(tmp_path)
     scalar_paths = (
@@ -144,23 +162,38 @@ def test_every_behavior_index_rejects_boolean_and_coercion(tmp_path):
         (result.effective_body_groups[0], "representative_declaration_index"),
     )
     for value, field in scalar_paths:
-        payload = value.model_dump(mode="python")
-        payload[field] = True
-        with pytest.raises(ValidationError):
-            type(value).model_validate(payload)
+        for hostile in (True, "0", 0.0):
+            payload = value.model_dump(mode="python")
+            payload[field] = hostile
+            with pytest.raises(ValidationError):
+                type(value).model_validate(payload)
 
     root = result.roots[0].model_dump(mode="python")
     for field in ("lineage_record_indices", "current_tip_indices",
                   "withdrawal_indices", "effective_body_group_indices"):
-        payload = {**root, field: (True,)}
-        with pytest.raises(ValidationError):
-            kernel.BehaviorRuleRootResult.model_validate(payload)
+        for hostile in (True, "0", 0.0):
+            payload = {**root, field: (hostile,)}
+            with pytest.raises(ValidationError):
+                kernel.BehaviorRuleRootResult.model_validate(payload)
 
     group = result.effective_body_groups[0].model_dump(mode="python")
     for field in ("current_tip_indices", "root_record_indices"):
-        payload = {**group, field: (False,)}
+        for hostile in (False, "0", 0.0):
+            payload = {**group, field: (hostile,)}
+            with pytest.raises(ValidationError):
+                kernel.BehaviorEffectiveBodyGroupResult.model_validate(payload)
+
+
+def test_implication_bearing_extra_fields_are_rejected(tmp_path):
+    result, _, _ = conflict_result(tmp_path)
+    for field in (
+            "input", "output", "role", "port", "flow", "direction",
+            "causes", "controls", "influences", "compatible", "safe",
+            "valid", "behavior_health"):
+        payload = result.model_dump(mode="python")
+        payload[field] = "forged"
         with pytest.raises(ValidationError):
-            kernel.BehaviorEffectiveBodyGroupResult.model_validate(payload)
+            type(result).model_validate(payload)
 
 
 def test_complete_material_is_carried_once_and_rows_are_indices_only(tmp_path):
@@ -170,7 +203,8 @@ def test_complete_material_is_carried_once_and_rows_are_indices_only(tmp_path):
     assert len(decoded["material"]["records"]) == \
         decoded["material"]["revision"]["record_count"]
     for record in decoded["material"]["records"]:
-        assert payload.count(f'"record_id":"{record["record_id"]}"') == 1
+        assert sum(candidate["record_id"] == record["record_id"]
+                   for candidate in decoded["material"]["records"]) == 1
     for row in (*decoded["roots"], *decoded["effective_body_groups"]):
         assert "material" not in row
         assert "evidence" not in row

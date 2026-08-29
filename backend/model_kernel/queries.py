@@ -44,6 +44,12 @@ from backend.model_kernel.contracts import (
     VariableSemanticsResult,
 )
 from backend.model_kernel.hierarchy import HierarchyProjection, build_projection
+from backend.model_kernel.behavior_results import (
+    BehaviorAssertionDisclosureResult, BehaviorLookupResult,
+    BehaviorRuleResult, VariableBehaviorsResult,
+    _behavior_assertion_payload, _behavior_lookup_payload,
+    _behavior_rule_payload, _variable_behaviors_payload,
+)
 from backend.model_kernel.port_results import (
     ConnectionRootResult, ConnectionSubjectResult, SharedConnectionsResult,
     EndpointInterfaceResult,
@@ -57,6 +63,7 @@ from backend.model_kernel.port_results import (
 )
 from backend.model_kernel.store import LoadedModel
 from backend.system_identity import (
+    BEHAVIOR_ANCHOR_ID_PATTERN,
     CONSTRAINT_ANCHOR_ID_PATTERN,
     ENTITY_ANCHOR_ID_PATTERN,
     PORT_ANCHOR_ID_PATTERN,
@@ -67,8 +74,10 @@ _ANCHOR_ID = re.compile(ENTITY_ANCHOR_ID_PATTERN)
 _VARIABLE_ANCHOR_ID = re.compile(VARIABLE_ANCHOR_ID_PATTERN)
 _CONSTRAINT_ANCHOR_ID = re.compile(CONSTRAINT_ANCHOR_ID_PATTERN)
 _PORT_ANCHOR_ID = re.compile(PORT_ANCHOR_ID_PATTERN)
+_BEHAVIOR_ANCHOR_ID = re.compile(BEHAVIOR_ANCHOR_ID_PATTERN)
 _PORT_RECORD_ID = re.compile(r"^(?:prg|pif|pcn|pcm|ptw)_[0-9a-f]{64}$")
 _VARIABLE_PORT_RECORD_ID = re.compile(r"^(?:vpa|vpw)_[0-9a-f]{64}$")
+_BEHAVIOR_RECORD_ID = re.compile(r"^(?:brg|bhd|bhw)_[0-9a-f]{64}$")
 _CONTEXT_ADAPTER: TypeAdapter = TypeAdapter(AssertionContext)
 _LIFECYCLE_VIEWS = frozenset(typing.get_args(LifecycleView))
 
@@ -114,6 +123,14 @@ class ModelQueries:
                                   f"{anchor_id!r} is not a canonical port anchor id")
         return anchor_id
 
+    def _require_behavior_anchor_id(self, anchor_id: str) -> str:
+        if (not isinstance(anchor_id, str)
+                or not _BEHAVIOR_ANCHOR_ID.fullmatch(anchor_id)):
+            raise ModelQueryError(
+                "MODEL_ANCHOR_ID_INVALID",
+                f"{anchor_id!r} is not a canonical behavior anchor id")
+        return anchor_id
+
     def _require_port_record_id(self, record_id: str) -> str:
         if (not isinstance(record_id, str)
                 or not _PORT_RECORD_ID.fullmatch(record_id)):
@@ -127,6 +144,14 @@ class ModelQueries:
             raise ModelQueryError(
                 "MODEL_RECORD_ID_INVALID",
                 f"{record_id!r} is not a VP record id")
+        return record_id
+
+    def _require_behavior_record_id(self, record_id: str) -> str:
+        if (not isinstance(record_id, str)
+                or not _BEHAVIOR_RECORD_ID.fullmatch(record_id)):
+            raise ModelQueryError(
+                "MODEL_RECORD_ID_INVALID",
+                f"{record_id!r} is not a BH record id")
         return record_id
 
     def _material(self) -> ModelQueryMaterial:
@@ -1022,6 +1047,51 @@ class ModelQueries:
             current_pcm_tip_indices=tuple(indices[i.record_id] for i in tips),
             stale_citation_indices=tuple(indices[i] for i in stale_ids),
             consistency=consistency)
+
+    # -- BH-001 explicit behavior declarations ----------------------------
+
+    def behavior(self, behavior_anchor_id) -> BehaviorLookupResult:
+        behavior_anchor_id = self._require_behavior_anchor_id(
+            behavior_anchor_id)
+        material = self._material()
+        return BehaviorLookupResult(
+            material=material,
+            **_behavior_lookup_payload(
+                material, self.loaded, behavior_anchor_id))
+
+    def behavior_declaration(
+            self, behavior_anchor_id, *, context
+    ) -> BehaviorRuleResult:
+        behavior_anchor_id = self._require_behavior_anchor_id(
+            behavior_anchor_id)
+        context = self._require_context(context)
+        material = self._material()
+        return BehaviorRuleResult(
+            material=material,
+            **_behavior_rule_payload(
+                material, self.loaded, behavior_anchor_id, context))
+
+    def behaviors_involving_variable(
+            self, variable_anchor_id, *, context
+    ) -> VariableBehaviorsResult:
+        variable_anchor_id = self._require_variable_anchor_id(
+            variable_anchor_id)
+        context = self._require_context(context)
+        material = self._material()
+        return VariableBehaviorsResult(
+            material=material,
+            **_variable_behaviors_payload(
+                material, self.loaded, variable_anchor_id, context))
+
+    def behavior_assertion(
+            self, record_id
+    ) -> BehaviorAssertionDisclosureResult:
+        record_id = self._require_behavior_record_id(record_id)
+        material = self._material()
+        return BehaviorAssertionDisclosureResult(
+            material=material,
+            **_behavior_assertion_payload(
+                material, self.loaded, record_id))
 
     # -- VP-001 explicit variable-to-port associations --------------------
 

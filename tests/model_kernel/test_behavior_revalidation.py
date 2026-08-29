@@ -245,18 +245,18 @@ def test_pt_and_vp_artifacts_remain_byte_frozen(tmp_path):
     assert hashlib.sha256(vp).hexdigest() == VP_ARTIFACT_SHA256
 
 
-def test_slice_a_has_no_query_evaluator_or_fixture_surface():
-    forbidden_methods = (
+def test_slice_b_adds_queries_but_no_evaluator_or_fixture_surface():
+    required_methods = (
         "behavior", "behavior_declaration",
         "behaviors_involving_variable", "behavior_assertion",
     )
-    for method in forbidden_methods:
-        assert not hasattr(kernel.ModelQueries, method)
+    for method in required_methods:
+        assert hasattr(kernel.ModelQueries, method)
     assert not Path("backend/behavior_evaluation").exists()
     assert not Path("tests/behavior_evaluation").exists()
     assert not any(path.name.startswith(("brg_", "bhd_", "bhw_"))
                    for path in (DEMO_MODEL / "records").glob("*.json"))
-    assert not hasattr(kernel, "BehaviorRuleResult")
+    assert hasattr(kernel, "BehaviorRuleResult")
     assert not hasattr(kernel, "BehaviorEvaluationResult")
 
 

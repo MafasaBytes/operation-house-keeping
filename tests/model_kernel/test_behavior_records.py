@@ -209,17 +209,15 @@ def test_model_record_union_accepts_exact_three_behavior_arms():
         assert type(rebuilt) is type(record)
 
 
-def test_kernel_public_surface_adds_only_slice_a_contracts():
+def test_slice_a_records_remain_public_after_slice_b_queries():
     expected_new = {
         "BehaviorRegistration", "BehaviorRuleDeclaration",
         "BehaviorRuleWithdrawal", "BehaviorVariableSemanticLock",
         "ExactNumericEqualityRule",
     }
-    assert len(kernel.__all__) == 131
+    assert len(kernel.__all__) == 144
     assert expected_new <= set(kernel.__all__)
     for forbidden in (
-        "BehaviorLookupResult", "BehaviorRuleResult",
-        "VariableBehaviorsResult", "BehaviorAssertionDisclosureResult",
         "BehaviorEvaluationQueries", "BehaviorEvaluationResult",
         "BehaviorParticipantSource", "BehaviorComputedRelation",
     ):
