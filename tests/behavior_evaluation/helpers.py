@@ -43,7 +43,6 @@ from tests.model_kernel.builders import (
     specification,
 )
 from tests.model_state.helpers import (
-    E1,
     PROP_TARGET,
     PROP_TEMP,
     SUBJECT,
@@ -55,6 +54,7 @@ from tests.model_state.helpers import (
 )
 
 AS_OF = datetime(2026, 8, 7, 20, 30, tzinfo=UTC)
+E1 = "ent_" + "9" * 32
 
 
 def _semantic_record(variable_anchor_id, declaration):
@@ -75,26 +75,33 @@ def _semantic_record(variable_anchor_id, declaration):
 
 
 def model_store(tmp_path, *, include_behavior=True, declaration_context=AS_DESIGNED,
-                declaration_records=None, specification_overrides=None):
+                declaration_records=None, specification_overrides=None,
+                omit_specifications=(), omit_semantics=(), extra_records=()):
     store = ModelStore(tmp_path / "model" / "demo-printer")
     for record in variable_records(owners=(E1, E1)):
         store.append(record)
     spec_overrides = specification_overrides or {}
     for variable_id in (VAR_A, VAR_B):
-        store.append(specification(variable_id, **spec_overrides.get(variable_id, {})))
-        store.append(_semantic_record(
-            variable_id,
-            QuantityKindDeclaration(
-                dimension="quantity_kind", quantity_kind=quantity_kind()),
-        ))
+        if variable_id not in omit_specifications:
+            store.append(specification(
+                variable_id, **spec_overrides.get(variable_id, {})))
+        if (variable_id, "quantity_kind") not in omit_semantics:
+            store.append(_semantic_record(
+                variable_id,
+                QuantityKindDeclaration(
+                    dimension="quantity_kind", quantity_kind=quantity_kind()),
+            ))
         role = "measured" if variable_id == VAR_A else "reported"
-        store.append(_semantic_record(
-            variable_id,
-            ObservationRoleDeclaration(
-                dimension="observation_role",
-                observation_role=observation_role(role),
-            ),
-        ))
+        if (variable_id, "observation_role") not in omit_semantics:
+            store.append(_semantic_record(
+                variable_id,
+                ObservationRoleDeclaration(
+                    dimension="observation_role",
+                    observation_role=observation_role(role),
+                ),
+            ))
+    for record in extra_records:
+        store.append(record)
     registration = behavior_registration(owners=(E1, E1))
     if include_behavior:
         store.append(registration)
@@ -126,39 +133,46 @@ def _interpretation_record(prop, interpretation):
     )
 
 
-def interpretation_resolver(tmp_path):
+def interpretation_resolver(tmp_path, *, overrides=None):
+    overrides = overrides or {}
     store = InterpretationStore(tmp_path / "interpretations" / "demo-printer")
     for prop in (PROP_TEMP, PROP_TARGET):
         role = "measured" if prop == PROP_TEMP else "reported"
+        values = overrides.get(prop, {})
         for body in (
             QuantityKindInterpretation(
-                dimension="quantity_kind", quantity_kind=quantity_kind()),
+                dimension="quantity_kind", quantity_kind=values.get(
+                    "quantity_kind", quantity_kind())),
             ObservationRoleInterpretation(
-                dimension="observation_role", observation_role=observation_role(role)),
+                dimension="observation_role", observation_role=values.get(
+                    "observation_role", observation_role(role))),
             UnitInterpretation(
-                dimension="unit", unit=semantic_lock(VAR_A).signature.unit),
+                dimension="unit", unit=values.get(
+                    "unit", semantic_lock(VAR_A).signature.unit)),
         ):
             store.append(_interpretation_record(prop, body))
     return InterpretationResolver(store.load())
 
 
-def semantic_queries(tmp_path, *, model=None, temporal=None):
+def semantic_queries(tmp_path, *, model=None, temporal=None,
+                     binding_records=None, interpretations=None):
     model = model or model_store(tmp_path)
     temporal = temporal or observed_stack(tmp_path)
     binding_store = BindingStore(tmp_path / "bindings" / "demo-printer")
-    for record in (
+    records = binding_records or (
         entity_declaration(E1, "Demo entity"),
         var_declaration(VAR_A, E1, "Variable A"),
         var_declaration(VAR_B, E1, "Variable B"),
         prop_assertion(VAR_A, PROP_TEMP),
         prop_assertion(VAR_B, PROP_TARGET),
-    ):
+    )
+    for record in records:
         binding_store.append(record)
     state = ModelStateQueries(
         model.load(), BindingResolver(binding_store.load()), temporal)
     compatibility = ObservationCompatibilityQueries(state)
     return SemanticCompatibilityQueries(
-        compatibility, interpretation_resolver(tmp_path))
+        compatibility, interpretations or interpretation_resolver(tmp_path))
 
 
 def participant_sources(*, reverse=False):
@@ -178,15 +192,15 @@ def participant_sources(*, reverse=False):
 
 
 def evaluate(tmp_path, *, context=AS_DESIGNED, model=None, temporal=None,
-             participants=None):
+             participants=None, as_of=AS_OF, semantic=None):
     from backend.behavior_evaluation import BehaviorEvaluationQueries
 
     facade = BehaviorEvaluationQueries(
-        semantic_queries(tmp_path, model=model, temporal=temporal))
+        semantic or semantic_queries(tmp_path, model=model, temporal=temporal))
     return facade.behavior_evaluation(
         BEHAVIOR_A,
         context=context,
-        as_of=AS_OF,
+        as_of=as_of,
         participants=participants or participant_sources(),
     )
 

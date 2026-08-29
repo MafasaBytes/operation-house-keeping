@@ -1,6 +1,7 @@
 """BH-001 lifecycle, evidence, cohort, and exact-comparison behavior."""
 
 from backend.model_kernel import ModelQueries
+from backend.semantic_compatibility import SemanticCompatibilityConfigurationError
 
 from tests.behavior_evaluation.helpers import (
     AS_BUILT,
@@ -101,3 +102,64 @@ def test_exact_result_has_no_implication_bearing_fields():
         "controls", "influences", "port", "consistent", "passed",
     }
     assert forbidden.isdisjoint(BehaviorEvaluationResult.model_fields)
+
+
+def test_both_lower_branches_run_once_before_first_typed_failure_propagates(
+        tmp_path, monkeypatch):
+    from backend.behavior_evaluation import BehaviorEvaluationQueries
+
+    semantic = semantic_queries(tmp_path)
+    original = semantic.variable_semantic_compatibility
+    calls = []
+    sentinel = SemanticCompatibilityConfigurationError(
+        "SYNTHETIC_LOWER_FAILURE", "first canonical participant failed")
+
+    def branch(variable_anchor_id, **kwargs):
+        calls.append(variable_anchor_id)
+        if variable_anchor_id == VAR_A:
+            raise sentinel
+        return original(variable_anchor_id, **kwargs)
+
+    monkeypatch.setattr(semantic, "variable_semantic_compatibility", branch)
+    facade = BehaviorEvaluationQueries(semantic)
+    try:
+        facade.behavior_evaluation(
+            BEHAVIOR_A, context=AS_DESIGNED, as_of=AS_OF,
+            participants=participant_sources())
+    except SemanticCompatibilityConfigurationError as error:
+        assert error is sentinel
+    else:
+        raise AssertionError("the exact lower exception must propagate")
+    assert calls == [VAR_A, VAR_B]
+
+
+def test_known_behavior_participant_substitution_fails_before_lower_access(
+        tmp_path, monkeypatch):
+    from backend.behavior_evaluation import (
+        BehaviorEvaluationInputError,
+        BehaviorEvaluationQueries,
+        BehaviorParticipantSource,
+    )
+    from backend.model_state import SourceSelector
+
+    semantic = semantic_queries(tmp_path)
+    calls = []
+
+    def forbidden(*args, **kwargs):
+        calls.append(args)
+        raise AssertionError("lower evidence must not be accessed")
+
+    monkeypatch.setattr(
+        semantic, "variable_semantic_compatibility", forbidden)
+    first, second = participant_sources()
+    substituted = BehaviorParticipantSource(
+        variable_anchor_id="var_" + "8" * 32,
+        entity_anchor_id=second.entity_anchor_id,
+        source=SourceSelector(
+            subject=second.source.subject, property=second.source.property))
+    with __import__("pytest").raises(BehaviorEvaluationInputError) as error:
+        BehaviorEvaluationQueries(semantic).behavior_evaluation(
+            BEHAVIOR_A, context=AS_DESIGNED, as_of=AS_OF,
+            participants=(first, substituted))
+    assert error.value.error_code == "BEHAVIOR_EVALUATION_INPUT_INVALID"
+    assert calls == []

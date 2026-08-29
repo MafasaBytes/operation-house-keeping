@@ -345,4 +345,4 @@ def test_query_and_result_modules_are_store_and_upper_layer_isolated():
         assert "sqlite3" not in source
         assert "Path(" not in source
         assert "open(" not in source
-    assert not Path("backend/behavior_evaluation").exists()
+    assert Path("backend/behavior_evaluation").is_dir()
