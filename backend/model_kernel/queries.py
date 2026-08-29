@@ -51,6 +51,9 @@ from backend.model_kernel.port_results import (
     ExactConnectionSetResult, PortConnectionsResult,
     InterfaceCompatibilityResult, InterfaceDimensionResult, ModelQueryMaterial,
     PortAssertionDisclosureResult, PortInterfaceResult, PortLookupResult,
+    PortVariablesResult, VariablePortAssociationEntry,
+    VariablePortAssociationResult, VariablePortAssociationRootResult,
+    VariablePortAssertionDisclosureResult, VariablePortsResult,
 )
 from backend.model_kernel.store import LoadedModel
 from backend.system_identity import (
@@ -65,6 +68,7 @@ _VARIABLE_ANCHOR_ID = re.compile(VARIABLE_ANCHOR_ID_PATTERN)
 _CONSTRAINT_ANCHOR_ID = re.compile(CONSTRAINT_ANCHOR_ID_PATTERN)
 _PORT_ANCHOR_ID = re.compile(PORT_ANCHOR_ID_PATTERN)
 _PORT_RECORD_ID = re.compile(r"^(?:prg|pif|pcn|pcm|ptw)_[0-9a-f]{64}$")
+_VARIABLE_PORT_RECORD_ID = re.compile(r"^(?:vpa|vpw)_[0-9a-f]{64}$")
 _CONTEXT_ADAPTER: TypeAdapter = TypeAdapter(AssertionContext)
 _LIFECYCLE_VIEWS = frozenset(typing.get_args(LifecycleView))
 
@@ -115,6 +119,14 @@ class ModelQueries:
                 or not _PORT_RECORD_ID.fullmatch(record_id)):
             raise ModelQueryError("MODEL_RECORD_ID_INVALID",
                                   f"{record_id!r} is not a PT record id")
+        return record_id
+
+    def _require_variable_port_record_id(self, record_id: str) -> str:
+        if (not isinstance(record_id, str)
+                or not _VARIABLE_PORT_RECORD_ID.fullmatch(record_id)):
+            raise ModelQueryError(
+                "MODEL_RECORD_ID_INVALID",
+                f"{record_id!r} is not a VP record id")
         return record_id
 
     def _material(self) -> ModelQueryMaterial:
@@ -1010,6 +1022,247 @@ class ModelQueries:
             current_pcm_tip_indices=tuple(indices[i.record_id] for i in tips),
             stale_citation_indices=tuple(indices[i] for i in stale_ids),
             consistency=consistency)
+
+    # -- VP-001 explicit variable-to-port associations --------------------
+
+    def _variable_port_root_results(self, root_ids):
+        indices = self._record_index()
+        rows = []
+        for root_id in sorted(set(root_ids)):
+            lineage_ids = tuple(sorted(
+                record_id for record_id, candidate_root
+                in self.loaded.variable_port_association_root_by_id.items()
+                if candidate_root == root_id))
+            tips = tuple(sorted(
+                self.loaded.current_variable_port_association_tips_by_root[
+                    root_id], key=lambda record: record.record_id))
+            withdrawals = tuple(sorted(
+                withdrawal_id
+                for record_id in lineage_ids
+                for withdrawal_id in
+                self.loaded.variable_port_association_withdrawn_by[record_id]))
+            rows.append(VariablePortAssociationRootResult(
+                root_record_index=indices[root_id],
+                lineage_record_indices=tuple(indices[record_id]
+                                             for record_id in lineage_ids),
+                current_tip_indices=tuple(indices[record.record_id]
+                                         for record in tips),
+                withdrawal_indices=tuple(indices[record_id]
+                                         for record_id in withdrawals),
+                lineage_health=(
+                    "inactive" if not tips else
+                    "conflicted" if len(tips) > 1 else
+                    "healthy"),
+            ))
+        return tuple(rows)
+
+    @staticmethod
+    def _variable_port_aggregate(roots):
+        if not roots:
+            return "not_declared", "not_applicable"
+        active = tuple(root for root in roots if root.current_tip_indices)
+        if not active:
+            return "inactive", "inactive"
+        return (
+            "asserted",
+            "conflicted" if any(root.lineage_health == "conflicted"
+                                for root in active) else "healthy",
+        )
+
+    def variable_port_association(
+            self, variable_anchor_id, port_anchor_id, *, context
+    ) -> VariablePortAssociationResult:
+        variable_anchor_id = self._require_variable_anchor_id(
+            variable_anchor_id)
+        port_anchor_id = self._require_port_anchor_id(port_anchor_id)
+        context = self._require_context(context)
+        material = self._material()
+        indices = self._record_index()
+        variable = self.loaded.variable_registrations_by_anchor.get(
+            variable_anchor_id)
+        port = self.loaded.port_registrations_by_anchor.get(port_anchor_id)
+        endpoint_status = (
+            "both_registered" if variable is not None and port is not None else
+            "variable_not_registered" if variable is None and port is not None else
+            "port_not_registered" if variable is not None and port is None else
+            "both_not_registered")
+        variable_owner_id = (None if variable is None else
+                             variable.anchor.entity_anchor_id)
+        port_owner_id = (None if port is None else
+                         port.owner_entity_anchor_id)
+        variable_index = (None if variable is None else
+                          indices[variable.record_id])
+        variable_owner_index = (None if variable_owner_id is None else
+            indices[self.loaded.registrations_by_anchor[
+                variable_owner_id].record_id])
+        port_index = None if port is None else indices[port.record_id]
+        port_owner_index = (None if port_owner_id is None else
+            indices[self.loaded.registrations_by_anchor[
+                port_owner_id].record_id])
+        if variable is None or port is None:
+            owner_alignment = "not_evaluated"
+            conclusion, lineage_summary = "not_evaluated", "not_applicable"
+            roots = ()
+        elif variable_owner_id != port_owner_id:
+            owner_alignment = "different_owners"
+            conclusion, lineage_summary = "not_evaluated", "not_applicable"
+            roots = ()
+        else:
+            owner_alignment = "same_owner"
+            association_ids = (
+                self.loaded.variable_port_association_ids_by_subject.get(
+                    (variable_anchor_id, port_anchor_id, context), ()))
+            roots = self._variable_port_root_results(
+                self.loaded.variable_port_association_root_by_id[record_id]
+                for record_id in association_ids)
+            conclusion, lineage_summary = self._variable_port_aggregate(roots)
+        return VariablePortAssociationResult(
+            material=material,
+            variable_anchor_id=variable_anchor_id,
+            port_anchor_id=port_anchor_id,
+            context=context,
+            endpoint_status=endpoint_status,
+            owner_alignment=owner_alignment,
+            variable_registration_index=variable_index,
+            variable_owner_registration_index=variable_owner_index,
+            port_registration_index=port_index,
+            port_owner_registration_index=port_owner_index,
+            conclusion=conclusion,
+            lineage_summary=lineage_summary,
+            roots=roots,
+        )
+
+    def _variable_port_entries(self, association_ids, *, order_by):
+        indices = self._record_index()
+        roots_by_subject = {}
+        for record_id in association_ids:
+            record = self.loaded.variable_port_associations[record_id]
+            subject = (record.variable_anchor_id, record.port_anchor_id,
+                       record.context)
+            roots_by_subject.setdefault(subject, set()).add(
+                self.loaded.variable_port_association_root_by_id[record_id])
+        pending = []
+        for (variable_anchor_id, port_anchor_id, _), root_ids \
+                in roots_by_subject.items():
+            variable = self.loaded.variable_registrations_by_anchor[
+                variable_anchor_id]
+            port = self.loaded.port_registrations_by_anchor[port_anchor_id]
+            roots = self._variable_port_root_results(root_ids)
+            conclusion, summary = self._variable_port_aggregate(roots)
+            first_root_id = min(root_ids)
+            sort_anchor = (port_anchor_id if order_by == "port" else
+                           variable_anchor_id)
+            pending.append(((sort_anchor, first_root_id), {
+                "variable_anchor_id": variable_anchor_id,
+                "port_anchor_id": port_anchor_id,
+                "variable_registration_index": indices[variable.record_id],
+                "variable_owner_registration_index": indices[
+                    self.loaded.registrations_by_anchor[
+                        variable.anchor.entity_anchor_id].record_id],
+                "port_registration_index": indices[port.record_id],
+                "port_owner_registration_index": indices[
+                    self.loaded.registrations_by_anchor[
+                        port.owner_entity_anchor_id].record_id],
+                "conclusion": conclusion,
+                "lineage_summary": summary,
+                "roots": roots,
+            }))
+        return tuple(VariablePortAssociationEntry(
+            entry_index=entry_index, **payload)
+            for entry_index, (_, payload) in enumerate(sorted(pending)))
+
+    def ports_associated_with_variable(
+            self, variable_anchor_id, *, context
+    ) -> VariablePortsResult:
+        variable_anchor_id = self._require_variable_anchor_id(
+            variable_anchor_id)
+        context = self._require_context(context)
+        material = self._material()
+        indices = self._record_index()
+        variable = self.loaded.variable_registrations_by_anchor.get(
+            variable_anchor_id)
+        if variable is None:
+            return VariablePortsResult(
+                material=material, variable_anchor_id=variable_anchor_id,
+                context=context, status="variable_not_registered")
+        association_ids = (
+            self.loaded.variable_port_association_ids_by_variable_context.get(
+                (variable_anchor_id, context), ()))
+        return VariablePortsResult(
+            material=material, variable_anchor_id=variable_anchor_id,
+            context=context, status="registered",
+            variable_registration_index=indices[variable.record_id],
+            owner_registration_index=indices[
+                self.loaded.registrations_by_anchor[
+                    variable.anchor.entity_anchor_id].record_id],
+            entries=self._variable_port_entries(
+                association_ids, order_by="port"),
+        )
+
+    def variables_associated_with_port(
+            self, port_anchor_id, *, context
+    ) -> PortVariablesResult:
+        port_anchor_id = self._require_port_anchor_id(port_anchor_id)
+        context = self._require_context(context)
+        material = self._material()
+        indices = self._record_index()
+        port = self.loaded.port_registrations_by_anchor.get(port_anchor_id)
+        if port is None:
+            return PortVariablesResult(
+                material=material, port_anchor_id=port_anchor_id,
+                context=context, status="port_not_registered")
+        association_ids = (
+            self.loaded.variable_port_association_ids_by_port_context.get(
+                (port_anchor_id, context), ()))
+        return PortVariablesResult(
+            material=material, port_anchor_id=port_anchor_id,
+            context=context, status="registered",
+            port_registration_index=indices[port.record_id],
+            owner_registration_index=indices[
+                self.loaded.registrations_by_anchor[
+                    port.owner_entity_anchor_id].record_id],
+            entries=self._variable_port_entries(
+                association_ids, order_by="variable"),
+        )
+
+    def variable_port_assertion(
+            self, record_id
+    ) -> VariablePortAssertionDisclosureResult:
+        record_id = self._require_variable_port_record_id(record_id)
+        material = self._material()
+        indices = self._record_index()
+        record = self.loaded.records.get(record_id)
+        if record is None or record.record_kind not in {
+                "variable_port_association",
+                "variable_port_association_withdrawal"}:
+            return VariablePortAssertionDisclosureResult(
+                material=material, record_id=record_id,
+                lookup_status="not_found")
+        if record.record_kind == "variable_port_association_withdrawal":
+            return VariablePortAssertionDisclosureResult(
+                material=material, record_id=record_id,
+                lookup_status="found", record_index=indices[record_id])
+        root_id = self.loaded.variable_port_association_root_by_id[record_id]
+        tips = self.loaded.current_variable_port_association_tips_by_root[
+            root_id]
+        successors = self.loaded.variable_port_association_superseded_by[
+            record_id]
+        withdrawals = self.loaded.variable_port_association_withdrawn_by[
+            record_id]
+        return VariablePortAssertionDisclosureResult(
+            material=material, record_id=record_id, lookup_status="found",
+            record_index=indices[record_id],
+            activity=("superseded" if successors else
+                      "withdrawn" if withdrawals else "current"),
+            containing_lineage_health=(
+                "inactive" if not tips else
+                "conflicted" if len(tips) > 1 else "healthy"),
+            root_record_index=indices[root_id],
+            successor_indices=tuple(indices[item]
+                                    for item in sorted(successors)),
+            withdrawal_indices=tuple(indices[item]
+                                     for item in sorted(withdrawals)),
+        )
 
     # -- health ------------------------------------------------------------
 

@@ -1,4 +1,4 @@
-"""PT-001 read-only query result contracts.
+"""PT-001 and VP-001 read-only query result contracts.
 
 All authority is carried once in ``ModelQueryMaterial``.  Result rows contain
 only indices into that immutable, fully revalidated collection.
@@ -14,8 +14,8 @@ from pydantic import (
 
 from backend.model_kernel.contracts import (
     AssertionContext, ENTITY_ANCHOR_ID_PATTERN,
-    PORT_ANCHOR_ID_PATTERN, ModelIntegrityError, ModelQueryError, ModelRecord,
-    ModelRevision,
+    PORT_ANCHOR_ID_PATTERN, VARIABLE_ANCHOR_ID_PATTERN, ModelIntegrityError,
+    ModelQueryError, ModelRecord, ModelRevision,
 )
 
 _CONTEXT_ADAPTER = TypeAdapter(AssertionContext)
@@ -39,6 +39,22 @@ ExplicitCompatibilityStatus = Literal[
 CrossFindingConsistency = Literal[
     "consistent", "inconsistent", "indeterminate",
 ]
+VariablePortEndpointStatus = Literal[
+    "both_registered", "variable_not_registered", "port_not_registered",
+    "both_not_registered",
+]
+VariablePortOwnerAlignment = Literal[
+    "not_evaluated", "same_owner", "different_owners",
+]
+VariablePortAssociationConclusion = Literal[
+    "not_evaluated", "not_declared", "asserted", "inactive",
+]
+VariablePortLineageSummary = Literal[
+    "not_applicable", "healthy", "conflicted", "inactive",
+]
+VariablePortsStatus = Literal["variable_not_registered", "registered"]
+PortVariablesStatus = Literal["port_not_registered", "registered"]
+VariablePortAssertionLookupStatus = Literal["not_found", "found"]
 
 
 def _validated_context(value) -> AssertionContext:
@@ -370,6 +386,451 @@ class PortAssertionDisclosureResult(_WithMaterial):
                 or self.successor_indices != tuple(indices[i] for i in successors[self.record_id])
                 or self.withdrawal_indices != tuple(indices[i] for i in withdrawn[self.record_id])):
             raise ValueError("assertion lifecycle disclosure is forged")
+        return self
+
+
+class VariablePortAssociationRootResult(_Result):
+    """One correction root, carrying indices into the outer material only."""
+
+    _material: ModelQueryMaterial = PrivateAttr()
+    root_record_index: int = Field(ge=0)
+    lineage_record_indices: tuple[int, ...]
+    current_tip_indices: tuple[int, ...]
+    withdrawal_indices: tuple[int, ...]
+    lineage_health: ContainingLineageHealth
+
+    @property
+    def root_record(self):
+        return self._material.record_at(self.root_record_index)
+
+    @property
+    def lineage_records(self):
+        return tuple(self._material.record_at(index)
+                     for index in self.lineage_record_indices)
+
+    @property
+    def current_tips(self):
+        return tuple(self._material.record_at(index)
+                     for index in self.current_tip_indices)
+
+    @property
+    def withdrawals(self):
+        return tuple(self._material.record_at(index)
+                     for index in self.withdrawal_indices)
+
+
+def _variable_port_root_payloads(material: ModelQueryMaterial, loaded,
+                                 root_ids) -> tuple[dict, ...]:
+    """Recompute complete VP lineage rows from one selected membership."""
+    indices = {record_id: index for index, record_id
+               in enumerate(material.revision.record_ids)}
+    payloads = []
+    for root_id in sorted(set(root_ids)):
+        lineage_ids = tuple(sorted(
+            record_id for record_id, candidate_root
+            in loaded.variable_port_association_root_by_id.items()
+            if candidate_root == root_id))
+        tips = tuple(sorted(
+            loaded.current_variable_port_association_tips_by_root[root_id],
+            key=lambda record: record.record_id))
+        withdrawal_ids = tuple(sorted(
+            withdrawal_id
+            for record_id in lineage_ids
+            for withdrawal_id in
+            loaded.variable_port_association_withdrawn_by[record_id]))
+        payloads.append({
+            "root_record_index": indices[root_id],
+            "lineage_record_indices": tuple(indices[record_id]
+                                             for record_id in lineage_ids),
+            "current_tip_indices": tuple(indices[record.record_id]
+                                         for record in tips),
+            "withdrawal_indices": tuple(indices[record_id]
+                                        for record_id in withdrawal_ids),
+            "lineage_health": (
+                "inactive" if not tips else
+                "conflicted" if len(tips) > 1 else
+                "healthy"),
+        })
+    return tuple(payloads)
+
+
+def _variable_port_conclusion(root_payloads: tuple[dict, ...]):
+    if not root_payloads:
+        return "not_declared", "not_applicable"
+    active = tuple(row for row in root_payloads
+                   if row["current_tip_indices"])
+    if not active:
+        return "inactive", "inactive"
+    return (
+        "asserted",
+        "conflicted" if any(row["lineage_health"] == "conflicted"
+                            for row in active) else "healthy",
+    )
+
+
+def _bind_variable_port_roots(rows, material: ModelQueryMaterial) -> None:
+    for row in rows:
+        object.__setattr__(row, "_material", material)
+
+
+class VariablePortAssociationResult(_WithMaterial):
+    variable_anchor_id: str = Field(pattern=VARIABLE_ANCHOR_ID_PATTERN)
+    port_anchor_id: str = Field(pattern=PORT_ANCHOR_ID_PATTERN)
+    context: AssertionContext
+    endpoint_status: VariablePortEndpointStatus
+    owner_alignment: VariablePortOwnerAlignment
+    variable_registration_index: int | None = Field(default=None, ge=0)
+    variable_owner_registration_index: int | None = Field(default=None, ge=0)
+    port_registration_index: int | None = Field(default=None, ge=0)
+    port_owner_registration_index: int | None = Field(default=None, ge=0)
+    conclusion: VariablePortAssociationConclusion
+    lineage_summary: VariablePortLineageSummary
+    roots: tuple[VariablePortAssociationRootResult, ...] = ()
+
+    @property
+    def variable_registration(self):
+        return (None if self.variable_registration_index is None else
+                self.material.record_at(self.variable_registration_index))
+
+    @property
+    def variable_owner_registration(self):
+        return (None if self.variable_owner_registration_index is None else
+                self.material.record_at(
+                    self.variable_owner_registration_index))
+
+    @property
+    def port_registration(self):
+        return (None if self.port_registration_index is None else
+                self.material.record_at(self.port_registration_index))
+
+    @property
+    def port_owner_registration(self):
+        return (None if self.port_owner_registration_index is None else
+                self.material.record_at(self.port_owner_registration_index))
+
+    @model_validator(mode="after")
+    def _coherent(self):
+        loaded = self.material.loaded()
+        context = _validated_context(self.context)
+        indices = {record_id: index for index, record_id
+                   in enumerate(self.material.revision.record_ids)}
+        variable = loaded.variable_registrations_by_anchor.get(
+            self.variable_anchor_id)
+        port = loaded.port_registrations_by_anchor.get(self.port_anchor_id)
+        expected_endpoint = (
+            "both_registered" if variable is not None and port is not None else
+            "variable_not_registered" if variable is None and port is not None else
+            "port_not_registered" if variable is not None and port is None else
+            "both_not_registered")
+        variable_owner_id = (None if variable is None else
+                             variable.anchor.entity_anchor_id)
+        port_owner_id = (None if port is None else
+                         port.owner_entity_anchor_id)
+        variable_index = (None if variable is None else
+                          indices[variable.record_id])
+        variable_owner_index = (None if variable_owner_id is None else
+            indices[loaded.registrations_by_anchor[variable_owner_id].record_id])
+        port_index = None if port is None else indices[port.record_id]
+        port_owner_index = (None if port_owner_id is None else
+            indices[loaded.registrations_by_anchor[port_owner_id].record_id])
+        if variable is None or port is None:
+            alignment = "not_evaluated"
+            conclusion, summary = "not_evaluated", "not_applicable"
+            payloads = ()
+        elif variable_owner_id != port_owner_id:
+            alignment = "different_owners"
+            conclusion, summary = "not_evaluated", "not_applicable"
+            payloads = ()
+        else:
+            alignment = "same_owner"
+            association_ids = loaded.variable_port_association_ids_by_subject.get(
+                (self.variable_anchor_id, self.port_anchor_id, context), ())
+            root_ids = tuple(
+                loaded.variable_port_association_root_by_id[record_id]
+                for record_id in association_ids)
+            payloads = _variable_port_root_payloads(
+                self.material, loaded, root_ids)
+            conclusion, summary = _variable_port_conclusion(payloads)
+        expected = (
+            expected_endpoint, alignment, variable_index, variable_owner_index,
+            port_index, port_owner_index, conclusion, summary,
+            tuple(payloads),
+        )
+        supplied = (
+            self.endpoint_status, self.owner_alignment,
+            self.variable_registration_index,
+            self.variable_owner_registration_index,
+            self.port_registration_index, self.port_owner_registration_index,
+            self.conclusion, self.lineage_summary,
+            tuple(row.model_dump() for row in self.roots),
+        )
+        if supplied != expected:
+            raise ValueError(
+                "variable-port association disclosure is forged")
+        _bind_variable_port_roots(self.roots, self.material)
+        return self
+
+
+class VariablePortAssociationEntry(_Result):
+    _material: ModelQueryMaterial = PrivateAttr()
+    entry_index: int = Field(ge=0)
+    variable_anchor_id: str = Field(pattern=VARIABLE_ANCHOR_ID_PATTERN)
+    port_anchor_id: str = Field(pattern=PORT_ANCHOR_ID_PATTERN)
+    variable_registration_index: int = Field(ge=0)
+    variable_owner_registration_index: int = Field(ge=0)
+    port_registration_index: int = Field(ge=0)
+    port_owner_registration_index: int = Field(ge=0)
+    conclusion: Literal["asserted", "inactive"]
+    lineage_summary: Literal["healthy", "conflicted", "inactive"]
+    roots: tuple[VariablePortAssociationRootResult, ...]
+
+    @property
+    def variable_registration(self):
+        return self._material.record_at(self.variable_registration_index)
+
+    @property
+    def variable_owner_registration(self):
+        return self._material.record_at(
+            self.variable_owner_registration_index)
+
+    @property
+    def port_registration(self):
+        return self._material.record_at(self.port_registration_index)
+
+    @property
+    def port_owner_registration(self):
+        return self._material.record_at(self.port_owner_registration_index)
+
+
+def _variable_port_entry_payloads(material: ModelQueryMaterial, loaded,
+                                  association_ids, *, order_by: str):
+    """Return canonical collection entries for association subjects."""
+    indices = {record_id: index for index, record_id
+               in enumerate(material.revision.record_ids)}
+    subjects = {}
+    for record_id in association_ids:
+        record = loaded.variable_port_associations[record_id]
+        subject = (record.variable_anchor_id, record.port_anchor_id,
+                   record.context)
+        subjects.setdefault(subject, set()).add(
+            loaded.variable_port_association_root_by_id[record_id])
+    pending = []
+    for (variable_anchor_id, port_anchor_id, _), roots in subjects.items():
+        variable = loaded.variable_registrations_by_anchor[variable_anchor_id]
+        port = loaded.port_registrations_by_anchor[port_anchor_id]
+        variable_owner = loaded.registrations_by_anchor[
+            variable.anchor.entity_anchor_id]
+        port_owner = loaded.registrations_by_anchor[port.owner_entity_anchor_id]
+        root_payloads = _variable_port_root_payloads(
+            material, loaded, tuple(roots))
+        conclusion, summary = _variable_port_conclusion(root_payloads)
+        # A stored subject necessarily has at least one root, so collection
+        # conclusions can only be asserted or inactive.
+        first_root_id = min(roots)
+        sort_anchor = (port_anchor_id if order_by == "port" else
+                       variable_anchor_id)
+        pending.append(((sort_anchor, first_root_id), {
+            "variable_anchor_id": variable_anchor_id,
+            "port_anchor_id": port_anchor_id,
+            "variable_registration_index": indices[variable.record_id],
+            "variable_owner_registration_index": indices[
+                variable_owner.record_id],
+            "port_registration_index": indices[port.record_id],
+            "port_owner_registration_index": indices[port_owner.record_id],
+            "conclusion": conclusion,
+            "lineage_summary": summary,
+            "roots": tuple(root_payloads),
+        }))
+    return tuple({"entry_index": entry_index, **payload}
+                 for entry_index, (_, payload) in enumerate(sorted(pending)))
+
+
+class VariablePortsResult(_WithMaterial):
+    variable_anchor_id: str = Field(pattern=VARIABLE_ANCHOR_ID_PATTERN)
+    context: AssertionContext
+    status: VariablePortsStatus
+    variable_registration_index: int | None = Field(default=None, ge=0)
+    owner_registration_index: int | None = Field(default=None, ge=0)
+    entries: tuple[VariablePortAssociationEntry, ...] = ()
+
+    @property
+    def variable_registration(self):
+        return (None if self.variable_registration_index is None else
+                self.material.record_at(self.variable_registration_index))
+
+    @property
+    def owner_registration(self):
+        return (None if self.owner_registration_index is None else
+                self.material.record_at(self.owner_registration_index))
+
+    @model_validator(mode="after")
+    def _coherent(self):
+        loaded = self.material.loaded()
+        context = _validated_context(self.context)
+        indices = {record_id: index for index, record_id
+                   in enumerate(self.material.revision.record_ids)}
+        variable = loaded.variable_registrations_by_anchor.get(
+            self.variable_anchor_id)
+        if variable is None:
+            expected_status = "variable_not_registered"
+            variable_index = owner_index = None
+            payloads = ()
+        else:
+            expected_status = "registered"
+            variable_index = indices[variable.record_id]
+            owner_index = indices[loaded.registrations_by_anchor[
+                variable.anchor.entity_anchor_id].record_id]
+            association_ids = (
+                loaded.variable_port_association_ids_by_variable_context.get(
+                    (self.variable_anchor_id, context), ()))
+            payloads = _variable_port_entry_payloads(
+                self.material, loaded, association_ids, order_by="port")
+        supplied = (
+            self.status, self.variable_registration_index,
+            self.owner_registration_index,
+            tuple(row.model_dump() for row in self.entries),
+        )
+        expected = (expected_status, variable_index, owner_index,
+                    tuple(payloads))
+        if supplied != expected:
+            raise ValueError("variable-to-ports disclosure is forged")
+        for entry in self.entries:
+            object.__setattr__(entry, "_material", self.material)
+            _bind_variable_port_roots(entry.roots, self.material)
+        return self
+
+
+class PortVariablesResult(_WithMaterial):
+    port_anchor_id: str = Field(pattern=PORT_ANCHOR_ID_PATTERN)
+    context: AssertionContext
+    status: PortVariablesStatus
+    port_registration_index: int | None = Field(default=None, ge=0)
+    owner_registration_index: int | None = Field(default=None, ge=0)
+    entries: tuple[VariablePortAssociationEntry, ...] = ()
+
+    @property
+    def port_registration(self):
+        return (None if self.port_registration_index is None else
+                self.material.record_at(self.port_registration_index))
+
+    @property
+    def owner_registration(self):
+        return (None if self.owner_registration_index is None else
+                self.material.record_at(self.owner_registration_index))
+
+    @model_validator(mode="after")
+    def _coherent(self):
+        loaded = self.material.loaded()
+        context = _validated_context(self.context)
+        indices = {record_id: index for index, record_id
+                   in enumerate(self.material.revision.record_ids)}
+        port = loaded.port_registrations_by_anchor.get(self.port_anchor_id)
+        if port is None:
+            expected_status = "port_not_registered"
+            port_index = owner_index = None
+            payloads = ()
+        else:
+            expected_status = "registered"
+            port_index = indices[port.record_id]
+            owner_index = indices[loaded.registrations_by_anchor[
+                port.owner_entity_anchor_id].record_id]
+            association_ids = (
+                loaded.variable_port_association_ids_by_port_context.get(
+                    (self.port_anchor_id, context), ()))
+            payloads = _variable_port_entry_payloads(
+                self.material, loaded, association_ids, order_by="variable")
+        supplied = (
+            self.status, self.port_registration_index,
+            self.owner_registration_index,
+            tuple(row.model_dump() for row in self.entries),
+        )
+        expected = (expected_status, port_index, owner_index, tuple(payloads))
+        if supplied != expected:
+            raise ValueError("port-to-variables disclosure is forged")
+        for entry in self.entries:
+            object.__setattr__(entry, "_material", self.material)
+            _bind_variable_port_roots(entry.roots, self.material)
+        return self
+
+
+class VariablePortAssertionDisclosureResult(_WithMaterial):
+    record_id: str = Field(pattern=r"^(?:vpa|vpw)_[0-9a-f]{64}$")
+    lookup_status: VariablePortAssertionLookupStatus
+    record_index: int | None = Field(default=None, ge=0)
+    activity: AssertionActivity | None = None
+    containing_lineage_health: ContainingLineageHealth | None = None
+    root_record_index: int | None = Field(default=None, ge=0)
+    successor_indices: tuple[int, ...] = ()
+    withdrawal_indices: tuple[int, ...] = ()
+
+    @property
+    def record(self):
+        return (None if self.record_index is None else
+                self.material.record_at(self.record_index))
+
+    @property
+    def root_record(self):
+        return (None if self.root_record_index is None else
+                self.material.record_at(self.root_record_index))
+
+    @property
+    def successors(self):
+        return tuple(self.material.record_at(index)
+                     for index in self.successor_indices)
+
+    @property
+    def withdrawals(self):
+        return tuple(self.material.record_at(index)
+                     for index in self.withdrawal_indices)
+
+    @model_validator(mode="after")
+    def _coherent(self):
+        loaded = self.material.loaded()
+        indices = {record_id: index for index, record_id
+                   in enumerate(self.material.revision.record_ids)}
+        record = loaded.records.get(self.record_id)
+        found = (record is not None and record.record_kind in {
+            "variable_port_association",
+            "variable_port_association_withdrawal",
+        })
+        expected_lookup = "found" if found else "not_found"
+        if not found:
+            expected = (expected_lookup, None, None, None, None, (), ())
+        elif record.record_kind == "variable_port_association_withdrawal":
+            expected = (
+                expected_lookup, indices[self.record_id], None, None, None,
+                (), (),
+            )
+        else:
+            root_id = loaded.variable_port_association_root_by_id[
+                self.record_id]
+            tips = loaded.current_variable_port_association_tips_by_root[
+                root_id]
+            successors = loaded.variable_port_association_superseded_by[
+                self.record_id]
+            withdrawals = loaded.variable_port_association_withdrawn_by[
+                self.record_id]
+            activity = (
+                "superseded" if successors else
+                "withdrawn" if withdrawals else
+                "current")
+            health = (
+                "inactive" if not tips else
+                "conflicted" if len(tips) > 1 else
+                "healthy")
+            expected = (
+                expected_lookup, indices[self.record_id], activity, health,
+                indices[root_id],
+                tuple(indices[record_id] for record_id in sorted(successors)),
+                tuple(indices[record_id] for record_id in sorted(withdrawals)),
+            )
+        supplied = (
+            self.lookup_status, self.record_index, self.activity,
+            self.containing_lineage_health, self.root_record_index,
+            self.successor_indices, self.withdrawal_indices,
+        )
+        if supplied != expected:
+            raise ValueError("variable-port assertion disclosure is forged")
         return self
 
 
