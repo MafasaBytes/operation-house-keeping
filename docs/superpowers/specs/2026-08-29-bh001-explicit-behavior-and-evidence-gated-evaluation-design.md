@@ -1323,9 +1323,9 @@ Validation accesses no filesystem or store and performs no writes.
 
 BH authoritative result validation proves the internal coherence of the
 carried lower public results and every BH-derived field. It inherits, and does
-not independently re-prove, raw-source authenticity. A fully coherent lower-
-evidence content mutation accepted by the lower public contracts is outside
-BH's store-independent detection boundary.
+not independently re-prove, raw-source authenticity. A fully coherent
+lower-evidence content mutation accepted by the lower public contracts is
+outside BH's store-independent detection boundary.
 
 Validation still rejects inconsistent duplicate occurrences, mixed revisions
 and cutoffs, selector retargeting, stale model IDs, forged indices, and every
@@ -1716,8 +1716,9 @@ Do not add the evaluator or fixture. Stop for owner acceptance.
 Implementation status: owner accepted at
 `05177f7306ce745d093bd5f11abafc13a6274d0f`. The exact four-query surface, carry-once results, lifecycle and
 effective-body agreement disclosure, deterministic ordering, historical
-revival, and store-independent hostile revalidation are present. Slice C is
-owner-authorized but not yet implemented. Slice D remains unstarted.
+revival, and store-independent hostile revalidation are present. BH-001 Slices
+A and B are owner accepted. Slice C is implemented and adversarially reviewed;
+awaiting owner acceptance. Slice D has not started.
 
 ### 26.3 Slice C — evidence-gated evaluator
 
@@ -1757,8 +1758,9 @@ or structural fixtures. Stop for owner acceptance.
 
 Implementation status: the preimplementation discrepancy at
 `eedae19a9b2542958f44e66af7117a981c7faeef` is owner accepted and all four
-contract questions are resolved. Slice C implementation is authorized but is
-not yet complete. Slice D remains unstarted.
+contract questions are resolved. BH-001 Slices A and B are owner accepted.
+Slice C is implemented and adversarially reviewed; awaiting owner acceptance.
+Slice D has not started.
 
 ### 26.4 Slice D — bounded synthetic demonstration
 

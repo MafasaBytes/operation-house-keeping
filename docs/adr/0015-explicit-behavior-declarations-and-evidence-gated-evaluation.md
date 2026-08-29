@@ -4,8 +4,9 @@ Status: BH-001 corrected final design and Slice A owner accepted. Slice A is
 accepted at `57edec37b40c5da0c300cc1333fbb3cf5d7bb41a`. Slice B is owner accepted
 at `05177f7306ce745d093bd5f11abafc13a6274d0f`. The Slice C discrepancy stop is
 owner accepted at `eedae19a9b2542958f44e66af7117a981c7faeef`; all four contract
-questions are resolved. Slice C is owner-authorized but not yet implemented.
-Slice D remains separately owner-gated and unstarted.
+questions are resolved. BH-001 Slices A and B are owner accepted. Slice C is
+implemented and adversarially reviewed; awaiting owner acceptance. Slice D
+has not started.
 
 Accepted base: `main` at
 `46c04ed6f6f09b254b2f52f07611e2efbdd1d4f6`.

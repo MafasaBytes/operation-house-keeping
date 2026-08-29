@@ -5,9 +5,11 @@ Status: Slice B is owner accepted at
 separate administrative commit
 `cc8fcf0`. The repository-grounded contradictions recorded in
 `docs/superpowers/reports/2026-08-30-bh001-slice-c-preimplementation-discrepancy-report.md`
-are owner accepted and resolved at the documentation gate. Slice C production
-may begin only after the normative documentation amendments and focused
-documentation assertions pass. Slice D remains unstarted.
+are owner accepted and resolved at the documentation gate. The normative
+documentation amendments and focused assertions passed before production
+work began. BH-001 Slices A and B are owner accepted. Slice C is implemented
+and adversarially reviewed; awaiting owner acceptance. Slice D has not
+started.
 
 Date: 2026-08-30
 

@@ -11,12 +11,13 @@ cohort admission. `equal` and `different` are mathematical outcomes, not
 claims about validity, correctness, causality, flow, control, safety, health,
 simultaneity, or continuing real-machine behavior.
 
-The evaluator owns no store and writes nothing. It carries lower public
-results once and validates their internal coherence without filesystem
-access. Raw-source authenticity remains the responsibility and limitation of
-the lower evidence contracts; an internally coherent lower-content mutation
-accepted by those contracts is outside this layer's detection boundary.
+The evaluator owns no store and writes nothing. BH authoritative result
+validation proves the internal coherence of the carried lower public results
+and every BH-derived field. It inherits, and does not independently re-prove,
+raw-source authenticity. A fully coherent lower-evidence content mutation
+accepted by the lower public contracts is outside BH's store-independent
+detection boundary.
 
-BH-001 Slices A and B are owner accepted. Slice C is implemented and awaiting
-owner acceptance. Slice D has not started; no committed behavior fixture or
-demonstration artifact exists.
+BH-001 Slices A and B are owner accepted. Slice C is implemented and
+adversarially reviewed; awaiting owner acceptance. Slice D has not started.
+No committed behavior fixture or demonstration artifact exists.

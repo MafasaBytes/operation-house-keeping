@@ -1,9 +1,10 @@
 # BH-001 Slice C — adversarial acceptance matrix
 
 Status: owner-resolved red-first controls for the authorized evidence-gated
-evaluator. Slices A and B are owner accepted. The preimplementation discrepancy
-and every blocker row below are owner resolved. Production starts only after
-the documentation assertions pass. Slice D is unstarted.
+evaluator. The preimplementation discrepancy and every blocker row below are
+owner resolved. Documentation assertions passed before production began.
+BH-001 Slices A and B are owner accepted. Slice C is implemented and
+adversarially reviewed; awaiting owner acceptance. Slice D has not started.
 
 ## 1. Public contract
 

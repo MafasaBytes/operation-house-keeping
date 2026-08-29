@@ -147,15 +147,15 @@ def test_cohort_and_parser_scheduling_are_exact_and_staleness_is_disclosure():
 def test_carried_material_integrity_boundary_is_exact_and_testable():
     exact = (
         "BH authoritative result validation proves the internal coherence of "
-        "the\ncarried lower public results and every BH-derived field. It "
-        "inherits, and does\nnot independently re-prove, raw-source "
-        "authenticity. A fully coherent lower-\nevidence content mutation "
-        "accepted by the lower public contracts is outside\nBH's "
+        "the carried lower public results and every BH-derived field. It "
+        "inherits, and does not independently re-prove, raw-source "
+        "authenticity. A fully coherent lower-evidence content mutation "
+        "accepted by the lower public contracts is outside BH's "
         "store-independent detection boundary."
     )
     spec = SPEC.read_text(encoding="utf-8")
     discrepancy = DISCREPANCY.read_text(encoding="utf-8")
-    assert exact in spec
+    assert exact in " ".join(spec.split())
     assert "The owner accepted option 1" in discrepancy
     assert "executable limitation test" in spec
     assert "does not claim that `payload_checksum` authenticates" in spec
@@ -178,11 +178,12 @@ def test_discrepancy_is_resolved_and_slice_d_remains_unstarted():
         in " ".join(spec.lower().split())
     )
     assert "owner accepted and resolved" in plan
-    assert "every blocker row below are owner resolved" in matrix
+    assert "every blocker row below are owner resolved" in " ".join(
+        matrix.split())
     assert "ALL FOUR QUESTIONS RESOLVED" in discrepancy
     assert "eedae19a9b2542958f44e66af7117a981c7faeef" in claude
     assert "all four contract\nquestions are resolved" in adr
-    assert "Slice D remains unstarted" in spec
-    assert "Slice D remains unstarted" in plan
-    assert "Slice D is unstarted" in matrix
+    assert "Slice D has not started" in spec
+    assert "Slice D has not\nstarted" in plan
+    assert "Slice D has not started" in matrix
     assert "Slice D remains\nunstarted" in discrepancy
