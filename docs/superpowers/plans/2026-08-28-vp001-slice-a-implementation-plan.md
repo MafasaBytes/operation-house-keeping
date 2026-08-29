@@ -1,9 +1,10 @@
 # VP-001 Slice A — implementation plan
 
-Status: implemented and adversarially reviewed; awaiting owner acceptance. The
-completed slice contains claims, withdrawals, canonical identity, validation,
-indexes, replay, builders, exports, tests, and documentation only. It does not
-implement Slices B, C, or D.
+Status: owner accepted at
+`60b739182e423a05eac7f3c531145d90c65fe9bc`. The completed slice contains
+claims, withdrawals, canonical identity, validation, indexes, replay, builders,
+exports, tests, and documentation only. Its acceptance authorized the separately
+implemented Slice B; Slices C and D remain owner-gated.
 
 Accepted base: `8a20dc82ef9445c311e89106ad10572c5c259df1`.
 

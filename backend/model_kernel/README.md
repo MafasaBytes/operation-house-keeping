@@ -26,7 +26,7 @@ runtime model sets use the documented external verification procedure.
 
 ## Semantics worth knowing
 
-- **Variable-to-port association is explicit** (VP-001 Slice A): an
+- **Variable-to-port association is explicit** (VP-001 Slices A and B): an
   evidence-bearing `VariablePortAssociation` relates one registered variable
   to one registered port in an exact assertion context only when both are owned
   by the exact same registered entity. Shared ownership never creates the
@@ -35,7 +35,9 @@ runtime model sets use the documented external verification procedure.
   positive tip membership-relatively. The claim says nothing about observation
   location, ownership transfer, values passing through a port, topology,
   compatibility, flow, behavior, control, causality, correctness, or safety.
-  Slice A adds no query, model-state composition, or fixture record.
+  Slice B adds four read-only exact/reverse/assertion queries with one complete
+  selected membership carried per result and index-only nested disclosures. It
+  adds no model-state composition or fixture record.
 - **Ports are explicit model identities and claims** (PT-001 Slice A): a pure
   `PortAnchor` is permanently registered to one entity by an evidence-bearing
   `PortRegistration`; three independent interface dimensions, positive
@@ -189,7 +191,9 @@ also remain future work.
 VP-001 Slice A is owner accepted at
 `60b739182e423a05eac7f3c531145d90c65fe9bc`. It adds only role-free positive
 associations with strict same-owner admission, independent corroborating roots,
-and dedicated `vpw_` withdrawals. Slice B is authorized and in progress. Slices
-C and D remain separately owner-gated; no VP query, state composition, or fixture
-record exists at this administrative gate. The demo ledger remains the
-accepted 28-record PT-001 revision with no committed `vpa_` or `vpw_` record.
+and dedicated `vpw_` withdrawals. Slice B is implemented and adversarially
+reviewed; awaiting owner acceptance. It adds only the four accepted read-only
+kernel queries and authoritative carry-once result contracts. Slices C and D
+remain separately owner-gated; no state composition or VP fixture record has
+been added. The demo ledger remains the accepted 28-record PT-001 revision with
+no committed `vpa_` or `vpw_` record.

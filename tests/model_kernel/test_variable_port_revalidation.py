@@ -201,7 +201,7 @@ def test_slice_b_is_present_while_c_d_and_upper_layer_imports_are_absent():
         "backend.data_sources")) for name in imports)
 
 
-def test_slice_a_status_documentation_records_owner_acceptance():
+def test_slice_b_status_documentation_records_slice_a_acceptance_and_gate():
     accepted = (
         "VP-001 Slice A is owner accepted at "
         "`60b739182e423a05eac7f3c531145d90c65fe9bc`.")
@@ -215,10 +215,11 @@ def test_slice_a_status_documentation_records_owner_acceptance():
     for path in surfaces:
         text = " ".join(path.read_text(encoding="utf-8").split())
         assert accepted in text
-        assert "Slice B is authorized and in progress" in text
+        assert ("Slice B is implemented and adversarially reviewed; awaiting "
+                "owner acceptance" in text)
         assert "Slices C and D remain separately owner-gated" in text
-        assert ("no vp query, state composition, or fixture record exists at "
-                "this administrative gate") in text.lower()
+        assert ("no state composition or vp fixture record has been added"
+                in text.lower())
 
     for path in (Path("CLAUDE.md"), Path("backend/model_kernel/README.md")):
         text = " ".join(path.read_text(encoding="utf-8").split())

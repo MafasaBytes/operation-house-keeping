@@ -744,7 +744,8 @@ VP-001 Slice A is owner accepted at
 `vpa_` association claims with strict same-owner admission, independent
 corroborating roots, and dedicated `vpw_` withdrawals, plus canonical/store
 validation, immutable indexes, builders, exports, replay, and tests. Slice B is
-authorized and in progress. Slices C and D remain separately owner-gated; no VP
-query, state composition, or fixture record exists at this administrative
-gate. The demo
-ledger remains exactly 28 records at the accepted PT-001 revision.
+implemented and adversarially reviewed; awaiting owner acceptance. It adds only
+the four accepted read-only kernel query methods and their authoritative,
+carry-once result contracts. Slices C and D remain separately owner-gated; no
+state composition or VP fixture record has been added. The demo ledger remains
+exactly 28 records at the accepted PT-001 revision.

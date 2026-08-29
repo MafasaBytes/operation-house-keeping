@@ -1,7 +1,9 @@
 # VP-001 — adversarial acceptance matrix
 
-Status: Slice A exercised and adversarially reviewed; awaiting owner acceptance.
-Slice B/C/D entries pin later boundaries but do not authorize implementation.
+Status: Slice A owner accepted at
+`60b739182e423a05eac7f3c531145d90c65fe9bc`. Slice B is implemented and
+adversarially reviewed; awaiting owner acceptance. Slice C/D entries pin later
+boundaries and do not authorize implementation.
 
 ## A. Public contract and canonical identity
 
@@ -102,19 +104,19 @@ Slice B/C/D entries pin later boundaries but do not authorize implementation.
 | F01 | Replay explicit 9/10/11/14/16/18/28 memberships | Exact accepted revisions, zero VP artifacts |
 | F02 | Any pre-VP model byte changes | Golden byte-freeze failure |
 | F03 | PT deterministic artifact changes | Hash regression failure |
-| F04 | Demo ledger count changes in Slice A | Failure; must remain 28 |
-| F05 | VP query/result contract appears in production | Slice-boundary failure |
+| F04 | Demo ledger count changes in Slice A or B | Failure; must remain 28 |
+| F05 | VP query/result surface exceeds the exact Slice B contract | Slice-boundary failure |
 | F06 | Model-state composition appears | Slice-boundary failure |
 | F07 | VP fixture record appears | Slice-boundary failure |
 | F08 | New ledger/store/module appears | Architecture failure |
 | F09 | Kernel imports temporal, state, binding, evidence implementation, or source module | Import-isolation failure |
 | F10 | Accepted PT/variable/relationship/constraint validation weakened | Regression failure |
 
-## G. Reserved Slice B authoritative-query attacks
+## G. Slice B authoritative-query attacks
 
-These rows constrain later design but are not Slice A implementation work.
+These rows are exercised by the Slice B query and authoritative-result tests.
 
-| ID | Attack or assertion | Required later result |
+| ID | Attack or assertion | Required result |
 |---|---|---|
 | G01 | Endpoint missing | Exact four-way endpoint status; not evaluated |
 | G02 | Same-owner registered pair, no roots | `not_declared`, never negative association |

@@ -1,9 +1,10 @@
 # ADR-0014 — Explicit variable-to-port association
 
 Status: VP-001 Slice A is owner accepted at
-`60b739182e423a05eac7f3c531145d90c65fe9bc`. Slice B is authorized and in
-progress. Slices C and D remain separately owner-gated. No VP query, state
-composition, or fixture record exists at this administrative gate.
+`60b739182e423a05eac7f3c531145d90c65fe9bc`. Slice B is implemented and
+adversarially reviewed; awaiting owner acceptance. Slices C and D remain
+separately owner-gated. No state composition or VP fixture record has been
+added.
 
 ## Context
 
@@ -55,10 +56,11 @@ claiming that a value occurred at, travelled through, or was produced by a port.
 9. `vpa_` is citable model-record evidence and `vpw_` is not. Evidence supports
    an authority's declaration but never automatically materializes model truth.
 10. Slice A adds only canonical contracts, validation, store indexes, builders,
-    exports, replay, and tests. Slice B reserves exact read-only kernel query and
-    carry-once result contracts. Slice C, required for VP-001 completion, adds a
-    separately gated read-only model-state composition. Slice D may append one
-    synthetic VPA to evolve the demo from 28 to 29 records.
+    exports, replay, and tests. Slice B adds exactly four read-only kernel query
+    methods and six carry-once result contracts with seven nominal status
+    vocabularies. Slice C, required for VP-001 completion, adds a separately
+    gated read-only model-state composition. Slice D may append one synthetic
+    VPA to evolve the demo from 28 to 29 records.
 
 ## Consequences
 

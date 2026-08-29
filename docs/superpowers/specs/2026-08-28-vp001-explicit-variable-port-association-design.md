@@ -1,9 +1,10 @@
 # VP-001 — Explicit variable-to-port association
 
 Status: VP-001 Slice A is owner accepted at
-`60b739182e423a05eac7f3c531145d90c65fe9bc`. Slice B is authorized and in
-progress. Slices C and D remain separately owner-gated. No VP query, state
-composition, or fixture record exists at this administrative gate.
+`60b739182e423a05eac7f3c531145d90c65fe9bc`. Slice B is implemented and
+adversarially reviewed; awaiting owner acceptance. Slices C and D remain
+separately owner-gated. No state composition or VP fixture record has been
+added.
 
 ## Mission and boundary
 
@@ -277,10 +278,11 @@ at revision
 and the accepted PT artifact remains SHA-256
 `53dd32846956d10331dfca8fc370ef7d7019325904a062db5f037605aa4cf3d8`.
 
-## Reserved Slice B API
+## Slice B API
 
-Slice A does not implement these contracts. The design reserves them so the
-record/index shape cannot drift away from the accepted query boundary.
+Slice B implements exactly these read-only `ModelQueries` contracts over one
+injected `LoadedModel`. They own no store, perform no writes, and do not infer
+associations.
 
 ```python
 variable_port_association(variable_anchor_id, port_anchor_id, *, context)
@@ -293,7 +295,7 @@ variable_port_assertion(record_id)
     -> VariablePortAssertionDisclosureResult
 ```
 
-Reserved literal vocabularies:
+Public literal vocabularies:
 
 ```text
 VariablePortEndpointStatus:
