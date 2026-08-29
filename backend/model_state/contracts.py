@@ -28,6 +28,7 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
+    StrictInt,
     TypeAdapter,
     model_validator,
 )
@@ -166,7 +167,7 @@ class VariableStateResult(_Frozen):
                               "binding_declaration_absent",
                               "model_registration_absent"]
     divergent_anchor_fields: tuple[str, ...] = ()
-    declared_locator_count: int = Field(ge=0)
+    declared_locator_count: Annotated[StrictInt, Field(ge=0)]
     candidates: tuple[CandidateObservation, ...] = ()
 
     @model_validator(mode="after")
@@ -174,6 +175,7 @@ class VariableStateResult(_Frozen):
         def fail(message):
             raise ValueError(message)
 
+        binding_record_ids = set(self.binding_revision.record_ids)
         registered = self.model_membership == "registered"
         # 1: membership <=> registrations <=> agreement basis
         if registered != (self.variable_registration is not None):
@@ -201,6 +203,10 @@ class VariableStateResult(_Frozen):
                 self.requested_entity_registration is not None):
             fail("requested_entity_registration present exactly when the "
                  "supplied entity is registered")
+        if (self.requested_entity_registration is not None
+                and self.requested_entity_registration.anchor.anchor_id !=
+                self.requested_entity_anchor_id):
+            fail("requested_entity_registration must be the requested entity")
         if supplied:
             if (self.requested_entity_agreement == "owner_unavailable") != (
                     not registered):
@@ -224,9 +230,16 @@ class VariableStateResult(_Frozen):
             if len(self.candidates) != 1 or (
                     self.candidates[0].origin != "explicit_selector"):
                 fail("selector mode carries exactly the selector candidate")
-            if (self.selector_declaration == "undeclared") != (
-                    self.candidates[0].declaration is None):
-                fail("an undeclared selector carries no declaration")
+            declaration = self.candidates[0].declaration
+            expected_selector = (
+                "undeclared" if declaration is None else
+                "ever_declared_for_requested_variable" if any(
+                    summary.target_anchor_id == self.variable_anchor_id
+                    for summary in declaration.assertion_summaries) else
+                "ever_declared_for_other_variable")
+            if self.selector_declaration != expected_selector:
+                fail("selector_declaration must follow the carried "
+                     "declaration targets")
         else:
             if any(candidate.origin != "declared_binding"
                    for candidate in self.candidates):
@@ -236,6 +249,14 @@ class VariableStateResult(_Frozen):
             unknown = self.binding_discovery == "anchor_unknown_to_binding_set"
             if unknown != (self.binding_declared_anchor is None):
                 fail("anchor_unknown exactly when no declaration exists")
+            expected_discovery = (
+                "anchor_unknown_to_binding_set"
+                if self.binding_declared_anchor is None else
+                "declared_candidates" if self.candidates else
+                "no_declared_candidates")
+            if self.binding_discovery != expected_discovery:
+                fail("binding_discovery must follow anchor and candidate "
+                     "disclosure")
             expected_selection = ("none" if not self.candidates else
                                   "single" if len(self.candidates) == 1
                                   else "multiple")
@@ -245,6 +266,10 @@ class VariableStateResult(_Frozen):
         if self.anchor_agreement in ("exact", "divergent") and (
                 self.binding_declared_anchor is None):
             fail("anchor comparison requires the declared anchor")
+        if (self.binding_declared_anchor is not None
+                and self.binding_declared_anchor.anchor_id !=
+                self.variable_anchor_id):
+            fail("binding_declared_anchor must be the requested variable")
         if self.anchor_agreement == "binding_declaration_absent" and (
                 not registered or self.binding_declared_anchor is not None):
             fail("binding_declaration_absent: registered, no declaration")
@@ -274,6 +299,21 @@ class VariableStateResult(_Frozen):
         # 8-10: per-candidate coherence
         for candidate in self.candidates:
             if candidate.declaration is not None:
+                if (candidate.declaration.subject != candidate.subject
+                        or candidate.declaration.property !=
+                        candidate.property):
+                    fail("candidate locator must equal its declaration")
+                for summary in candidate.declaration.assertion_summaries:
+                    lifecycle_ids = (
+                        *((summary.supersedes,) if summary.supersedes else ()),
+                        *summary.superseded_by,
+                        *summary.retracted_by,
+                        *summary.closure_records,
+                    )
+                    if ({summary.record_id, *lifecycle_ids}
+                            - binding_record_ids):
+                        fail("candidate binding citations must belong to the "
+                             "carried binding revision")
                 expected_ids = tuple(sorted(
                     summary.record_id
                     for summary in candidate.declaration.assertion_summaries
@@ -282,15 +322,52 @@ class VariableStateResult(_Frozen):
                     fail("declared_via ids must be exactly the carried "
                          "declaration's assertions targeting the requested "
                          "variable")
+                if (candidate.origin == "declared_binding"
+                        and not expected_ids):
+                    fail("a discovery candidate must cite an assertion "
+                         "targeting the requested variable")
             if candidate.bound is None:
                 continue
+            observed = candidate.bound.observed
             resolution = candidate.bound.resolution
+            if observed.as_of != self.as_of:
+                fail("candidate cutoff must equal the requested cutoff")
+            if observed.occurrence.received_at > observed.as_of:
+                fail("candidate occurrence must not postdate its cutoff")
+            expected_staleness = (
+                observed.as_of - observed.occurrence.received_at
+            ).total_seconds()
+            if observed.staleness_seconds != expected_staleness:
+                fail("candidate staleness must derive from its cutoff")
+            if (observed.occurrence.subject != candidate.subject
+                    or observed.occurrence.property != candidate.property
+                    or resolution.locator_subject != candidate.subject
+                    or resolution.locator_property != candidate.property):
+                fail("candidate locator must equal observation and resolution")
             if resolution.revision != self.binding_revision:
                 fail("one binding revision governs discovery and every "
                      "candidate resolution")
+            resolution_ids = set()
+            for summary in resolution.via_assertions:
+                resolution_ids.update((
+                    summary.record_id,
+                    *summary.superseded_by,
+                    *summary.retracted_by,
+                    *summary.closure_records,
+                ))
+            if resolution.subject_context is not None:
+                resolution_ids.update(
+                    resolution.subject_context.via_assertion_ids)
+            if resolution_ids - binding_record_ids:
+                fail("resolution citations must belong to the carried "
+                     "binding revision")
             positive = resolution.status == "bound"
             target = (resolution.resolved_target.anchor_id
                       if positive else None)
+            if (target == self.variable_anchor_id
+                    and resolution.resolved_target !=
+                    self.binding_declared_anchor):
+                fail("resolved target must equal the carried binding anchor")
             if not positive:
                 expected_attachment = "not_attachable_resolution_nonpositive"
             elif target != self.variable_anchor_id:
