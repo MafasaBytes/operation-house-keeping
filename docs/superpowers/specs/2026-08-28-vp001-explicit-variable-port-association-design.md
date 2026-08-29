@@ -388,10 +388,11 @@ no declaration return registered-empty or `not_declared`, never an
 evidence-backed negative. Results follow the accepted `ModelQueryMaterial`
 carry-once pattern and fully recompute all derived fields without store access.
 
-## Reserved Slice C composition
+## Authorized Slice C composition
 
-Slice C is required before VP-001 completion but is separately owner-gated and
-not implemented by Slice A.
+Slice C is authorized over the owner-accepted Slice B boundary. It remains
+limited to the following read-only model-state composition and does not
+authorize Slice D.
 
 ```python
 ModelStateQueries.associated_port_variable_state(

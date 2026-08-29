@@ -1,9 +1,9 @@
 # VP-001 — adversarial acceptance matrix
 
 Status: Slice A owner accepted at
-`60b739182e423a05eac7f3c531145d90c65fe9bc`. Slice B is implemented and
-adversarially reviewed; awaiting owner acceptance. Slice C/D entries pin later
-boundaries and do not authorize implementation.
+`60b739182e423a05eac7f3c531145d90c65fe9bc`. Slice B is owner accepted at
+`81179700513bb671cf9955c6a5d7163e3bcc7e1b`. Slice C is authorized and in
+progress. Slice D remains unstarted and separately owner-gated.
 
 ## A. Public contract and canonical identity
 
@@ -129,18 +129,28 @@ These rows are exercised by the Slice B query and authoritative-result tests.
 | G09 | Registered endpoint with no reverse associations | Registered-empty collection |
 | G10 | Found VPW disclosure | Event with no assertion lifecycle |
 
-## H. Reserved Slice C/D boundaries
+## H. Slice C composition and reserved Slice D boundaries
 
-| ID | Attack or assertion | Required later result |
+| ID | Attack or assertion | Required result |
 |---|---|---|
 | H01 | Observation exists but association absent/conflicted/inactive | Observation disclosed independently; no port claim |
 | H02 | `as_of` used to select model membership | Rejected boundary |
 | H03 | Model/binding/cutoff presented as synchronized | Refused; axes remain separate |
 | H04 | Port value or observed-at-port field | Public-surface rejection |
-| H05 | Slice D appends more than one VPA or any VPW | Fixture failure |
-| H06 | Existing 28 records modified | Byte-freeze failure |
-| H07 | Mandatory synthetic disclaimer altered/absent | Artifact failure |
-| H08 | Artifact differs across clean checkouts | Determinism failure |
+| H05 | Outer association status forged or derived from observation availability | Full reconstruction rejects |
+| H06 | Nested association or variable-state `model_construct`/`model_copy` forgery | Serialized reconstruction rejects |
+| H07 | Association and variable-state model revisions differ | Outer validation rejects |
+| H08 | Variable, port, context, or UTC cutoff echoes differ | Outer validation rejects |
+| H09 | Context changes | Association may change; temporal candidate set is unchanged |
+| H10 | Cutoff changes | Temporal evidence may change; association and model revision are unchanged |
+| H11 | Endpoint not admitted | Variable state still runs and remains fully disclosed |
+| H12 | Upstream temporal storage failure | Original typed error propagates; no association status substitute |
+| H13 | Store construction, filesystem access, write, or upper-layer import | Architecture failure |
+| H14 | Slice D fixture or artifact mutation during Slice C | Preservation failure |
+| H15 | Slice D appends more than one VPA or any VPW | Fixture failure |
+| H16 | Existing 28 records modified | Byte-freeze failure |
+| H17 | Mandatory synthetic disclaimer altered/absent | Artifact failure |
+| H18 | Artifact differs across clean checkouts | Determinism failure |
 
 ## Verification evidence required
 
