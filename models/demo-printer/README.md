@@ -39,3 +39,49 @@ The pre-PT membership remains an explicit eighteen-record historical revision,
 The PT-001 membership is an explicit twenty-eight-record revision,
 `mrv_c6244b6dc41de599de9894b55f4064e41ba5260e7d00f50bffc1e1e63da560a2`.
 Historical replay never derives membership by enumerating this directory.
+
+## VP-001 synthetic variable-to-port association demonstration
+
+VP-001 Slice D appends exactly one parentless
+`VariablePortAssociation`,
+`vpa_f6443787fc9665e24cae80a5ba0650d0bda8abefe87cb60427c8b39068932e49`.
+It explicitly associates the existing synthetic hotend-temperature variable
+`var_b7e2d3c4f5a6172839405a6b7c8d9e0f` with the existing synthetic
+extruder-unit port `prt_91a3d6db9df440e1a09dbdb185c7b182` in the exact
+`lifecycle_view/as_designed` context. Both are owned by the exact registered
+entity `ent_a3f1c2d4e5b6478899aa0b1c2d3e4f50`.
+
+The VPA is a role-free positive claim made by fixture authority
+`test_fixture / vp001_demo_fixture / manual_declaration`. It cites the exact
+variable and port registrations plus one claim-specific synthetic owner
+declaration. It has no parents, successor, withdrawal, second root, or negative
+meaning. Its stored file is 1,184 bytes with SHA-256
+`95f9390f784600b2f7a17e74a540d6874722039be5d093614c15a716ff08034e`.
+
+The VP-001 membership is the explicit twenty-nine-record revision
+`mrv_18da4ce963ab5c4b1121cdcc009eaaef4cd1c5c11034f4678c6437361ffd7652`.
+The 28-record PT-001 membership above remains an unchanged historical boundary
+where the endpoints are registered and same-owner but the association is
+`not_declared`.
+
+> This is an illustrative synthetic VP-001 association fixture. It does not describe or claim any real printer wiring, signal routing, connector, protocol, sensing location, measurement location, data path, flow, command, control, influence, causality, behavior, compatibility, safety, correctness, activity, or operating condition.
+
+In particular:
+
+- shared ownership did not create the association;
+- names did not create the association;
+- Moonraker data did not create the association;
+- CAD or geometry did not create the association;
+- PIF tokens did not create the association;
+- PCN topology did not create the association;
+- existing observations did not create the association;
+- displaying variable state beside the port does not mean the value occurred
+  at, originated at, travelled through, or describes the port.
+
+The deterministic VP-001 disclosure artifact is 17,824 bytes with SHA-256
+`a150e10317982ccc6330fa17a921128d3cf31ee9d6b710ef0ad8ea23f63e4ea3`.
+It keeps model revision, binding revision, and temporal cutoff as separate
+provenance axes, discloses the exact binding declaration and resolution that
+attach the observation to the variable, and makes no clock-synchronization
+claim. The accepted PT-001 artifact remains byte-identical and is regenerated
+from the explicit 28-record membership.

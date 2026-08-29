@@ -1,7 +1,7 @@
 # VP-001 — adversarial acceptance matrix
 
-Status: VP-001 Slices A, B, and C are owner accepted. Slice D is authorized and
-in progress.
+Status: VP-001 Slices A, B, and C are owner accepted. Slice D is implemented
+and adversarially reviewed; awaiting final owner acceptance.
 Slice A is owner accepted at
 `60b739182e423a05eac7f3c531145d90c65fe9bc`; Slice B is owner accepted at
 `81179700513bb671cf9955c6a5d7163e3bcc7e1b`.
@@ -132,7 +132,7 @@ These rows are exercised by the Slice B query and authoritative-result tests.
 | G09 | Registered endpoint with no reverse associations | Registered-empty collection |
 | G10 | Found VPW disclosure | Event with no assertion lifecycle |
 
-## H. Slice C composition and reserved Slice D boundaries
+## H. Slice C composition and implemented Slice D boundaries
 
 | ID | Attack or assertion | Required result |
 |---|---|---|
@@ -161,5 +161,6 @@ For each genuine defect found after first green, retain the minimal failing
 reproduction and the passing result after repair. Final evidence must include
 focused VP tests, all model-kernel and PT regressions, the full suite, both clean
 checkout columns, OCP/STEP and PDF suites, import audits, `git diff --check`,
-branch topology, clean worktree, 28-record demo count, pinned current revision,
-and unchanged `.claude/settings.local.json`.
+branch topology, clean worktree, 29-record current demo count, explicit
+28-record historical PT replay, pinned revisions and artifact hashes, and
+unchanged `.claude/settings.local.json`.

@@ -1,9 +1,10 @@
 # ADR-0014 — Explicit variable-to-port association
 
-Status: VP-001 Slices A, B, and C are owner accepted. Slice D is authorized and
-in progress.
+Status: VP-001 Slices A, B, and C are owner accepted. Slice D is implemented
+and adversarially reviewed; awaiting final owner acceptance.
 Slice B is owner accepted at
-`81179700513bb671cf9955c6a5d7163e3bcc7e1b`. No VP fixture record exists.
+`81179700513bb671cf9955c6a5d7163e3bcc7e1b`. The bounded fixture is exactly one
+parentless VPA and no VPW, correction, or additional root.
 
 ## Context
 
@@ -66,6 +67,13 @@ claiming that a value occurred at, travelled through, or was produced by a port.
     for valid input. Displaying variable state beside a port is not a claim that
     an observation occurred at the port. Context does not filter temporal
     evidence, and the cutoff does not select model membership.
+12. Slice D appends exactly one synthetic VPA. The explicit 28-record PT
+    membership remains historical and unchanged; the current explicit
+    29-record membership is
+    `mrv_18da4ce963ab5c4b1121cdcc009eaaef4cd1c5c11034f4678c6437361ffd7652`.
+    Its test-owned deterministic disclosure keeps model, binding, and temporal
+    provenance separate and does not reinterpret the observation as a port
+    fact.
 
 ## Consequences
 

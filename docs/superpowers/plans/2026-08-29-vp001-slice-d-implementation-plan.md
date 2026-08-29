@@ -1,7 +1,8 @@
 # VP-001 Slice D — implementation plan
 
-Status: VP-001 Slices A, B, and C are owner accepted. Slice D is authorized
-and in progress. Final VP-001 owner acceptance remains a separate owner gate.
+Status: VP-001 Slices A, B, and C are owner accepted. Slice D is implemented
+and adversarially reviewed; awaiting final owner acceptance. Final VP-001 owner
+acceptance remains a separate owner gate.
 
 Accepted base: `e50d7cdfdada015230c3f3469c29c8ebc502bac4`.
 
@@ -149,6 +150,12 @@ byte length and SHA-256 in every column. The accepted PT artifact must continue
 to replay `PT001_MEMBERSHIP` and retain SHA-256
 `53dd32846956d10331dfca8fc370ef7d7019325904a062db5f037605aa4cf3d8`.
 
+The implemented artifact is 17,824 bytes with SHA-256
+`a150e10317982ccc6330fa17a921128d3cf31ee9d6b710ef0ad8ea23f63e4ea3`.
+It includes the exact variable and owner registrations, binding membership,
+declaration and resolution citations, applicability, state classifications,
+and temporal provenance required to reconstruct the disclosed attachment path.
+
 ## Gate 7 — adversarial and preservation review
 
 Fail on any extra/missing VP record, any VPW/correction/root, endpoint/context/
@@ -186,8 +193,9 @@ Run a sandbox-denied loopback case separately with permission when required.
 
 Shared ownership, names, Moonraker data, CAD or geometry, PIF tokens, PCN
 topology, and existing observations did not create the association. Displaying
-variable state beside the port does not mean the value occurred at, originated
-at, travelled through, or describes the port.
+variable state beside a port is not a claim that an observation occurred at
+the port; it does not mean the value occurred at, originated at, travelled
+through, or describes the port.
 
 ## Stop condition
 

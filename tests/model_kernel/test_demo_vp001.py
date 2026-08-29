@@ -289,3 +289,9 @@ def test_disclaimer_and_non_inference_warnings_are_exact_and_complete():
         "occurred at, originated at, travelled through, or describes the port.",
     )
     assert EXTRUDER == "ent_a3f1c2d4e5b6478899aa0b1c2d3e4f50"
+    for path in (
+        Path("models/demo-printer/README.md"),
+        Path("docs/superpowers/specs/"
+             "2026-08-28-vp001-explicit-variable-port-association-design.md"),
+    ):
+        assert DISCLAIMER in path.read_text(encoding="utf-8")

@@ -7,19 +7,19 @@ model set per directory; one write-once JSON record per file under
 never edited in place — corrections and withdrawals are new records, and
 `append` validates the complete set before every write.
 
-`demo-printer/` is the accepted validation model, currently 14 synthetic
-records (`test_fixture` authority): the 9 MK-001 records proving root →
-subsystem → extruder containment in the `as_built` view plus one
-view-independent `instance_of` edge; the VM-001 variable registration
-(hotend temperature); the VS-001 variable value specification; and the 3
-SN-001 records (`sn001_showcase_fixture` agent) — the
-`assembly_definition_contains` type (a second, non-merging,
-DEFINITION-level containment lineage, never "the hierarchy"), the
-printer-assembly-type registration, and the definition-level assertion
-citing the structural-source-locator evidence arm. Its anchors are
-declared in `bindings/demo-printer/` (the extruder and hotend variable)
-and `bindings/demo-printer-model/` (four synthetic declarations — a
-declaration fixture, not an anchor-generation service). It makes no
-claim about a real printer. Historical revisions remain provable by
-`replay()` from explicit record-id lists; a prefix filter is never an
-acceptable membership selector.
+`demo-printer/` is the accepted validation model, currently 29 synthetic
+records under `test_fixture` authorities. Its explicit historical memberships
+preserve the 9-record MK-001 model, VM-001, VS-001, SN-001, ES-001, CN-001, and
+the 28-record PT-001 fixture. VP-001 adds exactly one parentless, role-free,
+same-owner variable-to-port association and no withdrawal or correction. Its
+anchors remain declared in `bindings/demo-printer/` and
+`bindings/demo-printer-model/`; those binding ledgers are not modified by the
+VP append. The fixture makes no claim about a real printer. Historical
+revisions remain provable by `replay()` from explicit record-ID lists; a
+directory enumeration or prefix filter is never an acceptable membership
+selector.
+
+The bounded VP-001 disclosure is documented in `demo-printer/README.md`,
+including the exact synthetic-fixture disclaimer and the warning that showing
+variable state beside an associated port does not make the observation a port
+fact.

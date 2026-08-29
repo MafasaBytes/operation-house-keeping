@@ -1,7 +1,7 @@
 # VP-001 Slice C — implementation plan
 
-Status: VP-001 Slices A, B, and C are owner accepted. Slice D is authorized and
-in progress.
+Status: VP-001 Slices A, B, and C are owner accepted. Slice D is implemented
+and adversarially reviewed; awaiting final owner acceptance.
 The accepted Slice B base is
 `81179700513bb671cf9955c6a5d7163e3bcc7e1b`.
 

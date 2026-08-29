@@ -15,13 +15,16 @@ data_sources → temporal_state ─┐
 Spec: `docs/superpowers/specs/2026-08-09-vm001-model-state-design.md`;
 decisions: `docs/adr/0008-model-state-composition-facade.md`.
 
-VP-001 Slices A, B, and C are owner accepted. Slice D is authorized and in
-progress.
+VP-001 Slices A, B, and C are owner accepted. Slice D is implemented and
+adversarially reviewed; awaiting final owner acceptance.
 Slice B is owner accepted at
 `81179700513bb671cf9955c6a5d7163e3bcc7e1b`. Slice C adds only
 `associated_port_variable_state()`: displaying variable state beside a port is
-not a claim that an observation occurred at the port. No VP fixture record
-exists.
+not a claim that an observation occurred at the port. The bounded Slice D
+fixture adds exactly one VPA to the explicit 29-record demo membership. Its
+deterministic artifact discloses the distinct model revision, binding revision,
+and temporal cutoff together with the binding-resolution path, without making
+the observation a port fact.
 
 ## Composition
 

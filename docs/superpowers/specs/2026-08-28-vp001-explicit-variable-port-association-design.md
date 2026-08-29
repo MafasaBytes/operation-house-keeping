@@ -1,9 +1,10 @@
 # VP-001 — Explicit variable-to-port association
 
-Status: VP-001 Slices A, B, and C are owner accepted. Slice D is authorized and
-in progress.
+Status: VP-001 Slices A, B, and C are owner accepted. Slice D is implemented
+and adversarially reviewed; awaiting final owner acceptance.
 Slice B is owner accepted at
-`81179700513bb671cf9955c6a5d7163e3bcc7e1b`. No VP fixture record exists.
+`81179700513bb671cf9955c6a5d7163e3bcc7e1b`. The bounded fixture is exactly one
+parentless VPA and no VPW, correction, or additional root.
 
 ## Mission and boundary
 
@@ -271,8 +272,8 @@ a later withdrawal revives its target. Records in another exact context do not
 affect the requested context. Historical membership is never reconstructed by
 directory enumeration.
 
-Slice A appends no fixture records. The demo ledger remains exactly 28 records
-at revision
+Slice A appended no fixture records. The explicit historical PT membership
+remains exactly 28 records at revision
 `mrv_c6244b6dc41de599de9894b55f4064e41ba5260e7d00f50bffc1e1e63da560a2`,
 and the accepted PT artifact remains SHA-256
 `53dd32846956d10331dfca8fc370ef7d7019325904a062db5f037605aa4cf3d8`.
@@ -391,8 +392,8 @@ carry-once pattern and fully recompute all derived fields without store access.
 ## Implemented Slice C composition
 
 Slice C is owner accepted over the owner-accepted Slice B boundary. It remains
-limited to the following read-only model-state composition. Slice D is now
-separately authorized and in progress.
+limited to the following read-only model-state composition. Slice D is
+implemented and adversarially reviewed; awaiting final owner acceptance.
 
 ```python
 ModelStateQueries.associated_port_variable_state(
@@ -431,9 +432,10 @@ separate provenance axes; no temporal revision or clock synchronization is
 invented. The kernel never imports state, temporal, binding, or compatibility
 modules.
 
-## Reserved Slice D demonstration
+## Implemented Slice D demonstration
 
-After A–C are separately accepted, Slice D appends exactly one VPA and no VPW:
+After A–C were separately accepted, Slice D appended exactly one VPA and no
+VPW:
 
 ```text
 variable: var_b7e2d3c4f5a6172839405a6b7c8d9e0f
@@ -447,6 +449,18 @@ evidence: exact variable registration, exact port registration, and one
 
 The model evolves from 28 to exactly 29 records. No correction, second root,
 cross-owner claim, role, variable, port, or state record is added.
+
+The approved record is
+`vpa_f6443787fc9665e24cae80a5ba0650d0bda8abefe87cb60427c8b39068932e49`;
+its 1,184-byte stored file has SHA-256
+`95f9390f784600b2f7a17e74a540d6874722039be5d093614c15a716ff08034e`.
+The explicit 29-record revision is
+`mrv_18da4ce963ab5c4b1121cdcc009eaaef4cd1c5c11034f4678c6437361ffd7652`.
+The deterministic VP disclosure artifact is 17,824 bytes with SHA-256
+`a150e10317982ccc6330fa17a921128d3cf31ee9d6b710ef0ad8ea23f63e4ea3`.
+It carries the exact binding membership, declaration, resolution,
+applicability, model registrations, and temporal provenance while keeping the
+model revision, binding revision, and cutoff separate.
 
 Mandatory disclaimer:
 

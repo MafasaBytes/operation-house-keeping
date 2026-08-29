@@ -211,7 +211,7 @@ def test_slices_b_c_d_are_present_without_kernel_import_or_store_leakage():
         "backend.data_sources")) for name in imports)
 
 
-def test_slice_c_owner_acceptance_authorizes_slice_d_without_fixture_yet():
+def test_slice_d_review_status_and_fixture_identity_are_exact():
     accepted = (
         "Slice B is owner accepted at "
         "`81179700513bb671cf9955c6a5d7163e3bcc7e1b`.")
@@ -226,11 +226,10 @@ def test_slice_c_owner_acceptance_authorizes_slice_d_without_fixture_yet():
         text = " ".join(path.read_text(encoding="utf-8").split())
         assert accepted in text
         assert "VP-001 Slices A, B, and C are owner accepted" in text
-        assert "Slice D is authorized and in progress" in text
 
     accepted = (
-        "VP-001 Slices A, B, and C are owner accepted. Slice D is authorized "
-        "and in progress.")
+        "VP-001 Slices A, B, and C are owner accepted. Slice D is implemented "
+        "and adversarially reviewed; awaiting final owner acceptance.")
     reviewed_surfaces = (
         Path("CLAUDE.md"),
         Path("backend/model_state/README.md"),
@@ -242,6 +241,8 @@ def test_slice_c_owner_acceptance_authorizes_slice_d_without_fixture_yet():
              "2026-08-28-vp001-adversarial-acceptance-matrix.md"),
         Path("docs/superpowers/plans/"
              "2026-08-29-vp001-slice-c-implementation-plan.md"),
+        Path("docs/superpowers/plans/"
+             "2026-08-29-vp001-slice-d-implementation-plan.md"),
     )
     for path in reviewed_surfaces:
         text = " ".join(path.read_text(encoding="utf-8").split())
@@ -256,8 +257,30 @@ def test_slice_c_owner_acceptance_authorizes_slice_d_without_fixture_yet():
         assert "independent corroborating roots" in text
         assert "dedicated `vpw_` withdrawals" in text
 
-    specification = surfaces[1].read_text(encoding="utf-8")
-    assert "demo ledger remains exactly 28 records" in specification
+    final_revision = (
+        "mrv_18da4ce963ab5c4b1121cdcc009eaaef4cd1c5c11034f4678c6437361ffd7652")
+    vpa_id = (
+        "vpa_f6443787fc9665e24cae80a5ba0650d0bda8abefe87cb60427c8b39068932e49")
+    record_hash = (
+        "95f9390f784600b2f7a17e74a540d6874722039be5d093614c15a716ff08034e")
+    artifact_hash = (
+        "a150e10317982ccc6330fa17a921128d3cf31ee9d6b710ef0ad8ea23f63e4ea3")
+    for path in (Path("CLAUDE.md"), Path("backend/model_kernel/README.md"),
+                 surfaces[1], Path("models/demo-printer/README.md")):
+        text = path.read_text(encoding="utf-8")
+        assert final_revision in text
+        assert vpa_id in text
+        assert record_hash in text
+    for path in (Path("CLAUDE.md"), surfaces[1],
+                 Path("models/demo-printer/README.md"),
+                 Path("docs/superpowers/plans/"
+                      "2026-08-29-vp001-slice-d-implementation-plan.md")):
+        assert artifact_hash in path.read_text(encoding="utf-8")
+
+    current_claims = " ".join(
+        path.read_text(encoding="utf-8") for path in reviewed_surfaces)
+    assert "No VP fixture record exists" not in current_claims
+    assert "demo ledger remains exactly 28 records" not in current_claims
 
 
 def test_vp_index_order_is_independent_of_python_hash_seed():

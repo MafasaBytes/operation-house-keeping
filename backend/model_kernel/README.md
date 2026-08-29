@@ -171,7 +171,7 @@ adversarially reviewed, and dual-clean-checkout verified. Slice A is owner
 accepted. The qualified-token repair is owner accepted. Slice B is owner
 accepted. The public-contract repair is owner accepted. The accepted Slice B
 HEAD is `ec9ea7d8c20016e267fae16a2554d5e7f1a0ebce`. Slice C is owner accepted.
-The model ledger contains exactly 28 records. The final model revision is
+The accepted PT-001 membership contains exactly 28 records. Its model revision is
 `mrv_c6244b6dc41de599de9894b55f4064e41ba5260e7d00f50bffc1e1e63da560a2`.
 The deterministic artifact SHA-256 is
 `53dd32846956d10331dfca8fc370ef7d7019325904a062db5f037605aa4cf3d8`.
@@ -188,8 +188,8 @@ to the implemented Slice C demonstration. Richer
 predicates beyond CN-001's exact numeric bounds
 also remain future work.
 
-VP-001 Slices A, B, and C are owner accepted. Slice D is authorized and in
-progress.
+VP-001 Slices A, B, and C are owner accepted. Slice D is implemented and
+adversarially reviewed; awaiting final owner acceptance.
 Slice A is accepted at
 `60b739182e423a05eac7f3c531145d90c65fe9bc`; it adds only role-free positive
 associations with strict same-owner admission, independent corroborating roots,
@@ -197,6 +197,13 @@ and dedicated `vpw_` withdrawals. Slice B is owner accepted at
 `81179700513bb671cf9955c6a5d7163e3bcc7e1b`. It adds only the four accepted
 read-only kernel queries and authoritative carry-once result contracts. Slice C
 is confined to the read-only model-state layer; displaying variable state
-beside a port is not a claim that an observation occurred at the port. No VP
-fixture record exists. The demo ledger remains the accepted 28-record PT-001
-revision with no committed `vpa_` or `vpw_` record.
+beside a port is not a claim that an observation occurred at the port. Slice D
+adds exactly one parentless `vpa_` and no `vpw_`, correction, or second root.
+The current demo ledger contains 29 records at
+`mrv_18da4ce963ab5c4b1121cdcc009eaaef4cd1c5c11034f4678c6437361ffd7652`;
+the explicit 28-record PT membership remains unchanged. The VPA is
+`vpa_f6443787fc9665e24cae80a5ba0650d0bda8abefe87cb60427c8b39068932e49`,
+its stored-file SHA-256 is
+`95f9390f784600b2f7a17e74a540d6874722039be5d093614c15a716ff08034e`, and
+the deterministic VP artifact SHA-256 is
+`a150e10317982ccc6330fa17a921128d3cf31ee9d6b710ef0ad8ea23f63e4ea3`.
