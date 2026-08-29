@@ -500,7 +500,7 @@ def test_pt001_final_owner_acceptance_status_is_exact():
         "Slice B is owner accepted.",
         "The public-contract repair is owner accepted.",
         "Slice C is owner accepted.",
-        "The model ledger contains exactly 28 records.",
+        "The accepted PT-001 membership contains exactly 28 records.",
         FINAL_REVISION,
         ARTIFACT_SHA256,
     )
