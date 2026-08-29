@@ -58,9 +58,21 @@ BINDING_ROOT = Path("bindings/demo-printer")
 BINDING_REVISION = (
     "rev_67af9095cb5a75fc9022b7666a9a68d1eed48f03750f8e26759b745240e60b93"
 )
-ARTIFACT_BYTES = 13951
+VARIABLE_BINDING_ASSERTION = (
+    "iba_b1b86a4fd0c56f36aafb4574176429c0edab530dbbd5d1da954a54f2533fd90c"
+)
+OWNER_BINDING_ASSERTION = (
+    "iba_ba80b9e561b564a465b19109e2576d79d93b10e5b87e9917bf7ed45558c3a90a"
+)
+VARIABLE_REGISTRATION = (
+    "vrg_40c8c6b984345af33de6913ca9025d60d22b0e627b110e974c78270eb941dca7"
+)
+OWNER_REGISTRATION = (
+    "reg_9b5491aaa131b0df070cee792c83e002bdc4232cbbaba443f967cd3e5b780451"
+)
+ARTIFACT_BYTES = 17824
 ARTIFACT_SHA256 = (
-    "601210171a6080802d034b9c6b796c8d88e76a681464a99bc233828eb12b784d"
+    "a150e10317982ccc6330fa17a921128d3cf31ee9d6b710ef0ad8ea23f63e4ea3"
 )
 
 
@@ -186,6 +198,7 @@ def _artifact_bytes(tmp_path, *, model_root=DEMO_MODEL):
         HOTEND_VARIABLE, EXTRUDER_PORT, context=CONTEXT)
     [candidate] = composed.variable_state.candidates
     occurrence = candidate.bound.observed.occurrence
+    resolution = candidate.bound.resolution
     provenance = temporal.provenance(occurrence.occurrence_id)
 
     predecessor_hashes = {
@@ -281,6 +294,8 @@ def _artifact_bytes(tmp_path, *, model_root=DEMO_MODEL):
             "binding_revision_id": (
                 composed.variable_state.binding_revision.revision_id),
             "temporal_cutoff": composed.as_of.isoformat(),
+            "binding_revision_membership": list(
+                composed.variable_state.binding_revision.record_ids),
         },
         "state_composition": {
             "observation_attachment_statement": (
@@ -297,10 +312,56 @@ def _artifact_bytes(tmp_path, *, model_root=DEMO_MODEL):
             "binding_revision_id": (
                 composed.variable_state.binding_revision.revision_id),
             "temporal_cutoff": composed.as_of.isoformat(),
+            "model_registrations": {
+                "variable_registration_id": (
+                    composed.variable_state.variable_registration.record_id),
+                "owner_registration_id": (
+                    composed.variable_state.owner_registration.record_id),
+                "requested_entity_registration_id": (
+                    composed.variable_state.requested_entity_registration
+                    .record_id),
+            },
+            "state_classifications": {
+                "model_membership": (
+                    composed.variable_state.model_membership),
+                "requested_entity_membership": (
+                    composed.variable_state.requested_entity_membership),
+                "requested_entity_agreement": (
+                    composed.variable_state.requested_entity_agreement),
+                "binding_discovery": (
+                    composed.variable_state.binding_discovery),
+                "selector_declaration": (
+                    composed.variable_state.selector_declaration),
+                "anchor_agreement": (
+                    composed.variable_state.anchor_agreement),
+                "observation_availability": (
+                    composed.variable_state.observation_availability),
+                "selection": composed.variable_state.selection,
+            },
             "candidate_index": 0,
             "attachment": candidate.attachment,
             "source_subject": candidate.subject.model_dump(mode="json"),
             "source_property": candidate.property.model_dump(mode="json"),
+            "binding_provenance": {
+                "origin": candidate.origin,
+                "declared_via_assertion_ids": list(
+                    candidate.declared_via_assertion_ids),
+                "declaration": candidate.declaration.model_dump(mode="json"),
+                "resolution": {
+                    "status": resolution.status,
+                    "resolved_target": resolution.resolved_target.model_dump(
+                        mode="json"),
+                    "via_assertions": [
+                        row.model_dump(mode="json")
+                        for row in resolution.via_assertions
+                    ],
+                    "applicability_basis": resolution.applicability_basis,
+                    "subject_context": (
+                        resolution.subject_context.model_dump(mode="json")
+                        if resolution.subject_context is not None else None),
+                    "revision_id": resolution.revision.revision_id,
+                },
+            },
             "observed_value_json": occurrence.value_json,
             "occurrence": {
                 "occurrence_id": occurrence.occurrence_id,
@@ -369,6 +430,40 @@ def test_disclosure_artifact_is_deterministic_complete_and_path_free(tmp_path):
         "content"]["state_composition"][
             "observation_attachment_statement"]
     assert payload["content"]["state_composition"]["status"] == "associated"
+    state = payload["content"]["state_composition"]
+    assert state["model_registrations"] == {
+        "variable_registration_id": VARIABLE_REGISTRATION,
+        "owner_registration_id": OWNER_REGISTRATION,
+        "requested_entity_registration_id": OWNER_REGISTRATION,
+    }
+    assert state["state_classifications"] == {
+        "model_membership": "registered",
+        "requested_entity_membership": "registered",
+        "requested_entity_agreement": "matches_owner",
+        "binding_discovery": "declared_candidates",
+        "selector_declaration": "not_applicable",
+        "anchor_agreement": "exact",
+        "observation_availability": "observed",
+        "selection": "single",
+    }
+    assert payload["content"]["provenance_axes"][
+        "binding_revision_membership"].count(VARIABLE_BINDING_ASSERTION) == 1
+    binding = state["binding_provenance"]
+    assert binding["origin"] == "declared_binding"
+    assert binding["declared_via_assertion_ids"] == [
+        VARIABLE_BINDING_ASSERTION]
+    assert [row["record_id"] for row in binding["declaration"][
+        "assertion_summaries"]] == [VARIABLE_BINDING_ASSERTION]
+    assert binding["resolution"]["status"] == "bound"
+    assert binding["resolution"]["resolved_target"][
+        "anchor_id"] == HOTEND_VARIABLE
+    assert [row["record_id"] for row in binding["resolution"][
+        "via_assertions"]] == [VARIABLE_BINDING_ASSERTION]
+    assert binding["resolution"][
+        "applicability_basis"] == "declared_interval"
+    assert binding["resolution"]["subject_context"][
+        "via_assertion_ids"] == [OWNER_BINDING_ASSERTION]
+    assert binding["resolution"]["revision_id"] == BINDING_REVISION
     assert payload["content"]["state_composition"][
         "observed_value_json"] == LATEST_VALUE
     assert first.count(b'"record_kind":"variable_port_association"') == 1
