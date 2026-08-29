@@ -286,6 +286,37 @@ def test_known_nonnumeric_shapes_never_reach_parser(tmp_path, monkeypatch, lexem
     assert result.computed_relation is None
 
 
+@pytest.mark.parametrize("nullable", [False, True])
+def test_explicit_null_has_exact_precedence_and_never_reaches_parser(
+        tmp_path, monkeypatch, nullable):
+    import backend.behavior_evaluation.derivation as derivation
+    from tests.observation_compatibility.helpers import observed_value
+
+    temporal = observed_value(tmp_path, "null")
+    model = model_store(
+        tmp_path, specification_overrides={VAR_A: {"nullable": nullable}})
+    original = derivation.parse_observed_decimal
+    calls = []
+
+    def parser(value):
+        calls.append(value)
+        return original(value)
+
+    monkeypatch.setattr(derivation, "parse_observed_decimal", parser)
+    result = evaluate(tmp_path, model=model, temporal=temporal)
+
+    # The eligible peer is parsed once while building the result and once
+    # during authoritative public-boundary reconstruction. Explicit null is
+    # excluded from both schedules regardless of model nullability.
+    assert calls == ["60.0", "60.0"]
+    participant = result.participants[0]
+    assert participant.refusal_reasons == ("numeric_value_absent",)
+    assert participant.numeric_admission == "not_evaluated"
+    assert participant.canonical_decimal is None
+    assert result.execution == "not_executed"
+    assert result.computed_relation is None
+
+
 @pytest.mark.parametrize("left,right", [
     ("60.4", "60.40"), ("60.4", "6.04e1"),
     ("-0", "-0.0"), ("0E+99", "0"),
