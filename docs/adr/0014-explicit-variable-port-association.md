@@ -1,9 +1,9 @@
 # ADR-0014 — Explicit variable-to-port association
 
-Status: VP-001 Slices A and B are owner accepted. Slice B is owner accepted at
-`81179700513bb671cf9955c6a5d7163e3bcc7e1b`. Slice C is authorized and in
-progress. Slice D has not started; no state composition or VP fixture record
-exists at this administrative gate.
+Status: VP-001 Slices A and B are owner accepted. Slice C is implemented and
+adversarially reviewed; awaiting owner acceptance. Slice D has not started.
+Slice B is owner accepted at
+`81179700513bb671cf9955c6a5d7163e3bcc7e1b`. No VP fixture record exists.
 
 ## Context
 
@@ -60,6 +60,12 @@ claiming that a value occurred at, travelled through, or was produced by a port.
     vocabularies. Slice C, required for VP-001 completion, adds a separately
     gated read-only model-state composition. Slice D may append one synthetic
     VPA to evolve the demo from 28 to 29 records.
+11. Slice C composes the authoritative association query beside the existing
+    variable-state result. Its status derives only from association admission
+    and lifecycle, while variable state always remains independently disclosed
+    for valid input. Displaying variable state beside a port is not a claim that
+    an observation occurred at the port. Context does not filter temporal
+    evidence, and the cutoff does not select model membership.
 
 ## Consequences
 
@@ -70,5 +76,4 @@ never evidence-backed negatives. Existing relationship, PT, variable, state,
 temporal, evidence, and canonical contracts retain their meanings and bytes.
 
 The kernel remains dependent only on `system_identity`, standard library, and
-Pydantic. State composition, when separately authorized, remains in the
-read-only `model_state` layer.
+Pydantic. State composition remains in the read-only `model_state` layer.

@@ -15,10 +15,13 @@ data_sources → temporal_state ─┐
 Spec: `docs/superpowers/specs/2026-08-09-vm001-model-state-design.md`;
 decisions: `docs/adr/0008-model-state-composition-facade.md`.
 
-VP-001 Slices A and B are owner accepted; Slice B is owner accepted at
-`81179700513bb671cf9955c6a5d7163e3bcc7e1b`. Slice C is authorized and in
-progress. Slice D has not started, and no VP state composition or fixture record
-exists at this administrative gate.
+VP-001 Slices A and B are owner accepted. Slice C is implemented and
+adversarially reviewed; awaiting owner acceptance. Slice D has not started.
+Slice B is owner accepted at
+`81179700513bb671cf9955c6a5d7163e3bcc7e1b`. Slice C adds only
+`associated_port_variable_state()`: displaying variable state beside a port is
+not a claim that an observation occurred at the port. No VP fixture record
+exists.
 
 ## Composition
 
@@ -28,6 +31,15 @@ private-field access (AST-enforced). The facade builds one
 `BoundTemporalQueries` from the exact injected objects, so ONE binding
 revision governs reverse discovery and every candidate resolution — a
 mismatch is unconstructible.
+
+`associated_port_variable_state()` composes the exact-context, selected-model
+`VariablePortAssociationResult` with the independently computed
+`VariableStateResult` at the requested cutoff. Its outer status comes only from
+association admission and lifecycle. The state pipeline runs for every valid
+request even when endpoints are not admitted or the association is undeclared,
+conflicted, or inactive. Lifecycle context never filters temporal evidence;
+the cutoff never selects a model revision. Model revision, binding revision,
+and temporal cutoff remain separate provenance axes.
 
 ## Semantics worth knowing
 

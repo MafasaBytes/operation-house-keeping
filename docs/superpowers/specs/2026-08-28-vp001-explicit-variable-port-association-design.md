@@ -1,9 +1,9 @@
 # VP-001 — Explicit variable-to-port association
 
-Status: VP-001 Slices A and B are owner accepted. Slice B is owner accepted at
-`81179700513bb671cf9955c6a5d7163e3bcc7e1b`. Slice C is authorized and in
-progress. Slice D has not started; no state composition or VP fixture record
-exists at this administrative gate.
+Status: VP-001 Slices A and B are owner accepted. Slice C is implemented and
+adversarially reviewed; awaiting owner acceptance. Slice D has not started.
+Slice B is owner accepted at
+`81179700513bb671cf9955c6a5d7163e3bcc7e1b`. No VP fixture record exists.
 
 ## Mission and boundary
 
@@ -388,11 +388,11 @@ no declaration return registered-empty or `not_declared`, never an
 evidence-backed negative. Results follow the accepted `ModelQueryMaterial`
 carry-once pattern and fully recompute all derived fields without store access.
 
-## Authorized Slice C composition
+## Implemented Slice C composition
 
-Slice C is authorized over the owner-accepted Slice B boundary. It remains
-limited to the following read-only model-state composition and does not
-authorize Slice D.
+Slice C is implemented and adversarially reviewed over the owner-accepted
+Slice B boundary, and awaits owner acceptance. It remains limited to the
+following read-only model-state composition and does not authorize Slice D.
 
 ```python
 ModelStateQueries.associated_port_variable_state(
@@ -423,7 +423,9 @@ AssociatedPortVariableStateResult:
 
 State remains independently disclosed for valid input. Association failure does
 not suppress temporal evidence. Observations remain attached to variables,
-never ports. Context does not filter temporal data; `as_of` does not select a
+never ports. Displaying variable state beside a port is not a claim that an
+observation occurred at the port. Context does not filter temporal data;
+`as_of` does not select a
 model revision; model revision, binding revision, and temporal cutoff remain
 separate provenance axes; no temporal revision or clock synchronization is
 invented. The kernel never imports state, temporal, binding, or compatibility

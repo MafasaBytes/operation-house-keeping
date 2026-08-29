@@ -201,7 +201,7 @@ def test_slice_b_is_present_while_c_d_and_upper_layer_imports_are_absent():
         "backend.data_sources")) for name in imports)
 
 
-def test_slice_c_gate_records_slice_b_owner_acceptance():
+def test_slice_c_status_records_review_and_preserves_prior_acceptance():
     accepted = (
         "Slice B is owner accepted at "
         "`81179700513bb671cf9955c6a5d7163e3bcc7e1b`.")
@@ -216,10 +216,29 @@ def test_slice_c_gate_records_slice_b_owner_acceptance():
         text = " ".join(path.read_text(encoding="utf-8").split())
         assert accepted in text
         assert "VP-001 Slices A and B are owner accepted" in text
-        assert "Slice C is authorized and in progress" in text
         assert "Slice D has not started" in text
-        assert ("no state composition or vp fixture record exists at this "
-                "administrative gate" in text.lower())
+
+    reviewed = (
+        "VP-001 Slices A and B are owner accepted. Slice C is implemented "
+        "and adversarially reviewed; awaiting owner acceptance. Slice D has "
+        "not started.")
+    reviewed_surfaces = (
+        Path("CLAUDE.md"),
+        Path("backend/model_state/README.md"),
+        Path("backend/model_kernel/README.md"),
+        Path("docs/adr/0014-explicit-variable-port-association.md"),
+        Path("docs/superpowers/specs/"
+             "2026-08-28-vp001-explicit-variable-port-association-design.md"),
+        Path("docs/superpowers/plans/"
+             "2026-08-28-vp001-adversarial-acceptance-matrix.md"),
+        Path("docs/superpowers/plans/"
+             "2026-08-29-vp001-slice-c-implementation-plan.md"),
+    )
+    for path in reviewed_surfaces:
+        text = " ".join(path.read_text(encoding="utf-8").split())
+        assert reviewed in text
+        assert ("displaying variable state beside a port is not a claim that "
+                "an observation occurred at the port" in text.lower())
 
     for path in (Path("CLAUDE.md"), Path("backend/model_kernel/README.md")):
         text = " ".join(path.read_text(encoding="utf-8").split())

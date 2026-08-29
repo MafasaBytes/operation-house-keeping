@@ -1,9 +1,12 @@
 # VP-001 — adversarial acceptance matrix
 
-Status: Slice A owner accepted at
-`60b739182e423a05eac7f3c531145d90c65fe9bc`. Slice B is owner accepted at
-`81179700513bb671cf9955c6a5d7163e3bcc7e1b`. Slice C is authorized and in
-progress. Slice D remains unstarted and separately owner-gated.
+Status: VP-001 Slices A and B are owner accepted. Slice C is implemented and
+adversarially reviewed; awaiting owner acceptance. Slice D has not started.
+Slice A is owner accepted at
+`60b739182e423a05eac7f3c531145d90c65fe9bc`; Slice B is owner accepted at
+`81179700513bb671cf9955c6a5d7163e3bcc7e1b`.
+Displaying variable state beside a port is not a claim that an observation
+occurred at the port.
 
 ## A. Public contract and canonical identity
 
