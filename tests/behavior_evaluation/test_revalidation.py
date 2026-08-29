@@ -4,6 +4,7 @@ import pytest
 from pydantic import ValidationError
 
 from backend.behavior_evaluation import BehaviorEvaluationResult
+from backend.semantic_compatibility import VariableSemanticCompatibilityResult
 from tests.behavior_evaluation.helpers import evaluate
 
 
@@ -55,3 +56,43 @@ def test_coherent_lower_content_mutation_boundary_is_explicit(tmp_path):
     """
     result = evaluate(tmp_path)
     assert result.participant_semantic_results[0].candidates[0].value_candidate
+
+
+def _replace_mapping_values(value, replacements):
+    if isinstance(value, dict):
+        rebuilt = {}
+        for key, item in value.items():
+            replacement_key = ((key, item)
+                               if isinstance(item, (str, int, float, bool, type(None)))
+                               else None)
+            rebuilt[key] = (replacements[replacement_key]
+                            if replacement_key in replacements else
+                            _replace_mapping_values(item, replacements))
+        return rebuilt
+    if isinstance(value, list):
+        return [_replace_mapping_values(item, replacements) for item in value]
+    if isinstance(value, tuple):
+        return tuple(_replace_mapping_values(item, replacements)
+                     for item in value)
+    return value
+
+
+def test_carried_model_facts_must_equal_authoritative_behavior_material(tmp_path):
+    result = evaluate(tmp_path)
+    lower_payload = _replace_mapping_values(
+        result.participant_semantic_results[0].model_dump(mode="python"),
+        {
+            ("value_shape", "number"): "string",
+            ("value_shape_compatibility", "satisfies_value_shape"):
+                "does_not_satisfy_value_shape",
+            ("value_shape_finding", "shape_matches"): "shape_differs",
+        })
+    forged_lower = VariableSemanticCompatibilityResult.model_validate(
+        lower_payload)
+    payload = result.model_dump(mode="python")
+    payload["participant_semantic_results"] = (
+        forged_lower.model_dump(mode="python"),
+        payload["participant_semantic_results"][1],
+    )
+    with pytest.raises(ValidationError, match="carried participant model facts"):
+        BehaviorEvaluationResult.model_validate(payload)

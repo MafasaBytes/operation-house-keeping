@@ -133,7 +133,7 @@ def _interpretation_record(prop, interpretation):
     )
 
 
-def interpretation_resolver(tmp_path, *, overrides=None):
+def interpretation_resolver(tmp_path, *, overrides=None, extra_records=()):
     overrides = overrides or {}
     store = InterpretationStore(tmp_path / "interpretations" / "demo-printer")
     for prop in (PROP_TEMP, PROP_TARGET):
@@ -151,6 +151,8 @@ def interpretation_resolver(tmp_path, *, overrides=None):
                     "unit", semantic_lock(VAR_A).signature.unit)),
         ):
             store.append(_interpretation_record(prop, body))
+    for record in extra_records:
+        store.append(record)
     return InterpretationResolver(store.load())
 
 

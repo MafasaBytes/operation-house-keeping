@@ -73,6 +73,42 @@ def test_same_root_fork_conflict_keeps_both_observation_paths(tmp_path):
                for row in result.participants)
 
 
+def test_identical_independent_roots_corroborate_without_a_winner(tmp_path):
+    registration = behavior_registration(owners=(E1, E1))
+    first = behavior_declaration(registration, note="first authority claim")
+    second = behavior_declaration(registration, note="second authority claim")
+    result = evaluate(
+        tmp_path,
+        model=model_store(tmp_path, declaration_records=(first, second)))
+    assert result.behavior.conclusion == "declared"
+    assert result.behavior.agreement_findings == (
+        "corroborating_healthy_roots",)
+    assert len(result.behavior.roots) == 2
+    assert result.execution == "executed"
+
+
+def test_different_independent_engineering_bodies_conflict(tmp_path):
+    from tests.model_kernel.bh001_slice_a_helpers import semantic_lock
+
+    registration = behavior_registration(owners=(E1, E1))
+    first = behavior_declaration(registration, note="first body")
+    second = behavior_declaration(
+        registration,
+        locks=(
+            semantic_lock(VAR_A, role="reported"),
+            semantic_lock(VAR_B, role="reported"),
+        ),
+        note="different body",
+    )
+    result = evaluate(
+        tmp_path,
+        model=model_store(tmp_path, declaration_records=(first, second)))
+    assert result.behavior.conclusion == "conflicted"
+    assert "cross_root_effective_body_disagreement" in (
+        result.behavior.agreement_findings)
+    assert result.not_executed_reasons[0].reason == "behavior_conflicted"
+
+
 def test_nonnumeric_specification_is_not_available_and_never_parsed(tmp_path):
     model = model_store(
         tmp_path, specification_overrides={VAR_A: {"value_shape": "string"}})
@@ -149,6 +185,39 @@ def test_nonpositive_binding_and_attachment_are_separate_refusals(tmp_path):
     assert result.participants[0].attachment_admission == "not_attached"
 
 
+def test_positive_resolution_to_other_variable_is_attachment_only_refusal(
+        tmp_path):
+    bindings = (
+        entity_declaration(E1, "Demo entity"),
+        var_declaration(VAR_A, E1, "Variable A"),
+        var_declaration(VAR_B, E1, "Variable B"),
+        prop_assertion(VAR_B, PROP_TEMP),
+        prop_assertion(VAR_B, PROP_TARGET),
+    )
+    result = evaluate(
+        tmp_path,
+        semantic=semantic_queries(tmp_path, binding_records=bindings))
+    reasons = _reasons(result)
+    assert "observation_not_attached" in reasons
+    assert "binding_not_positive" not in reasons
+
+
+def test_divergent_binding_anchor_is_attachment_only_refusal(tmp_path):
+    bindings = (
+        entity_declaration(E1, "Demo entity"),
+        var_declaration(VAR_A, E1, "Divergent variable name"),
+        var_declaration(VAR_B, E1, "Variable B"),
+        prop_assertion(VAR_A, PROP_TEMP),
+        prop_assertion(VAR_B, PROP_TARGET),
+    )
+    result = evaluate(
+        tmp_path,
+        semantic=semantic_queries(tmp_path, binding_records=bindings))
+    reasons = _reasons(result)
+    assert "observation_not_attached" in reasons
+    assert "binding_not_positive" not in reasons
+
+
 def test_inconsistent_occurrence_evidence_is_not_numeric_shape_refusal(tmp_path):
     temporal = observed_stack(tmp_path)
     craft_occurrence(temporal, value_json="true", json_type="number")
@@ -186,6 +255,29 @@ def test_missing_model_meaning_dimensions_are_independent(tmp_path):
     assert result.participants[0].semantic_admission == "not_evaluated"
 
 
+def test_conflicted_model_meaning_dimensions_are_independent(tmp_path):
+    from tests.behavior_evaluation.helpers import _semantic_record
+    from backend.model_kernel import (
+        ObservationRoleDeclaration,
+        QuantityKindDeclaration,
+    )
+
+    extras = (
+        _semantic_record(VAR_A, QuantityKindDeclaration(
+            dimension="quantity_kind",
+            quantity_kind=quantity_kind(code="other_quantity"))),
+        _semantic_record(VAR_A, ObservationRoleDeclaration(
+            dimension="observation_role",
+            observation_role=observation_role("other_role"))),
+    )
+    result = evaluate(
+        tmp_path,
+        model=model_store(tmp_path, extra_records=extras))
+    reasons = _reasons(result)
+    assert "model_quantity_kind_not_available" in reasons
+    assert "model_observation_role_not_available" in reasons
+
+
 def test_source_semantic_and_unit_mismatch_is_not_conversion(tmp_path):
     from backend.model_kernel import UnitReference
 
@@ -203,6 +295,69 @@ def test_source_semantic_and_unit_mismatch_is_not_conversion(tmp_path):
     assert "source_semantics_not_admitted" in participant.refusal_reasons
     assert participant.semantic_admission == "not_admitted"
     assert participant.unit_admission == "mismatch"
+
+
+def test_absent_source_interpretation_is_an_ordinary_semantic_refusal(tmp_path):
+    resolver = InterpretationResolver(
+        InterpretationStore(tmp_path / "empty-interpretations").load())
+    result = evaluate(
+        tmp_path,
+        semantic=semantic_queries(tmp_path, interpretations=resolver))
+    assert "source_semantics_not_admitted" in _reasons(result)
+    assert result.participants[0].semantic_admission == "not_admitted"
+
+
+def test_source_unit_only_mismatch_refuses_semantic_admission(tmp_path):
+    from backend.model_kernel import UnitReference
+
+    resolver = interpretation_resolver(tmp_path, overrides={
+        PROP_TEMP: {"unit": UnitReference(
+            system_id="project_local", system_edition="ohk-units-1",
+            code="synthetic_other_unit")}})
+    result = evaluate(
+        tmp_path,
+        semantic=semantic_queries(tmp_path, interpretations=resolver))
+    participant = result.participants[0]
+    assert participant.semantic_admission == "not_admitted"
+    assert participant.unit_admission == "mismatch"
+    assert participant.refusal_reasons.count(
+        "source_semantics_not_admitted") == 1
+
+
+def test_known_lock_mismatch_survives_an_unavailable_peer_dimension(tmp_path):
+    from tests.model_kernel.bh001_slice_a_helpers import semantic_lock
+
+    registration = behavior_registration(owners=(E1, E1))
+    declaration = behavior_declaration(registration, locks=(
+        semantic_lock(VAR_A, quantity="other_quantity"),
+        semantic_lock(VAR_B, quantity="other_quantity", role="reported"),
+    ))
+    model = model_store(
+        tmp_path,
+        declaration_records=(declaration,),
+        omit_semantics=((VAR_A, "observation_role"),))
+    result = evaluate(tmp_path, model=model)
+    participant = result.participants[0]
+    assert "model_observation_role_not_available" in participant.refusal_reasons
+    assert "quantity_kind_lock_mismatch" in participant.refusal_reasons
+    assert participant.lock_admission == "mismatched"
+
+
+def test_known_source_mismatch_survives_an_unavailable_peer_dimension(tmp_path):
+    resolver = interpretation_resolver(tmp_path, overrides={
+        PROP_TEMP: {"quantity_kind": quantity_kind(
+            code="synthetic_other_quantity")}})
+    model = model_store(
+        tmp_path,
+        omit_semantics=((VAR_A, "observation_role"),))
+    result = evaluate(
+        tmp_path, model=model,
+        semantic=semantic_queries(
+            tmp_path, model=model, interpretations=resolver))
+    participant = result.participants[0]
+    assert "model_observation_role_not_available" in participant.refusal_reasons
+    assert "source_semantics_not_admitted" in participant.refusal_reasons
+    assert participant.semantic_admission == "not_admitted"
 
 
 def test_each_semantic_lock_mismatch_is_independently_named(tmp_path):
@@ -228,6 +383,60 @@ def test_each_semantic_lock_mismatch_is_independently_named(tmp_path):
     assert "observation_role_lock_mismatch" in first
     assert "unit_lock_mismatch" in first
     assert result.participants[0].lock_admission == "mismatched"
+
+
+def test_each_lock_refusal_is_independently_reachable(tmp_path):
+    from tests.model_kernel.bh001_slice_a_helpers import semantic_lock
+
+    cases = (
+        ("quantity_kind_lock_mismatch", (
+            semantic_lock(VAR_A, quantity="other_quantity"),
+            semantic_lock(VAR_B, quantity="other_quantity", role="reported"))),
+        ("observation_role_lock_mismatch", (
+            semantic_lock(VAR_A, role="other_role"),
+            semantic_lock(VAR_B, role="reported"))),
+        ("unit_lock_mismatch", (
+            semantic_lock(VAR_A, unit="other_unit"),
+            semantic_lock(VAR_B, unit="other_unit", role="reported"))),
+    )
+    lock_reasons = {
+        "quantity_kind_lock_mismatch", "observation_role_lock_mismatch",
+        "unit_lock_mismatch"}
+    for index, (expected, locks) in enumerate(cases):
+        root = tmp_path / str(index)
+        registration = behavior_registration(owners=(E1, E1))
+        declaration = behavior_declaration(registration, locks=locks)
+        result = evaluate(
+            root,
+            model=model_store(root, declaration_records=(declaration,)))
+        actual = lock_reasons.intersection(_reasons(result))
+        assert actual == {expected}
+
+
+def test_multiple_refusals_follow_exact_global_gate_order(tmp_path):
+    from tests.model_kernel.bh001_slice_a_helpers import semantic_lock
+
+    registration = behavior_registration(owners=(E1, E1))
+    declaration = behavior_declaration(registration, locks=(
+        semantic_lock(VAR_A, quantity="other_quantity", role="other_role",
+                      unit="other_unit"),
+        semantic_lock(VAR_B, quantity="other_quantity", role="reported",
+                      unit="other_unit"),
+    ))
+    result = evaluate(
+        tmp_path,
+        model=model_store(
+            tmp_path,
+            declaration_records=(declaration,),
+            omit_semantics=((VAR_A, "observation_role"),)))
+    reasons = _reasons(result)
+    expected_order = (
+        "model_observation_role_not_available",
+        "quantity_kind_lock_mismatch",
+        "unit_lock_mismatch",
+    )
+    assert tuple(reason for reason in reasons if reason in expected_order) == (
+        expected_order)
 
 
 def test_absent_behavior_can_disclose_an_unregistered_participant(tmp_path):

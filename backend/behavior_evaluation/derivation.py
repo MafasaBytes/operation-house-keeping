@@ -4,7 +4,7 @@ from backend.constraint_evaluation import (
     NumericParityBreachError,
     parse_observed_decimal,
 )
-from backend.model_kernel import BehaviorRuleDeclaration
+from backend.model_kernel import BehaviorRuleDeclaration, ModelQueries
 
 
 _REFUSAL_ORDER = (
@@ -145,17 +145,6 @@ def _participant_facts(source, semantic, lock):
         else:
             refusals.add("model_unit_not_available")
 
-    semantic_admission = "not_evaluated"
-    if (bound is not None and attachment_admission == "attached"
-            and evidence_assessable and qk is not None and role is not None):
-        compatible = (
-            semantic_candidate.quantity_kind_compatibility == "token_identical"
-            and semantic_candidate.observation_role_compatibility
-            == "token_identical")
-        semantic_admission = "admitted" if compatible else "not_admitted"
-        if not compatible:
-            refusals.add("source_semantics_not_admitted")
-
     unit_admission = "not_evaluated"
     if (bound is not None and attachment_admission == "attached"
             and evidence_assessable and unit is not None):
@@ -167,19 +156,38 @@ def _participant_facts(source, semantic, lock):
         else:
             refusals.add("source_semantics_not_admitted")
 
+    semantic_admission = "not_evaluated"
+    if (bound is not None and attachment_admission == "attached"
+            and evidence_assessable):
+        known_mismatch = (
+            (qk is not None and
+             semantic_candidate.quantity_kind_compatibility
+             != "token_identical")
+            or (role is not None and
+                semantic_candidate.observation_role_compatibility
+                != "token_identical")
+            or (unit is not None and
+                semantic_candidate.unit_identity_compatibility
+                != "unit_identity_exact"))
+        if known_mismatch:
+            semantic_admission = "not_admitted"
+            refusals.add("source_semantics_not_admitted")
+        elif qk is not None and role is not None and unit is not None:
+            semantic_admission = "admitted"
+
     lock_admission = "not_evaluated"
-    if lock is not None and qk is not None and role is not None and unit is not None:
+    if lock is not None:
         lock_refusals = []
-        if qk != lock.quantity_kind:
+        if qk is not None and qk != lock.quantity_kind:
             lock_refusals.append("quantity_kind_lock_mismatch")
-        if role != lock.observation_role:
+        if role is not None and role != lock.observation_role:
             lock_refusals.append("observation_role_lock_mismatch")
-        if unit != lock.unit:
+        if unit is not None and unit != lock.unit:
             lock_refusals.append("unit_lock_mismatch")
         if lock_refusals:
             lock_admission = "mismatched"
             refusals.update(lock_refusals)
-        else:
+        elif qk is not None and role is not None and unit is not None:
             lock_admission = "matched"
 
     numeric_eligible = False
@@ -220,6 +228,8 @@ def derive_evaluation(*, behavior, behavior_anchor_id, context, as_of,
     if variable_ids != tuple(sorted(set(variable_ids))):
         raise ValueError("participant sources must be unique and canonical")
 
+    loaded = behavior.material.loaded()
+    model_queries = ModelQueries(loaded)
     revisions = tuple(
         result.value_compatibility.state.model_revision
         for result in semantic_results)
@@ -242,6 +252,29 @@ def derive_evaluation(*, behavior, behavior_anchor_id, context, as_of,
     if registration is not None and (
             tuple(registration.participant_variable_anchor_ids) != variable_ids):
         raise ValueError("participant set differs from behavior registration")
+
+    for source, semantic in zip(
+            participant_sources, semantic_results, strict=True):
+        state = semantic.value_compatibility.state
+        variable = loaded.variable_registrations_by_anchor.get(
+            source.variable_anchor_id)
+        owner = (None if variable is None else
+                 loaded.registrations_by_anchor.get(
+                     variable.anchor.entity_anchor_id))
+        requested_owner = (None if source.entity_anchor_id is None else
+                           loaded.registrations_by_anchor.get(
+                               source.entity_anchor_id))
+        if (state.variable_registration != variable
+                or state.owner_registration != owner
+                or state.requested_entity_registration != requested_owner
+                or semantic.value_compatibility.specification_result
+                != model_queries.variable_value_specification(
+                    source.variable_anchor_id)
+                or semantic.semantics_result
+                != model_queries.variable_semantics(
+                    source.variable_anchor_id)):
+            raise ValueError(
+                "carried participant model facts differ from behavior material")
 
     locks = _current_locks(behavior)
     facts = []

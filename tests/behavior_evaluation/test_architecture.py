@@ -1,7 +1,13 @@
 """BH-001 Slice C dependency, non-write, and public-boundary isolation."""
 
 import ast
+import hashlib
+import os
 from pathlib import Path
+import subprocess
+import sys
+
+from backend.model_kernel import ModelQueries, ModelStore
 
 
 MODULES = tuple(sorted(Path("backend/behavior_evaluation").glob("*.py")))
@@ -47,6 +53,10 @@ def test_cn_dependency_is_narrow_and_no_parser_is_reexported():
     assert "parse_observed_decimal" in derivation
     assert '"parse_observed_decimal"' not in init
     assert '"CanonicalObservedDecimal"' not in init
+    assert "from decimal import" not in derivation
+    assert "Decimal(" not in derivation
+    assert "float(" not in derivation
+    assert "import re" not in derivation
 
 
 def test_slice_d_remains_absent_and_committed_demo_is_unchanged():
@@ -55,3 +65,56 @@ def test_slice_d_remains_absent_and_committed_demo_is_unchanged():
     assert not any(path.name.startswith(("brg_", "bhd_", "bhw_"))
                    for path in records)
     assert not Path("artifacts/bh001").exists()
+    loaded = ModelStore(Path("models/demo-printer")).load()
+    assert loaded.revision.revision_id == (
+        "mrv_18da4ce963ab5c4b1121cdcc009eaaef4cd1c5c11034f4678c6437361ffd7652")
+    vpa = Path(
+        "models/demo-printer/records/"
+        "vpa_f6443787fc9665e24cae80a5ba0650d0bda8abefe87cb60427c8b39068932e49.json")
+    assert hashlib.sha256(vpa.read_bytes()).hexdigest() == (
+        "95f9390f784600b2f7a17e74a540d6874722039be5d093614c15a716ff08034e")
+
+
+def test_all_explicit_pre_bh_memberships_replay_structured_absence():
+    from tests.model_kernel.test_demo_model import (
+        CN001_MEMBERSHIP,
+        PRE_CN001_MEMBERSHIP,
+        PRE_ES001_MEMBERSHIP,
+        PRE_SPECIFICATION_MEMBERSHIP,
+        PRE_VARIABLE_MEMBERSHIP,
+        PT001_MEMBERSHIP,
+        VP001_MEMBERSHIP,
+        VS001_MEMBERSHIP,
+    )
+    from tests.model_kernel.bh001_slice_a_helpers import BEHAVIOR_A
+
+    memberships = (
+        PRE_VARIABLE_MEMBERSHIP, PRE_SPECIFICATION_MEMBERSHIP,
+        VS001_MEMBERSHIP, PRE_ES001_MEMBERSHIP, PRE_CN001_MEMBERSHIP,
+        CN001_MEMBERSHIP, PT001_MEMBERSHIP, VP001_MEMBERSHIP,
+    )
+    assert tuple(map(len, memberships)) == (9, 10, 11, 14, 16, 18, 28, 29)
+    store = ModelStore(Path("models/demo-printer"))
+    for membership in memberships:
+        loaded = store.replay(membership)
+        assert loaded.revision.record_ids == tuple(sorted(membership))
+        assert ModelQueries(loaded).behavior(BEHAVIOR_A).status == (
+            "not_registered")
+
+
+def test_serialized_output_is_hash_seed_independent():
+    script = (
+        "from pathlib import Path\n"
+        "from tempfile import mkdtemp\n"
+        "from tests.behavior_evaluation.helpers import evaluate\n"
+        "print(evaluate(Path(mkdtemp())).model_dump_json())\n")
+    outputs = []
+    for seed in ("1", "9173"):
+        environment = dict(os.environ)
+        environment.update({"PYTHONHASHSEED": seed,
+                            "PYTHONDONTWRITEBYTECODE": "1"})
+        completed = subprocess.run(
+            [sys.executable, "-c", script], cwd=Path.cwd(),
+            env=environment, check=True, capture_output=True, text=True)
+        outputs.append(completed.stdout)
+    assert outputs[0] == outputs[1]

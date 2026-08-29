@@ -46,6 +46,16 @@ def test_exact_equal_world_executes_and_carries_direct_results_once(tmp_path):
         "60.1", "60")
 
 
+def test_real_disposable_ingestion_path_can_execute_exact_equal(tmp_path):
+    from tests.observation_compatibility.helpers import observed_value
+
+    result = evaluate(tmp_path, temporal=observed_value(tmp_path, "60.0"))
+    assert result.execution == "executed"
+    assert result.computed_relation == "equal"
+    assert tuple(row.canonical_decimal for row in result.participants) == (
+        "60", "60")
+
+
 def test_context_absence_never_suppresses_participant_evidence(tmp_path):
     result = evaluate(tmp_path, context=AS_BUILT)
     assert result.behavior.conclusion == "not_declared"
@@ -130,6 +140,55 @@ def test_both_lower_branches_run_once_before_first_typed_failure_propagates(
         assert error is sentinel
     else:
         raise AssertionError("the exact lower exception must propagate")
+    assert calls == [VAR_A, VAR_B]
+
+
+def test_second_lower_failure_propagates_after_both_branches(tmp_path, monkeypatch):
+    from backend.behavior_evaluation import BehaviorEvaluationQueries
+
+    semantic = semantic_queries(tmp_path)
+    original = semantic.variable_semantic_compatibility
+    calls = []
+    sentinel = SemanticCompatibilityConfigurationError(
+        "SYNTHETIC_SECOND_FAILURE", "second participant failed")
+
+    def branch(variable_anchor_id, **kwargs):
+        calls.append(variable_anchor_id)
+        if variable_anchor_id == VAR_B:
+            raise sentinel
+        return original(variable_anchor_id, **kwargs)
+
+    monkeypatch.setattr(semantic, "variable_semantic_compatibility", branch)
+    with __import__("pytest").raises(
+            SemanticCompatibilityConfigurationError) as error:
+        BehaviorEvaluationQueries(semantic).behavior_evaluation(
+            BEHAVIOR_A, context=AS_DESIGNED, as_of=AS_OF,
+            participants=participant_sources())
+    assert error.value is sentinel
+    assert calls == [VAR_A, VAR_B]
+
+
+def test_two_lower_failures_propagate_first_canonical_object(tmp_path, monkeypatch):
+    from backend.behavior_evaluation import BehaviorEvaluationQueries
+
+    semantic = semantic_queries(tmp_path)
+    calls = []
+    first = SemanticCompatibilityConfigurationError(
+        "FIRST_CANONICAL_FAILURE", "first")
+    second = SemanticCompatibilityConfigurationError(
+        "SECOND_CANONICAL_FAILURE", "second")
+
+    def branch(variable_anchor_id, **kwargs):
+        calls.append(variable_anchor_id)
+        raise first if variable_anchor_id == VAR_A else second
+
+    monkeypatch.setattr(semantic, "variable_semantic_compatibility", branch)
+    with __import__("pytest").raises(
+            SemanticCompatibilityConfigurationError) as error:
+        BehaviorEvaluationQueries(semantic).behavior_evaluation(
+            BEHAVIOR_A, context=AS_DESIGNED, as_of=AS_OF,
+            participants=participant_sources())
+    assert error.value is first
     assert calls == [VAR_A, VAR_B]
 
 
