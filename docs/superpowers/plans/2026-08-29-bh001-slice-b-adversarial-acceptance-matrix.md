@@ -1,8 +1,8 @@
 # BH-001 Slice B — adversarial acceptance matrix
 
-Status: all B01-B60 controls are green. Slice A is owner accepted. Slice B is
-implemented and adversarially reviewed; awaiting owner acceptance. Slices C
-and D are unstarted.
+Status: all B01-B60 controls are green. Slices A and B are owner accepted;
+Slice B is accepted at `05177f7306ce745d093bd5f11abafc13a6274d0f`. Slice C
+is owner-authorized but not yet implemented. Slice D is unstarted.
 
 ## 1. Public contract
 

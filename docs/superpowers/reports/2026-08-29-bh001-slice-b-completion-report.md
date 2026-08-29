@@ -1,6 +1,6 @@
 # BH-001 Slice B completion report
 
-Status: implemented and adversarially reviewed; awaiting owner acceptance.
+Status: owner accepted at `05177f7306ce745d093bd5f11abafc13a6274d0f`.
 
 Date: 2026-08-29
 
@@ -853,11 +853,10 @@ evaluation do not exist in Slice B.
 
 ## 22. Remaining owner-gated slices
 
-Slice C remains separately owner-gated and unstarted. It may add only the
-accepted read-only `backend/behavior_evaluation` layer after Slice B owner
-acceptance, including explicit source selectors, exact same-acquisition-envelope
-admission, inherited public CN exact-number parsing, and independent result
-dimensions.
+Slice C is owner-authorized but not yet implemented. It may add only the
+accepted read-only `backend/behavior_evaluation` layer, including explicit
+source selectors, exact same-acquisition-envelope admission, inherited public
+CN exact-number parsing, and independent result dimensions.
 
 Slice D remains separately owner-gated and unstarted. It may add only the
 accepted bounded declaration-only synthetic demonstration after disposable
@@ -914,6 +913,6 @@ There is no unresolved implementation discrepancy. The only open question is
 the intended owner gate: whether to accept BH-001 Slice B and separately
 authorize Slice C.
 
-BH-001 Slice B implemented and adversarially reviewed; awaiting owner acceptance.
+BH-001 Slice B owner accepted at `05177f7306ce745d093bd5f11abafc13a6274d0f`.
 
 END OF BH-001 SLICE B COMPLETION REPORT
