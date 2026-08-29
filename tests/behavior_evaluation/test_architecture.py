@@ -38,9 +38,16 @@ def test_evaluator_owns_no_store_path_database_socket_or_write_capability():
 
 
 def test_kernel_has_no_upward_behavior_evaluator_import():
-    for path in Path("backend/model_kernel").glob("*.py"):
-        assert "backend.behavior_evaluation" not in path.read_text(
-            encoding="utf-8")
+    lower_packages = (
+        "system_identity", "model_kernel", "model_state",
+        "observation_compatibility", "semantic_compatibility",
+        "identity_binding", "temporal_state", "source_interpretation",
+        "data_sources", "constraint_evaluation",
+    )
+    for package in lower_packages:
+        for path in Path("backend", package).rglob("*.py"):
+            assert "backend.behavior_evaluation" not in path.read_text(
+                encoding="utf-8"), path
 
 
 def test_cn_dependency_is_narrow_and_no_parser_is_reexported():

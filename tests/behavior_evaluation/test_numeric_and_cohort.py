@@ -276,6 +276,12 @@ def test_known_nonnumeric_shapes_never_reach_parser(tmp_path, monkeypatch, lexem
     # at the public result boundary. The nonnumeric participant is absent from
     # both schedules.
     assert calls == ["60.0", "60.0"]
+    expected = ("numeric_value_absent" if lexeme == "null"
+                else "numeric_value_shape_mismatch")
+    assert expected in result.participants[0].refusal_reasons
+    if lexeme != "null":
+        assert "numeric_value_absent" not in (
+            result.participants[0].refusal_reasons)
     assert result.participants[0].numeric_admission == "not_evaluated"
     assert result.computed_relation is None
 
@@ -334,6 +340,28 @@ def test_model_unit_absence_excludes_only_that_participant_from_parser(
     assert calls == ["60.0", "60.0"]
     assert "model_unit_not_available" in (
         result.participants[0].refusal_reasons)
+    assert result.cohort_admission == "same_acquisition_cohort"
+
+
+def test_one_present_and_one_absent_occurrence_never_invents_a_cohort(tmp_path):
+    from backend.behavior_evaluation import BehaviorParticipantSource
+    from backend.model_state import SourceSelector
+
+    first, second = __import__(
+        "tests.behavior_evaluation.helpers",
+        fromlist=["participant_sources"]).participant_sources()
+    absent_property = second.source.property.model_copy(
+        update={"json_pointer": "/synthetic/not-present"})
+    absent = BehaviorParticipantSource(
+        variable_anchor_id=second.variable_anchor_id,
+        entity_anchor_id=second.entity_anchor_id,
+        source=SourceSelector(
+            subject=second.source.subject, property=absent_property))
+    result = evaluate(tmp_path, participants=(first, absent))
+    assert result.participants[0].observation_availability == "observed"
+    assert result.participants[1].observation_availability == (
+        "none_before_cutoff")
+    assert result.cohort_admission == "not_evaluated"
 
 
 def test_attachment_refusal_does_not_hide_numeric_parser(tmp_path, monkeypatch):

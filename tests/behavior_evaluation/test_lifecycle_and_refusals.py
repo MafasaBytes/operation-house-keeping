@@ -218,14 +218,26 @@ def test_divergent_binding_anchor_is_attachment_only_refusal(tmp_path):
     assert "binding_not_positive" not in reasons
 
 
-def test_inconsistent_occurrence_evidence_is_not_numeric_shape_refusal(tmp_path):
+def test_inconsistent_occurrence_evidence_is_not_numeric_shape_refusal(
+        tmp_path, monkeypatch):
+    import backend.behavior_evaluation.derivation as derivation
+
     temporal = observed_stack(tmp_path)
     craft_occurrence(temporal, value_json="true", json_type="number")
+    original = derivation.parse_observed_decimal
+    calls = []
+
+    def parser(value):
+        calls.append(value)
+        return original(value)
+
+    monkeypatch.setattr(derivation, "parse_observed_decimal", parser)
     result = evaluate(tmp_path, temporal=temporal)
     reasons = _reasons(result)
     assert "evidence_not_assessable" in reasons
     assert "numeric_value_shape_mismatch" not in reasons
     assert result.participants[0].numeric_admission == "not_evaluated"
+    assert calls == ["60.0", "60.0"]
 
 
 def test_missing_and_conflicted_numeric_specifications_are_distinct(tmp_path):
@@ -305,6 +317,35 @@ def test_absent_source_interpretation_is_an_ordinary_semantic_refusal(tmp_path):
         semantic=semantic_queries(tmp_path, interpretations=resolver))
     assert "source_semantics_not_admitted" in _reasons(result)
     assert result.participants[0].semantic_admission == "not_admitted"
+
+
+def test_conflicted_source_interpretation_is_an_ordinary_semantic_refusal(
+        tmp_path):
+    from backend.source_interpretation import QuantityKindInterpretation
+    from tests.behavior_evaluation.helpers import _interpretation_record
+
+    conflict = _interpretation_record(
+        PROP_TEMP,
+        QuantityKindInterpretation(
+            dimension="quantity_kind",
+            quantity_kind=quantity_kind(code="other_quantity")))
+    resolver = interpretation_resolver(tmp_path, extra_records=(conflict,))
+    result = evaluate(
+        tmp_path,
+        semantic=semantic_queries(tmp_path, interpretations=resolver))
+    assert "source_semantics_not_admitted" in _reasons(result)
+    assert result.participants[0].semantic_admission == "not_admitted"
+
+
+def test_nullable_explicit_null_has_the_same_exact_precedence(tmp_path):
+    temporal = observed_value(tmp_path, "null")
+    model = model_store(
+        tmp_path, specification_overrides={VAR_A: {"nullable": True}})
+    result = evaluate(tmp_path, model=model, temporal=temporal)
+    reasons = _reasons(result)
+    assert "numeric_value_absent" in reasons
+    assert "numeric_value_shape_mismatch" not in reasons
+    assert result.participants[0].numeric_admission == "not_evaluated"
 
 
 def test_source_unit_only_mismatch_refuses_semantic_admission(tmp_path):
