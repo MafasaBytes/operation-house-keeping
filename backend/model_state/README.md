@@ -15,6 +15,11 @@ data_sources → temporal_state ─┐
 Spec: `docs/superpowers/specs/2026-08-09-vm001-model-state-design.md`;
 decisions: `docs/adr/0008-model-state-composition-facade.md`.
 
+VP-001 Slices A and B are owner accepted; Slice B is owner accepted at
+`81179700513bb671cf9955c6a5d7163e3bcc7e1b`. Slice C is authorized and in
+progress. Slice D has not started, and no VP state composition or fixture record
+exists at this administrative gate.
+
 ## Composition
 
 `ModelStateQueries(model: LoadedModel, resolver: BindingResolver,

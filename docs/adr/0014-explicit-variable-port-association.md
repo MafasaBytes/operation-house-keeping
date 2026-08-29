@@ -1,10 +1,9 @@
 # ADR-0014 — Explicit variable-to-port association
 
-Status: VP-001 Slice A is owner accepted at
-`60b739182e423a05eac7f3c531145d90c65fe9bc`. Slice B is implemented and
-adversarially reviewed; awaiting owner acceptance. Slices C and D remain
-separately owner-gated. No state composition or VP fixture record has been
-added.
+Status: VP-001 Slices A and B are owner accepted. Slice B is owner accepted at
+`81179700513bb671cf9955c6a5d7163e3bcc7e1b`. Slice C is authorized and in
+progress. Slice D has not started; no state composition or VP fixture record
+exists at this administrative gate.
 
 ## Context
 

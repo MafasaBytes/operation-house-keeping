@@ -188,12 +188,13 @@ to the implemented Slice C demonstration. Richer
 predicates beyond CN-001's exact numeric bounds
 also remain future work.
 
-VP-001 Slice A is owner accepted at
-`60b739182e423a05eac7f3c531145d90c65fe9bc`. It adds only role-free positive
+VP-001 Slices A and B are owner accepted. Slice A is accepted at
+`60b739182e423a05eac7f3c531145d90c65fe9bc`; it adds only role-free positive
 associations with strict same-owner admission, independent corroborating roots,
-and dedicated `vpw_` withdrawals. Slice B is implemented and adversarially
-reviewed; awaiting owner acceptance. It adds only the four accepted read-only
-kernel queries and authoritative carry-once result contracts. Slices C and D
-remain separately owner-gated; no state composition or VP fixture record has
-been added. The demo ledger remains the accepted 28-record PT-001 revision with
-no committed `vpa_` or `vpw_` record.
+and dedicated `vpw_` withdrawals. Slice B is owner accepted at
+`81179700513bb671cf9955c6a5d7163e3bcc7e1b`. It adds only the four accepted
+read-only kernel queries and authoritative carry-once result contracts. Slice C
+is authorized and in progress. Slice D has not started; no state composition or
+VP fixture record exists at this administrative gate. The demo ledger remains
+the accepted 28-record PT-001 revision with no committed `vpa_` or `vpw_`
+record.
