@@ -124,3 +124,66 @@ def test_facade_rejects_structurally_invalid_requests(tmp_path, bad):
         facade.behavior_evaluation(
             bad, context={}, as_of=True, participants=())
     assert error.value.error_code == "BEHAVIOR_EVALUATION_INPUT_INVALID"
+
+
+@pytest.mark.parametrize("case", [
+    "malformed_context", "naive_cutoff", "zero_participants",
+    "one_participant", "three_participants", "duplicate_variable",
+    "forged_source", "extra_participant_field",
+])
+def test_each_request_structure_guard_is_independently_reachable(
+        tmp_path, monkeypatch, case):
+    from datetime import datetime
+
+    from backend.model_state import SourceSelector
+    from tests.behavior_evaluation.helpers import (
+        AS_DESIGNED, AS_OF, BEHAVIOR_A, participant_sources,
+        semantic_queries,
+    )
+
+    semantic = semantic_queries(tmp_path)
+    calls = []
+
+    def forbidden(*args, **kwargs):
+        calls.append(args)
+        raise AssertionError("invalid request must not access lower evidence")
+
+    monkeypatch.setattr(
+        semantic, "variable_semantic_compatibility", forbidden)
+    context = AS_DESIGNED
+    as_of = AS_OF
+    participants = participant_sources()
+    if case == "malformed_context":
+        context = {"kind": "unknown_context"}
+    elif case == "naive_cutoff":
+        as_of = datetime(2026, 8, 7, 20, 30)
+    elif case == "zero_participants":
+        participants = ()
+    elif case == "one_participant":
+        participants = participants[:1]
+    elif case == "three_participants":
+        participants = (*participants, participants[0].model_copy(update={
+            "variable_anchor_id": "var_" + "8" * 32}))
+    elif case == "duplicate_variable":
+        participants = (participants[0], participants[0])
+    elif case == "forged_source":
+        participants = (
+            participants[0].model_construct(
+                variable_anchor_id=participants[0].variable_anchor_id,
+                entity_anchor_id=participants[0].entity_anchor_id,
+                source=SourceSelector.model_construct(
+                    subject=participants[0].source.subject, property=None)),
+            participants[1],
+        )
+    else:
+        participants = (
+            {**participants[0].model_dump(mode="python"),
+             "implicit_discovery": True},
+            participants[1],
+        )
+    with pytest.raises(behavior.BehaviorEvaluationInputError) as error:
+        behavior.BehaviorEvaluationQueries(semantic).behavior_evaluation(
+            BEHAVIOR_A, context=context, as_of=as_of,
+            participants=participants)
+    assert error.value.error_code == "BEHAVIOR_EVALUATION_INPUT_INVALID"
+    assert calls == []
