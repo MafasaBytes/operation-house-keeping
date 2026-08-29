@@ -32,6 +32,19 @@ def test_exact_slice_c_public_alias_result_fields_and_exports():
         "AssociatedPortVariableStateStatus",
         "AssociatedPortVariableStateResult",
     }
+    assert model_state.__all__ == [
+        "AssociatedPortVariableStateResult",
+        "AssociatedPortVariableStateStatus",
+        "AttachmentStatus",
+        "CandidateObservation",
+        "ModelStateConfigurationError",
+        "ModelStateError",
+        "ModelStateQueries",
+        "ModelStateQueryError",
+        "SourceSelector",
+        "VariableStateResult",
+    ]
+    assert len(model_state.__all__) == len(set(model_state.__all__))
 
 
 def test_exact_slice_c_method_signature_and_return_annotation():

@@ -13,10 +13,11 @@ from tests.model_kernel.test_demo_model import CURRENT_REVISION
 from tests.model_kernel.test_demo_pt001 import (
     ARTIFACT_BYTES, ARTIFACT_SHA256, _artifact_bytes,
 )
-from tests.model_state.helpers import AS_OF, E1, V1
+from tests.model_state.helpers import AS_OF, E1, PROP_TEMP, SUBJECT, V1
 from tests.model_state.vp001_slice_c_helpers import (
-    CONTEXT, P_ASSOCIATED, slice_c_world,
+    CONTEXT, P_ASSOCIATED, V_UNKNOWN, slice_c_world,
 )
+from tests.model_state.helpers import E2
 
 
 DEMO = Path("models/demo-printer")
@@ -81,6 +82,112 @@ def test_model_copy_construct_and_nested_instance_forgeries_are_rejected(
     for hostile in hostiles:
         with pytest.raises(ValidationError):
             type(result).model_validate(hostile)
+
+
+@pytest.mark.parametrize("attack", (
+    "requested_entity_registration",
+    "binding_declared_anchor",
+    "candidate_locator",
+    "candidate_declaration_locator",
+    "resolution_locator",
+    "occurrence_locator",
+    "resolution_target",
+    "citation_outside_revision",
+    "resolution_citation_outside_revision",
+    "discovery_target_substitution",
+    "nested_cutoff",
+    "observation_after_cutoff",
+    "boolean_count",
+))
+def test_outer_rejects_nested_provenance_and_coercion_substitution(
+        tmp_path, attack):
+    result = _result(slice_c_world(tmp_path))
+    payload = result.model_dump(mode="python")
+    state = payload["variable_state"]
+    if attack == "requested_entity_registration":
+        state["requested_entity_registration"] = next(
+            record for record in payload["association"]["material"]["records"]
+            if record["record_kind"] == "entity_registration"
+            and record["anchor"]["anchor_id"] == E2)
+    elif attack == "binding_declared_anchor":
+        state["binding_declared_anchor"]["anchor_id"] = V_UNKNOWN
+        state["anchor_agreement"] = "divergent"
+        state["divergent_anchor_fields"] = ("anchor_id",)
+        state["candidates"][0]["attachment"] = \
+            "not_attachable_anchor_divergent"
+    elif attack == "candidate_locator":
+        state["candidates"][0]["subject"]["subject_identifier"] = \
+            "forged-other-subject"
+    elif attack == "candidate_declaration_locator":
+        state["candidates"][0]["declaration"]["subject"][
+            "subject_identifier"] = "forged-declaration-subject"
+    elif attack == "resolution_locator":
+        state["candidates"][0]["bound"]["resolution"]["locator_subject"][
+            "subject_identifier"] = "forged-resolution-subject"
+    elif attack == "occurrence_locator":
+        state["candidates"][0]["bound"]["observed"]["occurrence"][
+            "subject"]["subject_identifier"] = "forged-occurrence-subject"
+    elif attack == "resolution_target":
+        state["candidates"][0]["bound"]["resolution"]["resolved_target"][
+            "display_name"] = "Forged resolution target"
+    elif attack == "citation_outside_revision":
+        forged_id = "iba_" + "0" * 64
+        state["candidates"][0]["declaration"]["assertion_summaries"][0][
+            "record_id"] = forged_id
+        state["candidates"][0]["declared_via_assertion_ids"] = (forged_id,)
+    elif attack == "resolution_citation_outside_revision":
+        state["candidates"][0]["bound"]["resolution"]["via_assertions"][0][
+            "record_id"] = "iba_" + "0" * 64
+    elif attack == "discovery_target_substitution":
+        state["candidates"][0]["declaration"]["assertion_summaries"][0][
+            "target_anchor_id"] = V_UNKNOWN
+        state["candidates"][0]["declared_via_assertion_ids"] = ()
+    elif attack == "nested_cutoff":
+        state["candidates"][0]["bound"]["observed"]["as_of"] = \
+            "2026-09-01T00:00:00Z"
+    elif attack == "observation_after_cutoff":
+        payload["as_of"] = "2026-08-07T19:00:00Z"
+        state["as_of"] = "2026-08-07T19:00:00Z"
+        state["candidates"][0]["bound"]["observed"]["as_of"] = \
+            "2026-08-07T19:00:00Z"
+    else:
+        state["declared_locator_count"] = True
+    with pytest.raises(ValidationError):
+        type(result).model_validate(payload)
+
+
+def test_outer_rejects_forged_explicit_selector_declaration_classification(
+        tmp_path):
+    world = slice_c_world(tmp_path)
+    result = world.queries.associated_port_variable_state(
+        V1, P_ASSOCIATED, context=CONTEXT, as_of=AS_OF,
+        entity_anchor_id=E1,
+        source=model_state.SourceSelector(subject=SUBJECT, property=PROP_TEMP))
+    payload = result.model_dump(mode="python")
+    state = payload["variable_state"]
+    state["candidates"][0]["declaration"]["assertion_summaries"][0][
+        "target_anchor_id"] = V_UNKNOWN
+    state["candidates"][0]["declared_via_assertion_ids"] = ()
+    # This classification still claims the declaration targets V1.
+    assert state["selector_declaration"] == \
+        "ever_declared_for_requested_variable"
+    with pytest.raises(ValidationError):
+        type(result).model_validate(payload)
+
+
+@pytest.mark.parametrize("attack", (
+    lambda p: p.update(variable_anchor_id=True),
+    lambda p: p.update(port_anchor_id=True),
+    lambda p: p.update(as_of=True),
+    lambda p: p.update(status=True),
+    lambda p: p["association"].update(variable_registration_index=True),
+    lambda p: p["association"]["roots"][0].update(
+        current_tip_indices=(True,)),
+))
+def test_outer_rejects_boolean_and_scalar_coercions(tmp_path, attack):
+    result = _result(slice_c_world(tmp_path))
+    with pytest.raises(ValidationError):
+        _reconstruct(result, attack)
 
 
 def test_serialized_composition_carries_each_nested_result_once(tmp_path):
