@@ -200,26 +200,33 @@ def test_slice_b_c_d_and_upper_layer_imports_are_absent():
         "backend.data_sources")) for name in imports)
 
 
-def test_slice_a_status_documentation_records_the_owner_stop():
-    status = (
-        "VP-001 Slice A implemented and adversarially reviewed; awaiting "
-        "owner acceptance.")
-    for path in (
+def test_slice_a_status_documentation_records_owner_acceptance():
+    accepted = (
+        "VP-001 Slice A is owner accepted at "
+        "`60b739182e423a05eac7f3c531145d90c65fe9bc`.")
+    surfaces = (
         Path("docs/adr/0014-explicit-variable-port-association.md"),
         Path("docs/superpowers/specs/"
              "2026-08-28-vp001-explicit-variable-port-association-design.md"),
-    ):
-        assert status in path.read_text(encoding="utf-8")
+        Path("CLAUDE.md"),
+        Path("backend/model_kernel/README.md"),
+    )
+    for path in surfaces:
+        text = " ".join(path.read_text(encoding="utf-8").split())
+        assert accepted in text
+        assert "Slice B is authorized and in progress" in text
+        assert "Slices C and D remain separately owner-gated" in text
+        assert ("no vp query, state composition, or fixture record exists at "
+                "this administrative gate") in text.lower()
+
     for path in (Path("CLAUDE.md"), Path("backend/model_kernel/README.md")):
         text = " ".join(path.read_text(encoding="utf-8").split())
-        assert (
-            "VP-001 Slice A has been implemented and adversarially reviewed; "
-            "owner validation is pending.") in text
-    specification = Path(
-        "docs/superpowers/specs/"
-        "2026-08-28-vp001-explicit-variable-port-association-design.md"
-    ).read_text(encoding="utf-8")
-    assert "Slices B, C, and D remain separately owner-gated" in specification
+        assert "role-free positive" in text
+        assert "strict same-owner admission" in text
+        assert "independent corroborating roots" in text
+        assert "dedicated `vpw_` withdrawals" in text
+
+    specification = surfaces[1].read_text(encoding="utf-8")
     assert "demo ledger remains exactly 28 records" in specification
 
 

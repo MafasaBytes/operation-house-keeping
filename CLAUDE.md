@@ -739,10 +739,12 @@ model ledger contains exactly 28 records. The final model revision is
 The deterministic artifact SHA-256 is
 `53dd32846956d10331dfca8fc370ef7d7019325904a062db5f037605aa4cf3d8`.
 
-VP-001 Slice A has been implemented and adversarially reviewed; owner validation
-is pending.
-Slice A adds only the explicit `vpa_` association claim, dedicated `vpw_`
-withdrawal event, canonical/store validation, immutable indexes, builders,
-exports, replay, and tests. Slices B, C, and D remain separately owner-gated;
-no VP query, state composition, or fixture record has been added. The demo
+VP-001 Slice A is owner accepted at
+`60b739182e423a05eac7f3c531145d90c65fe9bc`. It adds only role-free positive
+`vpa_` association claims with strict same-owner admission, independent
+corroborating roots, and dedicated `vpw_` withdrawals, plus canonical/store
+validation, immutable indexes, builders, exports, replay, and tests. Slice B is
+authorized and in progress. Slices C and D remain separately owner-gated; no VP
+query, state composition, or fixture record exists at this administrative
+gate. The demo
 ledger remains exactly 28 records at the accepted PT-001 revision.

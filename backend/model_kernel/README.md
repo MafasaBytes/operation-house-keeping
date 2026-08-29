@@ -186,7 +186,10 @@ to the implemented Slice C demonstration. Richer
 predicates beyond CN-001's exact numeric bounds
 also remain future work.
 
-VP-001 Slice A has been implemented and adversarially reviewed; owner validation
-is pending.
-Slices B, C, and D remain separately owner-gated. The demo ledger remains the
+VP-001 Slice A is owner accepted at
+`60b739182e423a05eac7f3c531145d90c65fe9bc`. It adds only role-free positive
+associations with strict same-owner admission, independent corroborating roots,
+and dedicated `vpw_` withdrawals. Slice B is authorized and in progress. Slices
+C and D remain separately owner-gated; no VP query, state composition, or fixture
+record exists at this administrative gate. The demo ledger remains the
 accepted 28-record PT-001 revision with no committed `vpa_` or `vpw_` record.
