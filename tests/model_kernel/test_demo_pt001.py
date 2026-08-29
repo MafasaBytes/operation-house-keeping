@@ -509,8 +509,12 @@ def test_pt001_final_owner_acceptance_status_is_exact():
         for statement in required:
             assert statement in text, (path, statement)
         pt_status = text[text.index(required[0]):]
-        if "VP-001 Slice A is owner accepted" in pt_status:
-            pt_status = pt_status.split("VP-001 Slice A is owner accepted", 1)[0]
+        for vp_boundary in (
+                "VP-001 Slices A and B are owner accepted",
+                "VP-001 Slice A is owner accepted"):
+            if vp_boundary in pt_status:
+                pt_status = pt_status.split(vp_boundary, 1)[0]
+                break
         assert "awaiting owner acceptance" not in pt_status
 
 
