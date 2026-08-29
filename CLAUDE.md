@@ -818,5 +818,8 @@ behavior query, evaluator, numeric comparison, state composition, or demo
 record. Slice B is owner accepted at
 `05177f7306ce745d093bd5f11abafc13a6274d0f`. It adds exactly the four
 read-only model-kernel queries and their authoritatively revalidated carry-once
-result contracts. Slice C is owner-authorized but not yet implemented. Slice D
-has not started.
+result contracts. The Slice C preimplementation discrepancy report is owner
+accepted at `eedae19a9b2542958f44e66af7117a981c7faeef`; its refusal mapping,
+carried-material integrity boundary, public errors/exports, and cohort/parser
+scheduling questions are resolved. Slice C is owner-authorized but not yet
+implemented. Slice D has not started.

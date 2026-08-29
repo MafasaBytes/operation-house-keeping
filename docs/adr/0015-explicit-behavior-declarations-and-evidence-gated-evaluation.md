@@ -2,8 +2,10 @@
 
 Status: BH-001 corrected final design and Slice A owner accepted. Slice A is
 accepted at `57edec37b40c5da0c300cc1333fbb3cf5d7bb41a`. Slice B is owner accepted
-at `05177f7306ce745d093bd5f11abafc13a6274d0f`. Slice C is owner-authorized but
-not yet implemented. Slice D remains separately owner-gated and unstarted.
+at `05177f7306ce745d093bd5f11abafc13a6274d0f`. The Slice C discrepancy stop is
+owner accepted at `eedae19a9b2542958f44e66af7117a981c7faeef`; all four contract
+questions are resolved. Slice C is owner-authorized but not yet implemented.
+Slice D remains separately owner-gated and unstarted.
 
 Accepted base: `main` at
 `46c04ed6f6f09b254b2f52f07611e2efbdd1d4f6`.
@@ -119,6 +121,12 @@ composition.
     exact-number parser. Slice D remains a separately gated declaration-only
     29-to-32-record demonstration after deterministic disposable rehearsal and
     owner approval of its exact derived identities and artifact contract.
+16. Slice C validation proves internal coherence of carried public lower
+    results and BH-derived fields, not raw-source authenticity. The exact
+    22-reason refusal vocabulary, public three-class BH error tree, 21-name
+    export list, and cohort/parser scheduling are fixed by the owner-resolved
+    preimplementation discrepancy. Content-bound lower occurrence
+    authentication remains separately owner-gated future work.
 
 ## Consequences
 

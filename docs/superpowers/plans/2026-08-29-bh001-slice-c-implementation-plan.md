@@ -1,14 +1,13 @@
 # BH-001 Slice C — evidence-gated evaluator implementation plan
 
-Status: **BLOCKED BEFORE PRODUCTION CODE.** Slice B is owner accepted at
+Status: Slice B is owner accepted at
 `05177f7306ce745d093bd5f11abafc13a6274d0f`, with acceptance recorded by the
 separate administrative commit
-`cc8fcf0`. Slice C was owner-authorized and planned here before production
-code, but repository-grounded specialist review found two contradictions in
-the accepted evaluator contract. They are recorded in
-`docs/superpowers/reports/2026-08-30-bh001-slice-c-preimplementation-discrepancy-report.md`.
-No Slice C production code or red tests may begin until the owner resolves
-them. Slice D remains unstarted.
+`cc8fcf0`. The repository-grounded contradictions recorded in
+`docs/superpowers/reports/2026-08-30-bh001-slice-c-preimplementation-discrepancy-report.md`
+are owner accepted and resolved at the documentation gate. Slice C production
+may begin only after the normative documentation amendments and focused
+documentation assertions pass. Slice D remains unstarted.
 
 Date: 2026-08-30
 
@@ -28,16 +27,10 @@ indexes, Slice B queries, model state, observation compatibility, source
 interpretation, semantic compatibility, temporal evidence, bindings, source
 data, constraints, ports, VPA, or any committed fixture.
 
-## 2. Public package surface — owner pin required
+## 2. Exact public package surface
 
-The specification fixes the package, facade, method, status aliases, selector,
-refusal, participant result, and top-level result names. It does **not** fix an
-exact module count, public error class names, or the exact ordered
-`backend.behavior_evaluation.__all__`. Because the authorization requires exact
-exports with no invented aliases, those details require an owner pin before
-implementation.
-
-A conventional implementation could use:
+Private module layout is not a public contract. The bounded implementation may
+use:
 
 ```text
 backend/behavior_evaluation/__init__.py
@@ -47,7 +40,7 @@ backend/behavior_evaluation/facade.py
 backend/behavior_evaluation/README.md
 ```
 
-Possible public errors, **not yet normative**:
+Public errors are exactly:
 
 ```text
 BehaviorEvaluationError
@@ -82,10 +75,36 @@ BehaviorEvaluationResult
 BehaviorEvaluationQueries
 ```
 
-Pin the eventual `backend.behavior_evaluation.__all__` to the owner-approved
-names. Add no
-alternate facade, helper, wrapper, convenience query, overload, port API,
-aggregate validity result, or persisted result.
+The exact ordered `backend.behavior_evaluation.__all__` is:
+
+```text
+BehaviorEvaluationError
+BehaviorEvaluationConfigurationError
+BehaviorEvaluationInputError
+NumericParityBreachError
+BehaviorParticipantSource
+BehaviorEvaluationExecution
+BehaviorComputedRelation
+BehaviorParticipantAdmission
+BehaviorParticipantModelAdmission
+BehaviorParticipantObservationAvailability
+BehaviorParticipantAttachmentAdmission
+BehaviorParticipantSemanticAdmission
+BehaviorParticipantUnitAdmission
+BehaviorParticipantLockAdmission
+BehaviorParticipantNumericAdmission
+BehaviorAcquisitionCohortAdmission
+BehaviorEvaluationRefusalReason
+BehaviorEvaluationRefusal
+BehaviorEvaluationParticipantResult
+BehaviorEvaluationResult
+BehaviorEvaluationQueries
+```
+
+`NumericParityBreachError` is the exact CN class object. BH does not re-export
+the parser or canonical-decimal constructor. Add no alternate facade, helper,
+wrapper, convenience query, overload, port API, aggregate validity result, or
+persisted result.
 
 ## 3. Exact request and result fields
 
@@ -163,10 +182,16 @@ class BehaviorEvaluationQueries:
     ) -> BehaviorEvaluationResult: ...
 ```
 
-The constructor accepts only the public semantic facade. Once exact typed
-error classes are owner-pinned, the query validates
+The constructor accepts only the public semantic facade. Invalid dependency
+construction raises `BehaviorEvaluationConfigurationError` with exact code
+`BEHAVIOR_EVALUATION_CONFIGURATION_INVALID`. The query validates
 and normalizes the behavior ID, exact `AssertionContext`, aware UTC cutoff,
 and exactly two structurally reconstructed participant selectors.
+
+Structurally invalid query input or participant-set misuse raises
+`BehaviorEvaluationInputError` with exact code
+`BEHAVIOR_EVALUATION_INPUT_INVALID`. Direct Pydantic construction may retain
+ordinary `ValidationError`. Ordinary evaluation refusals remain result data.
 
 Selectors are distinct by variable ID and canonically sorted by that ID.
 When registration exists, their variable set must equal the permanent BRG
@@ -194,7 +219,9 @@ BehaviorEvaluationResult
 Each participant semantic query executes exactly once in canonical participant
 order. Both branches execute for every structurally valid request, including
 behavior not registered, not declared, inactive, or conflicted. A typed lower
-failure propagates unchanged and no outer result is fabricated.
+failure does not suppress the other branch call. After both attempts, propagate
+the first typed failure in canonical participant order unchanged and fabricate
+no outer result.
 
 ## 6. Declaration admission
 
@@ -235,22 +262,54 @@ not when an earlier gate made it unevaluable. `unit_admission` remains separate
 from semantic and lock admission. Observation roles may differ across the two
 participants; each must match its own variable-keyed lock.
 
-The accepted refusal vocabulary does not presently provide an honest result
-for every state that these public lower layers can produce. In particular:
+Apply these exact resolved mappings:
 
-- a numeric VSP can assess a boolean, string, object, array, or explicit null
-  consistently while refusing its value shape;
-- a nullable numeric VSP can assess explicit null consistently;
-- a unique current nonnumeric VSP is neither absent nor conflicted; and
-- a numeric VSP can have `unit.kind="not_declared"`.
+- `numeric_specification_not_available`: no current specification, inactive
+  specification lineage, or one uniquely current specification with a
+  nonnumeric governing shape; `numeric_admission="not_evaluated"`;
+- `numeric_specification_conflicted`: the specification result is conflicted;
+- `model_unit_not_available`: the governing numeric VSP has no model-unit
+  identity; exactly `unit_admission="not_evaluated"` and
+  `numeric_admission="not_evaluated"`;
+- `numeric_value_absent`: selected `value_json` is explicit null;
+  `numeric_admission="not_evaluated"`;
+- `numeric_value_shape_mismatch`: a present non-null selected observation does
+  not satisfy numeric JSON shape; `numeric_admission="not_evaluated"`.
 
-None is truthfully `evidence_not_assessable`; some are also not
-`numeric_specification_not_available`, `source_semantics_not_admitted`, or
-`numeric_value_out_of_bounds`. The CN parser must not receive them. The owner
-must add exact reasons or normatively broaden named reasons before this gate
-can be implemented.
+Explicit null takes precedence over shape mismatch even for a nonnullable VSP.
+Do not add the shape-mismatch refusal for that participant. Preserve the lower
+nullable/nonnullable finding and every independently applicable earlier
+refusal. Each mapping makes aggregate participant admission `not_admitted` and
+none invokes the CN parser.
 
-## 8. Acquisition cohort — cross-gate timing unresolved
+The exact refusal order is:
+
+```text
+behavior_not_registered
+behavior_not_declared
+behavior_inactive
+behavior_conflicted
+participant_model_not_registered
+observation_absent
+observation_not_attached
+binding_not_positive
+evidence_not_assessable
+numeric_specification_not_available
+numeric_specification_conflicted
+model_quantity_kind_not_available
+model_observation_role_not_available
+model_unit_not_available
+source_semantics_not_admitted
+quantity_kind_lock_mismatch
+observation_role_lock_mismatch
+unit_lock_mismatch
+numeric_value_absent
+numeric_value_shape_mismatch
+numeric_value_out_of_bounds
+acquisition_cohort_mismatch
+```
+
+## 8. Acquisition cohort
 
 The cohort key itself is exact and settled:
 
@@ -270,26 +329,30 @@ Exact equality produces `same_acquisition_cohort`; any field mismatch produces
 Source time, receipt time, staleness, ordering, clock segment, run, sweep,
 occurrence ID, value, unit, and quality flags never establish a cohort.
 
-The specification orders cohort after participant-local gates but also requires
-independent disclosure of failed dimensions. It does not pin whether cohort is
-`not_evaluated` whenever either participant has an ordinary local refusal or is
-still computed whenever both occurrences exist. That timing remains blocked
-for an owner decision.
+Compute cohort whenever both selected occurrences exist, even when either
+participant has another ordinary local refusal. If either occurrence is
+absent, cohort is `not_evaluated`. A different cohort blocks all parser calls.
+
+If either occurrence is absent, no cohort identity is invented.
 
 ## 9. Numeric boundary
 
-Eventually invoke only the public
+Invoke only the public
 `backend.constraint_evaluation.parse_observed_decimal()` API, after all prior
 gates. Its public implementation is the bounded lexical/expansion preflight;
-BH adds no regex, parser, numeric conversion, Decimal arithmetic, or private
-constant import.
+BH adds no copied/private numeric regex or parser, numeric conversion, Decimal
+arithmetic, or private constant import.
 
-The accepted text also says a numeric parity error cannot be hidden by a peer
-ordinary refusal. Whether the parser runs for a numeric-eligible participant
-when its peer has an earlier ordinary local refusal, and whether cohort must be
-admitted first in that case, is not fully pinned. No parser scheduling will be
-implemented until the owner resolves that interaction. Public CN typed errors
-must then propagate without permissive translation.
+After an admitted cohort, invoke the parser in canonical participant order for
+every participant whose own carried evidence establishes an occurrence,
+non-null value, uniquely current numeric VSP with a declared model-unit
+identity, and numeric observed JSON shape. Attachment, semantic, known
+source/model unit mismatch, unit-lock mismatch, another lock refusal, or peer
+ordinary refusal does not suppress an otherwise eligible parser call. Known
+boolean, string, array, object, null, nonnumeric-model-shape, or model-unit-not-
+available cases never reach it. Propagate the first public
+`NumericParityBreachError` unchanged. No peer refusal hides a typed parity
+failure for an otherwise eligible participant.
 
 Map admitted parser results to `canonical_decimal`; map ordinary bounds refusal
 to `numeric_value_out_of_bounds`. Compare two admitted canonical strings by
@@ -306,12 +369,13 @@ Top-level refusal order is:
 4. cohort refusal, participant index `None`.
 
 `participant.refusal_reasons` carries that participant's exact local reason
-tuple. `not_executed_reasons` carries typed refusal rows. No aggregate validity
-or preferred refusal exists.
+tuple as `tuple[BehaviorEvaluationRefusalReason, ...]`.
+`not_executed_reasons` carries
+`tuple[BehaviorEvaluationRefusal, ...]`. No aggregate validity or preferred
+refusal exists.
 
-The ordering of already-derived refusals is fixed above. Whether cohort and
-numeric gates are derived at all after a peer's earlier local refusal remains
-the explicit unresolved question in Sections 8 and 9.
+The ordering of derived refusals is fixed above. Cohort and parser scheduling
+follow Sections 8 and 9 even when peer ordinary refusals already exist.
 
 Execution is `executed` exactly when the declaration is admitted, both
 participants are admitted, the cohort is exact, and both canonical decimals
@@ -344,22 +408,17 @@ Use one pure authoritative derivation shared by the facade and validator.
 Reject missing, duplicate, extra, reordered, substituted, mixed-revision, and
 forged content at the public boundary.
 
-This promise is blocked for a fully coherent lower occurrence-value mutation.
-The carried lower result contains neither the raw payload bytes nor extraction
-manifest, and the accepted `TemporalOccurrence.occurrence_id` and
-`observation_id` do not bind `value_json`. A hostile caller can consistently
-replace every carried copy of one numeric `value_json`, reconstruct the lower
-results, and recompute the BH decimal/relation without creating any
-store-independent contradiction. The owner must either narrow the rejection
-promise to substitutions detectable from carried material or separately
-authorize content binding/raw-evidence carry in a lower layer.
+The validator proves internal coherence of carried lower public results and
+every BH-derived field. It inherits and does not re-prove raw-source
+authenticity. A fully coherent lower-evidence mutation accepted by lower public
+contracts is outside its store-independent detection boundary. Add one
+executable limitation test that demonstrates this boundary; do not change
+temporal identity or access raw stores.
 
 ## 12. Red-first test groups
 
-The groups below remain the implementation plan after the two contract
-decisions above. They have not been started. Writing tests that invent a
-refusal meaning or an unauthenticable integrity guarantee would silently
-reinterpret the accepted design.
+The groups below use the owner-resolved contracts. They begin only after the
+documentation assertion gate passes.
 
 Commit tests before production code:
 
@@ -430,13 +489,13 @@ required permission.
 
 ## 16. Reviewable commits and stop gate
 
-The only completed Slice C-era commits are the separate Slice B acceptance
-administrative commit and, if committed after review, the documentation-only
-discrepancy package. Once the owner resolves both contradictions, use the
-remaining reviewable groups:
+The completed Slice C-era commits before resumed implementation are the
+separate Slice B acceptance administrative commit and the documentation-only
+discrepancy package. Add the owner-resolution documentation commit, then use
+the remaining reviewable groups:
 
 ```text
-docs: plan BH-001 Slice C
+docs: resolve BH-001 Slice C contract discrepancy
 test: define BH-001 Slice C evaluator contracts
 feat: add BH-001 evidence-gated evaluator
 test: harden BH-001 Slice C reconstruction
@@ -446,10 +505,11 @@ docs: record BH-001 Slice C verification
 ```
 
 Write the final report to
-`docs/superpowers/reports/2026-08-29-bh001-slice-c-completion-report.md`, commit
+`docs/superpowers/reports/2026-08-30-bh001-slice-c-completion-report.md`, commit
 it, and stop for owner acceptance. Do not begin Slice D.
 
-Until then, the discrepancy report is the authoritative stop artifact. It is
-not a completion report and does not claim Slice C acceptance.
+The discrepancy report remains the historical stop artifact and now records
+its owner resolution. It is not a completion report and does not claim Slice C
+acceptance.
 
 END OF BH-001 SLICE C IMPLEMENTATION PLAN

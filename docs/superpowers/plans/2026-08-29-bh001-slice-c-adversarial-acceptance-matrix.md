@@ -1,10 +1,9 @@
 # BH-001 Slice C — adversarial acceptance matrix
 
-Status: **BLOCKED BEFORE RED TESTS OR PRODUCTION CODE.** These are the planned
-red-first controls for the owner-authorized evidence-gated evaluator. Slices A
-and B are owner accepted. Repository-grounded review exposed two accepted-
-contract contradictions described in the Slice C preimplementation discrepancy
-report. Slice D is unstarted.
+Status: owner-resolved red-first controls for the authorized evidence-gated
+evaluator. Slices A and B are owner accepted. The preimplementation discrepancy
+and every blocker row below are owner resolved. Production starts only after
+the documentation assertions pass. Slice D is unstarted.
 
 ## 1. Public contract
 
@@ -12,13 +11,13 @@ report. Slice D is unstarted.
 |---|---|---|
 | C01 | Public package boundary | `backend.behavior_evaluation` exists and is read-only; private module layout is not public contract |
 | C02 | Query facade method | Only `behavior_evaluation` with exact signature |
-| C03 | Literal aliases and order | Exact accepted vocabulary |
+| C03 | Literal aliases and order | Exact status aliases plus ordered 22-reason `BehaviorEvaluationRefusalReason` |
 | C04 | Result class fields and order | Exact accepted fields, no extras |
 | C05 | Exact `__all__` | No aliases, private helpers, or future APIs |
 | C06 | Frozen/extra-forbid/revalidate | Every public model reconstructs |
 | C07 | Index booleans/coercion | Typed rejection |
 | C08 | Implication-bearing fields | Rejected as extras |
-| C08a | Public evaluator error names and exact ordered `__all__` | **Owner pin required:** specification does not enumerate them |
+| C08a | Public evaluator errors and exact ordered `__all__` | Exact three-class inheritance/codes, exact CN error class object, exact 21 names; no parser export |
 
 ## 2. Input and selector boundary
 
@@ -47,7 +46,7 @@ report. Slice D is unstarted.
 | C24 | One healthy root | Declaration gate admitted |
 | C25 | Corroborating identical roots | Declaration gate admitted; no winner |
 | C26 | Different context only | Exact-context not declared |
-| C27 | Lower typed failure on either branch | Unwrapped public failure type/code/message propagates |
+| C27 | Lower typed failure on either branch | Both branches attempted once; first canonical unwrapped public failure type/code/message propagates; no result |
 | C28 | Lifecycle failure with observations | Observation evidence unchanged |
 
 ## 4. Participant gates and refusals
@@ -59,7 +58,8 @@ report. Slice D is unstarted.
 | C31 | Resolution nonpositive | attachment refusal plus `binding_not_positive` |
 | C32 | Resolution mismatch/divergent anchor | `observation_not_attached` |
 | C33 | Malformed or inconsistent evidence | `evidence_not_assessable`; no parser call |
-| C34 | Consistent boolean/string/object/array or explicit-null evidence against numeric VSP | **Owner decision required:** fixed refusal vocabulary has no truthful reason; no parser call |
+| C34 | Consistent boolean/string/object/array evidence against numeric VSP | `numeric_value_shape_mismatch`; numeric not evaluated; no parser call |
+| C34a | Explicit null against nullable or nonnullable numeric VSP | `numeric_value_absent` only; numeric not evaluated; no parser call; lower finding preserved |
 | C35 | VSP conflict | `numeric_specification_conflicted` |
 | C36 | Quantity kind absent/conflicted | `model_quantity_kind_not_available` |
 | C37 | Observation role absent/conflicted | `model_observation_role_not_available` |
@@ -70,8 +70,8 @@ report. Slice D is unstarted.
 | C42 | Unit lock mismatch | Exact lock refusal; no conversion |
 | C43 | Multiple local failures | All exact reasons in gate order |
 | C44 | Participant admission forgery | Recomputed and rejected |
-| C44a | Unique current nonnumeric VSP | **Owner decision required:** define exact refusal; no parser call |
-| C44b | Numeric VSP with unit `not_declared` | **Owner decision required:** define exact refusal; no parser call |
+| C44a | Missing/inactive or unique current nonnumeric VSP | `numeric_specification_not_available`; numeric not evaluated; no parser call |
+| C44b | Numeric VSP with unit `not_declared` | `model_unit_not_available`; unit and numeric not evaluated; no parser call |
 
 ## 5. Cohort and time
 
@@ -88,7 +88,8 @@ report. Slice D is unstarted.
 | C53 | Staleness differs | Disclosed below; no age veto |
 | C54 | Cohort mismatch | Parser not called; never `different` |
 | C55 | `as_of` mutation | Temporal evidence may change, model membership may not |
-| C55a | Peer local refusal with both occurrences present | **Owner decision required:** pin cohort evaluation versus `not_evaluated` |
+| C55a | Peer local refusal with both occurrences present | Cohort still computed from exact five-field key |
+| C55b | Either selected occurrence absent | Cohort `not_evaluated` |
 
 ## 6. Numeric parser and execution
 
@@ -105,9 +106,10 @@ report. Slice D is unstarted.
 | C64 | Canonical byte twin | 386 admitted / 387 refused |
 | C65 | Boolean/string/object/array/null/malformed | Never compared as numbers |
 | C66 | Expansion-hostile input | Bounded refusal before allocation |
-| C67 | Public parser typed parity failure | Same exception propagates; not `different` |
+| C67 | Public parser typed parity failure | Exact re-exported CN class propagates unchanged; not `different` |
 | C68 | First parser ordinary refusal, second parity failure | Failure not hidden |
-| C68a | Numeric-eligible participant with peer earlier local refusal | **Owner decision required:** pin parser scheduling and cohort prerequisite |
+| C68a | Numeric-eligible participant with peer earlier local refusal | After cohort admission, parser still called; typed parity failure not hidden |
+| C68b | Model-unit identity unavailable | Participant is parser-ineligible even after cohort admission |
 | C69 | Ambient Decimal precision/rounding | Output byte-identical |
 | C70 | Equivalent lexemes/negative zero | Canonical exact `equal` |
 | C71 | Different admitted canonicals | Exact `different` only |
@@ -127,7 +129,7 @@ report. Slice D is unstarted.
 | C80 | Swapped/duplicate sources or semantic results | Rejected |
 | C81 | Selector/variable/entity/source retarget | Rejected |
 | C82 | Candidate/occurrence substitution detectable from carried material | Rejected |
-| C82a | Coherent value substitution preserving non-content-bound temporal IDs | **Owner decision required:** narrow guarantee or authorize lower-layer content binding/raw-evidence carry |
+| C82a | Coherent value substitution preserving non-content-bound temporal IDs | Executable limitation: internally coherent lower result revalidates; BH rederives from it and does not claim raw authenticity |
 | C83 | Forged lock/cohort/decimal/status/refusal/relation | Rejected |
 | C84 | Missing/extra/reordered participant rows | Rejected |
 | C85 | Wrong union-arm/index/count/order | Rejected |
@@ -152,10 +154,8 @@ report. Slice D is unstarted.
 | C99 | Full and dual-clean-checkout suites | Green; loopback separately disclosed |
 | C100 | Specialist findings and final report | Reconciled and committed before stop |
 
-Every numbered row, including the letter-suffixed blocker rows, must be green
-before Slice C completion. No red tests or production implementation may begin
-until C08a, C34, C44a, C44b, C55a, C68a, and C82a have owner-approved
-contracts. Stop for owner
-acceptance without beginning Slice D.
+Every numbered row, including letter-suffixed resolution rows, must be green
+before Slice C completion. The documentation assertions must pass before red
+production tests begin. Stop for owner acceptance without beginning Slice D.
 
 END OF BH-001 SLICE C ADVERSARIAL ACCEPTANCE MATRIX

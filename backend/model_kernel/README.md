@@ -240,4 +240,6 @@ accepted at `57edec37b40c5da0c300cc1333fbb3cf5d7bb41a`. The current committed de
 remains the accepted 29-record VP revision and contains zero `brg_`, `bhd_`, or
 `bhw_` records. Slice B is owner accepted at
 `05177f7306ce745d093bd5f11abafc13a6274d0f`. Slice C is owner-authorized but
-not yet implemented. Slice D has not started.
+not yet implemented. Its preimplementation discrepancy is owner accepted at
+`eedae19a9b2542958f44e66af7117a981c7faeef` and all four contract questions
+are resolved without changing kernel contracts. Slice D has not started.

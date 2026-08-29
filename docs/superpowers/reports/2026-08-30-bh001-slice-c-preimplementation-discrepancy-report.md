@@ -1,15 +1,16 @@
 # BH-001 Slice C — preimplementation discrepancy report
 
-Status: **BLOCKED BEFORE RED TESTS OR PRODUCTION CODE**
+Status: **OWNER ACCEPTED; ALL FOUR QUESTIONS RESOLVED; SLICE C RESUMED AFTER
+DOCUMENTATION ASSERTIONS**
 
 Date: 2026-08-30
 
 ## 1. Outcome
 
-BH-001 Slice C cannot be implemented exactly as authorized without silently
-changing accepted public semantics. Repository inspection and three independent
-specialist reviews found two hard contradictions and one public-surface pin
-missing from the authoritative specification:
+BH-001 Slice C could not be implemented exactly as originally authorized
+without silently changing accepted public semantics. Repository inspection and
+three independent specialist reviews found two hard contradictions and one
+public-surface pin missing from the authoritative specification:
 
 1. the fixed refusal vocabulary cannot truthfully encode several accepted
    lower-layer states that must refuse numeric comparison;
@@ -19,8 +20,11 @@ missing from the authoritative specification:
 3. the authorization requires exact public errors and `__all__`, but the
    specification does not enumerate them.
 
-No evaluator code, red tests, package, fixture, ledger record, artifact, or
-numeric comparison was implemented. Slice D has not started.
+The stop was owner accepted at
+`eedae19a9b2542958f44e66af7117a981c7faeef`. The owner subsequently resolved
+all four questions exactly in Sections 6, 8, 9, and 10 below. The original
+findings remain here as the audit trail. Slice C may resume only after the
+resolution documentation and focused assertions pass. Slice D has not started.
 
 ## 2. Authority and verified starting state
 
@@ -177,9 +181,9 @@ numeric_value_absent
 BH need not copy those names, but it needs owner-approved meanings that cover
 the same reachable facts honestly.
 
-## 6. Required owner decision for discrepancy one
+## 6. Owner resolution for discrepancy one
 
-Choose one bounded contract amendment before Slice C continues:
+The original resolution choices were:
 
 1. add exact BH refusal reasons for nonnumeric model shape, observed shape
    mismatch, explicit null, and unavailable model unit; or
@@ -198,9 +202,28 @@ The lead recommendation is the following minimal, explicit pin:
 | Unique current VSP has a nonnumeric governing shape, or no current unique numeric VSP exists | retain `numeric_specification_not_available`, normatively define it as “no current unique numeric specification is available” | `numeric_admission="not_evaluated"` |
 | Governing numeric VSP has no declared unit identity | add `model_unit_not_available` | `unit_admission="not_evaluated"`, `numeric_admission="not_evaluated"` |
 
-The owner should also pin explicit-null precedence when null simultaneously
-fails a nonnullable shape. This recommendation adds no parser behavior and does
-not make lower consistency prove numeric admissibility.
+The owner accepted that recommendation with these exact additions and
+clarifications:
+
+- add `model_unit_not_available`, `numeric_value_absent`, and
+  `numeric_value_shape_mismatch` at their pinned positions in the 22-reason
+  vocabulary;
+- define `numeric_specification_not_available` as no uniquely current numeric
+  specification due to absence, inactive lineage, or one uniquely current
+  nonnumeric governing shape;
+- keep conflicted specification under
+  `numeric_specification_conflicted`;
+- give explicit null precedence: emit `numeric_value_absent`, never additionally
+  emit shape mismatch, even for a nonnullable specification;
+- preserve every lower nullable/nonnullable finding and independent earlier
+  refusal;
+- map the first three numeric-unavailable/absent/shape cases to numeric
+  `not_evaluated`, and map unavailable model unit to both unit and numeric
+  `not_evaluated`;
+- never call the parser or produce `different` for these cases.
+
+The exact ordered vocabulary now appears in the authoritative specification
+and Slice C plan.
 
 ## 7. Hard discrepancy two — coherent occurrence mutation is unauthenticable
 
@@ -266,9 +289,9 @@ Slice C can and must reject:
 It cannot authenticate coherent lower evidence content beyond the guarantees
 already provided by that lower public result.
 
-## 8. Required owner decision for discrepancy two
+## 8. Owner resolution for discrepancy two
 
-Choose one bounded resolution:
+The original resolution choices were:
 
 1. narrow the Slice C rejection promise to substitutions detectable from the
    carried material, explicitly documenting that lower-evidence authenticity is
@@ -288,11 +311,15 @@ The lead recommendation is option 1, stated normatively as:
 > mutation accepted by the lower public contracts is outside BH's
 > store-independent detection boundary.
 
-This preserves every detectable construct/copy, stale-model-ID,
+The owner accepted option 1 and the quoted scoped contract exactly. This
+preserves every detectable construct/copy, stale-model-ID,
 mixed-revision, ordering, indexing, and derived-result attack while making no
-cryptographic guarantee the carried material cannot support.
+cryptographic guarantee the carried material cannot support. Slice C must add
+an executable limitation test. Temporal identity, raw evidence, extraction,
+and lower-result contracts remain unchanged; content-bound lower occurrence
+authentication is separately owner-gated future work.
 
-## 9. Public-surface pin missing from the specification
+## 9. Owner resolution for the public surface
 
 The specification fixes:
 
@@ -317,33 +344,47 @@ BehaviorEvaluationConfigurationError
 BehaviorEvaluationInputError
 ```
 
-The owner should pin whether BH-specific exception classes are public and the
-exact `__all__` order, or state that errors remain private while the explicitly
-named aliases, models, and facade form the complete public surface.
+The owner pinned all three classes as public with the stated inheritance. The
+configuration code is `BEHAVIOR_EVALUATION_CONFIGURATION_INVALID`; the query
+input/participant-set code is `BEHAVIOR_EVALUATION_INPUT_INVALID`.
 
-## 10. Gate-order clarification
+The exact CN `NumericParityBreachError` class object is re-exported without
+subclassing, wrapping, translation, or replacement. The parser and canonical-
+decimal constructor are not re-exported. The exact ordered 21-name `__all__`
+is now recorded in the authoritative specification and plan. Ordinary
+evaluation refusals remain result data; direct Pydantic construction may retain
+ordinary `ValidationError`.
+
+## 10. Owner-resolved gate order
 
 The accepted text requires all participant-local gates, then cohort, then CN
 numeric admission, while also requiring a typed parser parity breach in one
 participant not to be hidden by an ordinary refusal in the other.
 
-The specialists recommend this deterministic interpretation after discrepancy
-one is fixed:
+The specialists recommended this deterministic interpretation:
 
 1. validate request and known-registration participant equality;
-2. call both ES branches exactly once in canonical variable order;
+2. call both ES branches exactly once in canonical variable order, attempting
+   both even if one raises, then propagate the first canonical typed error
+   unchanged and fabricate no result;
 3. derive lifecycle and all lower participant-local ordinary refusals;
-4. subject to owner confirmation, evaluate cohort whenever both required
-   occurrences exist, even if a peer has another ordinary local refusal;
-5. subject to owner confirmation and only for an admitted cohort, call the
-   public parser on every participant whose lower shape is numeric-eligible,
-   in canonical order, even if the peer has another ordinary refusal;
+4. evaluate cohort whenever both required occurrences exist, even if a peer
+   has another ordinary local refusal; if either occurrence is absent, leave it
+   not evaluated;
+5. only for an admitted cohort, call the public parser on every participant
+   whose own evidence is observation-present, non-null, governed by one
+   uniquely current numeric VSP with a declared model-unit identity, and
+   numeric-shaped, in canonical order, even if the peer has another ordinary
+   refusal;
 6. propagate the first typed parser failure unchanged;
 7. execute equality only if every ordinary gate admitted.
 
-This never sends known boolean, object, array, null, malformed, or other
-nonnumeric shapes to the parser. The owner should confirm both cohort timing
-and parser scheduling under peer local refusal.
+The owner accepted this scheduling. Attachment, semantic, unit, lock, and peer
+ordinary refusals do not hide a typed parity failure for an otherwise eligible
+participant. A different cohort blocks parser calls. This never sends known
+boolean, string, object, array, null, malformed, or nonnumeric-model-shape
+cases, or model-unit-unavailable cases, to the parser. Equality executes only
+after every ordinary gate and the cohort gate admit.
 
 ## 11. Reproduction and test evidence
 
@@ -404,15 +445,17 @@ All corrections are incorporated here and in the two planning artifacts.
 ## 13. Planning artifacts
 
 The preimplementation Slice C plan and adversarial matrix were written before
-production code, as authorized. They are now explicitly marked blocked and do
-not invent answers:
+production code, as authorized. At the original stop they were explicitly
+marked blocked and did not invent answers. They now record the owner-accepted
+resolutions and form the active pre-code authority:
 
 ```text
 docs/superpowers/plans/2026-08-29-bh001-slice-c-implementation-plan.md
 docs/superpowers/plans/2026-08-29-bh001-slice-c-adversarial-acceptance-matrix.md
 ```
 
-The matrix preserves the planned C01-C100 coverage and adds blocker rows for:
+The matrix preserves the planned C01-C100 coverage. Rows that originally
+exposed blockers now pin the accepted resolutions for:
 
 - exact public errors and exports;
 - consistent nonnumeric/null observations;
@@ -438,9 +481,9 @@ The current demo therefore remains at the accepted 29-record pre-BH boundary.
 
 No push, merge, rebase, reset, cherry-pick, amend, or history rewrite occurred.
 
-## 15. Exact owner questions
+## 15. Owner resolution and resume gate
 
-Slice C can resume only after the owner answers:
+The owner answered:
 
 1. Is the minimal refusal/admission table in Section 6 accepted, including
    explicit-null precedence; if not, what exact replacement mapping applies?
@@ -453,7 +496,9 @@ Slice C can resume only after the owner answers:
    must the parser still run for every numeric-eligible participant so a typed
    parity failure cannot be hidden?
 
-Until these decisions are recorded, Slice C remains unimplemented and Slice D
-remains unstarted.
+All four answers are incorporated into the specification, implementation plan,
+and acceptance matrix. Slice C resumes only after their documentation
+assertions pass. The implementation remains bounded to Slice C; Slice D remains
+unstarted.
 
 END OF BH-001 SLICE C PREIMPLEMENTATION DISCREPANCY REPORT

@@ -2,8 +2,12 @@
 
 Status: corrected final synthesis and Slice A owner accepted. Slice A is
 accepted at `57edec37b40c5da0c300cc1333fbb3cf5d7bb41a`. Slice B is owner accepted
-at `05177f7306ce745d093bd5f11abafc13a6274d0f`. Slice C is owner-authorized but
-not yet implemented. Slice D has not started.
+at `05177f7306ce745d093bd5f11abafc13a6274d0f`. The Slice C preimplementation
+discrepancy report is owner accepted at
+`eedae19a9b2542958f44e66af7117a981c7faeef`; its four contract questions are
+resolved normatively in this document. All four contract questions are
+resolved. Slice C implementation is authorized
+but not yet implemented. Slice D has not started.
 
 Repository baseline: `main` at
 `46c04ed6f6f09b254b2f52f07611e2efbdd1d4f6`.
@@ -510,6 +514,36 @@ Across participants:
 These gates admit exact mathematical comparison. They do not prove the
 behavior declaration or transform equality into engineering truth.
 
+The following lower-layer cases are explicit ordinary refusals:
+
+- `numeric_specification_not_available` means no uniquely current numeric
+  specification exists: there is no current specification, its lineage is
+  inactive, or its one uniquely current specification has a nonnumeric
+  governing value shape;
+- a conflicted specification is instead
+  `numeric_specification_conflicted`;
+- `model_unit_not_available` means the governing numeric specification has no
+  declared model-unit identity;
+- `numeric_value_absent` means the selected observation is explicit JSON null
+  when BH requires a numeric operand;
+- `numeric_value_shape_mismatch` means a present, non-null observation does not
+  satisfy the governing numeric specification's numeric JSON shape.
+
+For each of `numeric_specification_not_available`, `numeric_value_absent`, and
+`numeric_value_shape_mismatch`, `numeric_admission="not_evaluated"`. For
+`model_unit_not_available`, both `unit_admission` and `numeric_admission` are
+`not_evaluated`: exactly `unit_admission="not_evaluated"` and
+`numeric_admission="not_evaluated"`. Each makes aggregate participant
+admission `not_admitted`.
+None invokes the CN parser or produces `different`.
+
+Explicit null has precedence over numeric-shape mismatch. Emit
+`numeric_value_absent` and do not additionally emit
+`numeric_value_shape_mismatch`, even for a nonnullable governing
+specification. The accepted lower nullable/nonnullable finding remains carried
+unchanged. Independently applicable earlier refusals, including
+`model_unit_not_available`, remain present in deterministic gate order.
+
 CN constraints and findings remain independent. Constraint satisfaction or
 violation cannot create, corroborate, refute, or evaluate a BH declaration.
 
@@ -637,6 +671,11 @@ Boolean, object, array, null, malformed, oversized, and expansion-hostile
 `value_json` values must never reach behavior comparison as numbers. Ambient
 decimal context must not affect admission, canonicalization, or equality.
 
+`numeric_value_out_of_bounds` applies only after a genuinely number-shaped
+lexeme reaches the public CN parser and that parser returns its ordinary
+`out_of_bounds` result. A public `NumericParityBreachError` remains a typed
+integrity exception, propagates unchanged, and is never an ordinary refusal.
+
 The accepted semantic pipeline already parses `value_json` before BH receives
 its result. BH can guarantee bounded work for its own numeric parsing, but it
 cannot claim a new whole-stack hostile-input bound without a separately
@@ -678,20 +717,43 @@ resolver, temporal-database, interpretation-store, or filesystem access.
 
 For valid input, both participant evidence branches are executed before
 ordinary lifecycle or admission outcomes are returned. If a lower typed error
-aborts one branch, that error propagates and no BH result is fabricated.
+occurs in one branch, the other branch is still invoked exactly once. After
+both attempts, propagate the first typed error in canonical participant order
+unchanged and fabricate no BH result.
 
-Execution gates are evaluated in this order:
+Execution scheduling is exact:
 
-1. behavior registration and exact-context declaration lifecycle;
-2. both participant-local model, observation, attachment, semantics, unit,
-   lock, and numeric-shape gates;
-3. exact acquisition-cohort equality;
-4. public CN numeric admission for both lexemes in canonical participant
+1. validate request structure and the participant-variable set;
+2. invoke both explicit semantic branches exactly once in canonical variable
    order;
-5. canonical numeric equality.
+3. propagate any typed lower exception unchanged and fabricate no BH result;
+4. derive every participant-local ordinary admission finding;
+5. whenever both selected occurrences exist, compute cohort admission from the
+   exact
+   five-field key even when either participant has another ordinary refusal;
+6. if either occurrence is absent, cohort admission is `not_evaluated`;
+7. if the cohort differs, report `different_acquisition_cohort` and do not
+   invoke the CN parser;
+8. if the cohort is admitted, invoke the public CN parser in canonical
+   participant order for every participant whose own carried evidence proves
+   an observation exists, its value is non-null, a uniquely current numeric
+   specification with a declared model-unit identity governs it, and its
+   observed JSON shape is numeric;
+9. attachment, semantic, known source/model unit mismatch, unit-lock mismatch,
+   another lock refusal, or peer-participant ordinary refusal does not hide a
+   typed parity failure for an otherwise numeric-eligible participant;
+10. known boolean, string, array, object, null, nonnumeric-model-shape, or
+    model-unit-not-available cases never reach the parser;
+11. propagate the first typed parser parity failure in canonical participant
+    order unchanged;
+12. execute equality only when every ordinary gate for both participants and
+    the exact cohort gate are admitted;
+13. otherwise return `not_executed` with every independently applicable refusal
+    in deterministic order.
 
-Cohort mismatch blocks execution and cannot become `different`. Numeric parity
-errors cannot be hidden by an ordinary refusal from the other participant.
+Cohort mismatch blocks execution and cannot become `different`. Staleness is
+carried below and is not an execution veto. If either occurrence is absent,
+cohort admission remains `not_evaluated`.
 
 The evaluator owns no store, cache, projection, database, or file. It writes
 nothing and never persists an evaluation as model or temporal truth.
@@ -935,6 +997,61 @@ collapse those dimensions.
 
 ## 18. Exact evaluator result contracts
 
+### 18.0 Public errors and exports
+
+The public BH error tree is exactly:
+
+```python
+class BehaviorEvaluationError(Exception): ...
+
+class BehaviorEvaluationConfigurationError(BehaviorEvaluationError): ...
+
+class BehaviorEvaluationInputError(BehaviorEvaluationError): ...
+```
+
+Public facade/dependency construction failures use exact code
+`BEHAVIOR_EVALUATION_CONFIGURATION_INVALID`. Structurally invalid query input
+or participant-set misuse uses exact code
+`BEHAVIOR_EVALUATION_INPUT_INVALID`. Ordinary absence, refusal, conflict,
+inactivity, cohort mismatch, and numeric bounds are result data, not
+exceptions. Direct Pydantic contract construction may retain ordinary
+`ValidationError`.
+
+The BH package re-exports the exact public CN `NumericParityBreachError` class
+object. It does not subclass, wrap, translate, or replace it. It does not
+re-export the CN parser or canonical-decimal constructor. In exact terms, BH
+does not re-export the CN parser.
+
+`backend.behavior_evaluation.__all__` is exactly this ordered list:
+
+```python
+[
+    "BehaviorEvaluationError",
+    "BehaviorEvaluationConfigurationError",
+    "BehaviorEvaluationInputError",
+    "NumericParityBreachError",
+    "BehaviorParticipantSource",
+    "BehaviorEvaluationExecution",
+    "BehaviorComputedRelation",
+    "BehaviorParticipantAdmission",
+    "BehaviorParticipantModelAdmission",
+    "BehaviorParticipantObservationAvailability",
+    "BehaviorParticipantAttachmentAdmission",
+    "BehaviorParticipantSemanticAdmission",
+    "BehaviorParticipantUnitAdmission",
+    "BehaviorParticipantLockAdmission",
+    "BehaviorParticipantNumericAdmission",
+    "BehaviorAcquisitionCohortAdmission",
+    "BehaviorEvaluationRefusalReason",
+    "BehaviorEvaluationRefusal",
+    "BehaviorEvaluationParticipantResult",
+    "BehaviorEvaluationResult",
+    "BehaviorEvaluationQueries",
+]
+```
+
+No alias or additional public derivation helper is authorized.
+
 ### 18.1 Public status literals
 
 ```python
@@ -1032,7 +1149,8 @@ BehaviorEvaluationRefusal
   participant_index: strict nonnegative integer | None
 ```
 
-The exact reason vocabulary is:
+The public nominal alias is `BehaviorEvaluationRefusalReason`. Its exact
+ordered vocabulary is:
 
 ```text
 behavior_not_registered
@@ -1048,10 +1166,13 @@ numeric_specification_not_available
 numeric_specification_conflicted
 model_quantity_kind_not_available
 model_observation_role_not_available
+model_unit_not_available
 source_semantics_not_admitted
 quantity_kind_lock_mismatch
 observation_role_lock_mismatch
 unit_lock_mismatch
+numeric_value_absent
+numeric_value_shape_mismatch
 numeric_value_out_of_bounds
 acquisition_cohort_mismatch
 ```
@@ -1085,6 +1206,9 @@ BehaviorEvaluationParticipantResult
 The explicit source selector produces one lower candidate, so
 `candidate_index` identifies that candidate and cannot represent ranking.
 `canonical_decimal` is present exactly when numeric admission succeeds.
+`refusal_reasons` is exactly
+`tuple[BehaviorEvaluationRefusalReason, ...]` in gate order; it does not
+duplicate participant indices.
 
 ### 18.4 Top-level evaluation result
 
@@ -1115,6 +1239,11 @@ evidence.
 `equal` or `different` exactly when execution is `executed`. There is no
 derived TemporalOccurrence, variable state, command, prediction, constraint
 finding, or persisted result.
+
+`not_executed_reasons` is exactly
+`tuple[BehaviorEvaluationRefusal, ...]`: first the behavior-level refusal, then
+participant-local reasons in canonical participant and gate order, then the
+cohort refusal. It is empty exactly when execution succeeds.
 
 ### 18.5 Independent result dimensions
 
@@ -1181,7 +1310,7 @@ Reject at the public boundary:
 - model revision substitution;
 - context or cutoff substitution;
 - variable, semantic-lock, source, candidate, occurrence, or owner
-  substitution;
+  substitution detectable as inconsistent with carried material;
 - missing, duplicate, extra, or reordered roots, groups, entries,
   participants, or material records;
 - forged current tips, withdrawals, activity, root health, effective-body
@@ -1191,6 +1320,20 @@ Reject at the public boundary:
 - implication-bearing extra fields.
 
 Validation accesses no filesystem or store and performs no writes.
+
+BH authoritative result validation proves the internal coherence of the
+carried lower public results and every BH-derived field. It inherits, and does
+not independently re-prove, raw-source authenticity. A fully coherent lower-
+evidence content mutation accepted by the lower public contracts is outside
+BH's store-independent detection boundary.
+
+Validation still rejects inconsistent duplicate occurrences, mixed revisions
+and cutoffs, selector retargeting, stale model IDs, forged indices, and every
+forged derived gate, decimal, cohort state, refusal, execution state, or
+computed relation. It does not claim that `payload_checksum` authenticates an
+uncaptured payload, and it never accesses a store or filesystem to broaden
+that claim. Content-bound lower occurrence authentication is separately
+owner-gated future work, not BH-001 scope.
 
 ## 20. Store validation and immutable indexes
 
@@ -1372,6 +1515,10 @@ The following controls remain mandatory.
 - no dynamic imports, external models, scripts, plugins, callbacks, or code
   execution;
 - no persisted computed result.
+- every substitution detectable from carried material rejected;
+- an executable limitation test showing that a fully coherent lower-evidence
+  mutation accepted by lower public contracts lies outside BH's
+  store-independent authentication boundary.
 
 ### 23.6 Inherited limitations
 
@@ -1385,11 +1532,16 @@ context gates defined in Section 15. Those gates require no new slice and do
 not silently change an accepted lower-layer contract. Any future modification
 of the lower-layer parser or storage boundary remains separately owner-gated.
 
+BH validation proves carried-material coherence, not cryptographic raw-source
+authenticity. The absence of raw payload and extraction proof in the carried
+lower results is an inherited limitation; BH neither fetches that material nor
+treats a payload checksum alone as authentication.
+
 ## 24. Adversarial acceptance matrix
 
 | Area | Required red-first and adversarial coverage |
 |---|---|
-| Identity and exports | Exact `bhv_` grammar and UUID4 minter; frozen/extra-forbid/revalidate anchor; no semantic fields; exact public exports; no premature query/evaluator exports |
+| Identity and exports | Exact `bhv_` grammar and UUID4 minter; frozen/extra-forbid/revalidate anchor; no semantic fields; exact 21-name evaluator `__all__`; exact BH error tree/codes; exact CN error class-object re-export; no parser re-export or aliases |
 | Record IDs | Malformed `brg_`, `bhd_`, `bhw_`; wrong case, prefix, length, hex; stale hash; filename/key mismatch; hostile on-disk instances |
 | BRG shape | Exactly two distinct variables; reversed input gives identical bytes/ID; duplicate or missing variable rejected; rule family fixed; no context/lifecycle/owner/port field |
 | BRG closure | Unknown variable; missing owner; exact two VRG citations required; missing owner declaration; missing extra citation; same-owner and cross-owner valid twins |
@@ -1406,15 +1558,15 @@ of the lower-layer parser or storage boundary remains separately owner-gated.
 | Carry-once material | Complete material once; strict contiguous row indices; bool/coercion rejected; missing/duplicate/reordered/substituted material or rows rejected |
 | Selectors | Exactly two; distinct; canonical order; source required; forged SourceSelector; known-behavior participant mismatch typed; absent behavior still discloses supplied pair |
 | Evidence preservation | Both participant lower paths called for absent, undeclared, inactive, and conflicted behavior; lifecycle never suppresses observations; lower errors propagate |
-| Participant admission | Registered/owner closure; observation absent; attachment failure; evidence inconsistency; VSP absent/conflict; VSM absent/conflict; source semantics refusal; each lock mismatch |
-| Unit boundary | Exact identity admits; any mismatch refuses; no conversion, ontology inference, name matching, or dimensional algebra |
-| Cohort | Mutate each of source ID, adapter ID, attempt ID, raw record ID, checksum independently; each mismatch refuses execution |
+| Participant admission | Registered/owner closure; observation absent; attachment failure; evidence inconsistency; numeric VSP absent/inactive/nonnumeric/conflicted; explicit null precedence; present nonnull numeric-shape mismatch; VSM absent/conflict; source semantics refusal; each lock mismatch; exact new refusal order and admission states |
+| Unit boundary | Exact identity admits; unavailable model unit versus known mismatch are distinct; no conversion, ontology inference, name matching, or dimensional algebra |
+| Cohort | Mutate each of source ID, adapter ID, attempt ID, raw record ID, checksum independently; each mismatch refuses execution; compute whenever both occurrences exist despite other ordinary refusals; absent occurrence leaves cohort not evaluated |
 | Non-cohort fields | Source/receipt times, clock segment, run/sweep, occurrence/property IDs, values, units, and quality flags do not redefine cohort |
 | Staleness | Different staleness remains disclosed but does not change exact equality or create an age gate |
-| Numeric parser | Reuse the public CN parser and typed failures without copy, fork, or permissive wrapper; admitted boundary twins and one-step-over hostile values for input bytes, coefficient/mantissa digits, fraction digits, exponent representation and magnitude, expanded digits/fraction, and canonical output bytes; boolean/object/array/null/malformed/oversized/expansion-hostile `value_json`; whitespace and negative-zero twins; ambient Decimal changes; parity failures propagate and never become `different` |
+| Numeric parser | Reuse the public CN parser and exact public error class without copy, fork, wrapper, or re-export; admitted boundary twins and one-step-over hostile values for input bytes, coefficient/mantissa digits, fraction digits, exponent representation and magnitude, expanded digits/fraction, and canonical output bytes; boolean/object/array/null/malformed/oversized/expansion-hostile `value_json`; canonical eligible-participant scheduling after admitted cohort; peer ordinary refusal cannot hide parity failure; whitespace and negative-zero twins; ambient Decimal changes; parity failures propagate and never become `different` |
 | Execution | Cohort mismatch never returns `different`; all gates passing yields `equal` or `different`; relation absent exactly when not executed |
 | Vocabulary | No consistent/inconsistent, valid/invalid, pass/fail, healthy/fault, normal/abnormal computed outcome; no safety or control result |
-| Reconstruction | Mixed models/bindings/interpretations/cutoffs; candidate/occurrence substitution; forged decimal, cohort, refusal, execution, relation all rejected |
+| Reconstruction | Mixed models/bindings/interpretations/cutoffs; every candidate/occurrence substitution detectable from carried material; forged decimal, cohort, refusal, execution, relation all rejected; executable coherent-mutation limitation proves raw authenticity is inherited rather than re-proven |
 | Import/isolation | Kernel remains downward-only; evaluator owns no store/path/cache/database and performs no writes; public CN parser is the only CN dependency |
 | Non-inference | Names, owner, hierarchy, CAD, PIF, PCN, PCM, VPA, ES compatibility, CN result, temporal correlation create no behavior |
 | Replay | Explicit 9/10/11/14/16/18/28/29 memberships unchanged; pre-BH structured absence; no enumeration-derived membership |
@@ -1572,6 +1724,8 @@ owner-authorized but not yet implemented. Slice D remains unstarted.
 Implement only:
 
 - `backend/behavior_evaluation`;
+- the exact public BH error tree, error codes, 21-name `__all__`, and exact CN
+  parity-error class-object re-export;
 - `BehaviorParticipantSource` and exact evaluator result contracts;
 - the read-only `BehaviorEvaluationQueries` facade;
 - explicit two-source selection;
@@ -1585,13 +1739,26 @@ Implement only:
   magnitude, expanded digits/fraction, and canonical output bytes;
 - refusal of boolean, object, array, null, malformed, oversized, and
   expansion-hostile `value_json` before comparison;
+- exact ordered 22-reason refusal vocabulary, explicit-null precedence,
+  nonnumeric/inactive/missing specification mapping, unavailable-unit mapping,
+  and admission-state mapping;
+- cohort calculation whenever both occurrences exist, followed by exact
+  canonical scheduling of every locally numeric-eligible parser call after an
+  admitted cohort;
 - ambient-decimal-context and parser-parity failure tests;
 - store-independent hostile result reconstruction;
+- an executable limitation test for a fully coherent lower-evidence mutation
+  accepted by lower public contracts;
 - disposable equal, different, cohort-mismatch, and admission-refusal tests;
 - import, non-write, preservation, and resource-bound tests.
 
 Do not modify the committed model, binding, interpretation, temporal, source,
 or structural fixtures. Stop for owner acceptance.
+
+Implementation status: the preimplementation discrepancy at
+`eedae19a9b2542958f44e66af7117a981c7faeef` is owner accepted and all four
+contract questions are resolved. Slice C implementation is authorized but is
+not yet complete. Slice D remains unstarted.
 
 ### 26.4 Slice D — bounded synthetic demonstration
 
@@ -1648,6 +1815,13 @@ that the model can carry and disclose an explicit declaration honestly.
 The evaluator inherits accepted lower-layer resource behavior. BH bounds its
 own records, indexing, graph derivation, and numeric parser path but does not
 claim a new whole-stack bound for hostile stored source or model bytes.
+
+BH authoritative validation proves internal coherence of carried lower public
+results and all BH-derived fields. It does not independently authenticate raw
+source content. A fully coherent lower-evidence mutation already accepted by
+lower public contracts is outside BH's store-independent detection boundary.
+Content-bound occurrence authentication remains separately owner-gated future
+work.
 
 ## 28. Specialist review and reconciliation
 
@@ -1723,8 +1897,17 @@ propagates parser parity failures honestly, and proves ambient decimal context
 cannot affect comparison. It is not a separate implementation slice and does
 not authorize a private parser fork or permissive wrapper.
 
-These decisions authorize no implementation during the current documentation
-phase. Each implementation slice still requires its explicit owner gate.
+The Slice C discrepancy is owner resolved. The refusal vocabulary contains
+the exact unit-unavailable, numeric-absent, and numeric-shape-mismatch facts;
+`numeric_specification_not_available` has its bounded current-numeric-
+specification meaning; explicit null has precedence; cohort calculation and
+parser scheduling are deterministic; BH-specific public errors and exact
+exports are pinned; and carried-material validation is scoped to internal
+coherence without claiming raw-source authentication.
+
+Slice C implementation is owner authorized after these corrections are
+committed and their focused documentation assertions pass. Slice D still
+requires its separate owner gate.
 
 ## 30. Decision change log
 
