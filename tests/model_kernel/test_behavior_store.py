@@ -14,6 +14,7 @@ from tests.model_kernel.builders import (
     VAR_B,
     VAR_C,
     registration as entity_registration,
+    specification,
     variable_registration,
 )
 from tests.model_kernel.bh001_slice_a_helpers import (
@@ -50,6 +51,20 @@ def registration_citation(record_id):
 
 
 class TestBehaviorRegistrationAdmission:
+    def test_all_pre_bh_validation_precedes_behavior_admission(self):
+        behavior = behavior_registration()
+        citations_only = tuple(
+            reference for reference in behavior.evidence
+            if reference.kind == "model_record")
+        behavior = behavior_registration(evidence=citations_only)
+        pre_bh_invalid = specification(variable_anchor_id=VAR_C)
+        records = (*variable_records(), behavior, pre_bh_invalid)
+        with pytest.raises(kernel.ModelIntegrityError) as error:
+            validate_record_collection(
+                "demo-printer",
+                {record.record_id: record for record in records})
+        assert error.value.error_code == "MODEL_REFERENCE_INVALID"
+
     def test_registration_requires_both_exact_variable_registrations(self,
                                                                      tmp_path):
         variables = variable_records()

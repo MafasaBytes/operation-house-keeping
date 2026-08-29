@@ -39,6 +39,14 @@ _PREFIX_BY_KIND = {
     "behavior_rule_withdrawal": "bhw",
 }
 
+_BEHAVIOR_EFFECTIVE_BODY_FIELDS = (
+    "behavior_anchor_id",
+    "context",
+    "participant_semantics",
+    "rule",
+    "evaluation_basis",
+)
+
 
 def _canonical_value(value):
     if isinstance(value, datetime):
@@ -68,6 +76,29 @@ def canonical_bytes(record) -> bytes:
         raise ModelIntegrityError(
             "MODEL_RECORD_INVALID",
             "record content is not canonically serializable") from error
+
+
+def _behavior_effective_body_bytes(record) -> bytes:
+    """Canonical, non-persisted BH engineering-body projection.
+
+    Slice A provides only this private deterministic primitive. Public body
+    groups, corroboration findings, and conflict conclusions remain Slice B.
+    The caller supplies an authoritative reconstructed declaration.
+    """
+    try:
+        dumped = record.model_dump(
+            mode="python", include=set(_BEHAVIOR_EFFECTIVE_BODY_FIELDS))
+        if tuple(sorted(dumped)) != tuple(sorted(
+                _BEHAVIOR_EFFECTIVE_BODY_FIELDS)):
+            raise ValueError("record is not a behavior rule declaration")
+        return json.dumps(
+            _canonical_value(dumped), sort_keys=True, separators=(",", ":"),
+            ensure_ascii=False,
+        ).encode("utf-8")
+    except (AttributeError, UnicodeError, TypeError, ValueError) as error:
+        raise ModelIntegrityError(
+            "MODEL_RECORD_INVALID",
+            "behavior body is not canonically serializable") from error
 
 
 def compute_record_id(record) -> str:

@@ -18,6 +18,7 @@ from backend.model_kernel.store import validate_record_collection
 from tests.model_kernel.bh001_slice_a_helpers import (
     AS_DESIGNED,
     BEHAVIOR_A,
+    BEHAVIOR_B,
     RULE_DECLARATION,
     behavior_declaration,
     behavior_registration,
@@ -346,3 +347,35 @@ print(json.dumps(projection(one), sort_keys=True, separators=(",", ":")))
             text=True, capture_output=True, check=True)
         outputs.append(result.stdout)
     assert outputs[0] == outputs[1] == outputs[2]
+
+
+def test_every_behavior_mapping_key_order_is_input_order_independent():
+    first_registration = behavior_registration()
+    second_registration = behavior_registration(
+        behavior_anchor_id=BEHAVIOR_B, note="second")
+    first_root = behavior_declaration(first_registration, note="first root")
+    first_child = behavior_declaration(
+        first_registration, supersedes=(first_root.record_id,), note="child")
+    second_root = behavior_declaration(
+        second_registration, behavior_anchor_id=BEHAVIOR_B,
+        note="second root")
+    first_event = behavior_withdrawal(first_child, note="first event")
+    second_event = behavior_withdrawal(second_root, note="second event")
+    records = (*variable_records(), first_registration, second_registration,
+               first_root, first_child, second_root, first_event, second_event)
+    forward = validate_record_collection(
+        "demo-printer", {record.record_id: record for record in records})
+    reverse = validate_record_collection(
+        "demo-printer", {
+            record.record_id: record for record in reversed(records)})
+    names = (
+        "behavior_registrations", "behavior_registrations_by_anchor",
+        "behavior_anchor_ids_by_variable", "behavior_rule_declarations",
+        "behavior_rule_ids_by_key", "behavior_rule_root_by_id",
+        "behavior_rule_ancestry_by_id", "behavior_rule_superseded_by",
+        "current_behavior_rule_tips_by_root", "behavior_rule_withdrawals",
+        "behavior_rule_withdrawn_by",
+        "behavior_rule_withdrawals_by_target",
+    )
+    for name in names:
+        assert tuple(getattr(forward, name)) == tuple(getattr(reverse, name))

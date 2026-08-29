@@ -6,7 +6,11 @@ import pytest
 from pydantic import TypeAdapter, ValidationError
 
 import backend.model_kernel as kernel
-from backend.model_kernel.canonical import canonical_bytes, verify_record_id
+from backend.model_kernel.canonical import (
+    _behavior_effective_body_bytes,
+    canonical_bytes,
+    verify_record_id,
+)
 from backend.model_kernel.contracts import MODEL_RECORD_ID_PATTERN
 
 from tests.model_kernel.bh001_slice_a_helpers import (
@@ -190,3 +194,25 @@ def test_self_id_is_excluded_only_from_its_own_hash():
     declaration = behavior_declaration(registration)
     assert registration.record_id.encode() in canonical_bytes(declaration)
     assert declaration.record_id.encode() not in canonical_bytes(declaration)
+
+
+def test_effective_engineering_body_is_exact_private_canonical_projection():
+    registration = behavior_registration()
+    first = behavior_declaration(registration, note="authority one")
+    second = behavior_declaration(
+        registration, recorded_at=first.recorded_at.replace(hour=13),
+        note="authority two")
+    expected = {
+        "behavior_anchor_id", "context", "participant_semantics", "rule",
+        "evaluation_basis",
+    }
+    import json
+
+    assert set(json.loads(_behavior_effective_body_bytes(first))) == expected
+    assert _behavior_effective_body_bytes(first) == (
+        _behavior_effective_body_bytes(second))
+    changed = behavior_declaration(registration, locks=(
+        semantic_lock(VAR_A, role="estimated"),
+        semantic_lock(VAR_B, role="reported")))
+    assert _behavior_effective_body_bytes(first) != (
+        _behavior_effective_body_bytes(changed))
