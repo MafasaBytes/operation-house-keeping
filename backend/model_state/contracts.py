@@ -28,6 +28,7 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
+    TypeAdapter,
     model_validator,
 )
 
@@ -37,12 +38,15 @@ from backend.identity_binding.contracts import (
 )
 from backend.identity_binding.facade import BoundLatestObserved
 from backend.model_kernel import (
+    AssertionContext,
     EntityRegistration,
     ModelRevision,
+    VariablePortAssociationResult,
     VariableRegistration,
 )
 from backend.system_identity import (
     ENTITY_ANCHOR_ID_PATTERN,
+    PORT_ANCHOR_ID_PATTERN,
     VARIABLE_ANCHOR_ID_PATTERN,
     VariableAnchor,
 )
@@ -302,4 +306,118 @@ class VariableStateResult(_Frozen):
                      "exist without its binding declaration")
             if candidate.attachment != expected_attachment:
                 fail("attachment must follow the deterministic precedence")
+        return self
+
+
+AssociatedPortVariableStateStatus = Literal[
+    "endpoint_not_admitted",
+    "association_not_declared",
+    "association_conflicted",
+    "association_inactive",
+    "associated",
+]
+
+_ASSERTION_CONTEXT = TypeAdapter(AssertionContext)
+
+
+def _rebuild_context(value) -> AssertionContext:
+    payload = (value.model_dump(mode="python", warnings=False)
+               if hasattr(value, "model_dump") else value)
+    return _ASSERTION_CONTEXT.validate_python(payload)
+
+
+def _status_from_association(
+        association: VariablePortAssociationResult
+) -> AssociatedPortVariableStateStatus:
+    if (association.endpoint_status != "both_registered"
+            or association.owner_alignment != "same_owner"):
+        return "endpoint_not_admitted"
+    if association.conclusion == "not_declared":
+        return "association_not_declared"
+    if association.conclusion == "inactive":
+        return "association_inactive"
+    if (association.conclusion == "asserted"
+            and association.lineage_summary == "conflicted"):
+        return "association_conflicted"
+    if (association.conclusion == "asserted"
+            and association.lineage_summary == "healthy"):
+        return "associated"
+    raise ValueError("association carries an impossible lifecycle result")
+
+
+class AssociatedPortVariableStateResult(BaseModel):
+    """A revision-relative association beside independently computed state.
+
+    The temporal evidence remains attached only to the variable.  Carrying it
+    beside a port association does not assert that an observation occurred at,
+    originated from, passed through, or otherwise describes the port.
+    """
+
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", revalidate_instances="always")
+
+    variable_anchor_id: str = Field(pattern=VARIABLE_ANCHOR_ID_PATTERN)
+    port_anchor_id: str = Field(pattern=PORT_ANCHOR_ID_PATTERN)
+    context: AssertionContext
+    as_of: UtcDatetime
+    status: AssociatedPortVariableStateStatus
+    association: VariablePortAssociationResult
+    variable_state: VariableStateResult
+
+    @model_validator(mode="before")
+    @classmethod
+    def _reconstruct_inputs(cls, value):
+        # Nested kernel rows carry private dereference-only material handles.
+        # Convert all supplied Pydantic instances to public serialized field
+        # content before field validation so neither private state nor an
+        # already-constructed instance can cross this trust boundary.
+        if isinstance(value, BaseModel):
+            payload = value.model_dump(mode="python", warnings=False)
+        elif isinstance(value, dict):
+            payload = dict(value)
+        else:
+            return value
+        for name in ("context", "association", "variable_state"):
+            nested = payload.get(name)
+            if hasattr(nested, "model_dump"):
+                payload[name] = nested.model_dump(
+                    mode="python", warnings=False)
+        return payload
+
+    @model_validator(mode="after")
+    def _authoritative(self):
+        # Reconstruct both public nested results from their serialized field
+        # content.  Existing Pydantic instances, including model_construct and
+        # model_copy forgeries, are never trusted at this outer boundary.
+        context = _rebuild_context(self.context)
+        association = VariablePortAssociationResult.model_validate(
+            self.association.model_dump(mode="python", warnings=False))
+        variable_state = VariableStateResult.model_validate(
+            self.variable_state.model_dump(mode="python", warnings=False))
+        object.__setattr__(self, "context", context)
+        object.__setattr__(self, "association", association)
+        object.__setattr__(self, "variable_state", variable_state)
+
+        if (association.variable_anchor_id != self.variable_anchor_id
+                or association.port_anchor_id != self.port_anchor_id
+                or association.context != context):
+            raise ValueError(
+                "association request echo does not match the composition")
+        if (variable_state.variable_anchor_id != self.variable_anchor_id
+                or variable_state.as_of != self.as_of):
+            raise ValueError(
+                "variable-state request echo does not match the composition")
+        if association.material.revision != variable_state.model_revision:
+            raise ValueError(
+                "association and variable state use different model revisions")
+        if association.variable_registration != (
+                variable_state.variable_registration):
+            raise ValueError(
+                "association and state carry different variable registration")
+        if association.variable_owner_registration != (
+                variable_state.owner_registration):
+            raise ValueError(
+                "association and state carry different variable owner")
+        if self.status != _status_from_association(association):
+            raise ValueError("associated-port state status is forged")
         return self

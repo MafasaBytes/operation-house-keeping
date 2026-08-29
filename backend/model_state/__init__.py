@@ -8,6 +8,8 @@ latest-per-locator limitation, stated verbatim in `contracts`.
 """
 
 from backend.model_state.contracts import (
+    AssociatedPortVariableStateResult,
+    AssociatedPortVariableStateStatus,
     AttachmentStatus,
     CandidateObservation,
     ModelStateConfigurationError,
@@ -19,6 +21,8 @@ from backend.model_state.contracts import (
 from backend.model_state.facade import ModelStateQueries
 
 __all__ = [
+    "AssociatedPortVariableStateResult",
+    "AssociatedPortVariableStateStatus",
     "AttachmentStatus",
     "CandidateObservation",
     "ModelStateConfigurationError",

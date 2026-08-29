@@ -19,12 +19,13 @@ or presented as a single current value.
 import re
 from datetime import UTC, datetime
 
-from pydantic import ValidationError
+from pydantic import TypeAdapter, ValidationError
 
 from backend.identity_binding.facade import BoundTemporalQueries
 from backend.identity_binding.resolver import BindingResolver
-from backend.model_kernel import LoadedModel
+from backend.model_kernel import AssertionContext, LoadedModel, ModelQueries
 from backend.model_state.contracts import (
+    AssociatedPortVariableStateResult,
     CandidateObservation,
     ModelStateConfigurationError,
     ModelStateQueryError,
@@ -33,12 +34,15 @@ from backend.model_state.contracts import (
 )
 from backend.system_identity import (
     ENTITY_ANCHOR_ID_PATTERN,
+    PORT_ANCHOR_ID_PATTERN,
     VARIABLE_ANCHOR_ID_PATTERN,
 )
 from backend.temporal_state.queries import TemporalQueries
 
 _VARIABLE_ID = re.compile(VARIABLE_ANCHOR_ID_PATTERN)
+_PORT_ID = re.compile(PORT_ANCHOR_ID_PATTERN)
 _ENTITY_ID = re.compile(ENTITY_ANCHOR_ID_PATTERN)
+_ASSERTION_CONTEXT = TypeAdapter(AssertionContext)
 
 _DISCOVERY_STATUS = {
     "declared": "declared_candidates",
@@ -81,6 +85,25 @@ class ModelStateQueries:
                 "MODEL_STATE_NAIVE_AS_OF",
                 "the query cutoff must be a timezone-aware datetime")
         return as_of.astimezone(UTC)
+
+    def _require_port_id(self, anchor_id):
+        if not isinstance(anchor_id, str) or not _PORT_ID.fullmatch(anchor_id):
+            raise ModelStateQueryError(
+                "MODEL_STATE_INPUT_INVALID",
+                f"{anchor_id!r} is not a canonical port anchor id")
+        return anchor_id
+
+    def _require_context(self, context):
+        try:
+            payload = (context.model_dump(mode="python", warnings=False)
+                       if hasattr(context, "model_dump") else context)
+            return _ASSERTION_CONTEXT.validate_python(payload)
+        except (ValidationError, ValueError, TypeError, AttributeError,
+                KeyError, UnicodeError, Warning) as error:
+            raise ModelStateQueryError(
+                "MODEL_STATE_INPUT_INVALID",
+                "context must be a structurally valid AssertionContext",
+            ) from error
 
     # -- the query ---------------------------------------------------------
 
@@ -220,6 +243,58 @@ class ModelStateQueries:
             divergent_anchor_fields=divergent_fields,
             declared_locator_count=declared_locator_count,
             candidates=tuple(candidates))
+
+    def associated_port_variable_state(
+            self, variable_anchor_id, port_anchor_id, *, context, as_of,
+            entity_anchor_id=None, source=None,
+    ) -> AssociatedPortVariableStateResult:
+        """Disclose explicit association beside independent variable state.
+
+        This is composition only.  The observation remains attached to the
+        variable by the existing binding/temporal pipeline and is never
+        represented as having occurred at or passed through the port.
+        """
+        variable_anchor_id = self._require_variable_id(variable_anchor_id)
+        port_anchor_id = self._require_port_id(port_anchor_id)
+        context = self._require_context(context)
+        as_of = self._require_as_of(as_of)
+
+        association = ModelQueries(self.model).variable_port_association(
+            variable_anchor_id, port_anchor_id, context=context)
+        # Always execute the accepted state pipeline for valid composition
+        # input.  Association absence, conflict, or inactivity never filters
+        # or suppresses temporal evidence.
+        variable_state = self.variable_state(
+            variable_anchor_id, as_of=as_of,
+            entity_anchor_id=entity_anchor_id, source=source)
+
+        if (association.endpoint_status != "both_registered"
+                or association.owner_alignment != "same_owner"):
+            status = "endpoint_not_admitted"
+        elif association.conclusion == "not_declared":
+            status = "association_not_declared"
+        elif association.conclusion == "inactive":
+            status = "association_inactive"
+        elif (association.conclusion == "asserted"
+              and association.lineage_summary == "conflicted"):
+            status = "association_conflicted"
+        elif (association.conclusion == "asserted"
+              and association.lineage_summary == "healthy"):
+            status = "associated"
+        else:
+            raise ModelStateQueryError(
+                "MODEL_STATE_RESULT_INVALID",
+                "association returned an impossible lifecycle result")
+
+        return AssociatedPortVariableStateResult(
+            variable_anchor_id=variable_anchor_id,
+            port_anchor_id=port_anchor_id,
+            context=context,
+            as_of=as_of,
+            status=status,
+            association=association,
+            variable_state=variable_state,
+        )
 
     @staticmethod
     def _attachment(bound, variable_anchor_id, registered, agreement):
