@@ -666,6 +666,44 @@ For every backend module or meaningful change:
 Prefer test-driven development. A test should describe observable behavior, not
 mirror private implementation details.
 
+## File-First Architecture and Verification Artifacts
+
+Substantial architecture proposals, synthesized designs, implementation plans,
+acceptance matrices, adversarial reviews, repair reports, and completion
+reports must be written to repository files. Never rely on terminal or chat
+scrollback as the authoritative copy.
+
+Terminal or chat delivery for one of these artifacts is limited to a concise
+receipt, normally no more than 30 lines. Where applicable, the receipt reports:
+
+- the artifact path;
+- line and byte counts;
+- SHA-256;
+- section or acceptance-item count;
+- confirmation of the required ending marker;
+- the `git diff --check` result;
+- concise `git status --short` output;
+- confirmation of the work's authorized scope;
+- genuine unresolved owner questions.
+
+Use `apply_patch` for repository documentation. A large document may be built
+through several sequential patches organized by numbered sections. Subsequent
+work must reference the artifact by path and SHA-256 instead of repasting it.
+
+When Codex and GLM produce independent proposals, each proposal must be written
+to a distinct file. Neither model may silently modify the other model's
+proposal. A synthesized specification is a separate authoritative file, never
+an in-place rewrite of either independent input.
+
+Writing a design or review artifact does not authorize implementation, fixture
+or ledger mutation, commits, pushes, merges, rebases, or other history
+operations. Files remain uncommitted until the applicable owner gate explicitly
+authorizes commitment.
+
+Completion reports must include the evidence and commands needed to reproduce
+verification. Large test transcripts are summarized or placed in a dedicated
+report file rather than pasted into terminal or chat output.
+
 ## Technology Decisions
 
 The repository currently may not have an established language or backend stack.
