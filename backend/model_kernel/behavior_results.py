@@ -50,8 +50,8 @@ class _BehaviorResult(BaseModel):
 
 
 def _dump_nested(value):
-    return value.model_dump(mode="python") if hasattr(
-        value, "model_dump") else value
+    return (value.model_dump(mode="python")
+            if isinstance(value, BaseModel) else value)
 
 
 def _rebuild_material(value) -> ModelQueryMaterial:

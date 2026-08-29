@@ -1,10 +1,14 @@
 """BH-001 Slice B read-only registration, lineage, and assertion queries."""
 
+import os
 from pathlib import Path
+import subprocess
+import sys
 
 import pytest
 
 import backend.model_kernel as kernel
+from backend.model_kernel.store import validate_record_collection
 from tests.model_kernel.bh001_slice_a_helpers import (
     AS_BUILT,
     AS_DESIGNED,
@@ -12,6 +16,7 @@ from tests.model_kernel.bh001_slice_a_helpers import (
     BEHAVIOR_B,
     T1,
     behavior_declaration,
+    declaration_evidence,
     behavior_registration,
     behavior_withdrawal,
     semantic_lock,
@@ -153,6 +158,34 @@ def test_identical_independent_roots_corroborate_by_engineering_body(tmp_path):
             first.record_id, second.record_id)
 
 
+def test_audit_fields_and_parent_history_do_not_split_effective_body(tmp_path):
+    registration = behavior_registration()
+    parent = behavior_declaration(registration, note="superseded parent")
+    alternate_claim = kernel.OwnerDeclarationEvidence(
+        kind="owner_declaration",
+        statement="Independent synthetic authority declares the same body.")
+    child = behavior_declaration(
+        registration, supersedes=(parent.record_id,),
+        evidence=declaration_evidence(
+            registration, statement=alternate_claim),
+        authority=kernel.AuthorityRef(
+            kind="test_fixture", agent="alternate_bh_authority",
+            method="manual_declaration"),
+        recorded_at=T1, note="different audit fields")
+    independent = behavior_declaration(registration, note="independent root")
+    result = kernel.ModelQueries(world(
+        tmp_path, parent, child, independent).load()
+                                 ).behavior_declaration(
+                                     BEHAVIOR_A, context=AS_DESIGNED)
+    assert result.conclusion == "declared"
+    assert result.agreement_findings == ("corroborating_healthy_roots",)
+    assert len(result.effective_body_groups) == 1
+    assert record_ids(
+        result.material,
+        result.effective_body_groups[0].current_tip_indices) == tuple(sorted(
+            (child.record_id, independent.record_id)))
+
+
 def test_independent_different_bodies_conflict_without_winner(tmp_path):
     registration = behavior_registration()
     first = behavior_declaration(registration, note="measured")
@@ -215,6 +248,62 @@ def test_partial_corroboration_and_disagreement_findings_coexist(tmp_path):
     )
 
 
+def test_partial_and_full_same_root_convergence(tmp_path):
+    registration = behavior_registration()
+    root = behavior_declaration(registration, note="root")
+    left = behavior_declaration(
+        registration, supersedes=(root.record_id,), note="left")
+    right = behavior_declaration(
+        registration, supersedes=(root.record_id,), note="right")
+    partial = behavior_declaration(
+        registration, supersedes=(left.record_id,), note="partial")
+    partial_result = kernel.ModelQueries(world(
+        tmp_path / "partial", root, left, right, partial).load()
+                                         ).behavior_declaration(
+                                             BEHAVIOR_A, context=AS_DESIGNED)
+    assert partial_result.conclusion == "conflicted"
+    assert partial_result.agreement_findings == ("same_root_conflict",)
+    assert record_ids(
+        partial_result.material,
+        partial_result.current_declaration_indices) == tuple(sorted(
+            (right.record_id, partial.record_id)))
+
+    merged = behavior_declaration(
+        registration, supersedes=(left.record_id, right.record_id),
+        note="merged")
+    full_result = kernel.ModelQueries(world(
+        tmp_path / "full", root, left, right, merged).load()
+                                      ).behavior_declaration(
+                                          BEHAVIOR_A, context=AS_DESIGNED)
+    assert (full_result.conclusion, full_result.lineage_summary,
+            full_result.agreement_findings) == (
+                "declared", "healthy", ("one_healthy_root",))
+    assert record_ids(full_result.material,
+                      full_result.current_declaration_indices) == (
+                          merged.record_id,)
+
+
+def test_conflicted_healthy_and_inactive_findings_remain_independent(tmp_path):
+    registration = behavior_registration()
+    fork_root = behavior_declaration(registration, note="fork root")
+    left = behavior_declaration(
+        registration, supersedes=(fork_root.record_id,), note="left")
+    right = behavior_declaration(
+        registration, supersedes=(fork_root.record_id,),
+        locks=(semantic_lock(VAR_A, role="estimated"),
+               semantic_lock(VAR_B, role="reported")), note="right")
+    healthy = behavior_declaration(registration, note="healthy")
+    inactive = behavior_declaration(registration, note="inactive")
+    event = behavior_withdrawal(inactive)
+    result = kernel.ModelQueries(world(
+        tmp_path, fork_root, left, right, healthy, inactive, event).load()
+                                 ).behavior_declaration(
+                                     BEHAVIOR_A, context=AS_DESIGNED)
+    assert result.conclusion == "conflicted"
+    assert result.agreement_findings == (
+        "one_healthy_root", "same_root_conflict", "inactive_roots_present")
+
+
 def test_inactive_roots_and_active_plus_inactive_are_disclosed(tmp_path):
     registration = behavior_registration()
     inactive_root = behavior_declaration(registration, note="inactive")
@@ -243,6 +332,28 @@ def test_inactive_roots_and_active_plus_inactive_are_disclosed(tmp_path):
     assert tuple(row.lineage_health for row in mixed.roots) == tuple(
         "inactive" if mixed.material.record_at(row.root_record_index) ==
         inactive_root else "healthy" for row in mixed.roots)
+
+
+def test_selective_fork_withdrawal_restores_one_healthy_tip(tmp_path):
+    registration = behavior_registration()
+    root = behavior_declaration(registration, note="root")
+    left = behavior_declaration(
+        registration, supersedes=(root.record_id,), note="left")
+    right = behavior_declaration(
+        registration, supersedes=(root.record_id,), note="right")
+    event = behavior_withdrawal(left)
+    result = kernel.ModelQueries(world(
+        tmp_path, root, left, right, event).load()
+                                 ).behavior_declaration(
+                                     BEHAVIOR_A, context=AS_DESIGNED)
+    assert (result.conclusion, result.lineage_summary,
+            result.agreement_findings) == (
+                "declared", "healthy", ("one_healthy_root",))
+    assert result.roots[0].lineage_health == "healthy"
+    assert record_ids(result.material,
+                      result.roots[0].current_tip_indices) == (right.record_id,)
+    assert record_ids(result.material,
+                      result.roots[0].withdrawal_indices) == (event.record_id,)
 
 
 def test_reverse_variable_discovery_includes_registered_empty_and_lifecycle(
@@ -279,6 +390,25 @@ def test_registered_variable_without_behavior_is_registered_empty(tmp_path):
     assert result.variable_registration_index is not None
     assert result.owner_registration_index is not None
     assert result.entries == ()
+
+
+def test_reverse_entry_lifecycle_equals_direct_exact_context_query(tmp_path):
+    registration = behavior_registration()
+    first = behavior_declaration(registration, note="first")
+    second = behavior_declaration(registration, note="second", recorded_at=T1)
+    queries = kernel.ModelQueries(world(tmp_path, first, second).load())
+    direct = queries.behavior_declaration(BEHAVIOR_A, context=AS_DESIGNED)
+    reverse = queries.behaviors_involving_variable(
+        VAR_A, context=AS_DESIGNED).entries[0]
+    assert reverse.conclusion == direct.conclusion
+    assert reverse.lineage_summary == direct.lineage_summary
+    assert reverse.agreement_findings == direct.agreement_findings
+    assert tuple(row.model_dump() for row in reverse.roots) == tuple(
+        row.model_dump() for row in direct.roots)
+    assert tuple(row.model_dump() for row in reverse.effective_body_groups) == \
+        tuple(row.model_dump() for row in direct.effective_body_groups)
+    assert reverse.current_declaration_indices == \
+        direct.current_declaration_indices
 
 
 def test_assertion_discloses_permanent_event_and_membership_lifecycle(tmp_path):
@@ -356,6 +486,22 @@ def test_assertion_keeps_root_health_and_subject_conflict_independent(tmp_path):
                 ("cross_root_effective_body_disagreement",))
 
 
+def test_assertion_in_inactive_root_can_have_declared_aggregate_subject(
+        tmp_path):
+    registration = behavior_registration()
+    inactive = behavior_declaration(registration, note="inactive")
+    event = behavior_withdrawal(inactive)
+    active = behavior_declaration(registration, note="active")
+    result = kernel.ModelQueries(world(
+        tmp_path, inactive, event, active).load()
+                                 ).behavior_assertion(inactive.record_id)
+    assert (result.activity, result.containing_lineage_health,
+            result.containing_subject_conclusion,
+            result.containing_agreement_findings) == (
+                "withdrawn", "inactive", "declared",
+                ("one_healthy_root", "inactive_roots_present"))
+
+
 def test_malformed_query_inputs_raise_typed_errors(tmp_path):
     queries = kernel.ModelQueries(world(tmp_path).load())
     calls = (
@@ -393,3 +539,89 @@ def test_historical_explicit_memberships_return_structured_absence():
                 variable_id, context=AS_DESIGNED)
             assert reverse.status == "registered"
             assert reverse.entries == ()
+
+
+def test_synthetic_explicit_replay_revives_omitted_successor_and_withdrawal(
+        tmp_path):
+    registration = behavior_registration()
+    root = behavior_declaration(registration, note="root")
+    child = behavior_declaration(
+        registration, supersedes=(root.record_id,), note="child")
+    successor_store = world(tmp_path / "successor", root, child)
+    complete = successor_store.load()
+    earlier_membership = tuple(record_id for record_id
+                               in complete.revision.record_ids
+                               if record_id != child.record_id)
+    earlier = kernel.ModelQueries(successor_store.replay(earlier_membership))
+    later = kernel.ModelQueries(complete)
+    assert earlier.behavior_assertion(root.record_id).activity == "current"
+    assert later.behavior_assertion(root.record_id).activity == "superseded"
+
+    target = behavior_declaration(registration, note="target")
+    event = behavior_withdrawal(target)
+    withdrawal_store = world(tmp_path / "withdrawal", target, event)
+    withdrawn = withdrawal_store.load()
+    pre_withdrawal_membership = tuple(record_id for record_id
+                                      in withdrawn.revision.record_ids
+                                      if record_id != event.record_id)
+    revived = kernel.ModelQueries(
+        withdrawal_store.replay(pre_withdrawal_membership))
+    assert revived.behavior_assertion(target.record_id).activity == "current"
+    assert kernel.ModelQueries(withdrawn).behavior_assertion(
+        target.record_id).activity == "withdrawn"
+
+
+def test_reversed_record_mapping_produces_identical_serialized_queries(
+        tmp_path):
+    registration = behavior_registration()
+    first = behavior_declaration(registration, note="first")
+    second = behavior_declaration(registration, note="second", recorded_at=T1)
+    loaded = world(tmp_path, first, second).load()
+    reversed_loaded = validate_record_collection(
+        loaded.revision.model_id,
+        dict(reversed(tuple(loaded.records.items()))))
+    forward = kernel.ModelQueries(loaded)
+    reverse = kernel.ModelQueries(reversed_loaded)
+    calls = (
+        lambda q: q.behavior(BEHAVIOR_A),
+        lambda q: q.behavior_declaration(BEHAVIOR_A, context=AS_DESIGNED),
+        lambda q: q.behaviors_involving_variable(VAR_A, context=AS_DESIGNED),
+        lambda q: q.behavior_assertion(first.record_id),
+    )
+    for call in calls:
+        assert call(forward).model_dump_json() == call(reverse).model_dump_json()
+
+
+def test_behavior_serialization_is_identical_across_hash_seeds():
+    script = """
+from pathlib import Path
+from tempfile import TemporaryDirectory
+import backend.model_kernel as kernel
+from tests.model_kernel.bh001_slice_a_helpers import (
+    AS_DESIGNED, BEHAVIOR_A, T1, behavior_declaration,
+    behavior_registration, world,
+)
+with TemporaryDirectory() as root:
+    registration = behavior_registration()
+    first = behavior_declaration(registration, note='first')
+    second = behavior_declaration(registration, note='second', recorded_at=T1)
+    queries = kernel.ModelQueries(world(Path(root), first, second).load())
+    results = (
+        queries.behavior(BEHAVIOR_A),
+        queries.behavior_declaration(BEHAVIOR_A, context=AS_DESIGNED),
+        queries.behaviors_involving_variable(
+            registration.participant_variable_anchor_ids[0],
+            context=AS_DESIGNED),
+        queries.behavior_assertion(first.record_id),
+    )
+    print('\\n'.join(result.model_dump_json() for result in results))
+"""
+    outputs = []
+    for seed in ("1", "17", "31337"):
+        environment = dict(os.environ, PYTHONHASHSEED=seed,
+                           PYTHONDONTWRITEBYTECODE="1")
+        completed = subprocess.run(
+            [sys.executable, "-c", script], check=True, capture_output=True,
+            text=True, env=environment)
+        outputs.append(completed.stdout)
+    assert outputs[0] == outputs[1] == outputs[2]

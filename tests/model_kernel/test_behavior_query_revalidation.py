@@ -115,6 +115,28 @@ def test_lookup_reverse_and_assertion_reject_derived_forgery(tmp_path):
                 reconstruct(result, attack)
 
 
+def test_optional_outer_indices_reject_boolean_and_coercion(tmp_path):
+    registration = behavior_registration()
+    declaration = behavior_declaration(registration)
+    queries = kernel.ModelQueries(world(tmp_path, declaration).load())
+    cases = (
+        (queries.behavior(BEHAVIOR_A), "registration_index"),
+        (queries.behaviors_involving_variable(
+            VAR_A, context=AS_DESIGNED), "variable_registration_index"),
+        (queries.behaviors_involving_variable(
+            VAR_A, context=AS_DESIGNED), "owner_registration_index"),
+        (queries.behavior_assertion(declaration.record_id), "record_index"),
+        (queries.behavior_assertion(declaration.record_id),
+         "root_record_index"),
+    )
+    for result, field in cases:
+        for hostile in (True, "0", 0.0):
+            payload = result.model_dump(mode="python")
+            payload[field] = hostile
+            with pytest.raises(ValidationError):
+                type(result).model_validate(payload)
+
+
 def test_nested_construct_and_copy_forgery_is_revalidated(tmp_path):
     result, _, _ = conflict_result(tmp_path)
     hostile_root = result.roots[0].model_copy(
@@ -183,6 +205,45 @@ def test_every_behavior_index_rejects_boolean_and_coercion(tmp_path):
             with pytest.raises(ValidationError):
                 kernel.BehaviorEffectiveBodyGroupResult.model_validate(payload)
 
+    for field in ("current_declaration_indices",):
+        for hostile in (False, "0", 0.0):
+            payload = result.model_dump(mode="python")
+            payload[field] = (hostile,)
+            with pytest.raises(ValidationError):
+                type(result).model_validate(payload)
+
+    queries = kernel.ModelQueries(world(
+        tmp_path / "entry", behavior_declaration()).load())
+    reverse = queries.behaviors_involving_variable(
+        VAR_A, context=AS_DESIGNED)
+    entry = reverse.entries[0].model_dump(mode="python")
+    for field in (
+            "entry_index", "behavior_registration_index",
+            "other_variable_registration_index",
+            "other_owner_registration_index"):
+        for hostile in (True, "0", 0.0):
+            payload = {**entry, field: hostile}
+            with pytest.raises(ValidationError):
+                kernel.VariableBehaviorEntry.model_validate(payload)
+
+    lookup = queries.behavior(BEHAVIOR_A)
+    for field in (
+            "participant_variable_registration_indices",
+            "participant_owner_registration_indices"):
+        for hostile in (True, "0", 0.0):
+            payload = lookup.model_dump(mode="python")
+            payload[field] = (hostile, hostile)
+            with pytest.raises(ValidationError):
+                type(lookup).model_validate(payload)
+
+    assertion = queries.behavior_assertion(behavior_declaration().record_id)
+    for field in ("successor_indices", "withdrawal_indices"):
+        for hostile in (True, "0", 0.0):
+            payload = assertion.model_dump(mode="python")
+            payload[field] = (hostile,)
+            with pytest.raises(ValidationError):
+                type(assertion).model_validate(payload)
+
 
 def test_implication_bearing_extra_fields_are_rejected(tmp_path):
     result, _, _ = conflict_result(tmp_path)
@@ -194,6 +255,46 @@ def test_implication_bearing_extra_fields_are_rejected(tmp_path):
         payload[field] = "forged"
         with pytest.raises(ValidationError):
             type(result).model_validate(payload)
+
+
+def test_invalid_input_is_rejected_before_any_model_index_access(tmp_path):
+    loaded = world(tmp_path).load()
+
+    class ExplodingRecords(dict):
+        def __iter__(self):
+            raise AssertionError("model records were accessed")
+
+        def __getitem__(self, key):
+            raise AssertionError("model records were accessed")
+
+    object.__setattr__(loaded, "records", ExplodingRecords())
+    queries = kernel.ModelQueries(loaded)
+    calls = (
+        lambda: queries.behavior(False),
+        lambda: queries.behavior("bhv_bad"),
+        lambda: queries.behavior_declaration(BEHAVIOR_A, context=None),
+        lambda: queries.behaviors_involving_variable(
+            {}, context=AS_DESIGNED),
+        lambda: queries.behavior_assertion("brg_bad"),
+        lambda: queries.behavior_assertion([]),
+    )
+    for call in calls:
+        with pytest.raises(kernel.ModelQueryError):
+            call()
+
+
+def test_result_revalidation_is_store_and_filesystem_independent(
+        tmp_path, monkeypatch):
+    result, _, _ = conflict_result(tmp_path)
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("store or filesystem access is forbidden")
+
+    for name in ("__init__", "append", "load", "replay"):
+        monkeypatch.setattr(kernel.ModelStore, name, forbidden)
+    monkeypatch.setattr(Path, "open", forbidden)
+    rebuilt = type(result).model_validate(result.model_dump(mode="python"))
+    assert rebuilt.model_dump_json() == result.model_dump_json()
 
 
 def test_complete_material_is_carried_once_and_rows_are_indices_only(tmp_path):
