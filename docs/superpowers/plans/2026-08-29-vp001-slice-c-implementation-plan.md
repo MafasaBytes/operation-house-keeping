@@ -166,8 +166,8 @@ Run, in order:
 10. focused OCP/STEP and PDF suites;
 11. backend compilation and `git diff --check`.
 
-Both clean checkouts must reproduce the unchanged demo revision and PT artifact
-hash.
+At the Slice C gate, both clean checkouts reproduced the then-unchanged demo
+revision and PT artifact hash.
 
 ## Reviewable commits
 
@@ -178,9 +178,9 @@ hash.
 5. bounded test or validation repair commits for genuine review findings
 6. `docs: record VP-001 Slice C review status`
 
-## Stop condition
+## Historical Slice C stop condition — satisfied
 
-Stop when Slice C is implemented, independently adversarially reviewed,
-dual-clean-checkout verified, committed, and awaiting owner acceptance. Do not
-append the Slice D VPA, modify the demo artifact, or start any behavior,
-flow, control, causality, compatibility, safety, or state-at-port work.
+Slice C stopped after it was implemented, independently adversarially reviewed,
+dual-clean-checkout verified, committed, and accepted by the owner. The Slice D
+VPA was not appended until the later owner authorization. No behavior, flow,
+control, causality, compatibility, safety, or state-at-port work began.
