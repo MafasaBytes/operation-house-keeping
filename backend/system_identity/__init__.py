@@ -7,26 +7,35 @@ ADR-0006.
 """
 
 from backend.system_identity.anchors import (
+    BEHAVIOR_ANCHOR_ID_PATTERN,
     CONSTRAINT_ANCHOR_ID_PATTERN,
     ENTITY_ANCHOR_ID_PATTERN,
     PORT_ANCHOR_ID_PATTERN,
     VARIABLE_ANCHOR_ID_PATTERN,
+    BehaviorAnchor,
     ConstraintAnchor,
     EntityAnchor,
     PortAnchor,
     VariableAnchor,
 )
-from backend.system_identity.minting import mint_constraint_anchor, mint_port_anchor
+from backend.system_identity.minting import (
+    mint_behavior_anchor,
+    mint_constraint_anchor,
+    mint_port_anchor,
+)
 
 __all__ = [
+    "BEHAVIOR_ANCHOR_ID_PATTERN",
     "CONSTRAINT_ANCHOR_ID_PATTERN",
     "ENTITY_ANCHOR_ID_PATTERN",
     "PORT_ANCHOR_ID_PATTERN",
     "VARIABLE_ANCHOR_ID_PATTERN",
+    "BehaviorAnchor",
     "ConstraintAnchor",
     "EntityAnchor",
     "PortAnchor",
     "VariableAnchor",
+    "mint_behavior_anchor",
     "mint_constraint_anchor",
     "mint_port_anchor",
 ]

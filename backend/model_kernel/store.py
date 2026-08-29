@@ -29,6 +29,9 @@ from backend.model_kernel.canonical import (
     verify_record_id,
 )
 from backend.model_kernel.contracts import (
+    BehaviorRegistration,
+    BehaviorRuleDeclaration,
+    BehaviorRuleWithdrawal,
     ConstraintRegistration,
     EntityRegistration,
     MODEL_ID_PATTERN,
@@ -56,7 +59,7 @@ from backend.model_kernel.contracts import (
 _RECORD_ADAPTER: TypeAdapter = TypeAdapter(ModelRecord)
 _RECORD_ID = re.compile(MODEL_RECORD_ID_PATTERN)
 _FILENAME = re.compile(
-    r"^(reg|rtd|rel|rwd|vrg|vsp|vsm|crg|vcn|prg|pif|pcn|pcm|ptw|vpa|vpw)_[0-9a-f]{64}\.json$")
+    r"^(reg|rtd|rel|rwd|vrg|vsp|vsm|crg|vcn|prg|pif|pcn|pcm|ptw|vpa|vpw|brg|bhd|bhw)_[0-9a-f]{64}\.json$")
 
 _EMPTY: Mapping = MappingProxyType({})
 
@@ -155,6 +158,22 @@ class LoadedModel:
     variable_port_association_withdrawn_by: Mapping[
         str, tuple[str, ...]] = _EMPTY
     variable_port_association_withdrawals_by_target: Mapping[
+        str, tuple[str, ...]] = _EMPTY
+    behavior_registrations: Mapping[str, BehaviorRegistration] = _EMPTY
+    behavior_registrations_by_anchor: Mapping[
+        str, BehaviorRegistration] = _EMPTY
+    behavior_anchor_ids_by_variable: Mapping[str, tuple[str, ...]] = _EMPTY
+    behavior_rule_declarations: Mapping[
+        str, BehaviorRuleDeclaration] = _EMPTY
+    behavior_rule_ids_by_key: Mapping[tuple, tuple[str, ...]] = _EMPTY
+    behavior_rule_root_by_id: Mapping[str, str] = _EMPTY
+    behavior_rule_ancestry_by_id: Mapping[str, tuple[str, ...]] = _EMPTY
+    behavior_rule_superseded_by: Mapping[str, tuple[str, ...]] = _EMPTY
+    current_behavior_rule_tips_by_root: Mapping[
+        str, tuple[BehaviorRuleDeclaration, ...]] = _EMPTY
+    behavior_rule_withdrawals: Mapping[str, BehaviorRuleWithdrawal] = _EMPTY
+    behavior_rule_withdrawn_by: Mapping[str, tuple[str, ...]] = _EMPTY
+    behavior_rule_withdrawals_by_target: Mapping[
         str, tuple[str, ...]] = _EMPTY
 
 
@@ -303,6 +322,9 @@ def validate_record_collection(
     variable_port_associations: dict[str, VariablePortAssociation] = {}
     variable_port_association_withdrawals: dict[
         str, VariablePortAssociationWithdrawal] = {}
+    behavior_registrations: dict[str, BehaviorRegistration] = {}
+    behavior_rule_declarations: dict[str, BehaviorRuleDeclaration] = {}
+    behavior_rule_withdrawals: dict[str, BehaviorRuleWithdrawal] = {}
     types: dict[str, RelationshipTypeDefinition] = {}
     assertions: dict[str, RelationshipAssertion] = {}
     withdrawals: dict[str, RelationshipWithdrawal] = {}
@@ -343,6 +365,9 @@ def validate_record_collection(
             "variable_port_association": variable_port_associations,
             "variable_port_association_withdrawal": (
                 variable_port_association_withdrawals),
+            "behavior_registration": behavior_registrations,
+            "behavior_rule_declaration": behavior_rule_declarations,
+            "behavior_rule_withdrawal": behavior_rule_withdrawals,
             "relationship_type_definition": types,
             "relationship_assertion": assertions,
             "relationship_withdrawal": withdrawals,
@@ -379,6 +404,147 @@ def validate_record_collection(
             _fail("MODEL_REFERENCE_INVALID",
                   f"variable registration {variable.record_id} references "
                   f"unregistered owner entity {owner_id}")
+
+    # -- behaviors: permanent evidence-bearing registration plus an exact-
+    # context, multi-root correction DAG. Registration says only that two
+    # unordered variables participate in the declared rule family. It adds
+    # no roles, direction, port/VPA relation, or operational truth.
+    behavior_registrations_by_anchor: dict[str, BehaviorRegistration] = {}
+    behavior_anchor_ids_by_variable: dict[str, tuple[str, ...]] = {}
+    for record_id in sorted(behavior_registrations):
+        registration = behavior_registrations[record_id]
+        anchor_id = registration.anchor.anchor_id
+        existing = behavior_registrations_by_anchor.get(anchor_id)
+        if existing is not None:
+            _fail("MODEL_DUPLICATE_REGISTRATION",
+                  f"behavior {anchor_id} is registered more than once "
+                  f"({existing.record_id}, {record_id})")
+        variables = registration.participant_variable_anchor_ids
+        missing = tuple(variable_id for variable_id in variables
+                        if variable_id not in variable_registrations_by_anchor)
+        if missing:
+            _fail("MODEL_REFERENCE_INVALID",
+                  f"behavior registration {record_id} references an "
+                  "unregistered variable")
+        _check_model_record_evidence(records, registration,
+                                     "behavior registration")
+        required_citations = {
+            variable_registrations_by_anchor[variable_id].record_id
+            for variable_id in variables
+        }
+        supplied_citations = {
+            reference.record_id for reference in registration.evidence
+            if reference.kind == "model_record"
+        }
+        has_claim_basis = any(reference.kind == "owner_declaration"
+                              for reference in registration.evidence)
+        if (not required_citations <= supplied_citations
+                or not has_claim_basis):
+            _fail("MODEL_BEHAVIOR_REGISTRATION_INVALID",
+                  f"behavior registration {record_id} lacks its exact "
+                  "variable-registration citations or claim basis")
+        behavior_registrations_by_anchor[anchor_id] = registration
+        for variable_id in variables:
+            behavior_anchor_ids_by_variable[variable_id] = tuple(sorted((
+                *behavior_anchor_ids_by_variable.get(variable_id, ()),
+                anchor_id)))
+
+    def behavior_rule_key(record):
+        return (record.behavior_anchor_id, record.context)
+
+    behavior_rule_ids_by_key: dict[tuple, tuple[str, ...]] = {}
+    for record_id in sorted(behavior_rule_declarations):
+        declaration = behavior_rule_declarations[record_id]
+        registration = behavior_registrations_by_anchor.get(
+            declaration.behavior_anchor_id)
+        if registration is None:
+            _fail("MODEL_REFERENCE_INVALID",
+                  f"behavior declaration {record_id} references an "
+                  "unregistered behavior")
+        if tuple(lock.variable_anchor_id
+                 for lock in declaration.participant_semantics) != (
+                     registration.participant_variable_anchor_ids):
+            _fail("MODEL_BEHAVIOR_DECLARATION_INVALID",
+                  f"behavior declaration {record_id} locks variables other "
+                  "than its permanent registered pair")
+        _check_model_record_evidence(records, declaration,
+                                     "behavior declaration")
+        supplied_citations = {
+            reference.record_id for reference in declaration.evidence
+            if reference.kind == "model_record"
+        }
+        has_claim_basis = any(reference.kind == "owner_declaration"
+                              for reference in declaration.evidence)
+        if (registration.record_id not in supplied_citations
+                or not has_claim_basis):
+            _fail("MODEL_BEHAVIOR_DECLARATION_INVALID",
+                  f"behavior declaration {record_id} lacks its exact "
+                  "registration citation or claim basis")
+        key = behavior_rule_key(declaration)
+        behavior_rule_ids_by_key[key] = tuple(sorted((
+            *behavior_rule_ids_by_key.get(key, ()), record_id)))
+
+    behavior_rule_superseded_by, behavior_rule_root_by_id = _pt_dag_indexes(
+        behavior_rule_declarations, behavior_rule_key,
+        "MODEL_BEHAVIOR_LINEAGE_INVALID", "behavior declaration")
+
+    behavior_rule_ancestry_by_id: dict[str, tuple[str, ...]] = {}
+    pending_behavior_ancestry = set(behavior_rule_declarations)
+    while pending_behavior_ancestry:
+        progressed = False
+        for record_id in sorted(tuple(pending_behavior_ancestry)):
+            parents = behavior_rule_declarations[record_id].supersedes
+            if any(parent not in behavior_rule_ancestry_by_id
+                   for parent in parents):
+                continue
+            ancestors = {
+                ancestor
+                for parent in parents
+                for ancestor in (
+                    parent, *behavior_rule_ancestry_by_id[parent])
+            }
+            behavior_rule_ancestry_by_id[record_id] = tuple(sorted(ancestors))
+            pending_behavior_ancestry.remove(record_id)
+            progressed = True
+        if not progressed:  # defence in depth after DAG validation
+            _fail("MODEL_BEHAVIOR_LINEAGE_INVALID",
+                  "behavior declaration ancestry could not be derived")
+
+    # Withdrawal admission is evaluated only after the whole successor graph
+    # is known. Any current fork tip may be withdrawn independently.
+    behavior_rule_withdrawals_by_target: dict[str, tuple[str, ...]] = {}
+    for withdrawal_id in sorted(behavior_rule_withdrawals):
+        withdrawal = behavior_rule_withdrawals[withdrawal_id]
+        target = withdrawal.withdraws
+        if target not in behavior_rule_declarations:
+            _fail("MODEL_REFERENCE_INVALID",
+                  f"behavior withdrawal {withdrawal_id} targets a missing "
+                  "declaration")
+        if behavior_rule_superseded_by[target]:
+            _fail("MODEL_BEHAVIOR_WITHDRAWAL_INVALID",
+                  f"behavior withdrawal {withdrawal_id} targets a "
+                  "superseded declaration")
+        if target in behavior_rule_withdrawals_by_target:
+            _fail("MODEL_BEHAVIOR_WITHDRAWAL_INVALID",
+                  f"behavior declaration {target} is withdrawn more than "
+                  "once")
+        behavior_rule_withdrawals_by_target[target] = (withdrawal_id,)
+
+    behavior_rule_withdrawn_by = {
+        record_id: behavior_rule_withdrawals_by_target.get(record_id, ())
+        for record_id in behavior_rule_declarations
+    }
+    current_behavior_rule_tips_by_root: dict[
+        str, tuple[BehaviorRuleDeclaration, ...]] = {
+            root: () for root in sorted(set(behavior_rule_root_by_id.values()))
+        }
+    for record_id in sorted(behavior_rule_declarations):
+        if (not behavior_rule_superseded_by[record_id]
+                and not behavior_rule_withdrawn_by[record_id]):
+            root = behavior_rule_root_by_id[record_id]
+            current_behavior_rule_tips_by_root[root] = (
+                *current_behavior_rule_tips_by_root[root],
+                behavior_rule_declarations[record_id])
 
     # -- value specifications: a multi-parent DAG per variable anchor.
     # Competing current tips are SURFACED, never fatal: the revision stays
@@ -1146,6 +1312,28 @@ def validate_record_collection(
             variable_port_association_withdrawn_by),
         variable_port_association_withdrawals_by_target=_frozen_mapping(
             variable_port_association_withdrawals_by_target),
+        behavior_registrations=_frozen_mapping(behavior_registrations),
+        behavior_registrations_by_anchor=_frozen_mapping(
+            behavior_registrations_by_anchor),
+        behavior_anchor_ids_by_variable=_frozen_mapping(
+            behavior_anchor_ids_by_variable),
+        behavior_rule_declarations=_frozen_mapping({
+            record_id: behavior_rule_declarations[record_id]
+            for record_id in sorted(behavior_rule_declarations)}),
+        behavior_rule_ids_by_key=_frozen_mapping(behavior_rule_ids_by_key),
+        behavior_rule_root_by_id=_frozen_mapping(behavior_rule_root_by_id),
+        behavior_rule_ancestry_by_id=_frozen_mapping(
+            behavior_rule_ancestry_by_id),
+        behavior_rule_superseded_by=_frozen_mapping(
+            behavior_rule_superseded_by),
+        current_behavior_rule_tips_by_root=_frozen_mapping(
+            current_behavior_rule_tips_by_root),
+        behavior_rule_withdrawals=_frozen_mapping(
+            behavior_rule_withdrawals),
+        behavior_rule_withdrawn_by=_frozen_mapping(
+            behavior_rule_withdrawn_by),
+        behavior_rule_withdrawals_by_target=_frozen_mapping(
+            behavior_rule_withdrawals_by_target),
         superseded_by=_frozen_mapping(superseded_by),
         withdrawn_by=_frozen_mapping(withdrawn_by))
 

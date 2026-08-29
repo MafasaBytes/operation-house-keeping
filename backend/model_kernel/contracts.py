@@ -32,10 +32,12 @@ from backend.model_kernel.canonical import (
     verify_record_id,
 )
 from backend.system_identity import (
+    BEHAVIOR_ANCHOR_ID_PATTERN,
     CONSTRAINT_ANCHOR_ID_PATTERN,
     ENTITY_ANCHOR_ID_PATTERN,
     PORT_ANCHOR_ID_PATTERN,
     VARIABLE_ANCHOR_ID_PATTERN,
+    BehaviorAnchor,
     ConstraintAnchor,
     EntityAnchor,
     PortAnchor,
@@ -45,7 +47,7 @@ from backend.system_identity import (
 UtcDatetime = Annotated[AwareDatetime, AfterValidator(lambda v: v.astimezone(UTC))]
 
 MODEL_ID_PATTERN = r"^[a-z0-9-]+$"
-MODEL_RECORD_ID_PATTERN = r"^(reg|rtd|rel|rwd|vrg|vsp|vsm|crg|vcn|prg|pif|pcn|pcm|ptw|vpa|vpw)_[0-9a-f]{64}$"
+MODEL_RECORD_ID_PATTERN = r"^(reg|rtd|rel|rwd|vrg|vsp|vsm|crg|vcn|prg|pif|pcn|pcm|ptw|vpa|vpw|brg|bhd|bhw)_[0-9a-f]{64}$"
 
 ReferentKind = Literal[
     "logical_instance", "physical_instance", "type_definition", "unknown"
@@ -109,7 +111,7 @@ class ModelRecordEvidence(_Frozen):
     # uncitable
     kind: Literal["model_record"]
     record_id: str = Field(
-        pattern=r"^(reg|rtd|rel|vrg|vsp|vsm|crg|vcn|prg|pif|pcn|pcm|vpa)_[0-9a-f]{64}$")
+        pattern=r"^(reg|rtd|rel|vrg|vsp|vsm|crg|vcn|prg|pif|pcn|pcm|vpa|brg|bhd)_[0-9a-f]{64}$")
 
 
 class IdentityBindingRecordEvidence(_Frozen):
@@ -676,6 +678,194 @@ class VariableConstraintDeclaration(_Frozen):
         return self
 
 
+# ------------------------------------------------ explicit behavior claims
+def _canonical_behavior_variables(value: tuple[str, ...]) -> tuple[str, ...]:
+    """Normalize the permanent, unordered pair without adding direction."""
+    if len(value) != 2 or len(set(value)) != 2:
+        raise ValueError(
+            "a behavior registration requires exactly two distinct variables")
+    if any(not isinstance(item, str) or not re.fullmatch(
+            VARIABLE_ANCHOR_ID_PATTERN, item) for item in value):
+        raise ValueError("a behavior participant is not a variable anchor id")
+    return tuple(sorted(value))
+
+
+CanonicalBehaviorVariableTuple = Annotated[
+    tuple[str, ...], AfterValidator(_canonical_behavior_variables)]
+
+
+class BehaviorVariableSemanticLock(BaseModel):
+    """Declared exact semantic identity expected for one participant.
+
+    The lock neither creates nor replaces variable specifications or semantic
+    declarations. Those independent model/source findings are evaluated only
+    by the separately owner-gated upper layer.
+    """
+
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", revalidate_instances="always")
+
+    variable_anchor_id: str = Field(pattern=VARIABLE_ANCHOR_ID_PATTERN)
+    signature: ConstraintSemanticSignature
+
+    @field_validator("signature", mode="before")
+    @classmethod
+    def _reconstruct_signature(cls, value):
+        if isinstance(value, BaseModel):
+            return value.model_dump(mode="python", warnings=False)
+        return value
+
+
+def _canonical_behavior_locks(
+    value: tuple[BehaviorVariableSemanticLock, ...],
+) -> tuple[BehaviorVariableSemanticLock, ...]:
+    if len(value) != 2:
+        raise ValueError("a behavior declaration requires exactly two locks")
+    by_variable = {lock.variable_anchor_id: lock for lock in value}
+    if len(by_variable) != 2:
+        raise ValueError("behavior semantic locks must name distinct variables")
+    return tuple(by_variable[key] for key in sorted(by_variable))
+
+
+CanonicalBehaviorSemanticLockTuple = Annotated[
+    tuple[BehaviorVariableSemanticLock, ...],
+    AfterValidator(_canonical_behavior_locks),
+]
+
+
+class ExactNumericEqualityRule(BaseModel):
+    """The complete BH-001 v1 rule body: exact equality and nothing else."""
+
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", revalidate_instances="always")
+
+    kind: Literal["exact_numeric_equality"] = "exact_numeric_equality"
+
+
+class BehaviorRegistration(BaseModel):
+    """Permanent evidence-backed registration of one unordered variable pair.
+
+    Registration has no context and no lifecycle. Changing a participant or
+    rule family requires a new behavior anchor and registration.
+    """
+
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", revalidate_instances="always")
+
+    record_kind: Literal["behavior_registration"] = "behavior_registration"
+    schema_version: Literal["1"] = "1"
+    record_id: str = Field(pattern=r"^brg_[0-9a-f]{64}$")
+    anchor: BehaviorAnchor
+    participant_variable_anchor_ids: CanonicalBehaviorVariableTuple
+    rule_family: Literal["exact_numeric_equality"] = "exact_numeric_equality"
+    evidence: Annotated[tuple[EvidenceRef, ...], Field(min_length=1),
+                        AfterValidator(_canonical_evidence)]
+    recorded_at: UtcDatetime
+    authority: AuthorityRef
+    note: str = ""
+
+    @field_validator("anchor", "authority", mode="before")
+    @classmethod
+    def _reconstruct_nested_model(cls, value):
+        if isinstance(value, BaseModel):
+            return value.model_dump(mode="python", warnings=False)
+        return value
+
+    @field_validator("evidence", mode="before")
+    @classmethod
+    def _reconstruct_evidence(cls, value):
+        if isinstance(value, (tuple, list)):
+            return tuple(
+                item.model_dump(mode="python", warnings=False)
+                if isinstance(item, BaseModel) else item
+                for item in value)
+        return value
+
+
+class BehaviorRuleDeclaration(BaseModel):
+    """Correctable exact-context BH-001 equality declaration.
+
+    Participant order is non-semantic. The declaration has no direction,
+    role, tolerance, computed outcome, port, VPA, or operational meaning.
+    """
+
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", revalidate_instances="always")
+
+    record_kind: Literal["behavior_rule_declaration"] = (
+        "behavior_rule_declaration")
+    schema_version: Literal["1"] = "1"
+    record_id: str = Field(pattern=r"^bhd_[0-9a-f]{64}$")
+    behavior_anchor_id: str = Field(pattern=BEHAVIOR_ANCHOR_ID_PATTERN)
+    context: AssertionContext
+    participant_semantics: CanonicalBehaviorSemanticLockTuple
+    rule: ExactNumericEqualityRule
+    evaluation_basis: Literal["same_acquisition_cohort"] = (
+        "same_acquisition_cohort")
+    evidence: Annotated[tuple[EvidenceRef, ...], Field(min_length=1),
+                        AfterValidator(_canonical_evidence)]
+    supersedes: Annotated[tuple[str, ...],
+                          AfterValidator(_canonical_parents)] = ()
+    recorded_at: UtcDatetime
+    authority: AuthorityRef
+    note: str = ""
+
+    @field_validator("context", "rule", "authority", mode="before")
+    @classmethod
+    def _reconstruct_nested_model(cls, value):
+        if isinstance(value, BaseModel):
+            return value.model_dump(mode="python", warnings=False)
+        return value
+
+    @field_validator("participant_semantics", "evidence", mode="before")
+    @classmethod
+    def _reconstruct_nested_tuple(cls, value):
+        if isinstance(value, (tuple, list)):
+            return tuple(
+                item.model_dump(mode="python", warnings=False)
+                if isinstance(item, BaseModel) else item
+                for item in value)
+        return value
+
+    @model_validator(mode="after")
+    def _semantics_and_parents_are_well_formed(self):
+        first, second = self.participant_semantics
+        if first.signature.quantity_kind != second.signature.quantity_kind:
+            raise ValueError(
+                "behavior participant quantity-kind identities must match")
+        if first.signature.unit != second.signature.unit:
+            raise ValueError("behavior participant unit identities must match")
+        if any(not re.fullmatch(r"bhd_[0-9a-f]{64}", parent)
+               for parent in self.supersedes):
+            raise ValueError("a behavior parent is not a BHD record id")
+        if self.record_id in self.supersedes:
+            raise ValueError("a behavior declaration cannot supersede itself")
+        return self
+
+
+class BehaviorRuleWithdrawal(BaseModel):
+    """Membership-relative retraction of one current BHD tip only."""
+
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", revalidate_instances="always")
+
+    record_kind: Literal["behavior_rule_withdrawal"] = (
+        "behavior_rule_withdrawal")
+    schema_version: Literal["1"] = "1"
+    record_id: str = Field(pattern=r"^bhw_[0-9a-f]{64}$")
+    withdraws: str = Field(pattern=r"^bhd_[0-9a-f]{64}$")
+    recorded_at: UtcDatetime
+    authority: AuthorityRef
+    note: str = ""
+
+    @field_validator("authority", mode="before")
+    @classmethod
+    def _reconstruct_authority(cls, value):
+        if isinstance(value, BaseModel):
+            return value.model_dump(mode="python", warnings=False)
+        return value
+
+
 class InterfaceDomainToken(_Frozen):
     """Exact interface-domain identity token; no ontology is implied."""
 
@@ -990,6 +1180,7 @@ ModelRecord = Union[
     EntityRegistration, VariableRegistration, VariableValueSpecification,
     VariableSemanticDeclaration,
     ConstraintRegistration, VariableConstraintDeclaration,
+    BehaviorRegistration, BehaviorRuleDeclaration, BehaviorRuleWithdrawal,
     RelationshipTypeDefinition, RelationshipAssertion,
     RelationshipWithdrawal,
     PortRegistration, PortInterfaceDeclaration, PortConnectionAssertion,

@@ -34,6 +34,9 @@ _PREFIX_BY_KIND = {
     "port_claim_withdrawal": "ptw",
     "variable_port_association": "vpa",
     "variable_port_association_withdrawal": "vpw",
+    "behavior_registration": "brg",
+    "behavior_rule_declaration": "bhd",
+    "behavior_rule_withdrawal": "bhw",
 }
 
 

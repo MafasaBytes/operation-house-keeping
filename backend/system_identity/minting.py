@@ -11,14 +11,31 @@ yet; CN-001 introduces the first public minter for ``ConstraintAnchor``.
 from uuid import uuid4
 
 from backend.system_identity.anchors import (
+    BEHAVIOR_ANCHOR_ID_PATTERN,
     CONSTRAINT_ANCHOR_ID_PATTERN,
     PORT_ANCHOR_ID_PATTERN,
     _NAME_PATTERN,
+    BehaviorAnchor,
     ConstraintAnchor,
     PortAnchor,
 )
 
 _NAME_FIELD = dict(pattern=_NAME_PATTERN)
+
+
+def mint_behavior_anchor(
+    *,
+    namespace: str,
+    display_name: str,
+    role_name: str | None = None,
+) -> BehaviorAnchor:
+    """Mint one fresh opaque UUID4-backed ``BehaviorAnchor``."""
+    return BehaviorAnchor(
+        anchor_id=f"bhv_{uuid4().hex}",
+        namespace=namespace,
+        display_name=display_name,
+        role_name=role_name,
+    )
 
 
 def mint_constraint_anchor(

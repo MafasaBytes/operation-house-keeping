@@ -54,8 +54,8 @@ class TestBehaviorRegistrationAdmission:
                                                                      tmp_path):
         variables = variable_records()
         behavior = behavior_registration()
-        for omitted in (VAR_A, VAR_B):
-            store = kernel.ModelStore(tmp_path / omitted)
+        for index, omitted in enumerate((VAR_A, VAR_B)):
+            store = kernel.ModelStore(tmp_path / f"omitted-{index}")
             for record in variables:
                 if (record.record_kind != "variable_registration"
                         or record.anchor.anchor_id != omitted):
@@ -239,8 +239,8 @@ class TestBehaviorCorrectionDag:
             tmp_path / "partial", root, left, right, partial).load()
         assert partial_model.behavior_rule_root_by_id[partial.record_id] == \
             root.record_id
-        assert partial_model.behavior_rule_ancestry_by_id[partial.record_id] == (
-            root.record_id, left.record_id)
+        assert partial_model.behavior_rule_ancestry_by_id[
+            partial.record_id] == tuple(sorted((root.record_id, left.record_id)))
         assert tuple(record.record_id for record in
                      partial_model.current_behavior_rule_tips_by_root[
                          root.record_id]) == tuple(sorted(

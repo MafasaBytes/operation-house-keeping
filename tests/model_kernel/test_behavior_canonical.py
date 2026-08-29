@@ -22,9 +22,9 @@ from tests.model_kernel.bh001_slice_a_helpers import (
 )
 
 
-BRG_ID = "brg_61285ea3c60f8cc319033ede3174f75c365411a68afafa968025cb7ff34de701"
-BHD_ID = "bhd_11a3ee92737da6a921052f2c92ca9c340840933ee99b7f2a408a2c58df38ea30"
-BHW_ID = "bhw_f422bbc75529292e1909843d77adb5c93a6a012629c154494c96c514c84f8974"
+BRG_ID = "brg_ecd5a9b669f91dca639fde20202ce4f3c4ff17006d7f0ffd23f09ed44f1f9e3e"
+BHD_ID = "bhd_9e3af9219521d1b3c5dfd5d41ae359dc8d3fb4c5db4b002586998e52f0a823eb"
+BHW_ID = "bhw_4c2456b2a6473f6a37c47b9aadedc10b1a8610c80e6650ba70cdbd7b2dd938f6"
 
 BRG_BYTES = (
     '{"anchor":{"anchor_id":"bhv_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",'
@@ -32,9 +32,9 @@ BRG_BYTES = (
     '"demo-printer","role_name":null},"authority":{"agent":'
     '"bh001_test_fixture","kind":"test_fixture","method":'
     '"manual_declaration"},"evidence":[{"kind":"model_record",'
-    '"record_id":"vrg_6fc3241195869cf9c78b2548a576acfe101f4495081b0c9137c4a30396e2066f"},'
+    '"record_id":"vrg_6809e209906f8b620096ac4c39f4b4d3291e750b3fd6eba516d620dee5b414bb"},'
     '{"kind":"model_record","record_id":'
-    '"vrg_71d844da5171e20044c7fc52aafbe729919fcbcbddabaf25d9df5c3a2842800a"},'
+    '"vrg_94aec6e0670adfd915a82217b40ca329a4026d4b14b39b290b6eff59da94e3ab"},'
     '{"kind":"owner_declaration","statement":'
     '"Synthetic authority explicitly registers this BH relation."}],'
     '"note":"","participant_variable_anchor_ids":'

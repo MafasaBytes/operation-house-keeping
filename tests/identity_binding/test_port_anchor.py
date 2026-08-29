@@ -126,14 +126,17 @@ def test_forged_port_anchor_is_fully_revalidated():
 
 def test_system_identity_exports_are_exact_after_pt001_identity_extension():
     assert identity.__all__ == [
+        "BEHAVIOR_ANCHOR_ID_PATTERN",
         "CONSTRAINT_ANCHOR_ID_PATTERN",
         "ENTITY_ANCHOR_ID_PATTERN",
         "PORT_ANCHOR_ID_PATTERN",
         "VARIABLE_ANCHOR_ID_PATTERN",
+        "BehaviorAnchor",
         "ConstraintAnchor",
         "EntityAnchor",
         "PortAnchor",
         "VariableAnchor",
+        "mint_behavior_anchor",
         "mint_constraint_anchor",
         "mint_port_anchor",
     ]

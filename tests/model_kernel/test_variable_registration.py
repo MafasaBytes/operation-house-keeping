@@ -231,8 +231,8 @@ class TestRecordIntegrity:
 
         members = typing.get_args(ModelRecord)
         assert VariableRegistration in members
-        # 9 pre-PT + five PT + two VP Slice A record kinds = 16.
-        assert len(_PREFIX_BY_KIND) == len(members) == 16
+        # 16 accepted pre-BH kinds plus three BH-001 Slice A kinds.
+        assert len(_PREFIX_BY_KIND) == len(members) == 19
         for prefix in _PREFIX_BY_KIND.values():
             sample = f"{prefix}_{'0' * 64}"
             assert re.fullmatch(MODEL_RECORD_ID_PATTERN, sample)
@@ -474,10 +474,10 @@ class TestKernelQueries:
                 call()
 
     def test_public_surface_name_count(self):
-        # 113 accepted Slice A names plus thirteen VP Slice B query names.
+        # Accepted VP surface plus five BH-001 Slice A record contracts.
         import backend.model_kernel as kernel
 
-        assert len(kernel.__all__) == 126
+        assert len(kernel.__all__) == 131
         for name in ("VariableRegistration", "VariableRegistrationSummary",
                      "VariableResult", "EntityVariablesResult",
                      "StructuralSourceLocatorEvidence"):
