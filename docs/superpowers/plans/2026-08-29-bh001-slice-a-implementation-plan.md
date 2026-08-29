@@ -1,8 +1,8 @@
 # BH-001 Slice A — identity and kernel record foundation implementation plan
 
-Status: corrected final BH-001 design owner accepted. Slice A is implemented
-and adversarially reviewed; awaiting owner acceptance. Slices B, C, and D are
-owner-gated and remain unstarted.
+Status: corrected final BH-001 design and Slice A owner accepted. Slice A is
+accepted at `57edec37b40c5da0c300cc1333fbb3cf5d7bb41a`. Slice B is
+owner-authorized but not yet implemented. Slices C and D remain unstarted.
 
 Accepted repository base: `main` at
 `46c04ed6f6f09b254b2f52f07611e2efbdd1d4f6`.
@@ -578,7 +578,7 @@ It must include:
 End the report with:
 
 ```text
-BH-001 Slice A implemented and adversarially reviewed; awaiting owner acceptance.
+BH-001 Slice A implemented, adversarially reviewed, and owner accepted.
 ```
 
 The terminal response is only the concise delivery receipt required by

@@ -1,6 +1,7 @@
 # BH-001 Slice A completion report
 
-Status: implemented and adversarially reviewed; awaiting owner acceptance.
+Status: implemented, adversarially reviewed, and owner accepted at
+`57edec37b40c5da0c300cc1333fbb3cf5d7bb41a`.
 
 Date: 2026-08-29
 
@@ -746,8 +747,8 @@ and single-writer assumptions. No behavior truth is inferred from common
 ownership, names, hierarchy, ports, VPA, topology, semantics, constraints, or
 observations.
 
-Genuine unresolved owner questions for Slice A: none. Owner acceptance is the
-only remaining Slice A gate.
+Genuine unresolved owner questions for Slice A: none. The owner accepted Slice
+A at `57edec37b40c5da0c300cc1333fbb3cf5d7bb41a`.
 
 ## 18. Final repository state
 
@@ -757,4 +758,4 @@ the accepted base; and `bh001` was six commits ahead and zero behind. The
 completion-report commit adds documentation only. Nothing was pushed or
 merged.
 
-BH-001 Slice A implemented and adversarially reviewed; awaiting owner acceptance.
+BH-001 Slice A implemented, adversarially reviewed, and owner accepted.

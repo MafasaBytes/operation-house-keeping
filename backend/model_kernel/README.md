@@ -226,7 +226,8 @@ the deterministic VP artifact SHA-256 is
 The accepted PT artifact SHA-256 is
 `53dd32846956d10331dfca8fc370ef7d7019325904a062db5f037605aa4cf3d8`.
 
-BH-001's corrected final design is owner accepted. Slice A is implemented and
-adversarially reviewed; awaiting owner acceptance. The current committed demo
+BH-001's corrected final design and Slice A are owner accepted. Slice A is
+accepted at `57edec37b40c5da0c300cc1333fbb3cf5d7bb41a`. The current committed demo
 remains the accepted 29-record VP revision and contains zero `brg_`, `bhd_`, or
-`bhw_` records. Slices B-D have not started.
+`bhw_` records. Slice B is owner-authorized but not yet implemented. Slices C
+and D have not started.

@@ -1,8 +1,8 @@
 # BH-001 — Adversarial Acceptance Matrix
 
-Status: BH-001 design is owner accepted. Slice A is implemented and
-adversarially reviewed against this red-first matrix; awaiting owner
-acceptance. Slices B, C, and D are not started.
+Status: BH-001 design and Slice A are owner accepted. Slice A is accepted at
+`57edec37b40c5da0c300cc1333fbb3cf5d7bb41a`. Slice B is owner-authorized but
+not yet implemented. Slices C and D are not started.
 
 Authoritative specification:
 `docs/superpowers/specs/2026-08-29-bh001-explicit-behavior-and-evidence-gated-evaluation-design.md`
