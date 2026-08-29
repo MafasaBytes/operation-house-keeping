@@ -211,7 +211,7 @@ def test_slices_b_c_d_are_present_without_kernel_import_or_store_leakage():
         "backend.data_sources")) for name in imports)
 
 
-def test_slice_d_review_status_and_fixture_identity_are_exact():
+def test_vp001_final_owner_acceptance_status_and_identities_are_exact():
     accepted = (
         "Slice B is owner accepted at "
         "`81179700513bb671cf9955c6a5d7163e3bcc7e1b`.")
@@ -225,15 +225,16 @@ def test_slice_d_review_status_and_fixture_identity_are_exact():
     for path in surfaces:
         text = " ".join(path.read_text(encoding="utf-8").split())
         assert accepted in text
-        assert "VP-001 Slices A, B, and C are owner accepted" in text
 
     accepted = (
-        "VP-001 Slices A, B, and C are owner accepted. Slice D is implemented "
-        "and adversarially reviewed; awaiting final owner acceptance.")
+        "VP-001 complete, owner accepted, adversarially reviewed, and "
+        "dual-clean-checkout verified.")
     reviewed_surfaces = (
         Path("CLAUDE.md"),
         Path("backend/model_state/README.md"),
         Path("backend/model_kernel/README.md"),
+        Path("models/README.md"),
+        Path("models/demo-printer/README.md"),
         Path("docs/adr/0014-explicit-variable-port-association.md"),
         Path("docs/superpowers/specs/"
              "2026-08-28-vp001-explicit-variable-port-association-design.md"),
@@ -247,8 +248,9 @@ def test_slice_d_review_status_and_fixture_identity_are_exact():
     for path in reviewed_surfaces:
         text = " ".join(path.read_text(encoding="utf-8").split())
         assert accepted in text
-        assert ("displaying variable state beside a port is not a claim that "
-                "an observation occurred at the port" in text.lower())
+        assert ("displaying variable state beside a port does not mean the "
+                "observation occurred at, originated at, travelled through, "
+                "or describes the port" in text.lower())
 
     for path in (Path("CLAUDE.md"), Path("backend/model_kernel/README.md")):
         text = " ".join(path.read_text(encoding="utf-8").split())
@@ -257,6 +259,9 @@ def test_slice_d_review_status_and_fixture_identity_are_exact():
         assert "independent corroborating roots" in text
         assert "dedicated `vpw_` withdrawals" in text
 
+    implementation_head = "82fcb93b233db180d5d2d6c54d465dad390f08a5"
+    pre_vp_revision = (
+        "mrv_c6244b6dc41de599de9894b55f4064e41ba5260e7d00f50bffc1e1e63da560a2")
     final_revision = (
         "mrv_18da4ce963ab5c4b1121cdcc009eaaef4cd1c5c11034f4678c6437361ffd7652")
     vpa_id = (
@@ -265,20 +270,21 @@ def test_slice_d_review_status_and_fixture_identity_are_exact():
         "95f9390f784600b2f7a17e74a540d6874722039be5d093614c15a716ff08034e")
     artifact_hash = (
         "a150e10317982ccc6330fa17a921128d3cf31ee9d6b710ef0ad8ea23f63e4ea3")
-    for path in (Path("CLAUDE.md"), Path("backend/model_kernel/README.md"),
-                 surfaces[1], Path("models/demo-printer/README.md")):
+    pt_artifact_hash = (
+        "53dd32846956d10331dfca8fc370ef7d7019325904a062db5f037605aa4cf3d8")
+    for path in reviewed_surfaces:
         text = path.read_text(encoding="utf-8")
+        assert implementation_head in text
+        assert pre_vp_revision in text
         assert final_revision in text
         assert vpa_id in text
         assert record_hash in text
-    for path in (Path("CLAUDE.md"), surfaces[1],
-                 Path("models/demo-printer/README.md"),
-                 Path("docs/superpowers/plans/"
-                      "2026-08-29-vp001-slice-d-implementation-plan.md")):
-        assert artifact_hash in path.read_text(encoding="utf-8")
+        assert artifact_hash in text
+        assert pt_artifact_hash in text
 
     current_claims = " ".join(
         path.read_text(encoding="utf-8") for path in reviewed_surfaces)
+    assert "awaiting final owner acceptance" not in current_claims
     assert "No VP fixture record exists" not in current_claims
     assert "demo ledger remains exactly 28 records" not in current_claims
 

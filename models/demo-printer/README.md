@@ -42,7 +42,12 @@ Historical replay never derives membership by enumerating this directory.
 
 ## VP-001 synthetic variable-to-port association demonstration
 
-VP-001 Slice D appends exactly one parentless
+VP-001 complete, owner accepted, adversarially reviewed, and
+dual-clean-checkout verified. The final implementation HEAD before the
+administrative acceptance commit is
+`82fcb93b233db180d5d2d6c54d465dad390f08a5`.
+
+VP-001 Slice D appended exactly one parentless
 `VariablePortAssociation`,
 `vpa_f6443787fc9665e24cae80a5ba0650d0bda8abefe87cb60427c8b39068932e49`.
 It explicitly associates the existing synthetic hotend-temperature variable
@@ -75,13 +80,14 @@ In particular:
 - PIF tokens did not create the association;
 - PCN topology did not create the association;
 - existing observations did not create the association;
-- displaying variable state beside the port does not mean the value occurred
-  at, originated at, travelled through, or describes the port.
+- displaying variable state beside a port does not mean the observation
+  occurred at, originated at, travelled through, or describes the port.
 
 The deterministic VP-001 disclosure artifact is 17,824 bytes with SHA-256
 `a150e10317982ccc6330fa17a921128d3cf31ee9d6b710ef0ad8ea23f63e4ea3`.
 It keeps model revision, binding revision, and temporal cutoff as separate
 provenance axes, discloses the exact binding declaration and resolution that
 attach the observation to the variable, and makes no clock-synchronization
-claim. The accepted PT-001 artifact remains byte-identical and is regenerated
-from the explicit 28-record membership.
+claim. The accepted PT-001 artifact remains byte-identical at SHA-256
+`53dd32846956d10331dfca8fc370ef7d7019325904a062db5f037605aa4cf3d8`
+and is regenerated from the explicit 28-record membership.

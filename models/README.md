@@ -7,6 +7,24 @@ model set per directory; one write-once JSON record per file under
 never edited in place — corrections and withdrawals are new records, and
 `append` validates the complete set before every write.
 
+VP-001 complete, owner accepted, adversarially reviewed, and
+dual-clean-checkout verified. The final implementation HEAD before the
+administrative acceptance commit is
+`82fcb93b233db180d5d2d6c54d465dad390f08a5`. The accepted VPA is
+`vpa_f6443787fc9665e24cae80a5ba0650d0bda8abefe87cb60427c8b39068932e49`;
+its file SHA-256 is
+`95f9390f784600b2f7a17e74a540d6874722039be5d093614c15a716ff08034e`.
+The pre-VP revision is
+`mrv_c6244b6dc41de599de9894b55f4064e41ba5260e7d00f50bffc1e1e63da560a2`;
+the final revision is
+`mrv_18da4ce963ab5c4b1121cdcc009eaaef4cd1c5c11034f4678c6437361ffd7652`.
+The VP artifact SHA-256 is
+`a150e10317982ccc6330fa17a921128d3cf31ee9d6b710ef0ad8ea23f63e4ea3`;
+the PT artifact SHA-256 is
+`53dd32846956d10331dfca8fc370ef7d7019325904a062db5f037605aa4cf3d8`.
+Displaying variable state beside a port does not mean the observation occurred
+at, originated at, travelled through, or describes the port.
+
 `demo-printer/` is the accepted validation model, currently 29 synthetic
 records under `test_fixture` authorities. Its explicit historical memberships
 preserve the 9-record MK-001 model, VM-001, VS-001, SN-001, ES-001, CN-001, and

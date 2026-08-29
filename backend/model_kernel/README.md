@@ -188,8 +188,10 @@ to the implemented Slice C demonstration. Richer
 predicates beyond CN-001's exact numeric bounds
 also remain future work.
 
-VP-001 Slices A, B, and C are owner accepted. Slice D is implemented and
-adversarially reviewed; awaiting final owner acceptance.
+VP-001 complete, owner accepted, adversarially reviewed, and
+dual-clean-checkout verified. The final implementation HEAD before the
+administrative acceptance commit is
+`82fcb93b233db180d5d2d6c54d465dad390f08a5`.
 Slice A is accepted at
 `60b739182e423a05eac7f3c531145d90c65fe9bc`; it adds only role-free positive
 associations with strict same-owner admission, independent corroborating roots,
@@ -197,7 +199,8 @@ and dedicated `vpw_` withdrawals. Slice B is owner accepted at
 `81179700513bb671cf9955c6a5d7163e3bcc7e1b`. It adds only the four accepted
 read-only kernel queries and authoritative carry-once result contracts. Slice C
 is confined to the read-only model-state layer; displaying variable state
-beside a port is not a claim that an observation occurred at the port. Slice D
+beside a port does not mean the observation occurred at, originated at,
+travelled through, or describes the port. Slice D
 adds exactly one parentless `vpa_` and no `vpw_`, correction, or second root.
 The current demo ledger contains 29 records at
 `mrv_18da4ce963ab5c4b1121cdcc009eaaef4cd1c5c11034f4678c6437361ffd7652`;
@@ -207,3 +210,5 @@ its stored-file SHA-256 is
 `95f9390f784600b2f7a17e74a540d6874722039be5d093614c15a716ff08034e`, and
 the deterministic VP artifact SHA-256 is
 `a150e10317982ccc6330fa17a921128d3cf31ee9d6b710ef0ad8ea23f63e4ea3`.
+The accepted PT artifact SHA-256 is
+`53dd32846956d10331dfca8fc370ef7d7019325904a062db5f037605aa4cf3d8`.

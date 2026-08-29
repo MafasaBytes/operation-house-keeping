@@ -1,10 +1,26 @@
 # VP-001 Slice D — implementation plan
 
-Status: VP-001 Slices A, B, and C are owner accepted. Slice D is implemented
-and adversarially reviewed; awaiting final owner acceptance. Final VP-001 owner
-acceptance remains a separate owner gate.
+Status: VP-001 complete, owner accepted, adversarially reviewed, and
+dual-clean-checkout verified. The final implementation HEAD before the
+administrative acceptance commit is
+`82fcb93b233db180d5d2d6c54d465dad390f08a5`.
 
 Accepted base: `e50d7cdfdada015230c3f3469c29c8ebc502bac4`.
+
+The accepted VPA is
+`vpa_f6443787fc9665e24cae80a5ba0650d0bda8abefe87cb60427c8b39068932e49`;
+its file SHA-256 is
+`95f9390f784600b2f7a17e74a540d6874722039be5d093614c15a716ff08034e`.
+The pre-VP revision is
+`mrv_c6244b6dc41de599de9894b55f4064e41ba5260e7d00f50bffc1e1e63da560a2`;
+the final revision is
+`mrv_18da4ce963ab5c4b1121cdcc009eaaef4cd1c5c11034f4678c6437361ffd7652`.
+The VP artifact SHA-256 is
+`a150e10317982ccc6330fa17a921128d3cf31ee9d6b710ef0ad8ea23f63e4ea3`;
+the PT artifact SHA-256 is
+`53dd32846956d10331dfca8fc370ef7d7019325904a062db5f037605aa4cf3d8`.
+Displaying variable state beside a port does not mean the observation occurred
+at, originated at, travelled through, or describes the port.
 
 ## Decision being validated
 
@@ -197,9 +213,9 @@ variable state beside a port is not a claim that an observation occurred at
 the port; it does not mean the value occurred at, originated at, travelled
 through, or describes the port.
 
-## Stop condition
+## Historical Slice D stop condition — satisfied
 
-Stop when Slice D is implemented, independently adversarially reviewed,
-dual-clean-checkout verified, committed, and awaiting final owner acceptance.
-Do not declare VP-001 owner accepted, begin behavior evaluation, or broaden the
-demonstration beyond the one approved synthetic VPA.
+Slice D stopped after implementation, independent adversarial review, and
+dual-clean-checkout verification. The owner subsequently accepted VP-001 in
+full. No behavior evaluation was begun and the demonstration remained bounded
+to the one approved synthetic VPA.

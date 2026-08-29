@@ -1,9 +1,26 @@
 # VP-001 Slice C — implementation plan
 
-Status: VP-001 Slices A, B, and C are owner accepted. Slice D is implemented
-and adversarially reviewed; awaiting final owner acceptance.
+Status: VP-001 complete, owner accepted, adversarially reviewed, and
+dual-clean-checkout verified. The final implementation HEAD before the
+administrative acceptance commit is
+`82fcb93b233db180d5d2d6c54d465dad390f08a5`.
 The accepted Slice B base is
 `81179700513bb671cf9955c6a5d7163e3bcc7e1b`.
+
+The accepted VPA is
+`vpa_f6443787fc9665e24cae80a5ba0650d0bda8abefe87cb60427c8b39068932e49`;
+its file SHA-256 is
+`95f9390f784600b2f7a17e74a540d6874722039be5d093614c15a716ff08034e`.
+The pre-VP and final revisions are
+`mrv_c6244b6dc41de599de9894b55f4064e41ba5260e7d00f50bffc1e1e63da560a2`
+and
+`mrv_18da4ce963ab5c4b1121cdcc009eaaef4cd1c5c11034f4678c6437361ffd7652`.
+The VP and PT artifact SHA-256 values are
+`a150e10317982ccc6330fa17a921128d3cf31ee9d6b710ef0ad8ea23f63e4ea3`
+and
+`53dd32846956d10331dfca8fc370ef7d7019325904a062db5f037605aa4cf3d8`.
+Displaying variable state beside a port does not mean the observation occurred
+at, originated at, travelled through, or describes the port.
 
 ## Decision being validated
 
