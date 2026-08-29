@@ -1,10 +1,12 @@
 # BH-001 Slice B — read-only kernel query implementation plan
 
-Status: Slice A owner accepted at
-`57edec37b40c5da0c300cc1333fbb3cf5d7bb41a`. Slice B is owner-authorized and
+Status: Slice A implementation owner accepted at
+`57edec37b40c5da0c300cc1333fbb3cf5d7bb41a`, with acceptance recorded by the
+separate administrative commit
+`c39c674a95ad04c68250e23e86b169399a9547dd`. Slice B is owner-authorized and
 planned here before production code. Slices C and D remain unstarted.
 
-Accepted base for Slice B: `57edec37b40c5da0c300cc1333fbb3cf5d7bb41a`.
+Slice B starting HEAD: `c39c674a95ad04c68250e23e86b169399a9547dd`.
 
 Authoritative specification:
 `docs/superpowers/specs/2026-08-29-bh001-explicit-behavior-and-evidence-gated-evaluation-design.md`.
@@ -215,6 +217,12 @@ index access. A valid absent ID returns `not_found`. A BRG and BHW disclose
 their record indices but no lifecycle/root fields. A BHD discloses direct
 successors, withdrawals, activity, containing-root health, and aggregate
 exact-subject conclusion/findings as independent dimensions.
+
+For an absent ID or a found BRG/BHW, scalar lifecycle/root fields and the
+subject-specific `containing_agreement_findings` field are explicitly `None`;
+only `successor_indices` and `withdrawal_indices` are canonical empty tuples.
+For a found BHD, `containing_agreement_findings` is the canonical tuple,
+including an empty tuple when no finding applies.
 
 ## 7. Authoritative reconstruction gate
 
