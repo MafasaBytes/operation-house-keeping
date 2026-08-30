@@ -1,6 +1,8 @@
 # ST-001 Slice B — Read-Only Kernel Queries Implementation Plan
 
-Status: Slice A owner accepted at `9adcf4d9613ac96e5fb430a4b750f3053679b64d`; Slice B authorized; Slices C-D unauthorized
+Status: Slice A owner accepted at `9adcf4d9613ac96e5fb430a4b750f3053679b64d`; Slice B implemented and adversarially reviewed, awaiting owner acceptance; Slices C-D unauthorized and unstarted
+
+Slice B is implemented and adversarially reviewed; awaiting owner acceptance.
 
 Date: 2026-08-30
 

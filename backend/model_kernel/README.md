@@ -262,8 +262,8 @@ verified, and dual-clean-checkout verified. The accepted evaluator
 demonstration remains `not_executed` and asserts no observed equality or
 real-machine truth.
 
-ST-001's corrected final design is owner accepted and Slice A is implemented
-for owner review. Slice A adds only the foundational ledger contracts:
+ST-001's corrected final design is owner accepted and Slice A is owner
+accepted. Slice A adds only the foundational ledger contracts:
 permanent entity-scoped `StateRegistration` (`srg_`), exact-context
 `StateDeclaration` (`std_`), and minimal current-tip
 `StateDeclarationWithdrawal` (`stw_`). A registration permanently fixes one
@@ -272,6 +272,18 @@ constraint and fixes `independent_latest_at_or_before_cutoff` as its later
 classification basis. State records remain explicit evidence-bearing model
 knowledge. Slice A performs no constraint evaluation or temporal
 classification, does not infer state from observations, and does not implement state transitions.
-The committed demo ledger remains the accepted 32-record
-BH-001 revision with zero SRG, STD, or STW records. Slices B-D and all ST-002
-transition work remain unstarted pending separate owner gates.
+Slice B adds exactly four read-only `ModelQueries` methods: `state()`,
+`state_declaration()`, `states_of_entity()`, and `state_assertion()`. Their
+frozen results carry `ModelQueryMaterial` exactly once, disclose canonical
+roots, tips, withdrawals, effective-body agreement, assertion activity, and
+exact-context lifecycle, and authoritatively reconstruct every derived field
+without a store or filesystem. Identical independent healthy roots
+corroborate; same-root forks and differing active effective bodies remain
+conflicted; inactive roots remain visible. IDs order disclosure only and
+never select a winner. Slice B is implemented and adversarially reviewed;
+awaiting owner acceptance.
+
+The committed demo ledger remains the accepted 32-record BH-001 revision with
+zero SRG, STD, or STW records. Slices C-D and all ST-002 transition work remain
+unstarted pending separate owner gates. No query infers state from a
+constraint, observation, hierarchy, port, VPA, behavior, name, or ownership.

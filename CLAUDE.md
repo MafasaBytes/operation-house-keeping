@@ -859,8 +859,10 @@ model-ledger foundation, canonical/store integration, immutable indexes,
 membership-relative declaration lifecycle, replay, tests, and documentation.
 The permanent state subject is one registered entity; every registered
 condition must target a variable whose embedded owner exactly equals that
-entity. Declarations pin exact VCN records. Slice B is separately authorized
-for exactly four read-only model-kernel state queries. State classification,
+entity. Declarations pin exact VCN records. Slice B implements exactly four
+read-only model-kernel state queries and their carry-once, store-independent,
+authoritatively reconstructed result contracts. Slice B is implemented and
+adversarially reviewed; awaiting owner acceptance. State classification,
 fixture records, state families, and every transition capability remain
 unstarted and unauthorized in Slices C-D. The authoritative demo remains 32
 records through Slice B.

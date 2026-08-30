@@ -1,6 +1,6 @@
 # ADR-0016 — Explicit state identity and evidence-gated classification
 
-Status: ST-001 corrected final design and Slice A owner accepted; Slice B separately authorized; Slices C-D unstarted and not authorized
+Status: ST-001 corrected final design and Slice A owner accepted; Slice B implemented and adversarially reviewed, awaiting owner acceptance; Slices C-D unstarted and not authorized
 
 Date: 2026-08-30
 
@@ -53,8 +53,8 @@ or state-machine execution.
 9. Use only the existing model ledger, `ModelStore`, `LoadedModel`, and `mrv_`
    revision. Add no state ledger, store, database, projection, cache, or
    revision.
-10. Slice B will later add exactly four read-only kernel methods, but they are
-    not authorized in Slice A.
+10. Slice B adds exactly four read-only kernel methods with carry-once,
+    store-independent, authoritatively reconstructed result contracts.
 11. Slice C will later add read-only `backend.state_classification`, composing
     public `ConstraintEvaluationQueries`; it is not authorized in Slice A.
 12. Slice D will later be separately rehearsed and owner-gated before a
@@ -90,7 +90,8 @@ Slice B is separately authorized for exactly the four read-only
 `ModelQueries` state methods and their carry-once, store-independent,
 authoritatively reconstructed result contracts. It does not authorize state
 classification, CN composition, temporal selection, demonstration records, or
-transition work. Slices C and D remain unstarted and unauthorized.
+transition work. Slice B is implemented and adversarially reviewed; awaiting
+owner acceptance. Slices C and D remain unstarted and unauthorized.
 
 ## Consequences
 
