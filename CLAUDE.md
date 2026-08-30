@@ -825,3 +825,9 @@ scheduling questions are resolved. BH-001 Slices A, B, and C are owner
 accepted. Slice C is accepted at
 `8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521`. Only the Slice D pre-append
 rehearsal gate is owner authorized; the authoritative append has not started.
+The Slice D public-variable-minter discrepancy is owner resolved: add and
+separately commit the exact narrow `mint_variable_anchor()` API before any
+candidate allocation, then resume only two independent disposable-ledger
+rehearsals. Each disposable ledger contains one parentless BHD and exactly one
+behavior lineage root. The authoritative append remains prohibited until the
+exact candidates and artifact contract receive owner approval.

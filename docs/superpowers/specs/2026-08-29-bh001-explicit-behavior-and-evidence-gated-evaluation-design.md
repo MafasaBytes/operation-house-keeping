@@ -9,6 +9,8 @@ resolved normatively in this document. All four contract questions are
 resolved. BH-001 Slices A, B, and C are owner accepted. Slice C is accepted at
 `8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521`. Only the Slice D pre-append
 rehearsal gate is owner authorized; the authoritative append has not started.
+The Slice D public-variable-minter discrepancy is owner resolved by the exact
+narrow API and sequencing contract in Section 31.
 
 Repository baseline: `main` at
 `46c04ed6f6f09b254b2f52f07611e2efbdd1d4f6`.
@@ -1571,7 +1573,7 @@ treats a payload checksum alone as authentication.
 | Import/isolation | Kernel remains downward-only; evaluator owns no store/path/cache/database and performs no writes; public CN parser is the only CN dependency |
 | Non-inference | Names, owner, hierarchy, CAD, PIF, PCN, PCM, VPA, ES compatibility, CN result, temporal correlation create no behavior |
 | Replay | Explicit 9/10/11/14/16/18/28/29 memberships unchanged; pre-BH structured absence; no enumeration-derived membership |
-| Demo | Rehearse VRG+BRG+BHD and artifact generation through public APIs in a disposable ledger before authoritative append; repeat to prove identical identities, hashes, membership order, revision, artifact bytes/size/SHA; present those values at the Slice D owner gate; append only after approval; current result not executed; equal/different fixtures disposable only |
+| Demo | After the separately committed public minter is green, allocate each candidate once and freeze its manifest; reconstruct those frozen mappings for VRG+BRG+BHD and artifact generation in two independent disposable ledgers before authoritative append; prove identical hashes, membership order, revision, artifact bytes/size/SHA; present those values at the Slice D owner gate; append only after approval; current result not executed; equal/different fixtures disposable only |
 | Binding seam | Exactly one pinned BH variable may lack AnchorDeclaration; all old anchors exact; second undeclared variable fails; binding bytes/revisions unchanged |
 
 Acceptance requires deterministic serialized output under reversed input maps,
@@ -1591,14 +1593,19 @@ Exact anchors, content-derived record IDs, membership order, model revision,
 record hashes, artifact bytes, artifact size, and artifact SHA-256 are
 intentionally not invented during design.
 
-Before any authoritative ledger mutation, Slice D must rehearse the complete
-append and disclosure-artifact generation in a disposable copy of the accepted
-29-record model ledger. The rehearsal uses only public identity minters,
-canonical record builders, `ModelStore` append/load/replay operations, and
-public query APIs. It hashes every predecessor file before and after the
-rehearsal and performs no write to the authoritative ledger.
+Before any authoritative ledger mutation, Slice D first commits the exact
+public variable minter green, invokes each public minter once, and freezes the
+complete serialized candidate anchors. It then rehearses the complete append
+and disclosure-artifact generation in a disposable copy of the accepted
+29-record model ledger by reconstructing those frozen mappings through public
+anchor contracts. From that point it uses only canonical record builders,
+`ModelStore` append/load/replay operations, and public query APIs. It hashes
+every predecessor file before and after the rehearsal and performs no write to
+the authoritative ledger.
 
-The complete rehearsal is repeated in independent disposable roots. The runs
+The complete rehearsal is repeated in two independent disposable ledger roots
+without invoking either minter again. Each ledger has one parentless BHD and
+one behavior lineage root. The runs
 must produce byte-identical records and artifact output, the same canonical
 membership order, and the same final model revision. Slice D then presents the
 derived anchors, canonical record IDs and file hashes, explicit membership,
@@ -1771,9 +1778,12 @@ Only after Slices A-C acceptance:
 
 1. write the bounded fixture and artifact-generation specification without
    inventing final content-derived identities;
-2. rehearse the complete append and artifact generation in a disposable copy
-   using public minters, builders, stores, replay, and query APIs;
-3. repeat the rehearsal in independent disposable roots and require identical
+2. after the separately committed public variable minter is green, invoke each
+   public minter once and freeze the complete serialized anchor mappings;
+3. rehearse the complete append and artifact generation in two independent
+   disposable ledger copies by reconstructing those frozen mappings, without
+   invoking either minter again, and use public builders, stores, replay, and
+   query APIs; require identical
    anchors, record IDs, hashes, membership order, final revision, artifact
    bytes, artifact size, and artifact SHA-256;
 4. prove every existing record byte is unchanged;
@@ -1887,8 +1897,10 @@ with no remaining architectural blocker.
 No BH-001 design question remains unresolved.
 
 Slice D identities and artifact values are intentionally derived rather than
-invented during design. Disposable rehearsals using public minters, builders,
-stores, replay, and query APIs must deterministically establish the exact
+invented during design. After the minter implementation is separately committed
+green, one public allocation per candidate freezes the manifest. Two disposable
+ledger rehearsals reconstruct that manifest and use public builders, stores,
+replay, and query APIs to deterministically establish the exact
 anchors, canonical record IDs and hashes, membership order, final revision,
 artifact bytes, artifact size, and artifact SHA-256. Those results are
 presented for owner approval before any authoritative append. This is the
@@ -1945,7 +1957,60 @@ are recorded here only to prevent accidental reintroduction:
 - Persisted derived values, equality-as-constraint, and real-printer target or
   control demonstrations were rejected.
 
-The normative behavior of BH-001 is defined by Sections 4 through 29. This
-document authorizes no code, test, fixture, ledger, artifact, or history change.
+The normative behavior of BH-001 is defined by Sections 4 through 29 and the
+owner-resolved Slice D gate in Section 31. This document authorizes no code,
+test, fixture, ledger, artifact, or history change beyond an explicit owner
+gate.
+
+## 31. Owner-resolved Slice D public variable minter gate
+
+Owner resolution: add the narrowly scoped public `mint_variable_anchor()` API, commit it green before candidate allocation, then resume only the disposable pre-append rehearsal.
+
+The exact public function is:
+
+```python
+def mint_variable_anchor(
+    *,
+    entity_anchor_id: str,
+    namespace: str,
+    display_name: str,
+    role_name: str | None = None,
+) -> VariableAnchor:
+    ...
+```
+
+It generates one UUID4 using standard-library `uuid4().hex`, prefixes the
+lowercase 32-hex value with `var_`, constructs the existing public
+`VariableAnchor`, and preserves all supplied fields after that unchanged
+contract validates them. It performs no storage, I/O, authority assertion,
+registration, binding, persistence, model-record construction, deterministic
+seeding, name-derived identity, time capture, source-path use, or business
+interpretation. No `mint_entity_anchor` is added and no existing anchor,
+minter, identity grammar, serialization, or canonical record vector changes.
+
+Place `mint_variable_anchor` after `mint_port_anchor` in the ordered public
+minter sequence; no other public name is added. Exact tests pin its signature,
+return fields, UUID version and variant, uniqueness, supplied-field preservation,
+invalid/coercive input rejection, non-I/O architecture, and preservation of all
+existing public identity and canonical vectors.
+
+No candidate may be minted before the minter commit is green.
+
+After that separate commit, invoke each public minter exactly once: first the
+variable minter and then the behavior minter. Immediately serialize the two
+complete anchors into the owner-required manifest with status
+`non_authoritative_candidate`. Then never invoke either minter again;
+reconstruct and reuse those frozen values for both independent disposable
+ledger roots. Each ledger contains exactly one parentless BHD and therefore
+exactly one behavior lineage root. UUID4 allocation itself is not deterministic;
+identical outputs are required only from identical frozen candidate inputs.
+
+The historical discrepancy report remains authoritative evidence of the
+fail-closed stop. Its missing-minter finding is resolved, not erased.
+
+The authoritative append remains prohibited until the owner approves the exact
+candidate anchors, canonical records and hashes, explicit membership, final
+revision, query/evaluator disclosures, and artifact bytes and SHA-256 produced
+by the two disposable rehearsals.
 
 END OF BH-001 CORRECTED FINAL SYNTHESIS

@@ -246,3 +246,7 @@ are resolved without changing kernel contracts. BH-001 Slices A, B, and C are
 owner accepted. Slice C is accepted at
 `8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521`. Only the Slice D pre-append
 rehearsal gate is owner authorized; the authoritative append has not started.
+The missing public variable-anchor minter is owner resolved by a separately
+committed, narrowly scoped `mint_variable_anchor()` addition before candidate
+allocation. The authoritative append remains prohibited pending approval of
+the frozen candidate identities and deterministic rehearsal outputs.

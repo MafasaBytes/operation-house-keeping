@@ -7,15 +7,21 @@ owner accepted at `eedae19a9b2542958f44e66af7117a981c7faeef`; all four contract
 questions are resolved. BH-001 Slices A, B, and C are owner accepted. Slice C
 is accepted at `8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521`. Only the Slice D
 pre-append rehearsal gate is owner authorized; the authoritative append has
-not started.
+not started. The public variable-minter discrepancy is owner resolved by the
+exact narrow API addition described in Decision 17; candidate allocation may
+start only after that addition is separately committed and green.
 
 Accepted base: `main` at
 `46c04ed6f6f09b254b2f52f07611e2efbdd1d4f6`.
 
-Authoritative specification:
+Original corrected-design acceptance specification:
 `docs/superpowers/specs/2026-08-29-bh001-explicit-behavior-and-evidence-gated-evaluation-design.md`
 at SHA-256
 `2efdf75850d0e003e8524ac9603f5c3f2eedb769069f558e39029c952b2db978`.
+
+Current owner-amended authoritative specification at the Slice D minter
+resolution gate: SHA-256
+`26607abd4b1a6e05d6893ea1641a5fbc35e0c6c6d00dd7daafca9d95316135d4`.
 
 ## Context
 
@@ -129,6 +135,10 @@ composition.
     export list, and cohort/parser scheduling are fixed by the owner-resolved
     preimplementation discrepancy. Content-bound lower occurrence
     authentication remains separately owner-gated future work.
+17. Owner resolution: add the narrowly scoped public `mint_variable_anchor()` API, commit it green before candidate allocation, then resume only the disposable pre-append rehearsal. The function is keyword-only, calls standard-library `uuid4()` exactly once, uses `uuid4().hex` with the `var_` prefix, and returns the unchanged `VariableAnchor` contract. Export `mint_variable_anchor` after `mint_port_anchor`. It adds no entity minter, storage, I/O, authority, registration, binding, persistence, injected randomness, or semantic meaning. No candidate may be minted before the minter commit is green. After the implementation commit, invoke each public minter exactly once, freeze both serialized anchors, and never invoke either minter again; reconstruct the frozen values in both independent disposable ledger roots.
+
+The authoritative append remains prohibited until the exact candidates and
+artifact contract are owner approved.
 
 ## Consequences
 

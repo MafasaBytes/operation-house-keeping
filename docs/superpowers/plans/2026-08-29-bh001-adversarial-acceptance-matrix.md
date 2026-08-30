@@ -1,8 +1,9 @@
 # BH-001 — Adversarial Acceptance Matrix
 
-Status: BH-001 design and Slice A are owner accepted. Slice A is accepted at
-`57edec37b40c5da0c300cc1333fbb3cf5d7bb41a`. Slice B is owner-authorized but
-not yet implemented. Slices C and D are not started.
+Status: BH-001 Slices A, B, and C are owner accepted; Slice C is accepted at
+`8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521`. Only the owner-resolved Slice D
+public-variable-minter repair and disposable pre-append rehearsal are
+authorized. The authoritative append remains prohibited.
 
 Authoritative specification:
 `docs/superpowers/specs/2026-08-29-bh001-explicit-behavior-and-evidence-gated-evaluation-design.md`
@@ -264,8 +265,12 @@ records is green, every preservation hash is unchanged, specialist findings
 are reconciled, the completion report is persisted, and the work stops for
 owner acceptance.
 
-This matrix does not authorize Slice B queries, Slice C evaluation, or Slice D
-fixtures. It does not authorize a push, merge, rebase, reset, cherry-pick, or
-history rewrite.
+Owner resolution: add the narrowly scoped public `mint_variable_anchor()` API, commit it green before candidate allocation, then resume only the disposable pre-append rehearsal. Its exact red-first and preservation gates continue in
+`docs/superpowers/plans/2026-08-30-bh001-slice-d-preappend-acceptance-matrix.md`.
+No candidate may be minted before the minter commit is green. Thereafter mint
+each candidate with one invocation of its public minter, freeze it, never invoke
+either minter again, and reuse it in both independent disposable ledger roots.
+Each ledger has one behavior lineage root. This matrix does not authorize the authoritative Slice D fixture append,
+a push, merge, rebase, reset, cherry-pick, amend, or history rewrite.
 
 END OF BH-001 SLICE A ADVERSARIAL ACCEPTANCE MATRIX
