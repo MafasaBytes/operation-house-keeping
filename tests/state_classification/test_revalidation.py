@@ -7,11 +7,14 @@ from pydantic import ValidationError
 
 from backend.constraint_evaluation import ConstraintEvaluationResult
 from backend.state_classification import StateClassificationResult
-from tests.model_kernel.builders import registration
+from tests.model_kernel.builders import (
+    CON_A, CON_B, constraint_declaration, registration, upper_bound)
+from tests.model_kernel.st001_slice_a_helpers import T0
 from tests.state_classification.helpers import (
     AS_DESIGNED,
     classify,
     condition_sources,
+    custom_state_model,
     state_model,
 )
 
@@ -36,9 +39,19 @@ def test_every_outer_derived_field_is_authoritative(tmp_path, field, value):
 
 @pytest.mark.parametrize("field,value", [
     ("condition_index", True),
+    ("condition_index", -1),
+    ("condition_index", 2),
     ("source_index", "0"),
+    ("source_index", -1),
+    ("source_index", 1),
+    ("source_index", 2),
     ("constraint_evaluation_index", 1.0),
+    ("constraint_evaluation_index", -1),
+    ("constraint_evaluation_index", 1),
+    ("constraint_evaluation_index", 2),
     ("candidate_index", False),
+    ("candidate_index", -1),
+    ("candidate_index", 2),
 ])
 def test_every_lightweight_index_is_strict_and_authoritative(
         tmp_path, field, value):
@@ -89,7 +102,8 @@ def test_forged_refusal_is_rejected(tmp_path, field):
 @pytest.mark.parametrize("field", [
     "condition_sources", "constraint_evaluations", "conditions",
 ])
-@pytest.mark.parametrize("mutation", ["missing", "duplicate", "reordered"])
+@pytest.mark.parametrize(
+    "mutation", ["missing", "duplicate", "reordered", "extra"])
 def test_carried_collections_are_complete_unique_and_canonical(
         tmp_path, field, mutation):
     payload = _payload(classify(tmp_path))
@@ -98,9 +112,64 @@ def test_carried_collections_are_complete_unique_and_canonical(
         rows = rows[:1]
     elif mutation == "duplicate":
         rows[1] = rows[0]
-    else:
+    elif mutation == "reordered":
         rows.reverse()
+    elif field == "condition_sources":
+        extra = dict(rows[-1])
+        extra["constraint_anchor_id"] = "con_" + "c" * 32
+        rows.append(extra)
+    elif field == "constraint_evaluations":
+        rows.append(rows[-1])
+    else:
+        extra = dict(rows[-1])
+        extra["condition_index"] = 2
+        rows.append(extra)
     payload[field] = rows
+    with pytest.raises(ValidationError):
+        StateClassificationResult.model_validate(payload)
+
+
+@pytest.mark.parametrize("mutation", ["missing", "duplicate", "extra"])
+def test_refusal_collection_is_complete_unique_and_authoritative(
+        tmp_path, mutation):
+    model, _, _ = state_model(tmp_path, declaration_records=())
+    payload = _payload(classify(tmp_path, model=model))
+    rows = list(payload["refusals"])
+    if mutation == "missing":
+        rows = []
+    elif mutation == "duplicate":
+        rows.append(dict(rows[0]))
+    else:
+        rows.append({
+            "reason": "condition_evaluation_not_evaluated",
+            "condition_index": 0,
+        })
+    payload["refusals"] = rows
+    with pytest.raises(ValidationError):
+        StateClassificationResult.model_validate(payload)
+
+
+def test_multiple_refusals_are_owned_ordered_and_cannot_be_reordered(tmp_path):
+    original = constraint_declaration(CON_A, predicate=upper_bound("80"))
+    correction = constraint_declaration(
+        CON_A, predicate=upper_bound("90"),
+        supersedes=(original.record_id,),
+        recorded_at=T0 + timedelta(hours=1))
+    unknown = constraint_declaration(CON_B, predicate=upper_bound("80"))
+    model, _ = custom_state_model(
+        tmp_path, declarations_a=(original, correction),
+        declarations_b=(unknown,), pinned_a=original, pinned_b=unknown)
+    result = classify(tmp_path, model=model)
+    assert [(item.reason, item.condition_index) for item in result.refusals] == [
+        ("condition_declaration_superseded", 0),
+        ("condition_evaluation_not_evaluated", 1),
+    ]
+    assert result.constraint_evaluations[1].candidates[0].not_evaluated_reason == (
+        "constraint_observation_role_mismatch")
+    assert "constraint_observation_role_mismatch" not in {
+        item.reason for item in result.refusals}
+    payload = _payload(result)
+    payload["refusals"] = tuple(reversed(payload["refusals"]))
     with pytest.raises(ValidationError):
         StateClassificationResult.model_validate(payload)
 
@@ -124,6 +193,20 @@ def test_mixed_model_revisions_and_stale_model_ids_are_rejected(tmp_path):
         if record["record_kind"] == "state_declaration")
     declaration["note"] = "stale content-derived id"
     with pytest.raises(ValidationError):
+        StateClassificationResult.model_validate(payload)
+
+
+@pytest.mark.parametrize("kind", ["semantic", "specification"])
+def test_stale_lower_model_projection_ids_are_rejected(tmp_path, kind):
+    payload = _payload(classify(tmp_path))
+    semantic = payload["constraint_evaluations"][0]["semantic_compatibility"]
+    if kind == "semantic":
+        record = semantic["semantics_result"]["quantity_kind"]["declaration"]
+    else:
+        record = semantic["value_compatibility"]["specification_result"][
+            "specification"]
+    record["note"] = "mutated content with stale model record id"
+    with pytest.raises(ValidationError, match="model facts"):
         StateClassificationResult.model_validate(payload)
 
 
@@ -165,8 +248,45 @@ def test_nested_model_copy_construct_and_hidden_extra_forgeries_reject(tmp_path)
         StateClassificationResult.model_validate(hidden)
 
 
+@pytest.mark.parametrize("target", ["observed", "evidence_quality"])
+def test_raw_nested_lower_mapping_extras_cannot_be_laundered(tmp_path, target):
+    payload = _payload(classify(tmp_path))
+    candidate = payload["constraint_evaluations"][0][
+        "semantic_compatibility"]["value_compatibility"]["candidates"][0]
+    if target == "observed":
+        mapping = candidate["state_candidate"]["bound"]["observed"]
+    else:
+        mapping = candidate["state_candidate"]["bound"]["observed"][
+            "evidence_quality"]
+    mapping["transition"] = "forged"
+    with pytest.raises(ValidationError, match="serialized shape"):
+        StateClassificationResult.model_validate(payload)
+
+
+@pytest.mark.parametrize("attack", ["cycle", "deep"])
+def test_hostile_raw_extra_shape_fails_closed_without_python_recursion(
+        tmp_path, attack):
+    payload = _payload(classify(tmp_path))
+    observed = payload["constraint_evaluations"][0][
+        "semantic_compatibility"]["value_compatibility"]["candidates"][0][
+            "state_candidate"]["bound"]["observed"]
+    if attack == "cycle":
+        observed["hostile"] = observed
+    else:
+        cursor = observed
+        for index in range(300):
+            nested = {"depth": index}
+            cursor["hostile"] = nested
+            cursor = nested
+    with pytest.raises(ValidationError):
+        StateClassificationResult.model_validate(payload)
+
+
 def test_store_and_filesystem_capabilities_are_not_used_for_revalidation(
         tmp_path, monkeypatch):
+    import builtins
+    import socket
+
     payload = _payload(classify(tmp_path))
 
     def forbidden(*args, **kwargs):
@@ -175,6 +295,8 @@ def test_store_and_filesystem_capabilities_are_not_used_for_revalidation(
     from backend.model_kernel import ModelStore
     for method in ("load", "replay", "append"):
         monkeypatch.setattr(ModelStore, method, forbidden)
+    monkeypatch.setattr(builtins, "open", forbidden)
+    monkeypatch.setattr(socket, "socket", forbidden)
     rebuilt = StateClassificationResult.model_validate(payload)
     assert rebuilt.model_dump(mode="python") == payload
 

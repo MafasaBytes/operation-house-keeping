@@ -125,6 +125,26 @@ def derive_classification(*, state, state_anchor_id, context, as_of,
             continue
         semantic = evaluation.semantic_compatibility
         evidence_state = semantic.value_compatibility.state
+        variable = loaded.variable_registrations_by_anchor.get(
+            declaration.registration.variable_anchor_id)
+        owner = (None if variable is None else
+                 loaded.registrations_by_anchor.get(
+                     variable.anchor.entity_anchor_id))
+        requested_owner = loaded.registrations_by_anchor.get(
+            registration.subject_entity_anchor_id)
+        if (
+            evidence_state.variable_registration != variable
+            or evidence_state.owner_registration != owner
+            or evidence_state.requested_entity_registration != requested_owner
+            or semantic.value_compatibility.specification_result
+            != ModelQueries(loaded).variable_value_specification(
+                declaration.registration.variable_anchor_id)
+            or semantic.semantics_result
+            != ModelQueries(loaded).variable_semantics(
+                declaration.registration.variable_anchor_id)
+        ):
+            raise ValueError(
+                "carried condition model facts differ from state material")
         if (
             evidence_state.requested_entity_anchor_id
             != registration.subject_entity_anchor_id

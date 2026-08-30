@@ -11,7 +11,8 @@ def test_classifier_owns_no_store_path_database_socket_or_write_capability():
     forbidden_imports = (
         "backend.model_kernel.store", "backend.identity_binding.store",
         "backend.temporal_state.store", "backend.source_interpretation.store",
-        "backend.data_sources", "sqlite3", "pathlib", "socket",
+        "backend.data_sources", "sqlite3", "pathlib", "socket", "subprocess",
+        "os", "time",
     )
     forbidden_names = (
         "ModelStore", "BindingStore", "TemporalStore", "InterpretationStore",
@@ -28,6 +29,14 @@ def test_classifier_owns_no_store_path_database_socket_or_write_capability():
                 imports.append(node.module or "")
         assert not any(name.startswith(forbidden_imports) for name in imports)
         assert not any(name in source for name in forbidden_names)
+        for node in ast.walk(tree):
+            if (isinstance(node, ast.Call)
+                    and isinstance(node.func, ast.Attribute)
+                    and node.func.attr in {
+                        "now", "utcnow", "today", "getenv", "write_text",
+                        "write_bytes", "connect", "send", "recv",
+                    }):
+                raise AssertionError(f"forbidden capability in {path}: {node.func.attr}")
 
 
 def test_lower_layers_never_import_state_classification():
@@ -72,3 +81,17 @@ def test_no_transition_or_aggregate_current_state_vocabulary():
         classification.StateClassificationConditionResult.model_fields)
     assert not public_names.intersection(forbidden)
     assert not public_fields.intersection(forbidden)
+
+
+def test_no_temporal_alignment_policy_is_added_to_public_contracts():
+    import backend.state_classification as classification
+
+    forbidden = (
+        "cohort", "skew", "freshness", "fresh", "aging", "stale",
+        "interpolation", "resampling", "lag", "max_age", "clock_equivalence",
+        "synchronized", "simultaneous",
+    )
+    names = tuple(classification.__all__)
+    fields = tuple(classification.StateClassificationResult.model_fields)
+    assert not any(term in name.lower() for term in forbidden for name in names)
+    assert not any(term in field.lower() for term in forbidden for field in fields)

@@ -496,7 +496,9 @@ def test_kernel_import_direction_and_slice_boundary_remain_exact():
             elif isinstance(node, ast.ImportFrom):
                 imports.append(node.module or "")
     assert not any(name.startswith(forbidden) for name in imports)
-    assert not Path("backend/state_classification").exists()
+    # Slice C exists strictly above the kernel; the import scan above is the
+    # enduring boundary now that the owner authorized classification.
+    assert Path("backend/state_classification").is_dir()
     for method in (
         "state", "state_declaration", "states_of_entity", "state_assertion"):
         assert hasattr(kernel.ModelQueries, method)

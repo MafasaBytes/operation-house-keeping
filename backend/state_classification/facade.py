@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from datetime import UTC, datetime
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
@@ -11,7 +12,7 @@ from backend.model_kernel import AssertionContext, ModelQueries
 from backend.state_classification.contracts import (
     StateClassificationResult,
     StateConditionSource,
-    UtcDatetime,
+    _assert_no_hidden_instance_fields,
 )
 from backend.state_classification.derivation import derive_classification
 from backend.state_classification.errors import (
@@ -114,10 +115,17 @@ class StateClassificationQueries:
         ):
             raise _input_error("state_anchor_id is malformed")
         try:
+            _assert_no_hidden_instance_fields((context, condition_sources))
             context = _CONTEXT.validate_python(_dump(context))
-            as_of = TypeAdapter(UtcDatetime).validate_python(as_of)
+            if (not isinstance(as_of, datetime)
+                    or as_of.tzinfo is None
+                    or as_of.tzinfo.utcoffset(as_of) is None):
+                raise ValueError("as_of must be a timezone-aware datetime")
+            as_of = as_of.astimezone(UTC)
             if not isinstance(condition_sources, (tuple, list)):
                 raise ValueError("condition_sources must be a tuple")
+            if len(condition_sources) > 64:
+                raise ValueError("at most 64 condition sources are permitted")
             sources = tuple(
                 StateConditionSource.model_validate(item)
                 for item in condition_sources)

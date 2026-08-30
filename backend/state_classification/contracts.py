@@ -111,14 +111,67 @@ def _dump(value):
             if isinstance(value, BaseModel) else value)
 
 
+def _serialized_shape(value):
+    """Describe every mapping key and sequence position, but not leaf values."""
+    signature = []
+    pending = [("visit", (), value, 0)]
+    active: set[int] = set()
+    node_count = 0
+    while pending:
+        operation, path, item, depth = pending.pop()
+        if operation == "exit":
+            active.remove(item)
+            continue
+        node_count += 1
+        if node_count > 200_000:
+            raise ValueError("serialized model shape exceeds the node limit")
+        if depth > 128:
+            raise ValueError("serialized model shape exceeds the depth limit")
+        item = _dump(item)
+        if isinstance(item, Mapping):
+            identity = id(item)
+            if identity in active:
+                raise ValueError("serialized model shape is cyclic")
+            active.add(identity)
+            if any(not isinstance(key, str) for key in item):
+                raise ValueError("serialized model mappings require string keys")
+            keys = tuple(sorted(item))
+            signature.append((path, "mapping", keys))
+            pending.append(("exit", (), identity, 0))
+            for key in reversed(keys):
+                pending.append(("visit", (*path, key), item[key], depth + 1))
+        elif isinstance(item, (tuple, list)):
+            identity = id(item)
+            if identity in active:
+                raise ValueError("serialized model shape is cyclic")
+            active.add(identity)
+            signature.append((path, "sequence", len(item)))
+            pending.append(("exit", (), identity, 0))
+            for index in range(len(item) - 1, -1, -1):
+                pending.append((
+                    "visit", (*path, index), item[index], depth + 1))
+        else:
+            signature.append((path, "leaf", None))
+    return tuple(signature)
+
+
+def _rebuild_content(value, contract, label):
+    raw = _dump(value)
+    rebuilt = contract.model_validate(raw)
+    content = rebuilt.model_dump(mode="python", warnings=False)
+    if _serialized_shape(raw) != _serialized_shape(content):
+        raise ValueError(f"{label} serialized shape changed during reconstruction")
+    return content
+
+
 def _rebuild_tuple(value, contract, label):
     if not isinstance(value, (tuple, list)):
         raise ValueError(f"{label} must be a tuple")
-    # Return serialized content. The annotated field contract performs the
-    # actual reconstruction after the base hidden-instance guard has seen a
-    # content-only graph. This avoids handing accepted lower result models
-    # back to validators that intentionally reject their private row bindings.
-    return tuple(_dump(item) for item in value)
+    # Return serialized content. The annotated field contract performs its
+    # final reconstruction after the hidden-instance guard has seen a
+    # content-only graph. Shape equality prevents permissive legacy lower
+    # contracts from silently discarding raw nested mapping keys.
+    return tuple(_rebuild_content(item, contract, label) for item in value)
 
 
 class StateConditionSource(_Frozen):
@@ -174,9 +227,18 @@ class StateClassificationResult(_Frozen):
         if not isinstance(payload, dict):
             return payload
         if "state" in payload:
-            payload["state"] = _dump(payload["state"])
+            payload["state"] = _rebuild_content(
+                payload["state"], StateDeclarationResult, "state result")
         if "context" in payload:
-            payload["context"] = _dump(payload["context"])
+            raw_context = _dump(payload["context"])
+            rebuilt_context = _CONTEXT.validate_python(raw_context)
+            context_content = rebuilt_context.model_dump(
+                mode="python", warnings=False)
+            if _serialized_shape(raw_context) != _serialized_shape(
+                    context_content):
+                raise ValueError(
+                    "context serialized shape changed during reconstruction")
+            payload["context"] = context_content
         for field, contract, label in (
             ("condition_sources", StateConditionSource, "condition sources"),
             ("constraint_evaluations", ConstraintEvaluationResult,

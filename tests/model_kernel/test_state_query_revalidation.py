@@ -689,4 +689,6 @@ def test_query_and_state_result_modules_are_store_and_upper_layer_isolated():
         assert "time(" not in source
         assert "Path(" not in source
         assert "open(" not in source
-    assert not Path("backend/state_classification").exists()
+    # Slice C is now the authorized upper composition layer. Its existence
+    # must not weaken the kernel-side import prohibition checked above.
+    assert Path("backend/state_classification").is_dir()

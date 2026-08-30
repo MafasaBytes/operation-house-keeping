@@ -11,9 +11,12 @@ from tests.model_kernel.st001_slice_a_helpers import AS_DESIGNED, STATE_B
 from tests.state_classification.helpers import (
     AS_OF,
     AS_OPERATED,
+    E1,
     classify,
+    condition_records,
     condition_sources,
     conflicted_model,
+    custom_state_model,
     facade,
     inactive_model,
     state_model,
@@ -130,3 +133,61 @@ def test_context_changes_state_lifecycle_without_selecting_model_or_cn(tmp_path)
     assert operated.computed_match == "matches"
     assert designed.computed_match is None
     assert designed.refusals[0].reason == "state_not_declared"
+
+
+def test_identical_independent_healthy_std_roots_corroborate_and_execute(
+        tmp_path):
+    from tests.model_kernel.st001_slice_a_helpers import (
+        T1, pins, state_declaration, state_registration)
+
+    _, declarations = condition_records()
+    registration = state_registration(
+        subject=E1, constraints=(CON_A, CON_B), second_owner=E1)
+    first = state_declaration(
+        registration, context=AS_OPERATED,
+        condition_pins=pins(declarations=declarations), note="first root")
+    second = state_declaration(
+        registration, context=AS_OPERATED,
+        condition_pins=pins(declarations=declarations),
+        recorded_at=T1, note="second root")
+    model, _ = custom_state_model(
+        tmp_path, declarations_a=(declarations[CON_A],),
+        declarations_b=(declarations[CON_B],),
+        state_declarations=(first, second))
+    result = classify(tmp_path, model=model)
+    assert result.state.conclusion == "declared"
+    assert result.state.agreement_findings == (
+        "corroborating_healthy_roots",)
+    assert len(result.state.roots) == 2
+    assert len(result.state.effective_body_groups) == 1
+    assert len(result.constraint_evaluations) == 2
+    assert result.execution == "executed"
+    assert result.computed_match == "matches"
+
+
+def test_withdrawn_corroborating_root_remains_disclosed_while_survivor_executes(
+        tmp_path):
+    from tests.model_kernel.st001_slice_a_helpers import (
+        T1, pins, state_declaration, state_registration, state_withdrawal)
+
+    _, declarations = condition_records()
+    registration = state_registration(
+        subject=E1, constraints=(CON_A, CON_B), second_owner=E1)
+    first = state_declaration(
+        registration, context=AS_OPERATED,
+        condition_pins=pins(declarations=declarations), note="inactive root")
+    second = state_declaration(
+        registration, context=AS_OPERATED,
+        condition_pins=pins(declarations=declarations),
+        recorded_at=T1, note="surviving root")
+    model, _ = custom_state_model(
+        tmp_path, declarations_a=(declarations[CON_A],),
+        declarations_b=(declarations[CON_B],),
+        state_declarations=(first, state_withdrawal(first), second))
+    result = classify(tmp_path, model=model)
+    assert result.state.conclusion == "declared"
+    assert result.state.agreement_findings == (
+        "one_healthy_root", "inactive_roots_present")
+    assert sorted(root.lineage_health for root in result.state.roots) == [
+        "healthy", "inactive"]
+    assert result.computed_match == "matches"

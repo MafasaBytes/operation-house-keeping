@@ -4,6 +4,7 @@ from datetime import datetime
 
 import pytest
 
+from backend.constraint_evaluation import NumericParityBreachError
 from backend.model_state import SourceSelector
 from backend.state_classification import (
     StateClassificationInputError,
@@ -24,6 +25,7 @@ from tests.state_classification.helpers import (
 @pytest.mark.parametrize("case", [
     "malformed_state", "malformed_context", "naive_cutoff",
     "non_tuple_sources", "malformed_source", "hidden_extra",
+    "forged_context",
 ])
 def test_invalid_requests_fail_before_kernel_or_cn_branch_access(
         tmp_path, monkeypatch, case):
@@ -41,6 +43,8 @@ def test_invalid_requests_fail_before_kernel_or_cn_branch_access(
         state = True
     elif case == "malformed_context":
         context = {"kind": "invented"}
+    elif case == "forged_context":
+        context = AS_OPERATED.model_copy(update={"transition": "forged"})
     elif case == "naive_cutoff":
         as_of = datetime(2026, 8, 7, 20, 30)
     elif case == "non_tuple_sources":
@@ -53,6 +57,39 @@ def test_invalid_requests_fail_before_kernel_or_cn_branch_access(
         queries.state_classification(
             state, context=context, as_of=as_of, condition_sources=sources)
     assert error.value.error_code == "STATE_CLASSIFICATION_INPUT_INVALID"
+    assert calls == []
+
+
+@pytest.mark.parametrize("cutoff", [True, 1, 1.0, "2026-08-07T20:30:00Z"])
+def test_coercible_cutoffs_are_typed_input_misuse_before_cn_access(
+        tmp_path, monkeypatch, cutoff):
+    model, _, _ = state_model(tmp_path)
+    queries = facade(tmp_path, model=model)
+    calls = []
+    monkeypatch.setattr(
+        queries.constraints, "constraint_evaluation",
+        lambda *args, **kwargs: calls.append((args, kwargs)))
+    with pytest.raises(StateClassificationInputError) as error:
+        queries.state_classification(
+            STATE_A, context=AS_OPERATED, as_of=cutoff,
+            condition_sources=condition_sources())
+    assert error.value.error_code == "STATE_CLASSIFICATION_INPUT_INVALID"
+    assert calls == []
+
+
+def test_condition_count_preflight_rejects_65_rows_before_reconstruction_or_cn(
+        tmp_path, monkeypatch):
+    model, _, _ = state_model(tmp_path)
+    queries = facade(tmp_path, model=model)
+    calls = []
+    monkeypatch.setattr(
+        queries.constraints, "constraint_evaluation",
+        lambda *args, **kwargs: calls.append((args, kwargs)))
+    rows = tuple({"hostile": index} for index in range(65))
+    with pytest.raises(StateClassificationInputError):
+        queries.state_classification(
+            STATE_A, context=AS_OPERATED, as_of=AS_OF,
+            condition_sources=rows)
     assert calls == []
 
 
@@ -79,20 +116,39 @@ def test_every_branch_runs_once_in_canonical_order_with_fixed_forwarding(
         row.source for row in result.condition_sources)
 
 
+def test_carried_cn_results_equal_direct_public_queries_byte_for_byte(tmp_path):
+    model, registration, _ = state_model(tmp_path)
+    queries = facade(tmp_path, model=model)
+    direct = tuple(
+        queries.constraints.constraint_evaluation(
+            row.constraint_anchor_id,
+            as_of=AS_OF,
+            entity_anchor_id=registration.subject_entity_anchor_id,
+            source=row.source)
+        for row in condition_sources())
+    result = queries.state_classification(
+        STATE_A, context=AS_OPERATED, as_of=AS_OF,
+        condition_sources=condition_sources())
+    assert tuple(item.model_dump_json() for item in result.constraint_evaluations) == (
+        tuple(item.model_dump_json() for item in direct))
+
+
 def test_all_branches_are_attempted_and_first_canonical_lower_error_propagates(
         tmp_path, monkeypatch):
     model, _, _ = state_model(tmp_path)
     queries = facade(tmp_path, model=model)
     calls = []
-    first = RuntimeError("first canonical lower failure")
-    second = LookupError("second canonical lower failure")
+    first = NumericParityBreachError(
+        "NUMERIC_PARITY_BREACH", "first canonical lower failure")
+    second = NumericParityBreachError(
+        "NUMERIC_PARITY_BREACH", "second canonical lower failure")
 
     def failing(constraint_anchor_id, **kwargs):
         calls.append(constraint_anchor_id)
         raise first if constraint_anchor_id == CON_A else second
 
     monkeypatch.setattr(queries.constraints, "constraint_evaluation", failing)
-    with pytest.raises(RuntimeError) as caught:
+    with pytest.raises(NumericParityBreachError) as caught:
         queries.state_classification(
             STATE_A, context=AS_OPERATED, as_of=AS_OF,
             condition_sources=condition_sources(reverse=True))
@@ -100,7 +156,7 @@ def test_all_branches_are_attempted_and_first_canonical_lower_error_propagates(
     assert calls == [CON_A, CON_B]
 
 
-def test_substituted_source_target_is_structural_input_misuse(tmp_path):
+def test_explicit_substituted_locator_is_preserved_without_discovery(tmp_path):
     model, _, _ = state_model(tmp_path)
     first, second = condition_sources()
     retargeted = StateConditionSource(
