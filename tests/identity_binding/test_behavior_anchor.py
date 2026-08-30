@@ -104,6 +104,7 @@ def test_system_identity_public_surface_is_exact_after_slice_a():
         "mint_behavior_anchor",
         "mint_constraint_anchor",
         "mint_port_anchor",
+        "mint_variable_anchor",
     }
     assert len(identity.__all__) == len(expected)
     assert set(identity.__all__) == expected

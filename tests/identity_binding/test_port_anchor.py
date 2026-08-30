@@ -139,6 +139,7 @@ def test_system_identity_exports_are_exact_after_pt001_identity_extension():
         "mint_behavior_anchor",
         "mint_constraint_anchor",
         "mint_port_anchor",
+        "mint_variable_anchor",
     ]
 
 

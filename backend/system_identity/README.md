@@ -3,7 +3,8 @@
 The canonical identity namespace shared between `identity_binding` and
 the model kernel: pure anchor value contracts (`EntityAnchor`,
 `VariableAnchor`, `ConstraintAnchor`, `PortAnchor`, and `BehaviorAnchor`) plus
-pure public UUID4 minters for constraint, port, and behavior identities — no
+pure public UUID4 minters for constraint, port, behavior, and variable
+identities — no
 storage, no I/O, no authority,
 and no dependency on any other backend module (enforced by test).
 
@@ -28,3 +29,10 @@ two-variable membership and fixed BH-001 rule family begin only at an explicit,
 evidence-bearing model-kernel `BehaviorRegistration`; names and shared
 ownership never create behavior. `mint_behavior_anchor()` creates only the
 opaque identity.
+
+`mint_variable_anchor()` creates one fresh opaque `var_` UUID4 identity and
+returns the unchanged `VariableAnchor` contract containing the explicitly
+supplied entity identity and human-facing names. The helper performs no lookup,
+registration, binding, authority assertion, storage, or persistence; its output
+becomes model knowledge only through an independently admitted
+`VariableRegistration`.

@@ -22,6 +22,7 @@ from backend.system_identity.minting import (
     mint_behavior_anchor,
     mint_constraint_anchor,
     mint_port_anchor,
+    mint_variable_anchor,
 )
 
 __all__ = [
@@ -38,4 +39,5 @@ __all__ = [
     "mint_behavior_anchor",
     "mint_constraint_anchor",
     "mint_port_anchor",
+    "mint_variable_anchor",
 ]
