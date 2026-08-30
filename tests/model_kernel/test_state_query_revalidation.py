@@ -6,13 +6,16 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+from types import MappingProxyType
 
 import pytest
 from pydantic import ValidationError
 
 import backend.model_kernel as kernel
 from backend.model_kernel.store import validate_record_collection
-from tests.model_kernel.builders import CON_A, ENT_A, constraint_declaration, upper_bound
+from tests.model_kernel.builders import (
+    CON_A, ENT_A, constraint_declaration, registration, upper_bound,
+)
 from tests.model_kernel.st001_slice_a_helpers import (
     AS_OPERATED, STATE_A, T1, condition_world_records, pins,
     state_declaration, state_registration, state_withdrawal, world,
@@ -256,6 +259,30 @@ def test_nested_construct_copy_and_hidden_extra_forgery_is_revalidated(
         pytest.fail(f"nested hostile instance was accepted: {index}")
 
 
+def test_mapping_wrapper_cannot_launder_hidden_nested_result_extra(tmp_path):
+    result, _, _ = conflict_result(tmp_path)
+    hostile_material = result.material.model_copy(
+        update={"winner": "forged"})
+    payload = {
+        **result.model_dump(mode="python"),
+        "material": hostile_material,
+    }
+    with pytest.raises(ValidationError):
+        type(result).model_validate(MappingProxyType(payload))
+
+
+def test_carried_revision_count_rejects_boolean_and_coercible_twins(tmp_path):
+    entity = registration(ENT_A)
+    loaded = validate_record_collection(
+        "demo-printer", {entity.record_id: entity})
+    result = kernel.ModelQueries(loaded).state(STATE_A)
+    for hostile in (True, False, "1", 1.0):
+        payload = result.model_dump(mode="python")
+        payload["material"]["revision"]["record_count"] = hostile
+        with pytest.raises(ValidationError):
+            type(result).model_validate(payload)
+
+
 def test_malformed_nested_collections_and_implication_fields_reject(tmp_path):
     result, _, _ = conflict_result(tmp_path)
     for field in ("roots", "effective_body_groups"):
@@ -302,6 +329,24 @@ def test_invalid_query_input_rejects_before_any_model_index_access(tmp_path):
     for call in calls:
         with pytest.raises(kernel.ModelQueryError):
             call()
+
+
+def test_forged_context_instance_rejects_before_any_model_index_access(
+        tmp_path):
+    loaded = world(tmp_path).load()
+
+    class ExplodingRecords(dict):
+        def __iter__(self):
+            raise AssertionError("model records were accessed")
+
+        def __getitem__(self, key):
+            raise AssertionError("model records were accessed")
+
+    object.__setattr__(loaded, "records", ExplodingRecords())
+    forged = AS_OPERATED.model_copy(update={"transition": "forged"})
+    with pytest.raises(kernel.ModelQueryError) as error:
+        kernel.ModelQueries(loaded).state_declaration(STATE_A, context=forged)
+    assert error.value.error_code == "MODEL_CONTEXT_INVALID"
 
 
 def test_result_revalidation_is_store_and_filesystem_independent(
