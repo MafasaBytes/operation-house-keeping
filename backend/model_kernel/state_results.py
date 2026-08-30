@@ -47,6 +47,34 @@ class _StateResult(BaseModel):
     model_config = ConfigDict(
         frozen=True, extra="forbid", revalidate_instances="always")
 
+    @model_validator(mode="before")
+    @classmethod
+    def _reject_hidden_instance_fields(cls, value):
+        """Reject extras that ``model_copy`` can hide from serialization."""
+        pending = [value]
+        seen: set[int] = set()
+        while pending:
+            item = pending.pop()
+            identity = id(item)
+            if identity in seen:
+                continue
+            seen.add(identity)
+            if isinstance(item, BaseModel):
+                fields = type(item).model_fields
+                stored = vars(item)
+                extras = getattr(item, "__pydantic_extra__", None)
+                if set(stored).difference(fields) or extras:
+                    raise ValueError(
+                        "pydantic result instance contains extra fields")
+                pending.extend(stored[field] for field in fields
+                               if field in stored)
+            elif isinstance(item, dict):
+                pending.extend(item.keys())
+                pending.extend(item.values())
+            elif isinstance(item, (tuple, list, set, frozenset)):
+                pending.extend(item)
+        return value
+
 
 def _dump_nested(value):
     return (value.model_dump(mode="python")
