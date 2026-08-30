@@ -288,6 +288,6 @@ is a read-only upper-layer composition and does not alter these kernel query
 contracts.
 
 The committed demo ledger remains the accepted 32-record BH-001 revision with
-zero SRG, STD, or STW records. All ST-002 transition work remains excluded. No
-query infers state from a
+zero SRG, STD, or STW records. All ST-002 transition work remains excluded.
+No query infers state from a
 constraint, observation, hierarchy, port, VPA, behavior, name, or ownership.
