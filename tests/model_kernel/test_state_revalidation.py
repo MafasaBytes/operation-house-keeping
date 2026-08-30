@@ -88,10 +88,10 @@ def ledger_tree_snapshot(store):
 
 def _normalized_index_value(value):
     if isinstance(value, Mapping):
-        items = [(_normalized_index_value(key), _normalized_index_value(item))
-                 for key, item in value.items()]
-        return sorted(items, key=lambda item: json.dumps(
-            item[0], sort_keys=True, separators=(",", ":")))
+        # Preserve observed mapping iteration order: sorting here would mask
+        # exactly the hash/input-order nondeterminism this projection tests.
+        return [(_normalized_index_value(key), _normalized_index_value(item))
+                for key, item in value.items()]
     if isinstance(value, (tuple, list)):
         return [_normalized_index_value(item) for item in value]
     if hasattr(value, "record_id"):
@@ -395,10 +395,14 @@ from tests.model_kernel.st001_slice_a_helpers import (
     state_withdrawal)
 from tests.model_kernel.test_state_revalidation import state_index_projection
 r = state_registration()
-one = state_declaration(r, note='one')
-two = state_declaration(r, note='two')
-event = state_withdrawal(one)
-records = (*condition_world_records(), r, one, two, event)
+root = state_declaration(r, note='root')
+left = state_declaration(r, supersedes=(root.record_id,), note='left')
+right = state_declaration(r, supersedes=(root.record_id,), note='right')
+partial = state_declaration(r, supersedes=(left.record_id,), note='partial')
+independent = state_declaration(r, note='independent')
+event = state_withdrawal(right)
+records = (*condition_world_records(), r, root, left, right, partial,
+           independent, event)
 loaded = validate_record_collection(
     'demo-printer', {item.record_id: item for item in reversed(records)})
 print(json.dumps({
@@ -426,9 +430,15 @@ def test_physical_append_and_enumeration_order_do_not_change_state_indexes(
         }
     }
     registration = state_registration()
-    one = state_declaration(registration, note="one")
-    two = state_declaration(registration, note="two")
-    event = state_withdrawal(one)
+    root = state_declaration(registration, note="root")
+    left = state_declaration(
+        registration, supersedes=(root.record_id,), note="left")
+    right = state_declaration(
+        registration, supersedes=(root.record_id,), note="right")
+    partial = state_declaration(
+        registration, supersedes=(left.record_id,), note="partial")
+    independent = state_declaration(registration, note="independent")
+    event = state_withdrawal(right)
 
     def make_store(path, *, reverse):
         store = kernel.ModelStore(path / "demo-printer")
@@ -440,7 +450,11 @@ def test_physical_append_and_enumeration_order_do_not_change_state_indexes(
             for record in (reversed(records) if reverse else records):
                 store.append(record)
         store.append(registration)
-        for record in ((two, one) if reverse else (one, two)):
+        declarations = (
+            (independent, root, right, left, partial)
+            if reverse else
+            (root, left, right, partial, independent))
+        for record in declarations:
             store.append(record)
         store.append(event)
         return store
@@ -450,7 +464,8 @@ def test_physical_append_and_enumeration_order_do_not_change_state_indexes(
     assert forward.revision == reverse.revision
     assert state_index_projection(forward) == state_index_projection(reverse)
 
-    direct_records = (*base, registration, one, two, event)
+    direct_records = (
+        *base, registration, root, left, right, partial, independent, event)
     direct = validate_record_collection(
         "demo-printer", {record.record_id: record
                          for record in reversed(direct_records)})
