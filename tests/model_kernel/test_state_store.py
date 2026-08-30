@@ -129,9 +129,15 @@ class TestStateRegistrationAdmission:
 
     def test_same_state_anchor_cannot_be_registered_twice(self, tmp_path):
         store = world(tmp_path)
+        # Exact content identity is the store-wide validated idempotent no-op.
+        before = store.load().revision
+        assert store.append(state_registration()) == state_registration().record_id
+        assert store.load().revision == before
         for duplicate in (
-            state_registration(),
-            state_registration(note="divergent audit registration"),
+            state_registration(note="agreeing skeleton, distinct audit record"),
+            state_registration(
+                constraints=(CON_A,),
+                note="divergent permanent condition skeleton"),
         ):
             assert_atomic_rejection(
                 store, duplicate, "MODEL_DUPLICATE_REGISTRATION")

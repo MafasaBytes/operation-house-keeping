@@ -48,6 +48,9 @@ from backend.model_kernel.contracts import (
     RelationshipAssertion,
     RelationshipTypeDefinition,
     RelationshipWithdrawal,
+    StateDeclaration,
+    StateDeclarationWithdrawal,
+    StateRegistration,
     VariableConstraintDeclaration,
     VariablePortAssociation,
     VariablePortAssociationWithdrawal,
@@ -174,6 +177,24 @@ class LoadedModel:
     behavior_rule_withdrawals: Mapping[str, BehaviorRuleWithdrawal] = _EMPTY
     behavior_rule_withdrawn_by: Mapping[str, tuple[str, ...]] = _EMPTY
     behavior_rule_withdrawals_by_target: Mapping[
+        str, tuple[str, ...]] = _EMPTY
+    state_registrations: Mapping[str, StateRegistration] = _EMPTY
+    state_registrations_by_anchor: Mapping[str, StateRegistration] = _EMPTY
+    state_anchor_ids_by_subject_entity: Mapping[str, tuple[str, ...]] = _EMPTY
+    state_condition_constraint_ids_by_anchor: Mapping[
+        str, tuple[str, ...]] = _EMPTY
+    state_declarations: Mapping[str, StateDeclaration] = _EMPTY
+    state_declaration_ids_by_key: Mapping[tuple, tuple[str, ...]] = _EMPTY
+    state_declaration_parent_ids: Mapping[str, tuple[str, ...]] = _EMPTY
+    state_declaration_successor_ids: Mapping[str, tuple[str, ...]] = _EMPTY
+    state_declaration_root_by_id: Mapping[str, str] = _EMPTY
+    state_declaration_ancestry_by_id: Mapping[str, tuple[str, ...]] = _EMPTY
+    current_state_declaration_tips_by_root: Mapping[
+        str, tuple[StateDeclaration, ...]] = _EMPTY
+    state_declaration_withdrawals: Mapping[
+        str, StateDeclarationWithdrawal] = _EMPTY
+    state_declaration_withdrawn_by: Mapping[str, tuple[str, ...]] = _EMPTY
+    state_declaration_withdrawals_by_target: Mapping[
         str, tuple[str, ...]] = _EMPTY
 
 
@@ -325,6 +346,10 @@ def validate_record_collection(
     behavior_registrations: dict[str, BehaviorRegistration] = {}
     behavior_rule_declarations: dict[str, BehaviorRuleDeclaration] = {}
     behavior_rule_withdrawals: dict[str, BehaviorRuleWithdrawal] = {}
+    state_registrations: dict[str, StateRegistration] = {}
+    state_declarations: dict[str, StateDeclaration] = {}
+    state_declaration_withdrawals: dict[
+        str, StateDeclarationWithdrawal] = {}
     types: dict[str, RelationshipTypeDefinition] = {}
     assertions: dict[str, RelationshipAssertion] = {}
     withdrawals: dict[str, RelationshipWithdrawal] = {}
@@ -368,6 +393,9 @@ def validate_record_collection(
             "behavior_registration": behavior_registrations,
             "behavior_rule_declaration": behavior_rule_declarations,
             "behavior_rule_withdrawal": behavior_rule_withdrawals,
+            "state_registration": state_registrations,
+            "state_declaration": state_declarations,
+            "state_declaration_withdrawal": state_declaration_withdrawals,
             "relationship_type_definition": types,
             "relationship_assertion": assertions,
             "relationship_withdrawal": withdrawals,
@@ -1213,6 +1241,187 @@ def validate_record_collection(
                 *current_behavior_rule_tips_by_root[root],
                 behavior_rule_declarations[record_id])
 
+    # -- states: permanent entity-scoped condition skeleton plus an exact-
+    # context, multi-root declaration correction DAG. State registration and
+    # declaration are explicit model knowledge only; no observation, match,
+    # transition, hierarchy, port, VPA, or behavior inference occurs here.
+    state_registrations_by_anchor: dict[str, StateRegistration] = {}
+    state_anchor_ids_by_subject_entity: dict[str, tuple[str, ...]] = {}
+    state_condition_constraint_ids_by_anchor: dict[str, tuple[str, ...]] = {}
+    for record_id in sorted(state_registrations):
+        registration = state_registrations[record_id]
+        anchor_id = registration.anchor.anchor_id
+        existing = state_registrations_by_anchor.get(anchor_id)
+        if existing is not None:
+            _fail("MODEL_DUPLICATE_REGISTRATION",
+                  f"state {anchor_id} is registered more than once "
+                  f"({existing.record_id}, {record_id})")
+        subject_id = registration.subject_entity_anchor_id
+        subject = registrations_by_anchor.get(subject_id)
+        if subject is None:
+            _fail("MODEL_REFERENCE_INVALID",
+                  f"state registration {record_id} references an "
+                  "unregistered subject entity")
+        required_citations = {subject.record_id}
+        for constraint_id in registration.condition_constraint_anchor_ids:
+            constraint = constraint_registrations_by_anchor.get(constraint_id)
+            if constraint is None:
+                _fail("MODEL_REFERENCE_INVALID",
+                      f"state registration {record_id} references an "
+                      "unregistered constraint")
+            variable = variable_registrations_by_anchor.get(
+                constraint.variable_anchor_id)
+            if variable is None:
+                _fail("MODEL_REFERENCE_INVALID",
+                      f"state registration {record_id} references a "
+                      "constraint whose target variable is unregistered")
+            if variable.anchor.entity_anchor_id != subject_id:
+                _fail("MODEL_STATE_REGISTRATION_INVALID",
+                      f"state registration {record_id} contains a "
+                      "constraint whose variable owner differs from its "
+                      "subject entity")
+            # The ordinary variable-registration validator already proves
+            # closure of the embedded owner in this exact membership.
+            required_citations.add(constraint.record_id)
+        _check_model_record_evidence(records, registration,
+                                     "state registration")
+        supplied_citations = {
+            reference.record_id for reference in registration.evidence
+            if reference.kind == "model_record"
+        }
+        has_claim_basis = any(reference.kind == "owner_declaration"
+                              for reference in registration.evidence)
+        if (not required_citations <= supplied_citations
+                or not has_claim_basis):
+            _fail("MODEL_STATE_REGISTRATION_INVALID",
+                  f"state registration {record_id} lacks its exact subject "
+                  "and constraint-registration citations or claim basis")
+        state_registrations_by_anchor[anchor_id] = registration
+        state_condition_constraint_ids_by_anchor[anchor_id] = (
+            registration.condition_constraint_anchor_ids)
+        state_anchor_ids_by_subject_entity[subject_id] = tuple(sorted((
+            *state_anchor_ids_by_subject_entity.get(subject_id, ()),
+            anchor_id)))
+
+    def state_declaration_key(record):
+        return (record.state_anchor_id, record.context)
+
+    state_declaration_ids_by_key: dict[tuple, tuple[str, ...]] = {}
+    state_declaration_parent_ids: dict[str, tuple[str, ...]] = {}
+    for record_id in sorted(state_declarations):
+        declaration = state_declarations[record_id]
+        registration = state_registrations_by_anchor.get(
+            declaration.state_anchor_id)
+        if registration is None:
+            _fail("MODEL_REFERENCE_INVALID",
+                  f"state declaration {record_id} references an "
+                  "unregistered state")
+        expected_constraints = (
+            registration.condition_constraint_anchor_ids)
+        supplied_constraints = tuple(
+            pin.constraint_anchor_id for pin in declaration.conditions)
+        if supplied_constraints != expected_constraints:
+            _fail("MODEL_STATE_DECLARATION_INVALID",
+                  f"state declaration {record_id} does not exactly cover "
+                  "its permanent constraint set")
+        required_citations = {registration.record_id}
+        for pin in declaration.conditions:
+            constraint = constraint_registrations_by_anchor[
+                pin.constraint_anchor_id]
+            pinned = constraint_declarations.get(
+                pin.constraint_declaration_record_id)
+            if pinned is None:
+                _fail("MODEL_REFERENCE_INVALID",
+                      f"state declaration {record_id} pins a missing "
+                      "constraint declaration")
+            if pinned.constraint_anchor_id != pin.constraint_anchor_id:
+                _fail("MODEL_STATE_DECLARATION_INVALID",
+                      f"state declaration {record_id} substitutes a VCN "
+                      "from another constraint")
+            required_citations.update((constraint.record_id, pinned.record_id))
+        _check_model_record_evidence(records, declaration,
+                                     "state declaration")
+        supplied_citations = {
+            reference.record_id for reference in declaration.evidence
+            if reference.kind == "model_record"
+        }
+        has_claim_basis = any(reference.kind == "owner_declaration"
+                              for reference in declaration.evidence)
+        if (not required_citations <= supplied_citations
+                or not has_claim_basis):
+            _fail("MODEL_STATE_DECLARATION_INVALID",
+                  f"state declaration {record_id} lacks its exact SRG, CRG, "
+                  "VCN citations or claim basis")
+        key = state_declaration_key(declaration)
+        state_declaration_ids_by_key[key] = tuple(sorted((
+            *state_declaration_ids_by_key.get(key, ()), record_id)))
+        state_declaration_parent_ids[record_id] = declaration.supersedes
+
+    (state_declaration_successor_ids,
+     state_declaration_root_by_id) = _pt_dag_indexes(
+         state_declarations, state_declaration_key,
+         "MODEL_STATE_LINEAGE_INVALID", "state declaration")
+
+    state_declaration_ancestry_by_id: dict[str, tuple[str, ...]] = {}
+    pending_state_ancestry = set(state_declarations)
+    while pending_state_ancestry:
+        progressed = False
+        for record_id in sorted(tuple(pending_state_ancestry)):
+            parents = state_declarations[record_id].supersedes
+            if any(parent not in state_declaration_ancestry_by_id
+                   for parent in parents):
+                continue
+            ancestors = {
+                ancestor
+                for parent in parents
+                for ancestor in (
+                    parent, *state_declaration_ancestry_by_id[parent])
+            }
+            state_declaration_ancestry_by_id[record_id] = tuple(
+                sorted(ancestors))
+            pending_state_ancestry.remove(record_id)
+            progressed = True
+        if not progressed:  # defence in depth after iterative DAG validation
+            _fail("MODEL_STATE_LINEAGE_INVALID",
+                  "state declaration ancestry could not be derived")
+
+    # A current fork tip may be withdrawn selectively. Prospective full-set
+    # validation also rejects a later successor of that same withdrawn tip.
+    state_declaration_withdrawals_by_target: dict[
+        str, tuple[str, ...]] = {}
+    for withdrawal_id in sorted(state_declaration_withdrawals):
+        withdrawal = state_declaration_withdrawals[withdrawal_id]
+        target = withdrawal.withdraws
+        if target not in state_declarations:
+            _fail("MODEL_REFERENCE_INVALID",
+                  f"state withdrawal {withdrawal_id} targets a missing "
+                  "declaration")
+        if state_declaration_successor_ids[target]:
+            _fail("MODEL_STATE_WITHDRAWAL_INVALID",
+                  f"state withdrawal {withdrawal_id} targets a superseded "
+                  "declaration")
+        if target in state_declaration_withdrawals_by_target:
+            _fail("MODEL_STATE_WITHDRAWAL_INVALID",
+                  f"state declaration {target} is withdrawn more than once")
+        state_declaration_withdrawals_by_target[target] = (withdrawal_id,)
+
+    state_declaration_withdrawn_by = {
+        record_id: state_declaration_withdrawals_by_target.get(record_id, ())
+        for record_id in state_declarations
+    }
+    current_state_declaration_tips_by_root: dict[
+        str, tuple[StateDeclaration, ...]] = {
+            root: () for root in sorted(set(
+                state_declaration_root_by_id.values()))
+        }
+    for record_id in sorted(state_declarations):
+        if (not state_declaration_successor_ids[record_id]
+                and not state_declaration_withdrawn_by[record_id]):
+            root = state_declaration_root_by_id[record_id]
+            current_state_declaration_tips_by_root[root] = (
+                *current_state_declaration_tips_by_root[root],
+                state_declarations[record_id])
+
     record_ids = tuple(sorted(records))
     revision = ModelRevision(
         revision_id=compute_revision_id(model_id, record_ids),
@@ -1339,6 +1548,40 @@ def validate_record_collection(
             for record_id in sorted(behavior_rule_withdrawn_by)}),
         behavior_rule_withdrawals_by_target=_frozen_mapping(
             behavior_rule_withdrawals_by_target),
+        state_registrations=_frozen_mapping({
+            record_id: state_registrations[record_id]
+            for record_id in sorted(state_registrations)}),
+        state_registrations_by_anchor=_frozen_mapping(
+            state_registrations_by_anchor),
+        state_anchor_ids_by_subject_entity=_frozen_mapping(
+            state_anchor_ids_by_subject_entity),
+        state_condition_constraint_ids_by_anchor=_frozen_mapping(
+            state_condition_constraint_ids_by_anchor),
+        state_declarations=_frozen_mapping({
+            record_id: state_declarations[record_id]
+            for record_id in sorted(state_declarations)}),
+        state_declaration_ids_by_key=_frozen_mapping(
+            state_declaration_ids_by_key),
+        state_declaration_parent_ids=_frozen_mapping({
+            record_id: state_declaration_parent_ids[record_id]
+            for record_id in sorted(state_declaration_parent_ids)}),
+        state_declaration_successor_ids=_frozen_mapping({
+            record_id: state_declaration_successor_ids[record_id]
+            for record_id in sorted(state_declaration_successor_ids)}),
+        state_declaration_root_by_id=_frozen_mapping(
+            state_declaration_root_by_id),
+        state_declaration_ancestry_by_id=_frozen_mapping(
+            state_declaration_ancestry_by_id),
+        current_state_declaration_tips_by_root=_frozen_mapping(
+            current_state_declaration_tips_by_root),
+        state_declaration_withdrawals=_frozen_mapping({
+            record_id: state_declaration_withdrawals[record_id]
+            for record_id in sorted(state_declaration_withdrawals)}),
+        state_declaration_withdrawn_by=_frozen_mapping({
+            record_id: state_declaration_withdrawn_by[record_id]
+            for record_id in sorted(state_declaration_withdrawn_by)}),
+        state_declaration_withdrawals_by_target=_frozen_mapping(
+            state_declaration_withdrawals_by_target),
         superseded_by=_frozen_mapping(superseded_by),
         withdrawn_by=_frozen_mapping(withdrawn_by))
 
