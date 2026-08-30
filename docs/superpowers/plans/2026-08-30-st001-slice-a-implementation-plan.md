@@ -1,6 +1,6 @@
 # ST-001 Slice A — Identity and Model-Record Foundation Implementation Plan
 
-Status: corrected final design owner accepted; Slice A implemented and adversarially reviewed, awaiting owner acceptance; Slices B-D unstarted and unauthorized
+Status: Slice A owner accepted at `9adcf4d9613ac96e5fb430a4b750f3053679b64d`; Slice B separately authorized; Slices C-D unstarted and unauthorized
 
 Date: 2026-08-30
 
@@ -198,6 +198,8 @@ verification count, preservation hashes/revisions, specialist findings,
 limitations, clean status, no remote operation, and confirmation that Slices
 B-D remain unstarted.
 
-Stop for owner acceptance of Slice A and separate authorization for Slice B.
+This stop gate was satisfied: Slice A was owner accepted at
+`9adcf4d9613ac96e5fb430a4b750f3053679b64d`, and Slice B was separately
+authorized. Slices C and D remain unauthorized.
 
 END OF ST-001 SLICE A IMPLEMENTATION PLAN

@@ -1,7 +1,7 @@
 # ST-001 Slice A Completion Report
 
-Date: 2026-08-30  
-Status: implemented and adversarially reviewed; awaiting owner acceptance  
+Date: 2026-08-30
+Status: owner accepted at `9adcf4d9613ac96e5fb430a4b750f3053679b64d`; Slice B separately authorized
 Scope: Slice A only — state identity and model-kernel record foundation
 
 ## 1. Executive result
@@ -460,9 +460,8 @@ delivery receipt.
 
 ## 19. Owner handoff
 
-ST-001 Slice A is implemented and adversarially reviewed. Slices B, C, and D
-remain unstarted and unauthorized. No later slice is implied by this delivery.
-
-Owner question: accept ST-001 Slice A and, separately, authorize Slice B?
+ST-001 Slice A was implemented and adversarially reviewed, then owner accepted
+at `9adcf4d9613ac96e5fb430a4b750f3053679b64d`. Slice B was separately
+authorized. Slices C and D remain unstarted and unauthorized.
 
 END OF ST-001 SLICE A COMPLETION REPORT

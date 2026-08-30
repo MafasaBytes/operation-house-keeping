@@ -1,6 +1,6 @@
 # ST-001 Slice A — Adversarial Acceptance Matrix
 
-Status: owner-approved design; Slice A implemented and adversarially reviewed, awaiting owner acceptance; Slices B-D unstarted
+Status: owner-approved design; Slice A owner accepted at `9adcf4d9613ac96e5fb430a4b750f3053679b64d`; Slice B separately authorized; Slices C-D unstarted
 
 Date: 2026-08-30
 
@@ -154,6 +154,8 @@ specialist findings are reproduced red-first and retained, the completion
 report is committed, the ledger remains 32 records, and Slices B-D remain
 unstarted.
 
-Owner question after delivery: accept Slice A and separately authorize Slice B?
+The owner accepted Slice A at
+`9adcf4d9613ac96e5fb430a4b750f3053679b64d` and separately authorized Slice B.
+Slices C and D remain unauthorized.
 
 END OF ST-001 SLICE A ADVERSARIAL ACCEPTANCE MATRIX
