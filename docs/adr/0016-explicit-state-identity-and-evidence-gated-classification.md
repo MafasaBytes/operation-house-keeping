@@ -1,6 +1,6 @@
 # ADR-0016 — Explicit state identity and evidence-gated classification
 
-Status: Slices A and B are owner accepted. Slice C is implemented and adversarially reviewed; awaiting owner acceptance. Slice D remains unstarted and unauthorized.
+Status: Slices A, B, and C are owner accepted. Slice D pre-append rehearsal is authorized; authoritative append remains prohibited.
 
 Date: 2026-08-30
 
@@ -96,9 +96,10 @@ transition work. Slice B is owner accepted at
 
 ## Slice C implementation
 
-Slices A and B are owner accepted. Slice C is implemented and adversarially
-reviewed; awaiting owner acceptance. Slice D remains unstarted and
-unauthorized. Slice C composes the public CN facade, uses exact explicit
+Slices A, B, and C are owner accepted. Slice C is accepted at
+`f2c6e4e12c3004615e3b0a6f321f6c2b3edec7d6`. Slice D pre-append rehearsal is
+authorized; authoritative append remains prohibited. Slice C composes the
+public CN facade, uses exact explicit
 sources, independently selected evidence at one cutoff, strict VCN pins, and
 the bounded all-of truth table. It performs no persistence and asserts no
 simultaneity, synchronization, current physical state, or transition.

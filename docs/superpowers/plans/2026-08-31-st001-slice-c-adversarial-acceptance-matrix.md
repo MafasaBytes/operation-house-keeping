@@ -1,6 +1,6 @@
 # ST-001 Slice C — Adversarial Acceptance Matrix
 
-Status: Slices A and B are owner accepted. Slice C is implemented and adversarially reviewed; awaiting owner acceptance. Slice D remains unstarted and unauthorized.
+Status: Slices A, B, and C are owner accepted. Slice D pre-append rehearsal is authorized; authoritative append remains prohibited.
 
 Date: 2026-08-31
 
@@ -99,6 +99,8 @@ separately authorize Slice D pre-append rehearsal?
 
 All rows are implemented and adversarially reviewed. C21 and C22 are pinned as
 defensive-unreachable consequences of accepted public reference closure, not
-as fabricated private worlds. Slice D remains unstarted and unauthorized.
+as fabricated private worlds. Slice C is owner accepted at
+`f2c6e4e12c3004615e3b0a6f321f6c2b3edec7d6`. Only Slice D pre-append rehearsal
+is authorized; authoritative append remains prohibited.
 
 END OF ST-001 SLICE C ADVERSARIAL ACCEPTANCE MATRIX

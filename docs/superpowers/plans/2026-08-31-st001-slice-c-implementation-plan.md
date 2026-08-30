@@ -1,6 +1,6 @@
 # ST-001 Slice C — Evidence-Gated State Classification Plan
 
-Status: Slices A and B are owner accepted. Slice C is implemented and adversarially reviewed; awaiting owner acceptance. Slice D remains unstarted and unauthorized.
+Status: Slices A, B, and C are owner accepted. Slice D pre-append rehearsal is authorized; authoritative append remains prohibited.
 
 Date: 2026-08-31
 
@@ -132,5 +132,10 @@ regression. The public closure rules make condition-level `not_registered` and
 `not_declared` branches defensive-unreachable in valid SRG/STD material; the
 implementation keeps them fail-closed without constructing invalid private
 models for coverage.
+
+Slice C is owner accepted at
+`f2c6e4e12c3004615e3b0a6f321f6c2b3edec7d6`. This acceptance authorizes only
+the separately bounded Slice D pre-append rehearsal and does not authorize an
+authoritative ledger append.
 
 END OF ST-001 SLICE C IMPLEMENTATION PLAN

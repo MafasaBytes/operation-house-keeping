@@ -1,8 +1,10 @@
 # State classification
 
-Status: Slices A and B are owner accepted. Slice C is implemented and
-adversarially reviewed; awaiting owner acceptance. Slice D remains unstarted
-and unauthorized.
+Status: Slices A, B, and C are owner accepted. Slice D pre-append rehearsal is
+authorized; authoritative append remains prohibited.
+
+Slice C is owner accepted at
+`f2c6e4e12c3004615e3b0a6f321f6c2b3edec7d6`.
 
 `backend.state_classification` is the read-only ST-001 composition layer. It
 combines an exact-context model state declaration with explicitly selected,

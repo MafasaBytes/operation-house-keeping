@@ -4,9 +4,10 @@ from pathlib import Path
 
 
 STATUS = (
-    "Slices A and B are owner accepted. Slice C is implemented and "
-    "adversarially reviewed; awaiting owner acceptance. Slice D remains "
-    "unstarted and unauthorized.")
+    "Slices A, B, and C are owner accepted. Slice D pre-append rehearsal is "
+    "authorized; authoritative append remains prohibited.")
+
+SLICE_C_HEAD = "f2c6e4e12c3004615e3b0a6f321f6c2b3edec7d6"
 
 
 def read(path):
@@ -28,7 +29,9 @@ def test_slice_c_status_and_slice_d_gate_are_exactly_documented():
         "acceptance-matrix.md",
     )
     for path in paths:
-        assert STATUS in " ".join(read(path).split()), path
+        normalized = " ".join(read(path).split())
+        assert STATUS in normalized, path
+        assert SLICE_C_HEAD in normalized, path
 
 
 def test_classifier_documentation_preserves_nonclaims_and_boundary():
