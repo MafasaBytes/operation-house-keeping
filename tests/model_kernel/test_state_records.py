@@ -176,16 +176,17 @@ def test_model_record_union_accepts_exact_three_state_arms():
         assert type(rebuilt) is type(record)
 
 
-def test_slice_a_public_surface_is_records_only():
+def test_slice_b_public_surface_adds_queries_but_not_classification():
     required = {
         "StateRegistration", "StateConstraintDeclarationPin",
         "StateDeclaration", "StateDeclarationWithdrawal",
+        "StateLookupResult", "StateDeclarationResult", "EntityStatesResult",
+        "StateAssertionDisclosureResult",
     }
     assert required <= set(kernel.__all__)
     for forbidden in (
-        "StateLookupResult", "StateDeclarationResult", "EntityStatesResult",
-        "StateAssertionDisclosureResult", "StateClassificationQueries",
-        "StateClassificationResult",
+            "StateClassificationQueries", "StateClassificationResult",
+            "StateConditionSource", "StateComputedMatch",
     ):
         assert forbidden not in kernel.__all__
         assert not hasattr(kernel, forbidden)

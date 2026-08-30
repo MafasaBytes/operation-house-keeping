@@ -499,7 +499,7 @@ def test_kernel_import_direction_and_slice_boundary_remain_exact():
     assert not Path("backend/state_classification").exists()
     for method in (
         "state", "state_declaration", "states_of_entity", "state_assertion"):
-        assert not hasattr(kernel.ModelQueries, method)
+        assert hasattr(kernel.ModelQueries, method)
 
 
 def test_slice_a_readme_documents_state_truth_and_non_transition_boundary():
@@ -513,7 +513,7 @@ def test_slice_a_readme_documents_state_truth_and_non_transition_boundary():
         assert required in text
 
 
-def test_slice_a_status_documents_are_exact_and_later_slices_remain_unstarted():
+def test_slice_a_acceptance_and_slice_b_authorization_status_are_exact():
     paths = (
         Path("CLAUDE.md"),
         Path("docs/adr/0016-explicit-state-identity-and-evidence-gated-classification.md"),
@@ -527,9 +527,10 @@ def test_slice_a_status_documents_are_exact_and_later_slices_remain_unstarted():
     combined = "\n".join(texts.values())
     assert "Slice A" in combined
     assert "implemented and adversarially reviewed" in combined
-    assert "awaiting owner acceptance" in combined
-    assert "Slices B-D" in combined
-    assert "unstarted" in combined
+    assert "9adcf4d9613ac96e5fb430a4b750f3053679b64d" in combined
+    assert "Slice B" in combined and "authorized" in combined
+    assert "Slices C-D" in combined or "Slices C and D" in combined
+    assert "unstarted" in combined and "unauthorized" in combined
     assert "StateClassificationQueries" not in kernel.__all__
     specification = texts[paths[2]]
     assert specification.endswith(
