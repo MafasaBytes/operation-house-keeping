@@ -22,7 +22,7 @@ from backend.model_kernel import (
     build_record,
 )
 from tests.model_kernel.test_demo_model import (
-    CURRENT_REVISION,
+    PRE_BH001_REVISION,
     DEMO_MODEL,
     EXTRUDER,
     FROZEN_CN001_MODEL_RECORDS,
@@ -153,8 +153,8 @@ def test_authoritative_append_is_exactly_one_vpa_and_preserves_28_bytes():
     assert len(path.read_bytes()) == VPA_FILE_BYTES
     assert hashlib.sha256(path.read_bytes()).hexdigest() == VPA_FILE_SHA256
 
-    loaded = ModelStore(DEMO_MODEL).load()
-    assert loaded.revision.revision_id == CURRENT_REVISION
+    loaded = ModelStore(DEMO_MODEL).replay(VP001_MEMBERSHIP)
+    assert loaded.revision.revision_id == PRE_BH001_REVISION
     assert loaded.revision.record_ids == VP001_MEMBERSHIP
     assert loaded.revision.record_count == 29
     assert VP001_MODEL_RECORDS == (VPA_ID,)
@@ -252,7 +252,7 @@ def test_other_registered_port_remains_empty_and_no_claim_is_inferred():
 
 def test_fixture_scope_and_accepted_pt_artifact_are_unchanged():
     model_paths = sorted((DEMO_MODEL / "records").glob("*.json"))
-    assert len(model_paths) == 29
+    assert len(model_paths) == 32
     assert [path.stem for path in model_paths
             if path.name.startswith("vpa_")] == [VPA_ID]
     assert not any(path.name.startswith("vpw_") for path in model_paths)

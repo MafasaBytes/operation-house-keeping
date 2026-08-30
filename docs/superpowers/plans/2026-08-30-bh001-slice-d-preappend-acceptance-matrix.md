@@ -54,7 +54,7 @@ frozen manifest content.
 | D16 | New record kinds | Exactly VRG, BRG, parentless BHD |
 | D17 | Any VSP/VSM/entity/port/VPA/constraint/BHW/correction/binding/source/temporal record | Absent |
 | D18 | Build path | Public `build_record()` only |
-| D19 | Append path | Disposable public `ModelStore.append()` only |
+| D19 | Rehearsal append path before owner approval | Disposable public `ModelStore.append()` only |
 | D20 | Membership | Exact `tuple(sorted((*VP001_MEMBERSHIP, *BH001_MODEL_RECORDS)))`; append order remains VRG then BRG then BHD |
 | D21 | Parents/roots | Empty BHD parents; exactly one root |
 | D22 | Evidence closure | Exact required citations and claim-bearing evidence |
@@ -104,7 +104,7 @@ behavior lineage root.
 | D48 | All 29 predecessor bytes | Unchanged in source and both roots |
 | D49 | PT artifact | Accepted bytes and SHA unchanged |
 | D50 | VP artifact | Accepted bytes and SHA unchanged |
-| D51 | Authoritative ledger/fixture paths | No writes |
+| D51 | Authoritative ledger/fixture paths during pre-approval rehearsal | No writes |
 
 ## 7. Artifact and stop gate
 
@@ -131,5 +131,8 @@ behavior lineage root.
 | D65 | Approved artifact | 122406 bytes, SHA-256 `4c29928156ceb2e1947473039bc20d07af4f3ff9e25a1b664b17c3e96ac415b3` |
 | D66 | Scope | Exactly three model records; no binding/VSP/VSM/port/VPA/constraint/BHW/correction/evidence mutation |
 | D67 | Final owner gate | Completion report delivered; BH-001 not self-declared owner accepted |
+
+All D1-D66 fixture, replay, query, evaluator, seam, preservation, and artifact
+rows are implemented and verified. D67 remains open for final owner acceptance.
 
 END OF BH-001 SLICE D PRE-APPEND ACCEPTANCE MATRIX

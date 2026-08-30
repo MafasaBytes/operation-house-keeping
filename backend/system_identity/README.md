@@ -45,3 +45,5 @@ frozen pre-append contract at `0905de0`; they must never be reminted or
 replaced. The authorized exact model revision is
 `mrv_d7d9b3918eb3f04157fb862164fe1d5fb17b4ef18d627fb89ff9bc429a94506b`.
 That approval changes no identity or minter semantics.
+The approved anchors are now embedded unchanged in the authoritative Slice D
+VRG and BRG; the allocation manifest remains unchanged as historical evidence.

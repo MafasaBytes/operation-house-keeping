@@ -11,7 +11,7 @@ from backend.identity_binding.store import BindingStore
 from backend.model_kernel import LifecycleViewContext, ModelQueries, ModelStore
 from backend.model_state import ModelStateQueries
 from tests.model_kernel.test_demo_model import (
-    CURRENT_REVISION,
+    PRE_BH001_REVISION,
     DEMO_MODEL,
     FROZEN_CN001_MODEL_RECORDS,
     FROZEN_ES001_MODEL_RECORDS,
@@ -112,8 +112,8 @@ def test_committed_association_and_variable_state_are_direct_equal(tmp_path):
     assert result.variable_state == direct_state
     assert (result.association.conclusion,
             result.association.lineage_summary) == ("asserted", "healthy")
-    assert result.association.material.revision.revision_id == CURRENT_REVISION
-    assert result.variable_state.model_revision.revision_id == CURRENT_REVISION
+    assert result.association.material.revision.revision_id == PRE_BH001_REVISION
+    assert result.variable_state.model_revision.revision_id == PRE_BH001_REVISION
     assert result.variable_state.binding_revision.revision_id == BINDING_REVISION
     assert result.as_of == AS_OF
 
@@ -412,7 +412,7 @@ def test_disclosure_artifact_is_deterministic_complete_and_path_free(tmp_path):
     assert payload["content"]["model"]["base_revision"][
         "revision_id"] == PRE_VP001_REVISION
     assert payload["content"]["model"]["final_revision"][
-        "revision_id"] == CURRENT_REVISION
+        "revision_id"] == PRE_BH001_REVISION
     assert len(payload["content"]["model"]["predecessor_sha256"]) == 28
     assert payload["content"]["model"]["predecessor_bytes_preserved"] is True
     assert payload["content"]["queries"]["exact"]["conclusion"] == "asserted"

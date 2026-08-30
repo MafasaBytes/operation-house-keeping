@@ -8,8 +8,9 @@ Owner resolution: add the narrowly scoped public `mint_variable_anchor()` API, c
 
 The accepted Slice C HEAD is
 `8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521`; its administrative acceptance
-commit is `a619ed14d36aeb508e4db8602adbbdce4b1b4e2d`. The authoritative demo remains
-29 records at `mrv_18da4ce963ab5c4b1121cdcc009eaaef4cd1c5c11034f4678c6437361ffd7652`.
+commit is `a619ed14d36aeb508e4db8602adbbdce4b1b4e2d`. At that accepted Slice C and
+pre-append boundary, the authoritative demo remained 29 records at
+`mrv_18da4ce963ab5c4b1121cdcc009eaaef4cd1c5c11034f4678c6437361ffd7652`.
 The current owner-amended BH specification SHA-256 is
 `520bf74823ab5e206bef8a56de9ba872ef8f3167451ad9c57e02a364532cd873`.
 
@@ -182,5 +183,13 @@ checkout of the approval commit. Then append only the approved VRG, BRG, and
 BHD through public builders and `ModelStore`, in that physical order, checking
 each file immediately. Stop on any mismatch. Final owner acceptance remains a
 separate gate after the complete Slice D verification report.
+
+## 10. Execution status
+
+The clean pre-append reproduction passed. The authorized append was performed
+through the public builders and store in VRG, BRG, BHD order, with each file
+verified immediately. The explicit 32-record revision and approved 122406-byte
+artifact reproduce exactly. Slice D is implemented and adversarially reviewed;
+final owner acceptance remains pending.
 
 END OF BH-001 SLICE D PRE-APPEND REHEARSAL PLAN

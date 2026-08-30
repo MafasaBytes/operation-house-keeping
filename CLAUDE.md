@@ -793,7 +793,7 @@ model-state composition; displaying variable state beside a port does not mean
 the observation occurred at, originated at, travelled through, or describes
 the port. Slice D adds exactly one
 role-free parentless VPA, with no VPW, correction, or additional root. The
-current demo ledger contains 29 records at
+explicit final VP / pre-BH membership contains 29 records at
 `mrv_18da4ce963ab5c4b1121cdcc009eaaef4cd1c5c11034f4678c6437361ffd7652`;
 the explicit 28-record PT membership remains unchanged historical replay. The
 approved VPA is
@@ -832,5 +832,10 @@ committed at `0905de0` is owner approved: fixed anchors
 `mrv_d7d9b3918eb3f04157fb862164fe1d5fb17b4ef18d627fb89ff9bc429a94506b`,
 and 122406-byte artifact SHA-256
 `4c29928156ceb2e1947473039bc20d07af4f3ff9e25a1b664b17c3e96ac415b3`.
-Only the bounded authoritative VRG-then-BRG-then-BHD append and final Slice D
-verification are authorized. BH-001 final owner acceptance remains pending.
+Slice D is implemented and adversarially reviewed: the authoritative ledger
+contains exactly the approved VRG, BRG, and parentless BHD at the explicit
+32-record revision above. The owner-approved pre-append candidate disclosure
+artifact reproduces its frozen 122406 bytes and SHA-256 from the committed
+ledger, and its evaluator disclosure is honestly
+`not_executed`. The 29-record VP membership remains the explicit predecessor.
+BH-001 final owner acceptance remains pending.

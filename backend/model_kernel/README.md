@@ -224,7 +224,7 @@ is confined to the read-only model-state layer; displaying variable state
 beside a port does not mean the observation occurred at, originated at,
 travelled through, or describes the port. Slice D
 adds exactly one parentless `vpa_` and no `vpw_`, correction, or second root.
-The current demo ledger contains 29 records at
+The explicit final VP / pre-BH membership contains 29 records at
 `mrv_18da4ce963ab5c4b1121cdcc009eaaef4cd1c5c11034f4678c6437361ffd7652`;
 the explicit 28-record PT membership remains unchanged. The VPA is
 `vpa_f6443787fc9665e24cae80a5ba0650d0bda8abefe87cb60427c8b39068932e49`,
@@ -236,9 +236,7 @@ The accepted PT artifact SHA-256 is
 `53dd32846956d10331dfca8fc370ef7d7019325904a062db5f037605aa4cf3d8`.
 
 BH-001's corrected final design and Slice A are owner accepted. Slice A is
-accepted at `57edec37b40c5da0c300cc1333fbb3cf5d7bb41a`. The current committed demo
-remains the accepted 29-record VP revision and contains zero `brg_`, `bhd_`, or
-`bhw_` records. Slice B is owner accepted at
+accepted at `57edec37b40c5da0c300cc1333fbb3cf5d7bb41a`. Slice B is owner accepted at
 `05177f7306ce745d093bd5f11abafc13a6274d0f`. Its preimplementation
 discrepancy is owner accepted at
 `eedae19a9b2542958f44e66af7117a981c7faeef` and all four contract questions
@@ -251,6 +249,12 @@ verification are authorized for exactly anchors
 `var_ab2d312466054c20b0ac764e9bc0114e` and
 `bhv_80e21f1682e449ca9c65a5e2ee051ea0`, revision
 `mrv_d7d9b3918eb3f04157fb862164fe1d5fb17b4ef18d627fb89ff9bc429a94506b`,
-and the 122406-byte artifact at SHA-256
+and the 122406-byte pre-append candidate disclosure artifact at SHA-256
 `4c29928156ceb2e1947473039bc20d07af4f3ff9e25a1b664b17c3e96ac415b3`.
-Final BH-001 owner acceptance remains pending.
+Slice D is implemented and adversarially reviewed. The current demo is the
+explicit 32-record revision above and adds exactly one VRG, one BRG, and one
+parentless BHD to the explicit 29-record predecessor. It adds no BHW,
+correction, fork, second root, specification, semantics, binding, source, or
+temporal evidence. The artifact's candidate/proposed scope fields remain
+historical rehearsal evidence and do not describe the current repository
+state. Final BH-001 owner acceptance remains pending.

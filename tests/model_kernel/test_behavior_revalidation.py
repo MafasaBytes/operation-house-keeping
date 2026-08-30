@@ -29,8 +29,10 @@ from tests.model_kernel.bh001_slice_a_helpers import (
     world,
 )
 from tests.model_kernel.test_demo_model import (
+    BH001_MEMBERSHIP,
     CN001_MEMBERSHIP,
     CURRENT_REVISION,
+    FROZEN_BH001_MODEL_RECORDS,
     FROZEN_CN001_MODEL_RECORDS,
     FROZEN_ES001_MODEL_RECORDS,
     FROZEN_MK001_RECORDS,
@@ -45,6 +47,7 @@ from tests.model_kernel.test_demo_model import (
     PRE_ES001_MEMBERSHIP,
     PRE_ES001_REVISION,
     PRE_PT001_REVISION,
+    PRE_BH001_REVISION,
     PRE_SPECIFICATION_MEMBERSHIP,
     PRE_SPECIFICATION_REVISION,
     PRE_VARIABLE_MEMBERSHIP,
@@ -189,7 +192,7 @@ def test_all_explicit_pre_bh_histories_replay_with_empty_immutable_indexes():
         (PRE_CN001_MEMBERSHIP, PRE_CN001_REVISION, 16),
         (CN001_MEMBERSHIP, PRE_PT001_REVISION, 18),
         (PT001_MEMBERSHIP, PRE_VP001_REVISION, 28),
-        (VP001_MEMBERSHIP, CURRENT_REVISION, 29),
+        (VP001_MEMBERSHIP, PRE_BH001_REVISION, 29),
     )
     store = kernel.ModelStore(DEMO_MODEL)
     empty_names = (
@@ -211,14 +214,15 @@ def test_all_explicit_pre_bh_histories_replay_with_empty_immutable_indexes():
                 mapping["forged"] = ()
 
 
-def test_current_demo_ledger_and_every_pre_bh_model_byte_remain_frozen():
+def test_current_demo_ledger_and_every_model_byte_remain_frozen():
     paths = sorted((DEMO_MODEL / "records").glob("*.json"))
-    assert len(paths) == 29
-    assert not any(path.name.startswith(("brg_", "bhd_", "bhw_"))
-                   for path in paths)
+    assert len(paths) == 32
+    assert sum(path.name.startswith("brg_") for path in paths) == 1
+    assert sum(path.name.startswith("bhd_") for path in paths) == 1
+    assert not any(path.name.startswith("bhw_") for path in paths)
     loaded = kernel.ModelStore(DEMO_MODEL).load()
     assert loaded.revision.revision_id == CURRENT_REVISION
-    assert loaded.revision.record_ids == VP001_MEMBERSHIP
+    assert loaded.revision.record_ids == BH001_MEMBERSHIP
     frozen = {
         **FROZEN_MK001_RECORDS,
         **FROZEN_VM001_RECORD,
@@ -228,8 +232,9 @@ def test_current_demo_ledger_and_every_pre_bh_model_byte_remain_frozen():
         **FROZEN_CN001_MODEL_RECORDS,
         **FROZEN_PT001_MODEL_RECORDS,
         **FROZEN_VP001_MODEL_RECORDS,
+        **FROZEN_BH001_MODEL_RECORDS,
     }
-    assert len(frozen) == 29
+    assert len(frozen) == 32
     assert set(frozen) == {path.name for path in paths}
     for filename, digest in frozen.items():
         assert hashlib.sha256(
@@ -245,7 +250,7 @@ def test_pt_and_vp_artifacts_remain_byte_frozen(tmp_path):
     assert hashlib.sha256(vp).hexdigest() == VP_ARTIFACT_SHA256
 
 
-def test_slice_c_adds_separate_evaluator_but_no_fixture_surface():
+def test_slice_d_adds_fixture_without_kernel_import_or_evaluator_leakage():
     required_methods = (
         "behavior", "behavior_declaration",
         "behaviors_involving_variable", "behavior_assertion",
@@ -254,8 +259,10 @@ def test_slice_c_adds_separate_evaluator_but_no_fixture_surface():
         assert hasattr(kernel.ModelQueries, method)
     assert Path("backend/behavior_evaluation").is_dir()
     assert Path("tests/behavior_evaluation").is_dir()
-    assert not any(path.name.startswith(("brg_", "bhd_", "bhw_"))
-                   for path in (DEMO_MODEL / "records").glob("*.json"))
+    paths = tuple((DEMO_MODEL / "records").glob("*.json"))
+    assert sum(path.name.startswith("brg_") for path in paths) == 1
+    assert sum(path.name.startswith("bhd_") for path in paths) == 1
+    assert not any(path.name.startswith("bhw_") for path in paths)
     assert hasattr(kernel, "BehaviorRuleResult")
     assert not hasattr(kernel, "BehaviorEvaluationResult")
 

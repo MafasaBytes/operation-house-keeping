@@ -18,8 +18,10 @@ PRE_PT001_REVISION = ("mrv_919e1b36216243fd211e38a9d36556afa0d46e3660c3813"
                       "02d271ec1fb258c51")  # 18 records (CN-001)
 PRE_VP001_REVISION = ("mrv_c6244b6dc41de599de9894b55f4064e41ba5260e7d00f50"
                       "bffc1e1e63da560a2")  # 28 records (PT-001)
-CURRENT_REVISION = ("mrv_18da4ce963ab5c4b1121cdcc009eaaef4cd1c5c11034f467"
-                    "8c6437361ffd7652")  # 29 records (VP-001)
+PRE_BH001_REVISION = ("mrv_18da4ce963ab5c4b1121cdcc009eaaef4cd1c5c11034f467"
+                      "8c6437361ffd7652")  # 29 records (VP-001)
+CURRENT_REVISION = ("mrv_d7d9b3918eb3f04157fb862164fe1d5fb17b4ef18d627fb8"
+                    "9ff9bc429a94506b")  # 32 records (BH-001)
 PRE_ES001_REVISION = ("mrv_702c840f7da00617feb1be252838105d8b001b2e19978842"
                       "bdcbec56996c99ff")  # 14 records (SN-001)
 GOLDEN_REVISION = ("mrv_25afc0ebf17ed12bd6ef0a95795798a53ef2"
@@ -67,6 +69,12 @@ VP001_MODEL_RECORDS = (
     "vpa_f6443787fc9665e24cae80a5ba0650d0bda8abefe87cb60427c8b39068932e49",
 )
 
+BH001_MODEL_RECORDS = (
+    "vrg_399bbea96bc27689ecab5b6162967b7d7320978117bfe7acddeb05c5ab9aeac6",
+    "brg_1fd13b69377257d987775c56f7abf9eedd466d4ca6555ff33ba6b8cf6e815d5e",
+    "bhd_fd567f57a0ac6a48309b6d04bb4585ed453a143c7789acc18469525f3536be7e",
+)
+
 VS001_MEMBERSHIP = (
     "reg_5776a541a04b428f35af40203294a34a8a9978f0bdf3572a8745e6febddd5941",
     "reg_9b5491aaa131b0df070cee792c83e002bdc4232cbbaba443f967cd3e5b780451",
@@ -102,6 +110,7 @@ PRE_CN001_MEMBERSHIP = tuple(sorted((*PRE_ES001_MEMBERSHIP,
 CN001_MEMBERSHIP = (*PRE_CN001_MEMBERSHIP, *CN001_MODEL_RECORDS)
 PT001_MEMBERSHIP = tuple(sorted((*CN001_MEMBERSHIP, *PT001_MODEL_RECORDS)))
 VP001_MEMBERSHIP = tuple(sorted((*PT001_MEMBERSHIP, *VP001_MODEL_RECORDS)))
+BH001_MEMBERSHIP = tuple(sorted((*VP001_MEMBERSHIP, *BH001_MODEL_RECORDS)))
 
 
 def eleven_ids(loaded):
@@ -119,8 +128,9 @@ class TestCommittedLedger:
         store = ModelStore(DEMO_MODEL)
         loaded = store.load()
         assert loaded.revision.revision_id == CURRENT_REVISION
-        assert loaded.revision.record_count == 29
-        assert len(loaded.variable_registrations_by_anchor) == 1
+        assert loaded.revision.record_ids == BH001_MEMBERSHIP
+        assert loaded.revision.record_count == 32
+        assert len(loaded.variable_registrations_by_anchor) == 2
         assert len(loaded.specifications) == 1
         assert len(loaded.types) == 3
         assert len(loaded.assertions) == 4
@@ -141,8 +151,14 @@ class TestCommittedLedger:
         pre_vp001 = store.replay(PT001_MEMBERSHIP)
         assert pre_vp001.revision.revision_id == PRE_VP001_REVISION
         assert pre_vp001.revision.record_count == 28
-        current = store.replay(VP001_MEMBERSHIP)
+        pre_bh001 = store.replay(VP001_MEMBERSHIP)
+        assert pre_bh001.revision.revision_id == PRE_BH001_REVISION
+        assert pre_bh001.revision.record_count == 29
+        current = store.replay(BH001_MEMBERSHIP)
         assert current.revision == loaded.revision
+        assert len(current.behavior_registrations) == 1
+        assert len(current.behavior_rule_declarations) == 1
+        assert not current.behavior_rule_withdrawals
 
     def test_fixture_authority_never_human_owner(self):
         """Mandatory regression, per-record form (AU2): every record is
@@ -163,9 +179,11 @@ class TestCommittedLedger:
                for record_id in PT001_MODEL_RECORDS},
             **{record_id: "vp001_demo_fixture"
                for record_id in VP001_MODEL_RECORDS},
+            **{record_id: "bh001_demo_fixture"
+               for record_id in BH001_MODEL_RECORDS},
         }
         paths = sorted((DEMO_MODEL / "records").glob("*.json"))
-        assert len(paths) == len(expected) == 29
+        assert len(paths) == len(expected) == 32
         for path in paths:
             record = json.loads(path.read_text())
             assert record["authority"]["kind"] == "test_fixture", path.name
@@ -357,6 +375,15 @@ FROZEN_VP001_MODEL_RECORDS = {
     "95f9390f784600b2f7a17e74a540d6874722039be5d093614c15a716ff08034e",
 }
 
+FROZEN_BH001_MODEL_RECORDS = {
+    "vrg_399bbea96bc27689ecab5b6162967b7d7320978117bfe7acddeb05c5ab9aeac6.json":
+    "0652fd7ca32de43d3e21c5a41a5117eb3c19d2a469ffa30f37b407f91937e285",
+    "brg_1fd13b69377257d987775c56f7abf9eedd466d4ca6555ff33ba6b8cf6e815d5e.json":
+    "19068707d3bb5423eab4db189208d85749ef18cc3447135d8cfa4ea7f0e89edb",
+    "bhd_fd567f57a0ac6a48309b6d04bb4585ed453a143c7789acc18469525f3536be7e.json":
+    "fa1a40272d100eb81cc15e64cff782a654b3369a91da62bc36b1f26a2cf655cf",
+}
+
 FROZEN_SN001_BINDING_RECORDS = {
     "bindings/demo-printer/records/iba_2061f4017a7f2355a36d30ee69a6ebc24a94de2e1db8866b4216916678b4d5aa.json":
     "2eec748ec43373b1c0bd5aa2744466f94db9c0f0d19503754077b6277c3d7a82",
@@ -416,7 +443,9 @@ class TestVm001Fixture:
         assert result.registration.anchor.entity_anchor_id == EXTRUDER
         owned = queries.variables_of(EXTRUDER)
         assert [e.anchor.anchor_id for e in owned.entries] == [
-            HOTEND_VARIABLE]
+            "var_ab2d312466054c20b0ac764e9bc0114e",
+            HOTEND_VARIABLE,
+        ]
 
 
 class TestVs001Fixture:

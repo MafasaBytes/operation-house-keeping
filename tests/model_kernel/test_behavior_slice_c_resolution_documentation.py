@@ -186,6 +186,10 @@ def test_discrepancy_is_resolved_and_slice_d_remains_unstarted():
     for text in (spec, plan, matrix):
         normalized = " ".join(text.split())
         assert "8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521" in normalized
+    for text in (plan, matrix):
+        normalized = " ".join(text.split())
         assert "Only the Slice D pre-append rehearsal gate is owner authorized" in normalized
         assert "the authoritative append has not started" in normalized
+    assert "Slice D is implemented and adversarially reviewed" in " ".join(
+        spec.split())
     assert "Slice D remains\nunstarted" in discrepancy

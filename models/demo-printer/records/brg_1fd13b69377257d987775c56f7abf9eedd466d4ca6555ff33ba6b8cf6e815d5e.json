@@ -1,0 +1,37 @@
+{
+  "anchor": {
+    "anchor_id": "bhv_80e21f1682e449ca9c65a5e2ee051ea0",
+    "display_name": "Synthetic exact numeric equality",
+    "namespace": "demo-printer",
+    "role_name": null
+  },
+  "authority": {
+    "agent": "bh001_demo_fixture",
+    "kind": "test_fixture",
+    "method": "manual_declaration"
+  },
+  "evidence": [
+    {
+      "kind": "model_record",
+      "record_id": "vrg_399bbea96bc27689ecab5b6162967b7d7320978117bfe7acddeb05c5ab9aeac6"
+    },
+    {
+      "kind": "model_record",
+      "record_id": "vrg_40c8c6b984345af33de6913ca9025d60d22b0e627b110e974c78270eb941dca7"
+    },
+    {
+      "kind": "owner_declaration",
+      "statement": "BH-001 fixture authority explicitly registers this unordered pair of synthetic variables for the exact-numeric-equality rule family; shared ownership, names, topology, VPA associations, semantics, constraints, and observations did not create or corroborate this behavior registration."
+    }
+  ],
+  "note": "BH-001 bounded synthetic registration.",
+  "participant_variable_anchor_ids": [
+    "var_ab2d312466054c20b0ac764e9bc0114e",
+    "var_b7e2d3c4f5a6172839405a6b7c8d9e0f"
+  ],
+  "record_id": "brg_1fd13b69377257d987775c56f7abf9eedd466d4ca6555ff33ba6b8cf6e815d5e",
+  "record_kind": "behavior_registration",
+  "recorded_at": "2026-08-30T12:00:00+00:00",
+  "rule_family": "exact_numeric_equality",
+  "schema_version": "1"
+}

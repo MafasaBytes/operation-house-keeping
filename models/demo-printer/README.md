@@ -92,10 +92,45 @@ claim. The accepted PT-001 artifact remains byte-identical at SHA-256
 `53dd32846956d10331dfca8fc370ef7d7019325904a062db5f037605aa4cf3d8`
 and is regenerated from the explicit 28-record membership.
 
-BH-001 Slice D pre-append status: the owner approved the exact frozen
-candidate inputs and 29-to-32 contract committed at `0905de0`. The bounded
-authoritative VRG-then-BRG-then-BHD append and final verification are
-authorized. At this approval-documentation boundary this ledger still contains
-29 records and no BRG, BHD, or BHW; the actual append must remain a separate
-commit and must match the approved bytes exactly at revision
+## BH-001 synthetic exact-numeric-equality declaration
+
+BH-001 Slice D is implemented and adversarially reviewed from the owner-
+approved pre-append contract at `0905de0`. It appends exactly
+the neutral variable registration
+`vrg_399bbea96bc27689ecab5b6162967b7d7320978117bfe7acddeb05c5ab9aeac6`,
+behavior registration
+`brg_1fd13b69377257d987775c56f7abf9eedd466d4ca6555ff33ba6b8cf6e815d5e`,
+and parentless declaration
+`bhd_fd567f57a0ac6a48309b6d04bb4585ed453a143c7789acc18469525f3536be7e`.
+The registered unordered, role-free pair is
+`var_ab2d312466054c20b0ac764e9bc0114e` and
+`var_b7e2d3c4f5a6172839405a6b7c8d9e0f` under behavior anchor
+`bhv_80e21f1682e449ca9c65a5e2ee051ea0`.
+
+The explicit 29-record VP membership remains the historical predecessor at
+`mrv_18da4ce963ab5c4b1121cdcc009eaaef4cd1c5c11034f4678c6437361ffd7652`.
+The current explicit 32-record membership is
 `mrv_d7d9b3918eb3f04157fb862164fe1d5fb17b4ef18d627fb89ff9bc429a94506b`.
+The three files retain the approved SHA-256 values
+`0652fd7ca32de43d3e21c5a41a5117eb3c19d2a469ffa30f37b407f91937e285`,
+`19068707d3bb5423eab4db189208d85749ef18cc3447135d8cfa4ea7f0e89edb`,
+and `fa1a40272d100eb81cc15e64cff782a654b3369a91da62bc36b1f26a2cf655cf`.
+
+The declaration has one healthy current root and no BHW, successor,
+correction, fork, or second root. The new variable is the sole pinned
+registered-anchor exception without a binding `AnchorDeclaration`; shared
+ownership did not create or corroborate the behavior. The evaluator therefore
+reports `not_executed`, `computed_relation=None`, and
+`cohort_admission=not_evaluated`. It preserves the existing variable's 60.4
+observation while honestly reporting the new variable's missing observation,
+numeric specification, quantity kind, and observation role.
+
+> This is an illustrative synthetic BH-001 exact-numeric-equality declaration. It does not describe or claim any real printer physics, target, command, response, control loop, wiring, signal path, flow, causality, simultaneity, correctness, safety, health, real-machine behavior, or operating condition. Shared ownership, names, topology, VPA associations, semantic compatibility, constraints, and observed correlation did not create this declaration.
+
+The deterministic owner-approved pre-append candidate disclosure artifact is
+122406 bytes with SHA-256
+`4c29928156ceb2e1947473039bc20d07af4f3ff9e25a1b664b17c3e96ac415b3`.
+The `not_executed` result is an honest admission result, not evidence that the
+declared relation is false. Its `authoritative_append_performed=false` and
+`records_proposed` fields describe the frozen rehearsal scope, not the current
+repository state. Final BH-001 owner acceptance remains pending.

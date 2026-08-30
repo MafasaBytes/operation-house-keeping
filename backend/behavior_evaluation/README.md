@@ -24,8 +24,12 @@ discrepancy is owner resolved and the exact pre-append contract committed at
 `0905de0` is owner approved. The bounded authoritative three-record append and
 final verification are authorized for revision
 `mrv_d7d9b3918eb3f04157fb862164fe1d5fb17b4ef18d627fb89ff9bc429a94506b`.
-The approved evaluator demonstration must
-remain `not_executed`, preserve the existing participant's evidence, and add
-no binding, specification, semantic, interpretation, temporal, or source
-evidence for the new participant. Final BH-001 owner acceptance remains
-pending; no authoritative behavior fixture has yet been appended.
+The authoritative evaluator demonstration is `not_executed`, preserves the
+existing participant's evidence, and adds no binding, specification, semantic,
+interpretation, temporal, or source evidence for the new participant. Its
+cohort admission is `not_evaluated` and its computed relation is absent.
+Slice D is implemented and adversarially reviewed; final BH-001 owner
+acceptance remains pending.
+The frozen candidate disclosure artifact is reproduced byte-identically after
+append; its pre-append scope fields remain historical rather than current
+repository claims.

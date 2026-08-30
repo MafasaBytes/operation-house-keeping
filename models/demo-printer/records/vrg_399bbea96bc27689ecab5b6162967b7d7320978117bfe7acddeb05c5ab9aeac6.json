@@ -1,0 +1,19 @@
+{
+  "anchor": {
+    "anchor_id": "var_ab2d312466054c20b0ac764e9bc0114e",
+    "display_name": "Synthetic comparison variable",
+    "entity_anchor_id": "ent_a3f1c2d4e5b6478899aa0b1c2d3e4f50",
+    "namespace": "demo-printer",
+    "role_name": null
+  },
+  "authority": {
+    "agent": "bh001_demo_fixture",
+    "kind": "test_fixture",
+    "method": "manual_declaration"
+  },
+  "note": "BH-001 bounded neutral synthetic participant.",
+  "record_id": "vrg_399bbea96bc27689ecab5b6162967b7d7320978117bfe7acddeb05c5ab9aeac6",
+  "record_kind": "variable_registration",
+  "recorded_at": "2026-08-30T12:00:00+00:00",
+  "schema_version": "1"
+}

@@ -16,6 +16,9 @@ from backend.system_identity import EntityAnchor
 DEMO_MODEL = Path("models/demo-printer")
 BINDING_SETS = (Path("bindings/demo-printer"),
                 Path("bindings/demo-printer-model"))
+BH001_UNBOUND_VARIABLE = "var_ab2d312466054c20b0ac764e9bc0114e"
+BH001_UNBOUND_REGISTRATION = (
+    "vrg_399bbea96bc27689ecab5b6162967b7d7320978117bfe7acddeb05c5ab9aeac6")
 
 
 def committed_declarations():
@@ -34,6 +37,7 @@ def committed_declarations():
 class TestEmbeddedAnchorEquality:
     def test_every_registration_matches_its_declaration_exactly(self):
         declared = committed_declarations()
+        assert len(declared) == 6
         loaded = ModelStore(DEMO_MODEL).load()
         assert len(loaded.registrations_by_anchor) == 5
         for anchor_id, registration in loaded.registrations_by_anchor.items():
@@ -42,15 +46,18 @@ class TestEmbeddedAnchorEquality:
                 "binding set")
             assert registration.anchor == declared[anchor_id], (
                 f"{anchor_id}: embedded anchor diverges from its declaration")
-        assert len(loaded.variable_registrations_by_anchor) >= 1
+        assert len(loaded.variable_registrations_by_anchor) == 2
+        exceptions = []
         for anchor_id, registration in (
                 loaded.variable_registrations_by_anchor.items()):
-            assert anchor_id in declared, (
-                f"variable {anchor_id} is registered but declared in no "
-                "committed binding set")
-            assert registration.anchor == declared[anchor_id], (
-                f"{anchor_id}: embedded variable anchor diverges from its "
-                "declaration (including entity_anchor_id ownership)")
+            if anchor_id not in declared:
+                exceptions.append((anchor_id, registration.record_id))
+            else:
+                assert registration.anchor == declared[anchor_id], (
+                    f"{anchor_id}: embedded variable anchor diverges from "
+                    "its declaration (including entity-anchor ownership)")
+        assert exceptions == [
+            (BH001_UNBOUND_VARIABLE, BH001_UNBOUND_REGISTRATION)]
 
     def test_seam_has_teeth_diverged_value_detected(self, tmp_path):
         """Negative control: a re-hashed registration embedding a diverged

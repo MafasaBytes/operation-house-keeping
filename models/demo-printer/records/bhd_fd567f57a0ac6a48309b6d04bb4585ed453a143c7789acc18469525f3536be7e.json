@@ -1,0 +1,74 @@
+{
+  "authority": {
+    "agent": "bh001_demo_fixture",
+    "kind": "test_fixture",
+    "method": "manual_declaration"
+  },
+  "behavior_anchor_id": "bhv_80e21f1682e449ca9c65a5e2ee051ea0",
+  "context": {
+    "kind": "lifecycle_view",
+    "view": "as_designed"
+  },
+  "evaluation_basis": "same_acquisition_cohort",
+  "evidence": [
+    {
+      "kind": "model_record",
+      "record_id": "brg_1fd13b69377257d987775c56f7abf9eedd466d4ca6555ff33ba6b8cf6e815d5e"
+    },
+    {
+      "kind": "owner_declaration",
+      "statement": "BH-001 fixture authority explicitly declares this exact-numeric-equality relationship under the same-acquisition-cohort evaluation basis in the as-designed lifecycle view; illustrative declaration only, not an observed equality or real-machine behavior claim."
+    }
+  ],
+  "note": "BH-001 bounded synthetic declaration.",
+  "participant_semantics": [
+    {
+      "signature": {
+        "observation_role": {
+          "code": "synthetic_comparison",
+          "system_edition": "ohk-observation-roles-1",
+          "system_id": "project_local"
+        },
+        "quantity_kind": {
+          "code": "temperature",
+          "system_edition": "ohk-quantities-1",
+          "system_id": "project_local"
+        },
+        "unit": {
+          "code": "degree_celsius",
+          "system_edition": "ohk-units-1",
+          "system_id": "project_local"
+        }
+      },
+      "variable_anchor_id": "var_ab2d312466054c20b0ac764e9bc0114e"
+    },
+    {
+      "signature": {
+        "observation_role": {
+          "code": "measured_actual",
+          "system_edition": "ohk-observation-roles-1",
+          "system_id": "project_local"
+        },
+        "quantity_kind": {
+          "code": "temperature",
+          "system_edition": "ohk-quantities-1",
+          "system_id": "project_local"
+        },
+        "unit": {
+          "code": "degree_celsius",
+          "system_edition": "ohk-units-1",
+          "system_id": "project_local"
+        }
+      },
+      "variable_anchor_id": "var_b7e2d3c4f5a6172839405a6b7c8d9e0f"
+    }
+  ],
+  "record_id": "bhd_fd567f57a0ac6a48309b6d04bb4585ed453a143c7789acc18469525f3536be7e",
+  "record_kind": "behavior_rule_declaration",
+  "recorded_at": "2026-08-30T12:00:00+00:00",
+  "rule": {
+    "kind": "exact_numeric_equality"
+  },
+  "schema_version": "1",
+  "supersedes": []
+}

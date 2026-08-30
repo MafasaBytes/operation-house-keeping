@@ -25,7 +25,7 @@ the PT artifact SHA-256 is
 Displaying variable state beside a port does not mean the observation occurred
 at, originated at, travelled through, or describes the port.
 
-`demo-printer/` is the accepted validation model, currently 29 synthetic
+`demo-printer/` is the accepted validation model, currently 32 synthetic
 records under `test_fixture` authorities. Its explicit historical memberships
 preserve the 9-record MK-001 model, VM-001, VS-001, SN-001, ES-001, CN-001, and
 the 28-record PT-001 fixture. VP-001 adds exactly one parentless, role-free,
@@ -42,9 +42,15 @@ including the exact synthetic-fixture disclaimer and the warning that showing
 variable state beside an associated port does not make the observation a port
 fact.
 
-BH-001 Slice D pre-append status: the exact candidate contract at `0905de0`
-is owner approved and the bounded authoritative append is authorized. At this
-approval-documentation boundary the ledger remains the accepted 29-record VP
-revision; no BH record has yet been appended. The authorized continuation may
-add only the approved VRG, BRG, and parentless BHD and must reproduce revision
+BH-001 Slice D is implemented and adversarially reviewed from the owner-
+approved pre-append contract at `0905de0`. It appends exactly
+one neutral VRG, one BRG, and one parentless BHD to the explicit 29-record VP
+membership. The resulting explicit 32-record revision is
 `mrv_d7d9b3918eb3f04157fb862164fe1d5fb17b4ef18d627fb89ff9bc429a94506b`.
+The owner-approved pre-append candidate disclosure artifact is 122406 bytes
+with SHA-256
+`4c29928156ceb2e1947473039bc20d07af4f3ff9e25a1b664b17c3e96ac415b3`.
+It reports `not_executed`; no binding or missing semantic/state evidence was
+fabricated. Its candidate/proposed fields record the frozen rehearsal scope;
+the byte-identical reproduction does not relabel them as current state. Final
+BH-001 owner acceptance remains pending.

@@ -3,7 +3,7 @@
 from pathlib import Path
 
 
-STATUS = (
+HISTORICAL_STATUS = (
     "BH-001 Slices A, B, and C are owner accepted. Slice C is accepted at "
     "`8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521`. Only the Slice D pre-append "
     "rehearsal gate is owner authorized; the authoritative append has not "
@@ -32,8 +32,15 @@ def _normalized(path):
 
 
 def test_exact_slice_status_is_recorded_everywhere():
-    for path in FILES:
-        assert STATUS in _normalized(path), path
+    for path in FILES[:5]:
+        normalized = _normalized(path)
+        assert "8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521" in normalized
+        assert "Slice D is implemented and adversarially reviewed" in normalized
+        lowered = normalized.lower()
+        assert ("final owner acceptance" in lowered
+                or "final bh-001 owner acceptance" in lowered)
+    for path in FILES[5:]:
+        assert HISTORICAL_STATUS in _normalized(path), path
 
 
 def test_authority_limitation_is_normative_in_spec_and_evaluator_docs():
@@ -41,7 +48,8 @@ def test_authority_limitation_is_normative_in_spec_and_evaluator_docs():
         assert LIMITATION in _normalized(path), path
 
 
-def test_no_operational_implication_and_slice_d_remains_unstarted():
+def test_no_operational_implication_and_slice_d_is_not_executed():
     evaluator = _normalized(FILES[2])
     assert "not claims about validity, correctness, causality, flow, control, safety, health, simultaneity, or continuing real-machine behavior" in evaluator
-    assert "no committed behavior fixture or demonstration artifact exists" in evaluator.lower()
+    assert "authoritative evaluator demonstration is `not_executed`" in evaluator.lower()
+    assert "computed relation is absent" in evaluator.lower()

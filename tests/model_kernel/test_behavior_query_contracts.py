@@ -132,21 +132,26 @@ def test_slice_b_exports_no_evaluator_port_or_outcome_surface():
 
 
 def test_slice_b_and_c_acceptance_and_slice_d_gate_status_are_exact():
-    slice_c_status = (
-        "Slice C is accepted at "
-        "`8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521`. Only the Slice D pre-append "
-        "rehearsal gate is owner authorized; the authoritative append has not "
-        "started.")
-    paths = (
+    living_paths = (
         Path("CLAUDE.md"),
         Path("backend/model_kernel/README.md"),
         Path("docs/adr/0015-explicit-behavior-declarations-and-evidence-gated-evaluation.md"),
         Path("docs/superpowers/specs/2026-08-29-bh001-explicit-behavior-and-evidence-gated-evaluation-design.md"),
+    )
+    for path in living_paths:
+        normalized = " ".join(path.read_text(encoding="utf-8").split())
+        assert "05177f7306ce745d093bd5f11abafc13a6274d0f" in normalized
+        assert "8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521" in normalized
+        assert "Slice D is implemented and adversarially reviewed" in normalized
+        lowered = normalized.lower()
+        assert ("final owner acceptance" in lowered
+                or "final bh-001 owner acceptance" in lowered)
+    historical_paths = (
         Path("docs/superpowers/plans/2026-08-29-bh001-slice-b-implementation-plan.md"),
         Path("docs/superpowers/plans/2026-08-29-bh001-slice-b-adversarial-acceptance-matrix.md"),
     )
-    for path in paths:
+    for path in historical_paths:
         text = path.read_text(encoding="utf-8")
         normalized = " ".join(text.split())
         assert "05177f7306ce745d093bd5f11abafc13a6274d0f" in normalized, path
-        assert slice_c_status in normalized, path
+        assert "8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521" in normalized, path

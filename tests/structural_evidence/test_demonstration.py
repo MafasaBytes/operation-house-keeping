@@ -167,10 +167,14 @@ class TestDM1TheCompleteChain:
             MANIFEST["sources"]["showcase-printer-cad"][
                 "pinned_raw_record_id"]
 
-        # [computed_result] the structurally identified extruder owns the
-        # already-bound temperature variable
+        # [computed_result] the structurally identified extruder owns both
+        # model variables. Ownership does not claim that the neutral BH-001
+        # participant has a binding declaration.
         owned = queries.variables_of(EXTRUDER)
-        assert [e.anchor.anchor_id for e in owned.entries] == [HOTEND]
+        assert [e.anchor.anchor_id for e in owned.entries] == [
+            "var_ab2d312466054c20b0ac764e9bc0114e",
+            HOTEND,
+        ]
 
     def test_every_subject_is_accounted_for(self):
         claim_sets = showcase_claims()

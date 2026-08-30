@@ -16,7 +16,7 @@ from tests.model_kernel.test_demo_model import (
     FROZEN_SN001_MODEL_RECORDS, FROZEN_VM001_RECORD,
     FROZEN_VS001_RECORD, PRE_CN001_MEMBERSHIP, PRE_CN001_REVISION,
     PRE_ES001_MEMBERSHIP, PRE_ES001_REVISION, PRE_SPECIFICATION_MEMBERSHIP,
-    PRE_PT001_REVISION,
+    PRE_BH001_REVISION, PRE_PT001_REVISION, VP001_MEMBERSHIP,
     PRE_SPECIFICATION_REVISION, PRE_VARIABLE_MEMBERSHIP,
     PRE_VARIABLE_REVISION, VS001_MEMBERSHIP, GOLDEN_REVISION)
 from tests.observation_compatibility.test_demo_compatibility import (
@@ -45,22 +45,23 @@ WARNING = (
     "Constraint verdicts are exact predicate outcomes only; they express no "
     "safety, alarm, severity, diagnosis, control, or recommended action."
 )
-# The artifact is a current-model disclosure. Slice D adds one independently
-# scoped VPA to that explicit model revision without changing the constraint,
-# state, semantic, binding, interpretation, or temporal findings.
+# The accepted artifact is explicitly pinned to the 29-record VP membership;
+# later independent model records cannot silently rewrite its provenance.
 ARTIFACT_BYTES = 41010
 ARTIFACT_SHA256 = "161a7beba5b836246f8d0500bd286cff488cc18b037997a6d02548e7c107a5d9"
 
 
 def _loaded_declaration():
-    result = ModelQueries(ModelStore(DEMO_MODEL).load()).constraint_declaration(
-        CONSTRAINT)
+    model = ModelStore(DEMO_MODEL).replay(VP001_MEMBERSHIP)
+    result = ModelQueries(model).constraint_declaration(CONSTRAINT)
     assert result.status == "declared"
     return result
 
 
 def _evaluation(tmp_path):
-    cn, _, _, temporal = cn_stack(tmp_path, include_committed_constraints=True)
+    cn, _, _, temporal = cn_stack(
+        tmp_path, include_committed_constraints=True,
+        model_membership=VP001_MEMBERSHIP)
     result = cn.constraint_evaluation(
         CONSTRAINT, as_of=AS_OF, entity_anchor_id=EXTRUDER)
     return result, temporal
@@ -122,7 +123,7 @@ class TestCommittedLedger:
     def test_exact_two_record_append_identity_authority_and_content(self):
         loaded = ModelStore(DEMO_MODEL).load()
         assert loaded.revision.revision_id == CURRENT_REVISION
-        assert loaded.revision.record_count == 29
+        assert loaded.revision.record_count == 32
         assert len(loaded.constraint_registrations_by_anchor) == 1
         assert len(loaded.constraint_declarations) == 1
         result = _loaded_declaration()
@@ -221,7 +222,7 @@ class TestEvaluationDemonstration:
                     LATEST_RAW_RECORD_ID, LATEST_CHECKSUM, LATEST_ATTEMPT_ID,
                     LATEST_OBSERVATION_ID, LATEST_OCCURRENCE_ID)
         assert temporal.provenance(occurrence.occurrence_id).raw_record_id == LATEST_RAW_RECORD_ID
-        assert result.constraint.revision.revision_id == CURRENT_REVISION
+        assert result.constraint.revision.revision_id == PRE_BH001_REVISION
         assert row.semantic_candidate_index == 0
         assert row.observed_decimal == "60.4"
         assert assessment.side == "upper"

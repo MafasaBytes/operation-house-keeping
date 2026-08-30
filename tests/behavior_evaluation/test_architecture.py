@@ -66,15 +66,16 @@ def test_cn_dependency_is_narrow_and_no_parser_is_reexported():
     assert "import re" not in derivation
 
 
-def test_slice_d_remains_absent_and_committed_demo_is_unchanged():
+def test_slice_d_fixture_is_exact_and_has_no_persisted_evaluation_artifact():
     records = tuple(Path("models/demo-printer/records").glob("*.json"))
-    assert len(records) == 29
-    assert not any(path.name.startswith(("brg_", "bhd_", "bhw_"))
-                   for path in records)
+    assert len(records) == 32
+    assert sum(path.name.startswith("brg_") for path in records) == 1
+    assert sum(path.name.startswith("bhd_") for path in records) == 1
+    assert not any(path.name.startswith("bhw_") for path in records)
     assert not Path("artifacts/bh001").exists()
     loaded = ModelStore(Path("models/demo-printer")).load()
     assert loaded.revision.revision_id == (
-        "mrv_18da4ce963ab5c4b1121cdcc009eaaef4cd1c5c11034f4678c6437361ffd7652")
+        "mrv_d7d9b3918eb3f04157fb862164fe1d5fb17b4ef18d627fb89ff9bc429a94506b")
     vpa = Path(
         "models/demo-printer/records/"
         "vpa_f6443787fc9665e24cae80a5ba0650d0bda8abefe87cb60427c8b39068932e49.json")

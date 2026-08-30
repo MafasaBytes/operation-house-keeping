@@ -23,8 +23,8 @@ from backend.model_kernel import (
 from backend.model_kernel.canonical import verify_record_id
 
 DEMO_MODEL = Path("models/demo-printer")
-CURRENT_REVISION = ("mrv_18da4ce963ab5c4b1121cdcc009eaaef4cd1c5c11034f467"
-                    "8c6437361ffd7652")  # 29 records (VP-001)
+CURRENT_REVISION = ("mrv_d7d9b3918eb3f04157fb862164fe1d5fb17b4ef18d627fb8"
+                    "9ff9bc429a94506b")  # 32 records (BH-001)
 
 ARM = dict(
     kind="structural_source_locator",
@@ -42,7 +42,7 @@ ARM = dict(
 class TestKR1CommittedLedgerUnchanged:
     def test_all_committed_ids_verify_under_the_six_arm_union(self):
         loaded = ModelStore(DEMO_MODEL).load()
-        assert loaded.revision.record_count == 29
+        assert loaded.revision.record_count == 32
         assert loaded.revision.revision_id == CURRENT_REVISION
         for record in loaded.records.values():
             assert verify_record_id(record), record.record_id
@@ -171,7 +171,7 @@ class TestKR5SchemeSpecificGrammar:
         """The grammar is additive: every committed structural citation
         in models/demo-printer already satisfies its scheme."""
         loaded = ModelStore(DEMO_MODEL).load()
-        assert loaded.revision.record_count == 29
+        assert loaded.revision.record_count == 32
 
 
 NONCANONICAL_STEP_PATHS = [

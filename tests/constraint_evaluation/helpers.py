@@ -151,7 +151,7 @@ def _sort_by_dependency(records):
 
 def cn_stack(tmp_path, *, constraint_records=(), model_records_override=None,
              interpretations_path=DEMO_INTERPRETATIONS, binding_records=None,
-             include_committed_constraints=False):
+             include_committed_constraints=False, model_membership=None):
     """Build a full CN evaluation stack in an isolated ``tmp_path`` model
     store. The committed demo records are copied; synthetic constraint
     records are appended. The committed bindings and interpretations are
@@ -167,6 +167,11 @@ def cn_stack(tmp_path, *, constraint_records=(), model_records_override=None,
         # sort later alphabetically). Constraint records are appended
         # afterwards one at a time.
         shutil.copytree(DEMO_MODEL, dst_dir)
+        if model_membership is not None:
+            retained = {f"{record_id}.json" for record_id in model_membership}
+            for path in (dst_dir / "records").glob("*.json"):
+                if path.name not in retained:
+                    path.unlink()
         if not include_committed_constraints:
             # Slice B fixtures retain their accepted isolated pre-CN model.
             # Only disposable copied files are removed; the authoritative

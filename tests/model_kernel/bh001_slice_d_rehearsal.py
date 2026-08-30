@@ -22,14 +22,16 @@ from backend.system_identity import BehaviorAnchor, VariableAnchor
 from backend.temporal_state.contracts import SourcePropertyRef
 from tests.model_kernel.test_cross_layer_seam import committed_declarations
 from tests.model_kernel.test_demo_model import (
+    BH001_MEMBERSHIP,
+    BH001_MODEL_RECORDS,
     CN001_MEMBERSHIP,
-    CURRENT_REVISION,
     DEMO_MODEL,
     GOLDEN_REVISION,
     PRE_CN001_MEMBERSHIP,
     PRE_CN001_REVISION,
     PRE_ES001_MEMBERSHIP,
     PRE_ES001_REVISION,
+    PRE_BH001_REVISION,
     PRE_PT001_REVISION,
     PRE_SPECIFICATION_MEMBERSHIP,
     PRE_SPECIFICATION_REVISION,
@@ -68,7 +70,7 @@ from tests.semantic_compatibility.test_demo_semantics import stack as semantic_s
 MANIFEST_PATH = Path(
     "docs/superpowers/reports/"
     "2026-08-30-bh001-slice-d-candidate-identities.json")
-BASE_REVISION = CURRENT_REVISION
+BASE_REVISION = PRE_BH001_REVISION
 EXISTING_VARIABLE = "var_b7e2d3c4f5a6172839405a6b7c8d9e0f"
 EXISTING_VARIABLE_REGISTRATION = (
     "vrg_40c8c6b984345af33de6913ca9025d60d22b0e627b110e974c78270eb941dca7"
@@ -246,7 +248,7 @@ def prepare_disposable_store(root: Path, *, predecessor_copy_order=None):
     assert set(source_ids) == set(VP001_MEMBERSHIP)
     source_paths = {
         path.stem for path in (DEMO_MODEL / "records").glob("*.json")}
-    assert source_paths == set(source_ids)
+    assert source_paths == set(BH001_MEMBERSHIP)
     source_before = record_inventory(DEMO_MODEL, source_ids)
     store = kernel.ModelStore(root / "demo-printer")
     for record_id in source_ids:
@@ -387,6 +389,10 @@ def _assert_binding_seam(*, entity_registrations, variable_registrations,
                          candidate_vrg):
     candidate_variable_id = candidate_vrg.anchor.anchor_id
     declared = committed_declarations()
+    observed_preexisting = (
+        set(entity_registrations)
+        | (set(variable_registrations) - {candidate_variable_id}))
+    assert observed_preexisting == set(declared)
     for anchor_id, registration in entity_registrations.items():
         assert anchor_id in declared
         assert registration.anchor == declared[anchor_id]
@@ -613,7 +619,7 @@ def historical_revisions():
         (PRE_CN001_MEMBERSHIP, PRE_CN001_REVISION, 16),
         (CN001_MEMBERSHIP, PRE_PT001_REVISION, 18),
         (PT001_MEMBERSHIP, PRE_VP001_REVISION, 28),
-        (VP001_MEMBERSHIP, CURRENT_REVISION, 29),
+        (VP001_MEMBERSHIP, PRE_BH001_REVISION, 29),
     )
     result = []
     for membership, expected_revision, count in cases:
@@ -713,7 +719,9 @@ def run_rehearsal(root: Path, *, predecessor_copy_order=None):
     for record in records:
         store.append(record)
     candidate_ids = tuple(record.record_id for record in records)
+    assert candidate_ids == BH001_MODEL_RECORDS
     membership = tuple(sorted((*VP001_MEMBERSHIP, *candidate_ids)))
+    assert membership == BH001_MEMBERSHIP
     final = store.replay(membership)
     loaded = store.load()
     assert final.revision == loaded.revision
@@ -781,6 +789,94 @@ def run_rehearsal(root: Path, *, predecessor_copy_order=None):
         "candidate_files": candidate_files,
         "candidate_record_bytes": candidate_record_bytes,
         "membership": list(membership),
+        "revision": final.revision.model_dump(mode="json"),
+        "queries": queries,
+        "evaluator": evaluator,
+        "predecessor_sha256": source_before,
+        "predecessor_aggregate_sha256": inventory_digest(source_before),
+        "binding_sha256": binding_hashes,
+        "interpretation_sha256": interpretation_hashes,
+        "artifact": artifact,
+        "artifact_bytes": len(artifact),
+        "artifact_sha256": sha256_bytes(artifact),
+    }
+
+
+def authoritative_reproduction(work_root: Path):
+    """Reproduce the approved artifact from the committed 32-record ledger."""
+    manifest, variable, behavior, records = candidate_records()
+    store = kernel.ModelStore(DEMO_MODEL)
+    base = store.replay(VP001_MEMBERSHIP)
+    final = store.replay(BH001_MEMBERSHIP)
+    loaded = store.load()
+    assert final.revision == loaded.revision
+    assert final.revision.revision_id == (
+        "mrv_d7d9b3918eb3f04157fb862164fe1d5fb17b4ef18d627fb89ff9bc429a94506b")
+    assert final.revision.record_count == 32
+    assert tuple(final.revision.record_ids) == BH001_MEMBERSHIP
+    assert tuple(record.record_id for record in records) == BH001_MODEL_RECORDS
+    for record in records:
+        assert final.records[record.record_id] == record
+
+    source_before = record_inventory(DEMO_MODEL, VP001_MEMBERSHIP)
+    assert inventory_digest(source_before) == (
+        "962a4ab5551435d849739bb4cff2e5379be03424265a40d4fe4a4b8c2c7e99cf")
+    candidate_record_bytes = {
+        f"{record.record_id}.json": (
+            store.records_dir / f"{record.record_id}.json").read_bytes()
+        for record in records
+    }
+    candidate_files = {
+        filename: {"bytes": len(raw), "sha256": sha256_bytes(raw)}
+        for filename, raw in candidate_record_bytes.items()
+    }
+
+    protected_before = tree_inventory(
+        Path("bindings/demo-printer"),
+        Path("bindings/demo-printer-model"),
+        Path("interpretations/demo-printer"),
+        Path("var/raw_store"),
+        Path("showcases/demo-printer"),
+    )
+    queries = query_disclosure(base, final, behavior.anchor_id, records)
+    evaluator = evaluator_disclosure(
+        work_root / "evaluation", final, behavior.anchor_id, records)
+    binding_hashes = tree_inventory(
+        Path("bindings/demo-printer"),
+        Path("bindings/demo-printer-model"),
+    )
+    interpretation_hashes = tree_inventory(Path("interpretations/demo-printer"))
+    accepted_artifacts = verify_accepted_artifacts(
+        work_root / "accepted-artifacts")
+    protected_after = tree_inventory(
+        Path("bindings/demo-printer"),
+        Path("bindings/demo-printer-model"),
+        Path("interpretations/demo-printer"),
+        Path("var/raw_store"),
+        Path("showcases/demo-printer"),
+    )
+    assert protected_before == protected_after
+    artifact = artifact_bytes(
+        manifest=manifest,
+        records=records,
+        source_before=source_before,
+        candidate_files=candidate_files,
+        final=final,
+        queries=queries,
+        evaluator=evaluator,
+        binding_hashes=binding_hashes,
+        interpretation_hashes=interpretation_hashes,
+        accepted_artifacts=accepted_artifacts,
+    )
+    return {
+        "manifest": manifest,
+        "variable_anchor": variable.model_dump(mode="json"),
+        "behavior_anchor": behavior.model_dump(mode="json"),
+        "records": [record.model_dump(mode="json") for record in records],
+        "record_ids": list(BH001_MODEL_RECORDS),
+        "candidate_files": candidate_files,
+        "candidate_record_bytes": candidate_record_bytes,
+        "membership": list(BH001_MEMBERSHIP),
         "revision": final.revision.model_dump(mode="json"),
         "queries": queries,
         "evaluator": evaluator,

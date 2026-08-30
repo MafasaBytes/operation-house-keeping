@@ -42,6 +42,13 @@ The VP artifact SHA-256 is
 the PT artifact SHA-256 is
 `53dd32846956d10331dfca8fc370ef7d7019325904a062db5f037605aa4cf3d8`.
 
+BH-001 Slice D adds one neutrally named variable without a binding declaration
+as the sole pinned binding-seam exception. Model state therefore reports
+`binding_declaration_absent` for that variable. This honest absence is
+preserved in the read-only behavior-evaluation result; no model-state contract
+or binding record changes. The 32-record model revision is
+`mrv_d7d9b3918eb3f04157fb862164fe1d5fb17b4ef18d627fb89ff9bc429a94506b`.
+
 ## Composition
 
 `ModelStateQueries(model: LoadedModel, resolver: BindingResolver,

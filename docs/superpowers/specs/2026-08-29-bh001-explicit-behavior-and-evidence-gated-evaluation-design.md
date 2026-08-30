@@ -11,8 +11,9 @@ resolved. BH-001 Slices A, B, and C are owner accepted. Slice C is accepted at
 minter discrepancy is owner resolved by the exact narrow API and sequencing
 contract in Section 31. The exact Slice D candidate identities, canonical
 records, 32-record revision, and 122406-byte disclosure-artifact contract are
-owner approved; the bounded authoritative append and final verification are
-authorized but have not yet been performed.
+owner approved. Slice D is implemented and adversarially reviewed at that
+exact 32-record revision and artifact contract; final owner acceptance is
+pending.
 
 Repository baseline: `main` at
 `46c04ed6f6f09b254b2f52f07611e2efbdd1d4f6`.
@@ -59,9 +60,10 @@ The accepted repository establishes the following constraints.
 11. Authoritative kernel results carry complete `ModelQueryMaterial` once,
     rebuild the selected model without filesystem or store access, and
     reconstruct nested Pydantic instances from serialized field content.
-12. The committed demo currently contains exactly 29 model records at
+12. At the accepted design baseline, the committed demo contained exactly 29
+    model records at
     `mrv_18da4ce963ab5c4b1121cdcc009eaaef4cd1c5c11034f4678c6437361ffd7652`
-    and has only one registered variable.
+    and had only one registered variable.
 13. Historical model memberships are explicitly pinned at 9, 10, 11, 14, 16,
     18, 28, and 29 records. They are never reconstructed by directory
     enumeration or chronology.
@@ -1728,8 +1730,9 @@ Implementation status: owner accepted at
 effective-body agreement disclosure, deterministic ordering, historical
 revival, and store-independent hostile revalidation are present. BH-001 Slices
 A, B, and C are owner accepted. Slice C is accepted at
-`8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521`. Only the Slice D pre-append
-rehearsal gate is owner authorized; the authoritative append has not started.
+`8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521`. At that accepted boundary, only
+the Slice D pre-append rehearsal gate was owner authorized and the
+authoritative append had not started.
 
 ### 26.3 Slice C — evidence-gated evaluator
 
@@ -1770,9 +1773,9 @@ or structural fixtures. Stop for owner acceptance.
 Implementation status: the preimplementation discrepancy at
 `eedae19a9b2542958f44e66af7117a981c7faeef` is owner accepted and all four
 contract questions are resolved. BH-001 Slices A, B, and C are owner accepted.
-Slice C is accepted at `8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521`.
-Only the Slice D pre-append rehearsal gate is owner authorized; the
-authoritative append has not started.
+Slice C is accepted at `8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521`. At that
+accepted boundary, only the Slice D pre-append rehearsal gate was owner
+authorized and the authoritative append had not started.
 
 ### 26.4 Slice D — bounded synthetic demonstration
 
@@ -2059,5 +2062,16 @@ and artifact SHA-256
 `4c29928156ceb2e1947473039bc20d07af4f3ff9e25a1b664b17c3e96ac415b3`.
 No field, identity, record byte, membership order, revision, or artifact byte
 may drift during the authoritative append.
+
+Implementation status: the authorized append has been performed through the
+public builders and `ModelStore` in physical VRG, BRG, BHD order. The ledger
+replays the explicit 32-record membership at the approved revision; all 29
+predecessor files remain byte-identical. The evaluator is honestly
+`not_executed`, with no computed relation and no evaluated acquisition cohort.
+The deterministic artifact reproduces the approved 122406 bytes and SHA-256.
+It remains the frozen pre-append candidate disclosure: its
+`authoritative_append_performed=false` and `records_proposed` fields describe
+the rehearsal scope, not the current repository state.
+Final BH-001 owner acceptance remains a separate gate.
 
 END OF BH-001 CORRECTED FINAL SYNTHESIS

@@ -9,8 +9,10 @@ is accepted at `8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521`. The public
 variable-minter discrepancy is owner resolved by the exact narrow API addition
 described in Decision 17. The exact Slice D candidate identities, canonical
 records, 32-record revision, and 122406-byte disclosure artifact are owner
-approved; the bounded authoritative append and final verification are
-authorized but have not yet been performed.
+approved. Slice D is implemented and adversarially reviewed at the exact
+32-record revision and artifact contract; final owner acceptance is pending.
+The frozen artifact remains explicitly a pre-append candidate disclosure; its
+scope fields are historical rehearsal evidence, not current-state assertions.
 
 Accepted base: `main` at
 `46c04ed6f6f09b254b2f52f07611e2efbdd1d4f6`.
@@ -173,7 +175,8 @@ state and semantic compatibility, owns no store, and never persists equality
 as model or temporal truth.
 
 The accepted 29-record demo and every explicit 9/10/11/14/16/18/28/29-record
-historical membership remain unchanged in Slice A. Pre-BH memberships contain
+historical membership remain unchanged. The Slice D model is an explicit
+32-record membership adding only VRG, BRG, and parentless BHD. Pre-BH memberships contain
 no migration or inferred behavior. The VP and PT deterministic artifacts and
 all model, binding, interpretation, temporal, source, and structural evidence
 remain byte-frozen.
