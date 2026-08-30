@@ -1,6 +1,6 @@
 # ADR-0016 — Explicit state identity and evidence-gated classification
 
-Status: ST-001 corrected final design and Slices A-B owner accepted; Slice C separately authorized; Slice D unstarted and not authorized
+Status: Slices A and B are owner accepted. Slice C is implemented and adversarially reviewed; awaiting owner acceptance. Slice D remains unstarted and unauthorized.
 
 Date: 2026-08-30
 
@@ -55,8 +55,9 @@ or state-machine execution.
    revision.
 10. Slice B adds exactly four read-only kernel methods with carry-once,
     store-independent, authoritatively reconstructed result contracts.
-11. Slice C will later add read-only `backend.state_classification`, composing
-    public `ConstraintEvaluationQueries`; it is not authorized in Slice A.
+11. Slice C adds read-only `backend.state_classification`, composing public
+    `ConstraintEvaluationQueries` through the accepted public facade chain.
+    It owns no store and persists no result.
 12. Slice D will later be separately rehearsed and owner-gated before a
     two-record 32-to-34 demonstration append; no fixture mutation is authorized
     in Slice A.
@@ -91,9 +92,16 @@ Slice B is separately authorized for exactly the four read-only
 authoritatively reconstructed result contracts. It does not authorize state
 classification, CN composition, temporal selection, demonstration records, or
 transition work. Slice B is owner accepted at
-`23eca10a52c0124d22b4e90d80bef952ef5f9381`. Slice C is separately
-authorized for the read-only classifier. Slice D remains unstarted and
-unauthorized.
+`23eca10a52c0124d22b4e90d80bef952ef5f9381`.
+
+## Slice C implementation
+
+Slices A and B are owner accepted. Slice C is implemented and adversarially
+reviewed; awaiting owner acceptance. Slice D remains unstarted and
+unauthorized. Slice C composes the public CN facade, uses exact explicit
+sources, independently selected evidence at one cutoff, strict VCN pins, and
+the bounded all-of truth table. It performs no persistence and asserts no
+simultaneity, synchronization, current physical state, or transition.
 
 ## Consequences
 
@@ -114,7 +122,8 @@ Costs and limitations:
 - accepted CN conditions remain the only v1 predicate vocabulary;
 - cross-entity conditions, any-of logic, state families, and transitions are
   unsupported;
-- no classification capability exists until separately authorized Slice C.
+- classifier authenticity is limited to coherence of carried public material;
+  uncaptured raw payload bytes are not independently authenticated.
 
 ## Rejected alternatives
 

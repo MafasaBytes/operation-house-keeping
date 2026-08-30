@@ -1,6 +1,6 @@
 # ST-001 — Explicit State Identity and Evidence-Gated Classification
 
-Status: Corrected final synthesis and Slices A-B owner accepted; Slice C separately authorized; Slice D unstarted and unauthorized
+Status: Slices A and B are owner accepted. Slice C is implemented and adversarially reviewed; awaiting owner acceptance. Slice D remains unstarted and unauthorized.
 
 Date: 2026-08-30
 
@@ -2370,8 +2370,9 @@ blocker for Slices A-C.
 
 Slice A is owner accepted at
 `9adcf4d9613ac96e5fb430a4b750f3053679b64d`. Slice B is owner accepted at
-`23eca10a52c0124d22b4e90d80bef952ef5f9381`. Slice C is separately
-authorized. Slice D remains unstarted and unauthorized.
+`23eca10a52c0124d22b4e90d80bef952ef5f9381`. Slices A and B are owner
+accepted. Slice C is implemented and adversarially reviewed; awaiting owner
+acceptance. Slice D remains unstarted and unauthorized.
 
 Genuine unresolved owner questions: none within authorized Slice C.
 

@@ -862,7 +862,9 @@ condition must target a variable whose embedded owner exactly equals that
 entity. Declarations pin exact VCN records. Slice B implements exactly four
 read-only model-kernel state queries and their carry-once, store-independent,
 authoritatively reconstructed result contracts. Slice B is owner accepted at
-`23eca10a52c0124d22b4e90d80bef952ef5f9381`. Slice C is separately
-authorized for the read-only `backend/state_classification` composition only.
-Slice D fixture work, state families, and every transition capability remain
-unstarted and unauthorized. The authoritative demo remains 32 records.
+`23eca10a52c0124d22b4e90d80bef952ef5f9381`. Slices A and B are owner
+accepted. Slice C is implemented and adversarially reviewed; awaiting owner
+acceptance. Slice D remains unstarted and unauthorized. Slice C is limited to
+the read-only `backend/state_classification` composition. The authoritative
+demo remains 32 records, and state families and every transition capability
+remain excluded.

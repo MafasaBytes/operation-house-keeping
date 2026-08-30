@@ -1,6 +1,6 @@
 # ST-001 Slice C — Evidence-Gated State Classification Plan
 
-Status: Slices A-B owner accepted; Slice C authorized; Slice D unauthorized and unstarted
+Status: Slices A and B are owner accepted. Slice C is implemented and adversarially reviewed; awaiting owner acceptance. Slice D remains unstarted and unauthorized.
 
 Date: 2026-08-31
 
@@ -123,5 +123,14 @@ both diff checks, and branch/status/topology checks.
 Commit in reviewable groups. Write and separately commit the file-first Slice C
 completion report. Stop for owner acceptance and separate authorization of
 Slice D pre-append rehearsal only.
+
+Implementation completed through the exact public CN facade chain. Internal
+reviews identified and closed stale lower-model projections, hidden nested
+extras, forged context extras, coercible cutoffs, deep/cyclic hostile payloads,
+and obsolete import-isolation expectations. Every repair is retained as a
+regression. The public closure rules make condition-level `not_registered` and
+`not_declared` branches defensive-unreachable in valid SRG/STD material; the
+implementation keeps them fail-closed without constructing invalid private
+models for coverage.
 
 END OF ST-001 SLICE C IMPLEMENTATION PLAN

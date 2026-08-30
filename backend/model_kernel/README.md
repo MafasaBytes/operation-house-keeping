@@ -281,10 +281,13 @@ without a store or filesystem. Identical independent healthy roots
 corroborate; same-root forks and differing active effective bodies remain
 conflicted; inactive roots remain visible. IDs order disclosure only and
 never select a winner. Slice B is owner accepted at
-`23eca10a52c0124d22b4e90d80bef952ef5f9381`. Slice C is separately
-authorized for the read-only state-classification composition.
+`23eca10a52c0124d22b4e90d80bef952ef5f9381`. Slices A and B are owner
+accepted. Slice C is implemented and adversarially reviewed; awaiting owner
+acceptance. Slice D remains unstarted and unauthorized. The Slice C classifier
+is a read-only upper-layer composition and does not alter these kernel query
+contracts.
 
 The committed demo ledger remains the accepted 32-record BH-001 revision with
-zero SRG, STD, or STW records. Slice D and all ST-002 transition work remain
-unstarted and unauthorized. No query infers state from a
+zero SRG, STD, or STW records. All ST-002 transition work remains excluded. No
+query infers state from a
 constraint, observation, hierarchy, port, VPA, behavior, name, or ownership.

@@ -1,6 +1,6 @@
 # ST-001 Slice C — Adversarial Acceptance Matrix
 
-Status: Slices A-B owner accepted; Slice C authorized; Slice D unauthorized and unstarted
+Status: Slices A and B are owner accepted. Slice C is implemented and adversarially reviewed; awaiting owner acceptance. Slice D remains unstarted and unauthorized.
 
 Date: 2026-08-31
 
@@ -38,11 +38,11 @@ Date: 2026-08-31
 |---|---|
 | C19 | State lifecycle refusals map exactly and keep coverage not evaluated. |
 | C20 | One/corroborating healthy effective body is admitted without winner selection. |
-| C21 | Absent constraint aligns not registered and contributes nothing. |
-| C22 | No current VCN aligns not declared and contributes nothing. |
-| C23 | Two current VCN tips align conflicted regardless of body equality. |
-| C24 | A unique current VCN differing from pin aligns superseded. |
-| C25 | Only exact current pin uses the authoritative CN candidate verdict. |
+| C21 | Absent constraint maps to `not_registered` / `condition_not_registered` and contributes nothing. Valid public SRG material makes this branch defensive-unreachable through reference closure; closure and fail-closed derivation are pinned without forging a private model. |
+| C22 | No current VCN maps to `not_declared` / `condition_declaration_not_declared` and contributes nothing. Valid public STD material makes this branch defensive-unreachable through pin closure; closure and fail-closed derivation are pinned without forging a private model. |
+| C23 | Two current VCN tips map to `conflicted` / `condition_declaration_conflicted` and contribute nothing regardless of body equality. |
+| C24 | A unique current VCN differing from pin maps to `superseded` / `condition_declaration_superseded` and contributes nothing. |
+| C25 | Only `exact_current` uses the authoritative CN candidate verdict; a CN `not_evaluated` outcome maps to `condition_evaluation_not_evaluated`. |
 | C26 | Alignment-to-refusal mapping is exact and independently tested. |
 | C27 | All satisfied yields complete/executed/matches. |
 | C28 | Known violation with evaluated siblings yields complete/executed/does_not_match. |
@@ -96,5 +96,9 @@ Date: 2026-08-31
 Every applicable row must be green and every confirmed specialist finding must
 remain as a regression. The completion report asks only: accept Slice C and
 separately authorize Slice D pre-append rehearsal?
+
+All rows are implemented and adversarially reviewed. C21 and C22 are pinned as
+defensive-unreachable consequences of accepted public reference closure, not
+as fabricated private worlds. Slice D remains unstarted and unauthorized.
 
 END OF ST-001 SLICE C ADVERSARIAL ACCEPTANCE MATRIX
