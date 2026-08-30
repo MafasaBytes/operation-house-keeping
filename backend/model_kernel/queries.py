@@ -12,7 +12,7 @@ children visited in canonical order.
 import re
 import typing
 
-from pydantic import TypeAdapter, ValidationError
+from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from backend.model_kernel.contracts import (
     AssertionContext,
@@ -206,8 +206,16 @@ class ModelQueries:
         matching never compares against raw input; malformed context is a
         typed error, never a silently empty answer."""
         try:
-            payload = context.model_dump(mode="python") if hasattr(
-                context, "model_dump") else context
+            if isinstance(context, BaseModel):
+                fields = type(context).model_fields
+                stored = vars(context)
+                extras = getattr(context, "__pydantic_extra__", None)
+                if set(stored).difference(fields) or extras:
+                    raise ValueError(
+                        "assertion context instance contains extra fields")
+                payload = context.model_dump(mode="python")
+            else:
+                payload = context
             return _CONTEXT_ADAPTER.validate_python(payload)
         except (ValidationError, ValueError, TypeError, AttributeError) as error:
             raise ModelQueryError(

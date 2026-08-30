@@ -5,6 +5,7 @@ Nested rows contain strict indices only. Query construction and public result
 validation share the deterministic private payload derivations below.
 """
 
+from collections.abc import Mapping
 from typing import Annotated, Literal
 
 from pydantic import (
@@ -51,6 +52,21 @@ class _StateResult(BaseModel):
     @classmethod
     def _reject_hidden_instance_fields(cls, value):
         """Reject extras that ``model_copy`` can hide from serialization."""
+        missing = object()
+
+        def field(container, name):
+            if isinstance(container, BaseModel):
+                return vars(container).get(name, missing)
+            if isinstance(container, Mapping):
+                return container.get(name, missing)
+            return missing
+
+        material = field(value, "material")
+        revision = field(material, "revision")
+        record_count = field(revision, "record_count")
+        if record_count is not missing and type(record_count) is not int:
+            raise ValueError("material revision record_count must be strict int")
+
         pending = [value]
         seen: set[int] = set()
         while pending:
@@ -68,7 +84,7 @@ class _StateResult(BaseModel):
                         "pydantic result instance contains extra fields")
                 pending.extend(stored[field] for field in fields
                                if field in stored)
-            elif isinstance(item, dict):
+            elif isinstance(item, Mapping):
                 pending.extend(item.keys())
                 pending.extend(item.values())
             elif isinstance(item, (tuple, list, set, frozenset)):
