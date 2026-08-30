@@ -125,6 +125,22 @@ from backend.model_kernel.behavior_results import (
     VariableBehaviorsResult,
     VariableBehaviorsStatus,
 )
+from backend.model_kernel.state_results import (
+    EntityStateEntry,
+    EntityStatesResult,
+    EntityStatesStatus,
+    StateAgreementFinding,
+    StateAssertionDisclosureResult,
+    StateAssertionLookupStatus,
+    StateConditionReferenceResult,
+    StateDeclarationConclusion,
+    StateDeclarationLineageSummary,
+    StateDeclarationResult,
+    StateDeclarationRootResult,
+    StateEffectiveBodyGroupResult,
+    StateLookupResult,
+    StateLookupStatus,
+)
 from backend.model_kernel.port_results import (
     AssertionActivity,
     CompatibilityEndpointStatus,
@@ -265,6 +281,13 @@ __all__ = [
     "BehaviorEffectiveBodyGroupResult", "BehaviorRuleRootResult",
     "BehaviorLookupResult", "BehaviorRuleResult", "VariableBehaviorEntry",
     "VariableBehaviorsResult", "BehaviorAssertionDisclosureResult",
+    "StateLookupStatus", "StateDeclarationConclusion",
+    "StateDeclarationLineageSummary", "StateAgreementFinding",
+    "EntityStatesStatus", "StateAssertionLookupStatus",
+    "StateConditionReferenceResult", "StateEffectiveBodyGroupResult",
+    "StateDeclarationRootResult", "StateLookupResult",
+    "StateDeclarationResult", "EntityStateEntry", "EntityStatesResult",
+    "StateAssertionDisclosureResult",
     # operations
     "build_record",
     "ModelStore",

@@ -73,7 +73,8 @@ def test_exact_state_query_result_names_fields_and_exports():
         assert name in kernel.__all__
     assert len(kernel.__all__) == 162
     assert len(kernel.__all__) == len(set(kernel.__all__))
-    assert {name for name in kernel.__all__ if name.startswith("State")} == (
+    assert {name for name in kernel.__all__
+            if name.startswith("State") or name.startswith("EntityState")} == (
         set(ALIASES) | set(RESULT_FIELDS) | {
             "StateRegistration", "StateConstraintDeclarationPin",
             "StateDeclaration", "StateDeclarationWithdrawal",

@@ -50,6 +50,12 @@ from backend.model_kernel.behavior_results import (
     _behavior_assertion_payload, _behavior_lookup_payload,
     _behavior_rule_payload, _variable_behaviors_payload,
 )
+from backend.model_kernel.state_results import (
+    EntityStatesResult, StateAssertionDisclosureResult,
+    StateDeclarationResult, StateLookupResult,
+    _entity_states_payload, _state_assertion_payload,
+    _state_declaration_payload, _state_lookup_payload,
+)
 from backend.model_kernel.port_results import (
     ConnectionRootResult, ConnectionSubjectResult, SharedConnectionsResult,
     EndpointInterfaceResult,
@@ -67,6 +73,7 @@ from backend.system_identity import (
     CONSTRAINT_ANCHOR_ID_PATTERN,
     ENTITY_ANCHOR_ID_PATTERN,
     PORT_ANCHOR_ID_PATTERN,
+    STATE_ANCHOR_ID_PATTERN,
     VARIABLE_ANCHOR_ID_PATTERN,
 )
 
@@ -75,9 +82,11 @@ _VARIABLE_ANCHOR_ID = re.compile(VARIABLE_ANCHOR_ID_PATTERN)
 _CONSTRAINT_ANCHOR_ID = re.compile(CONSTRAINT_ANCHOR_ID_PATTERN)
 _PORT_ANCHOR_ID = re.compile(PORT_ANCHOR_ID_PATTERN)
 _BEHAVIOR_ANCHOR_ID = re.compile(BEHAVIOR_ANCHOR_ID_PATTERN)
+_STATE_ANCHOR_ID = re.compile(STATE_ANCHOR_ID_PATTERN)
 _PORT_RECORD_ID = re.compile(r"^(?:prg|pif|pcn|pcm|ptw)_[0-9a-f]{64}$")
 _VARIABLE_PORT_RECORD_ID = re.compile(r"^(?:vpa|vpw)_[0-9a-f]{64}$")
 _BEHAVIOR_RECORD_ID = re.compile(r"^(?:brg|bhd|bhw)_[0-9a-f]{64}$")
+_STATE_RECORD_ID = re.compile(r"^(?:srg|std|stw)_[0-9a-f]{64}$")
 _CONTEXT_ADAPTER: TypeAdapter = TypeAdapter(AssertionContext)
 _LIFECYCLE_VIEWS = frozenset(typing.get_args(LifecycleView))
 
@@ -131,6 +140,14 @@ class ModelQueries:
                 f"{anchor_id!r} is not a canonical behavior anchor id")
         return anchor_id
 
+    def _require_state_anchor_id(self, anchor_id: str) -> str:
+        if (not isinstance(anchor_id, str)
+                or not _STATE_ANCHOR_ID.fullmatch(anchor_id)):
+            raise ModelQueryError(
+                "MODEL_ANCHOR_ID_INVALID",
+                f"{anchor_id!r} is not a canonical state anchor id")
+        return anchor_id
+
     def _require_port_record_id(self, record_id: str) -> str:
         if (not isinstance(record_id, str)
                 or not _PORT_RECORD_ID.fullmatch(record_id)):
@@ -152,6 +169,14 @@ class ModelQueries:
             raise ModelQueryError(
                 "MODEL_RECORD_ID_INVALID",
                 f"{record_id!r} is not a BH record id")
+        return record_id
+
+    def _require_state_record_id(self, record_id: str) -> str:
+        if (not isinstance(record_id, str)
+                or not _STATE_RECORD_ID.fullmatch(record_id)):
+            raise ModelQueryError(
+                "MODEL_RECORD_ID_INVALID",
+                f"{record_id!r} is not an ST record id")
         return record_id
 
     def _material(self) -> ModelQueryMaterial:
@@ -1092,6 +1117,46 @@ class ModelQueries:
             material=material,
             **_behavior_assertion_payload(
                 material, self.loaded, record_id))
+
+    # -- ST-001 explicit state declarations -------------------------------
+
+    def state(self, state_anchor_id) -> StateLookupResult:
+        state_anchor_id = self._require_state_anchor_id(state_anchor_id)
+        material = self._material()
+        return StateLookupResult(
+            material=material,
+            **_state_lookup_payload(material, self.loaded, state_anchor_id))
+
+    def state_declaration(
+            self, state_anchor_id, *, context
+    ) -> StateDeclarationResult:
+        state_anchor_id = self._require_state_anchor_id(state_anchor_id)
+        context = self._require_context(context)
+        material = self._material()
+        return StateDeclarationResult(
+            material=material,
+            **_state_declaration_payload(
+                material, self.loaded, state_anchor_id, context))
+
+    def states_of_entity(
+            self, entity_anchor_id, *, context
+    ) -> EntityStatesResult:
+        entity_anchor_id = self._require_anchor_id(entity_anchor_id)
+        context = self._require_context(context)
+        material = self._material()
+        return EntityStatesResult(
+            material=material,
+            **_entity_states_payload(
+                material, self.loaded, entity_anchor_id, context))
+
+    def state_assertion(
+            self, record_id
+    ) -> StateAssertionDisclosureResult:
+        record_id = self._require_state_record_id(record_id)
+        material = self._material()
+        return StateAssertionDisclosureResult(
+            material=material,
+            **_state_assertion_payload(material, self.loaded, record_id))
 
     # -- VP-001 explicit variable-to-port associations --------------------
 
