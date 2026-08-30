@@ -16,10 +16,12 @@ from tests.model_kernel.st001_slice_a_helpers import (
     state_withdrawal, world,
 )
 from tests.model_kernel.test_demo_model import (
-    BH001_MEMBERSHIP, CN001_MEMBERSHIP, PRE_CN001_MEMBERSHIP,
-    PRE_ES001_MEMBERSHIP, PRE_SPECIFICATION_MEMBERSHIP,
-    PRE_VARIABLE_MEMBERSHIP, PT001_MEMBERSHIP, VP001_MEMBERSHIP,
-    VS001_MEMBERSHIP,
+    BH001_MEMBERSHIP, CN001_MEMBERSHIP, CURRENT_REVISION, GOLDEN_REVISION,
+    PRE_BH001_REVISION, PRE_CN001_MEMBERSHIP, PRE_CN001_REVISION,
+    PRE_ES001_MEMBERSHIP, PRE_ES001_REVISION, PRE_PT001_REVISION,
+    PRE_SPECIFICATION_MEMBERSHIP, PRE_SPECIFICATION_REVISION,
+    PRE_VARIABLE_MEMBERSHIP, PRE_VARIABLE_REVISION, PRE_VP001_REVISION,
+    PT001_MEMBERSHIP, VP001_MEMBERSHIP, VS001_MEMBERSHIP,
 )
 
 
@@ -305,6 +307,29 @@ def test_withdrawn_root_beside_two_surviving_corroborating_roots(tmp_path):
             (survivor_one.record_id, survivor_two.record_id)))
 
 
+def test_healthy_root_never_hides_separate_same_root_conflict(tmp_path):
+    registration = state_registration()
+    healthy = state_declaration(registration, note="healthy root")
+    fork_root = state_declaration(
+        registration, recorded_at=T1, note="fork root")
+    left = state_declaration(
+        registration, supersedes=(fork_root.record_id,),
+        recorded_at=T1 + timedelta(seconds=1), note="left")
+    right = state_declaration(
+        registration, supersedes=(fork_root.record_id,),
+        recorded_at=T1 + timedelta(seconds=2), note="right")
+    result = kernel.ModelQueries(world(
+        tmp_path, healthy, fork_root, left, right).load()).state_declaration(
+            STATE_A, context=AS_OPERATED)
+    assert (result.conclusion, result.lineage_summary,
+            result.agreement_findings) == (
+                "conflicted", "conflicted",
+                ("one_healthy_root", "same_root_conflict"))
+    assert len(result.roots) == 2
+    assert record_ids(result.material, result.current_declaration_indices) == \
+        tuple(sorted((healthy.record_id, left.record_id, right.record_id)))
+
+
 def test_selective_fork_withdrawal_restores_one_healthy_tip(tmp_path):
     registration = state_registration()
     root = state_declaration(registration, note="root")
@@ -408,8 +433,12 @@ def test_assertion_discloses_events_activity_and_subject_health(tmp_path):
     permanent = queries.state_assertion(registration.record_id)
     assert permanent.lookup_status == "found"
     assert permanent.record == registration
-    assert permanent.activity is None
-    assert permanent.root_record_index is None
+    assert (permanent.activity, permanent.containing_lineage_health,
+            permanent.containing_subject_conclusion,
+            permanent.containing_agreement_findings,
+            permanent.root_record_index, permanent.successor_indices,
+            permanent.withdrawal_indices) == (
+                None, None, None, None, None, (), ())
 
     superseded = queries.state_assertion(root.record_id)
     assert superseded.activity == "superseded"
@@ -431,8 +460,37 @@ def test_assertion_discloses_events_activity_and_subject_health(tmp_path):
     assert withdrawn.containing_subject_conclusion == "inactive"
     event = withdrawn_queries.state_assertion(withdrawal.record_id)
     assert event.lookup_status == "found"
-    assert event.activity is None
-    assert event.root_record_index is None
+    assert (event.activity, event.containing_lineage_health,
+            event.containing_subject_conclusion,
+            event.containing_agreement_findings,
+            event.root_record_index, event.successor_indices,
+            event.withdrawal_indices) == (
+                None, None, None, None, None, (), ())
+
+
+def test_assertion_discloses_sorted_direct_fork_successors_and_withdrawal(
+        tmp_path):
+    registration = state_registration()
+    root = state_declaration(registration, note="root")
+    left = state_declaration(
+        registration, supersedes=(root.record_id,), recorded_at=T1,
+        note="left")
+    right = state_declaration(
+        registration, supersedes=(root.record_id,),
+        recorded_at=T1 + timedelta(seconds=1), note="right")
+    withdrawal = state_withdrawal(left, recorded_at=T1 + timedelta(seconds=2))
+    queries = kernel.ModelQueries(world(
+        tmp_path, root, left, right, withdrawal).load())
+    parent = queries.state_assertion(root.record_id)
+    assert parent.activity == "superseded"
+    assert parent.containing_lineage_health == "healthy"
+    assert record_ids(parent.material, parent.successor_indices) == tuple(
+        sorted((left.record_id, right.record_id)))
+    assert parent.withdrawal_indices == ()
+    withdrawn = queries.state_assertion(left.record_id)
+    assert withdrawn.activity == "withdrawn"
+    assert record_ids(withdrawn.material, withdrawn.withdrawal_indices) == (
+        withdrawal.record_id,)
 
 
 def test_individual_assertion_is_current_while_its_root_is_conflicted(tmp_path):
@@ -470,25 +528,42 @@ def test_valid_shaped_absent_assertions_are_structured_not_found(tmp_path):
 def test_every_explicit_pre_st_membership_returns_structured_absence():
     store = kernel.ModelStore(DEMO_MODEL)
     histories = (
-        PRE_VARIABLE_MEMBERSHIP, PRE_SPECIFICATION_MEMBERSHIP,
-        VS001_MEMBERSHIP, PRE_ES001_MEMBERSHIP, PRE_CN001_MEMBERSHIP,
-        CN001_MEMBERSHIP, PT001_MEMBERSHIP, VP001_MEMBERSHIP,
-        BH001_MEMBERSHIP,
+        (PRE_VARIABLE_MEMBERSHIP, PRE_VARIABLE_REVISION),
+        (PRE_SPECIFICATION_MEMBERSHIP, PRE_SPECIFICATION_REVISION),
+        (VS001_MEMBERSHIP, GOLDEN_REVISION),
+        (PRE_ES001_MEMBERSHIP, PRE_ES001_REVISION),
+        (PRE_CN001_MEMBERSHIP, PRE_CN001_REVISION),
+        (CN001_MEMBERSHIP, PRE_PT001_REVISION),
+        (PT001_MEMBERSHIP, PRE_VP001_REVISION),
+        (VP001_MEMBERSHIP, PRE_BH001_REVISION),
+        (BH001_MEMBERSHIP, CURRENT_REVISION),
     )
-    for membership in histories:
+    registered_entity = "ent_a3f1c2d4e5b6478899aa0b1c2d3e4f50"
+    absent_entity = "ent_ffffffffffffffffffffffffffffffff"
+    for membership, expected_revision in histories:
         loaded = store.replay(membership)
+        assert loaded.revision.revision_id == expected_revision
         queries = kernel.ModelQueries(loaded)
-        assert queries.state(STATE_A).status == "not_registered"
+        lookup = queries.state(STATE_A)
+        assert lookup.status == "not_registered"
+        assert lookup.material.revision.revision_id == expected_revision
         declaration = queries.state_declaration(
             STATE_A, context=AS_OPERATED)
         assert declaration.conclusion == "not_registered"
         assert declaration.roots == ()
-        assert queries.state_assertion(
-            "std_" + "f" * 64).lookup_status == "not_found"
-    current = kernel.ModelQueries(store.replay(BH001_MEMBERSHIP))
-    assert current.states_of_entity(
-        "ent_a3f1c2d4e5b6478899aa0b1c2d3e4f50",
-        context=AS_OPERATED).entries == ()
+        assert declaration.material.revision.revision_id == expected_revision
+        assertion = queries.state_assertion("std_" + "f" * 64)
+        assert assertion.lookup_status == "not_found"
+        assert assertion.material.revision.revision_id == expected_revision
+        entity = queries.states_of_entity(
+            registered_entity, context=AS_OPERATED)
+        assert (entity.status, entity.entries) == ("registered", ())
+        assert entity.material.revision.revision_id == expected_revision
+        absent = queries.states_of_entity(
+            absent_entity, context=AS_OPERATED)
+        assert (absent.status, absent.entity_registration_index,
+                absent.entries) == ("entity_not_registered", None, ())
+        assert absent.material.revision.revision_id == expected_revision
 
 
 def test_historical_membership_omitting_successor_or_withdrawal_revives_tip(

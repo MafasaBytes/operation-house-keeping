@@ -118,6 +118,20 @@ def test_state_query_fields_use_named_public_aliases():
     for contract_name, field, alias_name in cases:
         assert getattr(kernel, contract_name).model_fields[field].annotation == \
             getattr(kernel, alias_name)
+    assert kernel.StateDeclarationRootResult.model_fields[
+        "lineage_health"].annotation == kernel.ContainingLineageHealth
+    assertion = kernel.StateAssertionDisclosureResult.model_fields
+    assert assertion["activity"].annotation == kernel.AssertionActivity | None
+    assert assertion["containing_lineage_health"].annotation == \
+        kernel.ContainingLineageHealth | None
+
+
+def test_every_state_query_result_has_exact_frozen_revalidation_config():
+    for name in RESULT_FIELDS:
+        config = getattr(kernel, name).model_config
+        assert config["frozen"] is True
+        assert config["extra"] == "forbid"
+        assert config["revalidate_instances"] == "always"
 
 
 def test_exact_four_state_query_signatures_and_no_aliases():

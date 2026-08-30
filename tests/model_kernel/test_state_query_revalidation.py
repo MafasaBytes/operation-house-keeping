@@ -1,9 +1,12 @@
 """ST-001 Slice B authoritative reconstruction and isolation attacks."""
 
 import ast
+import builtins
 import json
 import os
 from pathlib import Path
+import socket
+import sqlite3
 import subprocess
 import sys
 from types import MappingProxyType
@@ -12,14 +15,19 @@ import pytest
 from pydantic import ValidationError
 
 import backend.model_kernel as kernel
+from backend.model_kernel.canonical import _state_effective_body_bytes
 from backend.model_kernel.store import validate_record_collection
 from tests.model_kernel.builders import (
     CON_A, ENT_A, constraint_declaration, registration, upper_bound,
 )
 from tests.model_kernel.st001_slice_a_helpers import (
-    AS_OPERATED, STATE_A, T1, condition_world_records, pins,
+    AS_OPERATED, STATE_A, STATE_B, T1, condition_world_records, pins,
     state_declaration, state_registration, state_withdrawal, world,
 )
+
+
+def record_ids(material, indices):
+    return tuple(material.record_at(index).record_id for index in indices)
 
 
 def reconstruct(result, mutate):
@@ -361,8 +369,43 @@ def test_result_revalidation_is_store_and_filesystem_independent(
     monkeypatch.setattr(Path, "open", forbidden)
     monkeypatch.setattr(Path, "read_text", forbidden)
     monkeypatch.setattr(Path, "read_bytes", forbidden)
+    monkeypatch.setattr(Path, "write_text", forbidden)
+    monkeypatch.setattr(Path, "write_bytes", forbidden)
+    monkeypatch.setattr(builtins, "open", forbidden)
+    monkeypatch.setattr(socket, "socket", forbidden)
+    monkeypatch.setattr(sqlite3, "connect", forbidden)
     rebuilt = type(result).model_validate(result.model_dump(mode="python"))
     assert rebuilt.model_dump_json() == result.model_dump_json()
+
+
+def test_every_public_state_result_instance_is_frozen(tmp_path):
+    registration = state_registration()
+    declaration_record = state_declaration(registration)
+    queries = kernel.ModelQueries(world(tmp_path, declaration_record).load())
+    lookup = queries.state(STATE_A)
+    declaration = queries.state_declaration(STATE_A, context=AS_OPERATED)
+    collection = queries.states_of_entity(ENT_A, context=AS_OPERATED)
+    assertion = queries.state_assertion(declaration_record.record_id)
+    instances = (
+        lookup,
+        declaration,
+        declaration.roots[0],
+        declaration.effective_body_groups[0],
+        declaration.effective_body_groups[0].conditions[0],
+        collection,
+        collection.entries[0],
+        assertion,
+    )
+    assert {type(instance).__name__ for instance in instances} == {
+        "StateConditionReferenceResult", "StateEffectiveBodyGroupResult",
+        "StateDeclarationRootResult", "StateLookupResult",
+        "StateDeclarationResult", "EntityStateEntry", "EntityStatesResult",
+        "StateAssertionDisclosureResult",
+    }
+    for instance in instances:
+        field = next(iter(type(instance).model_fields))
+        with pytest.raises(ValidationError):
+            setattr(instance, field, getattr(instance, field))
 
 
 def test_complete_material_is_carried_once_and_rows_are_indices_only(tmp_path):
@@ -384,6 +427,97 @@ def test_complete_material_is_carried_once_and_rows_are_indices_only(tmp_path):
         for condition in group["conditions"]:
             assert "material" not in condition
             assert "record" not in condition
+
+
+def test_every_query_family_rejects_missing_duplicate_extra_and_mixed_material(
+        tmp_path):
+    registration = state_registration()
+    declaration = state_declaration(registration)
+    queries = kernel.ModelQueries(world(tmp_path / "first", declaration).load())
+    results = (
+        queries.state(STATE_A),
+        queries.state_declaration(STATE_A, context=AS_OPERATED),
+        queries.states_of_entity(ENT_A, context=AS_OPERATED),
+        queries.state_assertion(declaration.record_id),
+    )
+    other_material = kernel.ModelQueries(world(
+        tmp_path / "other").load()).state(STATE_A).material.model_dump(
+            mode="python")
+    for result in results:
+        attacks = (
+            lambda p: p["material"].update(
+                records=p["material"]["records"][:-1]),
+            lambda p: p["material"].update(
+                records=(*p["material"]["records"],
+                         p["material"]["records"][0])),
+            lambda p: p["material"].update(
+                records=(p["material"]["records"][0],
+                         *p["material"]["records"])),
+            lambda p: p.update(material=other_material),
+        )
+        for attack in attacks:
+            with pytest.raises(ValidationError):
+                reconstruct(result, attack)
+
+
+def test_declaration_rejects_missing_duplicate_and_reordered_disclosure_rows(
+        tmp_path):
+    result, _, _ = conflict_result(tmp_path)
+    attacks = (
+        lambda p: p.update(roots=p["roots"][:-1]),
+        lambda p: p.update(roots=(*p["roots"], p["roots"][0])),
+        lambda p: p.update(effective_body_groups=
+                           p["effective_body_groups"][:-1]),
+        lambda p: p.update(effective_body_groups=(
+            *p["effective_body_groups"], p["effective_body_groups"][0])),
+        lambda p: p["effective_body_groups"][0].update(
+            conditions=p["effective_body_groups"][0]["conditions"][:-1]),
+        lambda p: p["effective_body_groups"][0].update(conditions=(
+            *p["effective_body_groups"][0]["conditions"],
+            p["effective_body_groups"][0]["conditions"][0])),
+        lambda p: p["effective_body_groups"][0].update(
+            conditions=tuple(reversed(
+                p["effective_body_groups"][0]["conditions"]))),
+    )
+    for attack in attacks:
+        with pytest.raises(ValidationError):
+            reconstruct(result, attack)
+
+
+def test_lookup_entry_and_assertion_index_tuples_are_strict(tmp_path):
+    registration = state_registration()
+    root = state_declaration(registration, note="root")
+    child = state_declaration(
+        registration, supersedes=(root.record_id,), recorded_at=T1,
+        note="child")
+    withdrawal = state_withdrawal(child)
+    queries = kernel.ModelQueries(world(
+        tmp_path, root, child, withdrawal).load())
+    lookup = queries.state(STATE_A)
+    entry = queries.states_of_entity(
+        ENT_A, context=AS_OPERATED).entries[0]
+    assertion = queries.state_assertion(child.record_id)
+    cases = (
+        (lookup, "condition_constraint_registration_indices"),
+        (lookup, "condition_variable_registration_indices"),
+        (lookup, "condition_owner_registration_indices"),
+        (entry, "current_declaration_indices"),
+        (assertion, "successor_indices"),
+        (assertion, "withdrawal_indices"),
+    )
+    for result, field in cases:
+        for hostile in (True, False, "0", 0.0, -1):
+            payload = result.model_dump(mode="python")
+            payload[field] = (hostile,)
+            with pytest.raises(ValidationError):
+                type(result).model_validate(payload)
+    for result, field in (
+            (entry, "entry_index"), (entry, "state_registration_index")):
+        for hostile in (True, False, "0", 0.0, -1):
+            payload = result.model_dump(mode="python")
+            payload[field] = hostile
+            with pytest.raises(ValidationError):
+                type(result).model_validate(payload)
 
 
 def test_state_query_result_is_deterministic_across_record_order_and_hash_seed(
@@ -422,6 +556,99 @@ print(ModelQueries(loaded).state_declaration(STATE_A, context=AS_OPERATED).model
     assert outputs[0] == outputs[1] == outputs[2]
 
 
+def test_complex_disclosures_are_identical_across_legal_physical_append_order(
+        tmp_path):
+    registration_a = state_registration()
+    root = state_declaration(registration_a, note="fork root")
+    left = state_declaration(
+        registration_a, supersedes=(root.record_id,), recorded_at=T1,
+        note="left")
+    right = state_declaration(
+        registration_a, supersedes=(root.record_id,), recorded_at=T1,
+        note="right")
+    third = state_declaration(
+        registration_a, supersedes=(root.record_id,), recorded_at=T1,
+        note="third")
+    withdrawal = state_withdrawal(left)
+    agreeing = state_declaration(registration_a, note="agreeing root")
+    alternative_vcn = constraint_declaration(
+        CON_A, predicate=upper_bound("90"), recorded_at=T1,
+        note="alternate pin")
+    alternate_pins = tuple(
+        pin.model_copy(update={
+            "constraint_declaration_record_id": alternative_vcn.record_id})
+        if pin.constraint_anchor_id == CON_A else pin
+        for pin in pins())
+    disagreeing = state_declaration(
+        registration_a, condition_pins=alternate_pins,
+        recorded_at=T1, note="disagreeing root")
+    registration_b = state_registration(state_anchor_id=STATE_B)
+    declaration_b = state_declaration(
+        registration_b, state_anchor_id=STATE_B, note="state b")
+
+    first_order = (
+        alternative_vcn, root, left, right, third, withdrawal, agreeing,
+        disagreeing, registration_b, declaration_b,
+    )
+    second_order = (
+        alternative_vcn, registration_b, declaration_b, agreeing,
+        disagreeing, root, third, right, left, withdrawal,
+    )
+    stores = []
+    for label, records in (("first", first_order), ("second", second_order)):
+        store = world(tmp_path / label)
+        for record in records:
+            store.append(record)
+        stores.append(store)
+
+    serialized = []
+    for store in stores:
+        queries = kernel.ModelQueries(store.load())
+        values = (
+            queries.state(STATE_A),
+            queries.state_declaration(STATE_A, context=AS_OPERATED),
+            queries.states_of_entity(ENT_A, context=AS_OPERATED),
+            queries.state_assertion(root.record_id),
+        )
+        serialized.append(tuple(value.model_dump_json() for value in values))
+    assert serialized[0] == serialized[1]
+
+    declaration = kernel.ModelQueries(stores[0].load()).state_declaration(
+        STATE_A, context=AS_OPERATED)
+    assert tuple(root_row.root_record.record_id
+                 for root_row in declaration.roots) == tuple(sorted(
+                     root_row.root_record.record_id
+                     for root_row in declaration.roots))
+    for root_row in declaration.roots:
+        assert record_ids(declaration.material,
+                          root_row.lineage_record_indices) == tuple(sorted(
+                              record_ids(declaration.material,
+                                         root_row.lineage_record_indices)))
+        assert record_ids(declaration.material,
+                          root_row.current_tip_indices) == tuple(sorted(
+                              record_ids(declaration.material,
+                                         root_row.current_tip_indices)))
+        assert record_ids(declaration.material,
+                          root_row.withdrawal_indices) == tuple(sorted(
+                              record_ids(declaration.material,
+                                         root_row.withdrawal_indices)))
+    body_bytes = tuple(_state_effective_body_bytes(
+        group.representative_declaration)
+                       for group in declaration.effective_body_groups)
+    assert body_bytes == tuple(sorted(body_bytes))
+    for group in declaration.effective_body_groups:
+        assert tuple(condition.constraint_anchor_id
+                     for condition in group.conditions) == tuple(sorted(
+                         condition.constraint_anchor_id
+                         for condition in group.conditions))
+    entity = kernel.ModelQueries(stores[0].load()).states_of_entity(
+        ENT_A, context=AS_OPERATED)
+    assert tuple(entry.entry_index for entry in entity.entries) == tuple(
+        range(len(entity.entries)))
+    assert tuple(entry.state_anchor_id for entry in entity.entries) == tuple(
+        sorted(entry.state_anchor_id for entry in entity.entries))
+
+
 def test_query_and_state_result_modules_are_store_and_upper_layer_isolated():
     forbidden = (
         "backend.state_classification", "backend.model_state",
@@ -455,6 +682,11 @@ def test_query_and_state_result_modules_are_store_and_upper_layer_isolated():
                        and node.func.id == "ModelStore"
                        for node in ast.walk(tree))
         assert "sqlite3" not in source
+        assert "socket" not in source
+        assert "getenv" not in source
+        assert "environ" not in source
+        assert "datetime" not in source
+        assert "time(" not in source
         assert "Path(" not in source
         assert "open(" not in source
     assert not Path("backend/state_classification").exists()
