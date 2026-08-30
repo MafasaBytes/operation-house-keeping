@@ -95,15 +95,18 @@ def test_system_identity_public_surface_is_exact_after_slice_a():
         "CONSTRAINT_ANCHOR_ID_PATTERN",
         "ENTITY_ANCHOR_ID_PATTERN",
         "PORT_ANCHOR_ID_PATTERN",
+        "STATE_ANCHOR_ID_PATTERN",
         "VARIABLE_ANCHOR_ID_PATTERN",
         "BehaviorAnchor",
         "ConstraintAnchor",
         "EntityAnchor",
         "PortAnchor",
+        "StateAnchor",
         "VariableAnchor",
         "mint_behavior_anchor",
         "mint_constraint_anchor",
         "mint_port_anchor",
+        "mint_state_anchor",
         "mint_variable_anchor",
     }
     assert len(identity.__all__) == len(expected)
