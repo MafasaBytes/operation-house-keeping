@@ -29,6 +29,12 @@ MANIFEST = Path(
     "2026-08-30-bh001-slice-d-candidate-identities.json")
 MANIFEST_SHA256 = (
     "8524e9219ee7e1e452d7390f00df99c790bc8d91068e04fc4ec4f7463f75ea07")
+COMPLETION_REPORT = Path(
+    "docs/superpowers/reports/"
+    "2026-08-30-bh001-slice-d-completion-report.md")
+COMPLETION_REPORT_SHA256 = (
+    "3d0485e92dff57df43f31fcd2774acf6099f4f61102246dc6d8777c7ee326b5a")
+IMPLEMENTATION_HEAD = "6fdf4d009538ddd169c1342508a104c9d61560b6"
 VARIABLE_ID = "var_ab2d312466054c20b0ac764e9bc0114e"
 BEHAVIOR_ID = "bhv_80e21f1682e449ca9c65a5e2ee051ea0"
 VRG_ID, BRG_ID, BHD_ID = BH001_MODEL_RECORDS
@@ -37,6 +43,10 @@ PREDECESSOR_AGGREGATE_SHA256 = (
 ARTIFACT_BYTES = 122406
 ARTIFACT_SHA256 = (
     "4c29928156ceb2e1947473039bc20d07af4f3ff9e25a1b664b17c3e96ac415b3")
+FINAL_STATUS = (
+    "BH-001 complete, owner accepted, adversarially reviewed, full-suite "
+    "verified, and dual-clean-checkout verified."
+)
 FILE_GOLDENS = {
     f"{VRG_ID}.json": {
         "bytes": 630,
@@ -68,6 +78,11 @@ def test_owner_approved_manifest_remains_byte_frozen():
     assert manifest["status"] == "non_authoritative_candidate"
     assert variable.anchor_id == VARIABLE_ID
     assert behavior.anchor_id == BEHAVIOR_ID
+
+
+def test_owner_accepted_completion_report_remains_byte_frozen():
+    assert hashlib.sha256(COMPLETION_REPORT.read_bytes()).hexdigest() == (
+        COMPLETION_REPORT_SHA256)
 
 
 def test_exact_three_record_append_and_explicit_revision(disclosure):
@@ -290,7 +305,9 @@ def test_living_documentation_pins_final_slice_d_status_and_limits():
     paths = (
         Path("CLAUDE.md"),
         Path("backend/model_kernel/README.md"),
+        Path("backend/model_state/README.md"),
         Path("backend/behavior_evaluation/README.md"),
+        Path("backend/system_identity/README.md"),
         Path("models/README.md"),
         Path("models/demo-printer/README.md"),
         Path("docs/adr/0015-explicit-behavior-declarations-and-evidence-gated-evaluation.md"),
@@ -301,9 +318,7 @@ def test_living_documentation_pins_final_slice_d_status_and_limits():
     for path in paths:
         normalized = " ".join(path.read_text(encoding="utf-8").split())
         assert CURRENT_REVISION in normalized, path
-        lowered = normalized.lower()
-        assert ("final owner acceptance" in lowered
-                or "final bh-001 owner acceptance" in lowered), path
+        assert FINAL_STATUS in normalized, path
     demo = (Path("models/demo-printer/README.md").read_text(encoding="utf-8"))
     normalized_demo = " ".join(demo.split())
     assert DISCLAIMER in normalized_demo
@@ -311,3 +326,53 @@ def test_living_documentation_pins_final_slice_d_status_and_limits():
     assert "no BHW, successor, correction, fork, or second root" in normalized_demo
     assert "pre-append candidate disclosure artifact" in normalized_demo
     assert "describe the frozen rehearsal scope, not the current" in normalized_demo
+
+
+def test_final_owner_acceptance_is_recorded_in_every_applicable_plan_and_matrix():
+    paths = (
+        Path("docs/superpowers/plans/2026-08-29-bh001-slice-a-implementation-plan.md"),
+        Path("docs/superpowers/plans/2026-08-29-bh001-adversarial-acceptance-matrix.md"),
+        Path("docs/superpowers/plans/2026-08-29-bh001-slice-b-implementation-plan.md"),
+        Path("docs/superpowers/plans/2026-08-29-bh001-slice-b-adversarial-acceptance-matrix.md"),
+        Path("docs/superpowers/plans/2026-08-29-bh001-slice-c-implementation-plan.md"),
+        Path("docs/superpowers/plans/2026-08-29-bh001-slice-c-adversarial-acceptance-matrix.md"),
+        Path("docs/superpowers/plans/2026-08-30-bh001-slice-d-preappend-rehearsal-plan.md"),
+        Path("docs/superpowers/plans/2026-08-30-bh001-slice-d-preappend-acceptance-matrix.md"),
+    )
+    for path in paths:
+        normalized = " ".join(path.read_text(encoding="utf-8").split())
+        assert FINAL_STATUS in normalized, path
+        assert IMPLEMENTATION_HEAD in normalized, path
+
+
+def test_final_acceptance_pins_the_accepted_boundary_without_changing_meaning():
+    for path in (
+        Path("CLAUDE.md"),
+        Path("docs/adr/0015-explicit-behavior-declarations-and-evidence-gated-evaluation.md"),
+        Path("docs/superpowers/specs/2026-08-29-bh001-explicit-behavior-and-evidence-gated-evaluation-design.md"),
+        Path("docs/superpowers/plans/2026-08-30-bh001-slice-d-preappend-rehearsal-plan.md"),
+        Path("docs/superpowers/plans/2026-08-30-bh001-slice-d-preappend-acceptance-matrix.md"),
+    ):
+        normalized = " ".join(path.read_text(encoding="utf-8").split())
+        assert IMPLEMENTATION_HEAD in normalized, path
+        assert COMPLETION_REPORT_SHA256 in normalized, path
+    specification = Path(
+        "docs/superpowers/specs/"
+        "2026-08-29-bh001-explicit-behavior-and-evidence-gated-evaluation-design.md"
+    ).read_text(encoding="utf-8")
+    normalized_specification = " ".join(specification.split())
+    for accepted_value in (
+        VARIABLE_ID,
+        BEHAVIOR_ID,
+        VRG_ID,
+        BRG_ID,
+        BHD_ID,
+        PREDECESSOR_AGGREGATE_SHA256,
+        ARTIFACT_SHA256,
+        "53dd32846956d10331dfca8fc370ef7d7019325904a062db5f037605aa4cf3d8",
+        "a150e10317982ccc6330fa17a921128d3cf31ee9d6b710ef0ad8ea23f63e4ea3",
+    ):
+        assert accepted_value in specification
+    assert "exactly 32 records" in normalized_specification
+    assert "remains `not_executed`" in normalized_specification
+    assert "does not convert it into observed equality" in normalized_specification

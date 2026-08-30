@@ -10,7 +10,12 @@ variable-minter discrepancy is owner resolved by the exact narrow API addition
 described in Decision 17. The exact Slice D candidate identities, canonical
 records, 32-record revision, and 122406-byte disclosure artifact are owner
 approved. Slice D is implemented and adversarially reviewed at the exact
-32-record revision and artifact contract; final owner acceptance is pending.
+32-record revision and artifact contract. BH-001 complete, owner accepted,
+adversarially reviewed, full-suite verified, and dual-clean-checkout verified.
+The final implementation HEAD before administrative acceptance is
+`6fdf4d009538ddd169c1342508a104c9d61560b6`; the accepted Slice D completion
+report SHA-256 is
+`3d0485e92dff57df43f31fcd2774acf6099f4f61102246dc6d8777c7ee326b5a`.
 The frozen artifact remains explicitly a pre-append candidate disclosure; its
 scope fields are historical rehearsal evidence, not current-state assertions.
 
@@ -139,6 +144,14 @@ composition.
     preimplementation discrepancy. Content-bound lower occurrence
     authentication remains separately owner-gated future work.
 17. Owner resolution: add the narrowly scoped public `mint_variable_anchor()` API, commit it green before candidate allocation, then resume only the disposable pre-append rehearsal. The function is keyword-only, calls standard-library `uuid4()` exactly once, uses `uuid4().hex` with the `var_` prefix, and returns the unchanged `VariableAnchor` contract. Export `mint_variable_anchor` after `mint_port_anchor`. It adds no entity minter, storage, I/O, authority, registration, binding, persistence, injected randomness, or semantic meaning. No candidate may be minted before the minter commit is green. After the implementation commit, invoke each public minter exactly once, freeze both serialized anchors, and never invoke either minter again; reconstruct the frozen values in both independent disposable ledger roots.
+18. Final owner acceptance covers Slices A-D, the public variable-anchor minter
+    repair, the Slice C discrepancy corrections, and the exact synthetic
+    demonstration at implementation HEAD
+    `6fdf4d009538ddd169c1342508a104c9d61560b6`. The ledger remains exactly 32
+    records at
+    `mrv_d7d9b3918eb3f04157fb862164fe1d5fb17b4ef18d627fb89ff9bc429a94506b`.
+    The evaluator demonstration remains `not_executed`; acceptance supplies no
+    observed equality or real-machine truth.
 
 Before the current owner decision, the authoritative append remained
 prohibited until the exact candidates and artifact contract were approved.

@@ -322,4 +322,12 @@ Write the final report to
 `docs/superpowers/reports/2026-08-29-bh001-slice-b-completion-report.md`, commit
 it, and stop for owner acceptance. Do not begin Slice C or D.
 
+## 13. Final BH-001 owner acceptance
+
+The later owner-gated Slices C and D are complete. BH-001 complete, owner
+accepted, adversarially reviewed, full-suite verified, and
+dual-clean-checkout verified. The accepted implementation boundary is
+`6fdf4d009538ddd169c1342508a104c9d61560b6`. This status does not alter the
+historical Slice B stop gate or query-only scope.
+
 END OF BH-001 SLICE B IMPLEMENTATION PLAN

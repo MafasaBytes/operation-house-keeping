@@ -47,3 +47,7 @@ replaced. The authorized exact model revision is
 That approval changes no identity or minter semantics.
 The approved anchors are now embedded unchanged in the authoritative Slice D
 VRG and BRG; the allocation manifest remains unchanged as historical evidence.
+BH-001 complete, owner accepted, adversarially reviewed, full-suite verified,
+and dual-clean-checkout verified. Acceptance changes no identity or minter
+semantics and does not turn the `not_executed` demonstration into observed
+equality or real-machine truth.

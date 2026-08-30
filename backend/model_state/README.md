@@ -48,6 +48,9 @@ as the sole pinned binding-seam exception. Model state therefore reports
 preserved in the read-only behavior-evaluation result; no model-state contract
 or binding record changes. The 32-record model revision is
 `mrv_d7d9b3918eb3f04157fb862164fe1d5fb17b4ef18d627fb89ff9bc429a94506b`.
+BH-001 complete, owner accepted, adversarially reviewed, full-suite verified,
+and dual-clean-checkout verified. Its accepted demonstration remains
+`not_executed` and supplies no observed equality or real-machine truth.
 
 ## Composition
 

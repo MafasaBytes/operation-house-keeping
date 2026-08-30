@@ -28,8 +28,9 @@ The authoritative evaluator demonstration is `not_executed`, preserves the
 existing participant's evidence, and adds no binding, specification, semantic,
 interpretation, temporal, or source evidence for the new participant. Its
 cohort admission is `not_evaluated` and its computed relation is absent.
-Slice D is implemented and adversarially reviewed; final BH-001 owner
-acceptance remains pending.
+BH-001 complete, owner accepted, adversarially reviewed, full-suite verified,
+and dual-clean-checkout verified. Final acceptance leaves the demonstration
+`not_executed`; it does not establish observed equality or real-machine truth.
 The frozen candidate disclosure artifact is reproduced byte-identically after
 append; its pre-append scope fields remain historical rather than current
 repository claims.

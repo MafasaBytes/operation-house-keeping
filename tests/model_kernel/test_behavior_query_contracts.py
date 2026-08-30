@@ -132,6 +132,10 @@ def test_slice_b_exports_no_evaluator_port_or_outcome_surface():
 
 
 def test_slice_b_and_c_acceptance_and_slice_d_gate_status_are_exact():
+    final_status = (
+        "BH-001 complete, owner accepted, adversarially reviewed, full-suite "
+        "verified, and dual-clean-checkout verified."
+    )
     living_paths = (
         Path("CLAUDE.md"),
         Path("backend/model_kernel/README.md"),
@@ -142,10 +146,7 @@ def test_slice_b_and_c_acceptance_and_slice_d_gate_status_are_exact():
         normalized = " ".join(path.read_text(encoding="utf-8").split())
         assert "05177f7306ce745d093bd5f11abafc13a6274d0f" in normalized
         assert "8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521" in normalized
-        assert "Slice D is implemented and adversarially reviewed" in normalized
-        lowered = normalized.lower()
-        assert ("final owner acceptance" in lowered
-                or "final bh-001 owner acceptance" in lowered)
+        assert final_status in normalized
     historical_paths = (
         Path("docs/superpowers/plans/2026-08-29-bh001-slice-b-implementation-plan.md"),
         Path("docs/superpowers/plans/2026-08-29-bh001-slice-b-adversarial-acceptance-matrix.md"),

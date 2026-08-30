@@ -4,8 +4,8 @@ Status: BH-001 Slices A, B, and C are owner accepted; Slice C is accepted at
 `8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521`. The owner-resolved Slice D
 public-variable-minter repair and disposable pre-append contract are complete.
 The exact candidate identities, canonical records, 32-record revision, and
-122406-byte artifact are owner approved. Slice D is implemented and
-adversarially reviewed; final owner acceptance remains pending.
+122406-byte artifact are owner approved. BH-001 complete, owner accepted,
+adversarially reviewed, full-suite verified, and dual-clean-checkout verified.
 
 Authoritative specification:
 `docs/superpowers/specs/2026-08-29-bh001-explicit-behavior-and-evidence-gated-evaluation-design.md`
@@ -283,11 +283,22 @@ revision
 and 122406-byte artifact SHA-256
 `4c29928156ceb2e1947473039bc20d07af4f3ff9e25a1b664b17c3e96ac415b3`.
 A push, merge, rebase, reset, cherry-pick, amend, or history rewrite remains
-prohibited. Final BH-001 owner acceptance remains a separate gate.
+prohibited. The separate final owner-acceptance gate is now satisfied at the
+accepted implementation boundary
+`6fdf4d009538ddd169c1342508a104c9d61560b6`.
 
 The bounded authoritative append has now reproduced the exact approved
 VRG/BRG/BHD files, explicit 32-record revision, honest `not_executed`
 disclosure, and 122406-byte artifact. All 29 predecessor bytes and accepted PT
 and VP artifacts remain frozen.
+
+## Final BH-001 owner acceptance
+
+All owner-gated Slices A-D, the variable-anchor minter repair, the Slice C
+discrepancy corrections, and the exact synthetic demonstration are accepted.
+The accepted completion report SHA-256 is
+`3d0485e92dff57df43f31fcd2774acf6099f4f61102246dc6d8777c7ee326b5a`.
+The demonstration remains `not_executed`; acceptance supplies no observed
+equality or real-machine truth.
 
 END OF BH-001 SLICE A ADVERSARIAL ACCEPTANCE MATRIX

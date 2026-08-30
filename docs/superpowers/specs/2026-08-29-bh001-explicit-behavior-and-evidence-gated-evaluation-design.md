@@ -12,8 +12,11 @@ minter discrepancy is owner resolved by the exact narrow API and sequencing
 contract in Section 31. The exact Slice D candidate identities, canonical
 records, 32-record revision, and 122406-byte disclosure-artifact contract are
 owner approved. Slice D is implemented and adversarially reviewed at that
-exact 32-record revision and artifact contract; final owner acceptance is
-pending.
+exact 32-record revision and artifact contract. BH-001 complete, owner
+accepted, adversarially reviewed, full-suite verified, and
+dual-clean-checkout verified. The final implementation HEAD before
+administrative acceptance is
+`6fdf4d009538ddd169c1342508a104c9d61560b6`.
 
 Repository baseline: `main` at
 `46c04ed6f6f09b254b2f52f07611e2efbdd1d4f6`.
@@ -2072,6 +2075,37 @@ The deterministic artifact reproduces the approved 122406 bytes and SHA-256.
 It remains the frozen pre-append candidate disclosure: its
 `authoritative_append_performed=false` and `records_proposed` fields describe
 the rehearsal scope, not the current repository state.
-Final BH-001 owner acceptance remains a separate gate.
+
+## 32. Final owner acceptance
+
+The owner grants final acceptance to BH-001 Slices A-D, the public
+variable-anchor minter repair, the Slice C discrepancy corrections, and the
+exact synthetic demonstration. BH-001 complete, owner accepted, adversarially
+reviewed, full-suite verified, and dual-clean-checkout verified.
+
+The accepted implementation boundary before the administrative closeout is
+`6fdf4d009538ddd169c1342508a104c9d61560b6`. The authoritative Slice D
+completion report is
+`docs/superpowers/reports/2026-08-30-bh001-slice-d-completion-report.md` at
+SHA-256
+`3d0485e92dff57df43f31fcd2774acf6099f4f61102246dc6d8777c7ee326b5a`.
+
+The accepted ledger contains exactly 32 records at
+`mrv_d7d9b3918eb3f04157fb862164fe1d5fb17b4ef18d627fb89ff9bc429a94506b`.
+It retains variable anchor `var_ab2d312466054c20b0ac764e9bc0114e`, behavior
+anchor `bhv_80e21f1682e449ca9c65a5e2ee051ea0`, VRG
+`vrg_399bbea96bc27689ecab5b6162967b7d7320978117bfe7acddeb05c5ab9aeac6`,
+BRG `brg_1fd13b69377257d987775c56f7abf9eedd466d4ca6555ff33ba6b8cf6e815d5e`,
+and BHD `bhd_fd567f57a0ac6a48309b6d04bb4585ed453a143c7789acc18469525f3536be7e`.
+The predecessor aggregate remains
+`962a4ab5551435d849739bb4cff2e5379be03424265a40d4fe4a4b8c2c7e99cf`.
+
+The accepted BH disclosure artifact remains exactly 122406 bytes with SHA-256
+`4c29928156ceb2e1947473039bc20d07af4f3ff9e25a1b664b17c3e96ac415b3`.
+The PT and VP artifact SHA-256 values remain, respectively,
+`53dd32846956d10331dfca8fc370ef7d7019325904a062db5f037605aa4cf3d8` and
+`a150e10317982ccc6330fa17a921128d3cf31ee9d6b710ef0ad8ea23f63e4ea3`.
+The evaluator demonstration remains `not_executed`; final acceptance does not
+convert it into observed equality, physical behavior, or real-machine truth.
 
 END OF BH-001 CORRECTED FINAL SYNTHESIS

@@ -104,4 +104,12 @@ Every B01-B60 row must be green, all specialist findings reconciled, all
 verification columns complete, and the file-first completion report committed.
 Stop for owner acceptance without beginning Slice C or D.
 
+## 8. Final BH-001 owner acceptance
+
+The subsequent owner-gated work is complete. BH-001 complete, owner accepted,
+adversarially reviewed, full-suite verified, and dual-clean-checkout verified.
+The accepted implementation boundary is
+`6fdf4d009538ddd169c1342508a104c9d61560b6`.
+The historical B01-B60 scope and results remain unchanged.
+
 END OF BH-001 SLICE B ADVERSARIAL ACCEPTANCE MATRIX

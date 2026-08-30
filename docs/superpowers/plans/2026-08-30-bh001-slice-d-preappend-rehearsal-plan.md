@@ -190,6 +190,17 @@ The clean pre-append reproduction passed. The authorized append was performed
 through the public builders and store in VRG, BRG, BHD order, with each file
 verified immediately. The explicit 32-record revision and approved 122406-byte
 artifact reproduce exactly. Slice D is implemented and adversarially reviewed;
-final owner acceptance remains pending.
+the completion report has been accepted by the owner.
+
+## 11. Final BH-001 owner acceptance
+
+BH-001 complete, owner accepted, adversarially reviewed, full-suite verified,
+and dual-clean-checkout verified. The accepted implementation boundary before
+administrative closeout is
+`6fdf4d009538ddd169c1342508a104c9d61560b6`, and the completion-report
+SHA-256 is
+`3d0485e92dff57df43f31fcd2774acf6099f4f61102246dc6d8777c7ee326b5a`.
+The evaluator result remains `not_executed`; acceptance creates no equality or
+real-machine claim.
 
 END OF BH-001 SLICE D PRE-APPEND REHEARSAL PLAN

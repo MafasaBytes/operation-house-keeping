@@ -9,6 +9,10 @@ HISTORICAL_STATUS = (
     "rehearsal gate is owner authorized; the authoritative append has not "
     "started."
 )
+FINAL_STATUS = (
+    "BH-001 complete, owner accepted, adversarially reviewed, full-suite "
+    "verified, and dual-clean-checkout verified."
+)
 LIMITATION = (
     "BH authoritative result validation proves the internal coherence of the "
     "carried lower public results and every BH-derived field. It inherits, "
@@ -35,10 +39,7 @@ def test_exact_slice_status_is_recorded_everywhere():
     for path in FILES[:5]:
         normalized = _normalized(path)
         assert "8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521" in normalized
-        assert "Slice D is implemented and adversarially reviewed" in normalized
-        lowered = normalized.lower()
-        assert ("final owner acceptance" in lowered
-                or "final bh-001 owner acceptance" in lowered)
+        assert FINAL_STATUS in normalized
     for path in FILES[5:]:
         assert HISTORICAL_STATUS in _normalized(path), path
 

@@ -52,5 +52,7 @@ with SHA-256
 `4c29928156ceb2e1947473039bc20d07af4f3ff9e25a1b664b17c3e96ac415b3`.
 It reports `not_executed`; no binding or missing semantic/state evidence was
 fabricated. Its candidate/proposed fields record the frozen rehearsal scope;
-the byte-identical reproduction does not relabel them as current state. Final
-BH-001 owner acceptance remains pending.
+the byte-identical reproduction does not relabel them as current state.
+BH-001 complete, owner accepted, adversarially reviewed, full-suite verified,
+and dual-clean-checkout verified. Acceptance does not convert `not_executed`
+into observed equality or real-machine truth.

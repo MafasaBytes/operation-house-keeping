@@ -130,9 +130,19 @@ behavior lineage root.
 | D64 | Approved final revision | `mrv_d7d9b3918eb3f04157fb862164fe1d5fb17b4ef18d627fb89ff9bc429a94506b` |
 | D65 | Approved artifact | 122406 bytes, SHA-256 `4c29928156ceb2e1947473039bc20d07af4f3ff9e25a1b664b17c3e96ac415b3` |
 | D66 | Scope | Exactly three model records; no binding/VSP/VSM/port/VPA/constraint/BHW/correction/evidence mutation |
-| D67 | Final owner gate | Completion report delivered; BH-001 not self-declared owner accepted |
+| D67 | Final owner gate | Completion report delivered and BH-001 owner accepted |
 
 All D1-D66 fixture, replay, query, evaluator, seam, preservation, and artifact
-rows are implemented and verified. D67 remains open for final owner acceptance.
+rows are implemented and verified. D67 is closed by the final owner decision.
+
+## Final BH-001 owner acceptance
+
+BH-001 complete, owner accepted, adversarially reviewed, full-suite verified,
+and dual-clean-checkout verified. The accepted implementation boundary is
+`6fdf4d009538ddd169c1342508a104c9d61560b6`. The accepted completion-report
+SHA-256 is
+`3d0485e92dff57df43f31fcd2774acf6099f4f61102246dc6d8777c7ee326b5a`.
+The exact 32-record revision and 122406-byte artifact remain frozen, and the
+accepted evaluator disclosure remains `not_executed`.
 
 END OF BH-001 SLICE D PRE-APPEND ACCEPTANCE MATRIX

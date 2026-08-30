@@ -592,4 +592,12 @@ kernel query, evaluator, numeric comparison, state composition, committed
 behavior fixture, or 29-to-32 ledger evolution without the next explicit owner
 gate.
 
+## 15. Final BH-001 owner acceptance
+
+The later owner-gated Slices B-D are complete. BH-001 complete, owner accepted,
+adversarially reviewed, full-suite verified, and dual-clean-checkout verified.
+The accepted implementation boundary before administrative closeout is
+`6fdf4d009538ddd169c1342508a104c9d61560b6`; this final status does not alter
+the historical Slice A scope or acceptance boundary recorded above.
+
 END OF BH-001 SLICE A IMPLEMENTATION PLAN

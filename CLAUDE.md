@@ -838,4 +838,13 @@ contains exactly the approved VRG, BRG, and parentless BHD at the explicit
 artifact reproduces its frozen 122406 bytes and SHA-256 from the committed
 ledger, and its evaluator disclosure is honestly
 `not_executed`. The 29-record VP membership remains the explicit predecessor.
-BH-001 final owner acceptance remains pending.
+BH-001 complete, owner accepted, adversarially reviewed, full-suite verified,
+and dual-clean-checkout verified. The final implementation HEAD before this
+administrative acceptance is
+`6fdf4d009538ddd169c1342508a104c9d61560b6`. The accepted Slice D completion
+report is
+`docs/superpowers/reports/2026-08-30-bh001-slice-d-completion-report.md` at
+SHA-256
+`3d0485e92dff57df43f31fcd2774acf6099f4f61102246dc6d8777c7ee326b5a`.
+Final acceptance does not convert the demonstration's `not_executed` result
+into observed equality or any claim about real-machine truth.

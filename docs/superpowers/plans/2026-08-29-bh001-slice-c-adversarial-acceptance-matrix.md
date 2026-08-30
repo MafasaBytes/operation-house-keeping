@@ -160,4 +160,13 @@ Every numbered row, including letter-suffixed resolution rows, must be green
 before Slice C completion. The documentation assertions must pass before red
 production tests begin. Stop for owner acceptance without beginning Slice D.
 
+## 9. Final BH-001 owner acceptance
+
+The subsequent owner-gated Slice D is complete. BH-001 complete, owner
+accepted, adversarially reviewed, full-suite verified, and
+dual-clean-checkout verified. The accepted implementation boundary is
+`6fdf4d009538ddd169c1342508a104c9d61560b6`. The Slice C refusal, parser,
+cohort, and carried-material integrity boundaries remain unchanged; the
+accepted demonstration remains `not_executed`.
+
 END OF BH-001 SLICE C ADVERSARIAL ACCEPTANCE MATRIX

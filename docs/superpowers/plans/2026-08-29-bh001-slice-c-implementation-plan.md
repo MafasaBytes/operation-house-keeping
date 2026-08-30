@@ -514,4 +514,13 @@ The discrepancy report remains the historical stop artifact and now records
 its owner resolution. It is not a completion report and does not claim Slice C
 acceptance.
 
+## 17. Final BH-001 owner acceptance
+
+The later owner-gated Slice D is complete. BH-001 complete, owner accepted,
+adversarially reviewed, full-suite verified, and dual-clean-checkout verified.
+The accepted implementation boundary is
+`6fdf4d009538ddd169c1342508a104c9d61560b6`.
+The accepted evaluator demonstration remains `not_executed`; final acceptance
+does not convert it into observed equality or real-machine truth.
+
 END OF BH-001 SLICE C IMPLEMENTATION PLAN

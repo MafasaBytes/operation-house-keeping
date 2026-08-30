@@ -257,4 +257,7 @@ parentless BHD to the explicit 29-record predecessor. It adds no BHW,
 correction, fork, second root, specification, semantics, binding, source, or
 temporal evidence. The artifact's candidate/proposed scope fields remain
 historical rehearsal evidence and do not describe the current repository
-state. Final BH-001 owner acceptance remains pending.
+state. BH-001 complete, owner accepted, adversarially reviewed, full-suite
+verified, and dual-clean-checkout verified. The accepted evaluator
+demonstration remains `not_executed` and asserts no observed equality or
+real-machine truth.

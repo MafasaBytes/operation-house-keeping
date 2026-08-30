@@ -133,4 +133,6 @@ The deterministic owner-approved pre-append candidate disclosure artifact is
 The `not_executed` result is an honest admission result, not evidence that the
 declared relation is false. Its `authoritative_append_performed=false` and
 `records_proposed` fields describe the frozen rehearsal scope, not the current
-repository state. Final BH-001 owner acceptance remains pending.
+repository state. BH-001 complete, owner accepted, adversarially reviewed,
+full-suite verified, and dual-clean-checkout verified. Final acceptance does
+not convert `not_executed` into observed equality or real-machine truth.
