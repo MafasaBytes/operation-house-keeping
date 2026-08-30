@@ -861,8 +861,8 @@ The permanent state subject is one registered entity; every registered
 condition must target a variable whose embedded owner exactly equals that
 entity. Declarations pin exact VCN records. Slice B implements exactly four
 read-only model-kernel state queries and their carry-once, store-independent,
-authoritatively reconstructed result contracts. Slice B is implemented and
-adversarially reviewed; awaiting owner acceptance. State classification,
-fixture records, state families, and every transition capability remain
-unstarted and unauthorized in Slices C-D. The authoritative demo remains 32
-records through Slice B.
+authoritatively reconstructed result contracts. Slice B is owner accepted at
+`23eca10a52c0124d22b4e90d80bef952ef5f9381`. Slice C is separately
+authorized for the read-only `backend/state_classification` composition only.
+Slice D fixture work, state families, and every transition capability remain
+unstarted and unauthorized. The authoritative demo remains 32 records.

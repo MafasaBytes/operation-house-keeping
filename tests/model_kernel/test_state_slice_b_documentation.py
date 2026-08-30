@@ -4,15 +4,15 @@ from pathlib import Path
 
 
 STATUS = (
-    "Slice B is implemented and adversarially reviewed; awaiting owner "
-    "acceptance.")
+    "Slice B is owner accepted at "
+    "`23eca10a52c0124d22b4e90d80bef952ef5f9381`.")
 
 
 def read(path):
     return Path(path).read_text(encoding="utf-8")
 
 
-def test_slice_b_status_is_pinned_across_authoritative_documentation():
+def test_slice_b_acceptance_and_slice_c_authorization_are_pinned():
     paths = (
         "CLAUDE.md",
         "backend/model_kernel/README.md",
@@ -28,8 +28,8 @@ def test_slice_b_status_is_pinned_across_authoritative_documentation():
     for path in paths:
         normalized = " ".join(read(path).split())
         assert STATUS in normalized, path
-        assert "Slices C-D" in normalized or "Slices C and D" in normalized
-        assert "unstarted" in normalized
+        assert "Slice C" in normalized and "authorized" in normalized
+        assert "Slice D" in normalized and "unauthorized" in normalized
 
 
 def test_kernel_documentation_pins_exact_slice_b_surface_and_non_inference():

@@ -1,6 +1,6 @@
 # ADR-0016 — Explicit state identity and evidence-gated classification
 
-Status: ST-001 corrected final design and Slice A owner accepted; Slice B implemented and adversarially reviewed, awaiting owner acceptance; Slices C-D unstarted and not authorized
+Status: ST-001 corrected final design and Slices A-B owner accepted; Slice C separately authorized; Slice D unstarted and not authorized
 
 Date: 2026-08-30
 
@@ -90,8 +90,10 @@ Slice B is separately authorized for exactly the four read-only
 `ModelQueries` state methods and their carry-once, store-independent,
 authoritatively reconstructed result contracts. It does not authorize state
 classification, CN composition, temporal selection, demonstration records, or
-transition work. Slice B is implemented and adversarially reviewed; awaiting
-owner acceptance. Slices C and D remain unstarted and unauthorized.
+transition work. Slice B is owner accepted at
+`23eca10a52c0124d22b4e90d80bef952ef5f9381`. Slice C is separately
+authorized for the read-only classifier. Slice D remains unstarted and
+unauthorized.
 
 ## Consequences
 

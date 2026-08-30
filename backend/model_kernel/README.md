@@ -280,10 +280,11 @@ exact-context lifecycle, and authoritatively reconstruct every derived field
 without a store or filesystem. Identical independent healthy roots
 corroborate; same-root forks and differing active effective bodies remain
 conflicted; inactive roots remain visible. IDs order disclosure only and
-never select a winner. Slice B is implemented and adversarially reviewed;
-awaiting owner acceptance.
+never select a winner. Slice B is owner accepted at
+`23eca10a52c0124d22b4e90d80bef952ef5f9381`. Slice C is separately
+authorized for the read-only state-classification composition.
 
 The committed demo ledger remains the accepted 32-record BH-001 revision with
-zero SRG, STD, or STW records. Slices C-D and all ST-002 transition work remain
-unstarted pending separate owner gates. No query infers state from a
+zero SRG, STD, or STW records. Slice D and all ST-002 transition work remain
+unstarted and unauthorized. No query infers state from a
 constraint, observation, hierarchy, port, VPA, behavior, name, or ownership.

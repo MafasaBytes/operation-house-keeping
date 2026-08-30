@@ -1,6 +1,6 @@
 # ST-001 — Explicit State Identity and Evidence-Gated Classification
 
-Status: Corrected final synthesis and Slice A owner accepted; Slice B implemented and adversarially reviewed, awaiting owner acceptance; Slices C-D unstarted and unauthorized
+Status: Corrected final synthesis and Slices A-B owner accepted; Slice C separately authorized; Slice D unstarted and unauthorized
 
 Date: 2026-08-30
 
@@ -2369,10 +2369,10 @@ gate. That is a planned gate, not an unresolved design or implementation
 blocker for Slices A-C.
 
 Slice A is owner accepted at
-`9adcf4d9613ac96e5fb430a4b750f3053679b64d`. Slice B is implemented and
-adversarially reviewed; awaiting owner acceptance. Slices C and D remain
-unstarted and unauthorized.
+`9adcf4d9613ac96e5fb430a4b750f3053679b64d`. Slice B is owner accepted at
+`23eca10a52c0124d22b4e90d80bef952ef5f9381`. Slice C is separately
+authorized. Slice D remains unstarted and unauthorized.
 
-Genuine unresolved owner questions: none within authorized Slice B.
+Genuine unresolved owner questions: none within authorized Slice C.
 
 END OF ST-001 CORRECTED FINAL SYNTHESIS
