@@ -37,6 +37,9 @@ _PREFIX_BY_KIND = {
     "behavior_registration": "brg",
     "behavior_rule_declaration": "bhd",
     "behavior_rule_withdrawal": "bhw",
+    "state_registration": "srg",
+    "state_declaration": "std",
+    "state_declaration_withdrawal": "stw",
 }
 
 _BEHAVIOR_EFFECTIVE_BODY_FIELDS = (
@@ -44,6 +47,13 @@ _BEHAVIOR_EFFECTIVE_BODY_FIELDS = (
     "context",
     "participant_semantics",
     "rule",
+    "evaluation_basis",
+)
+
+_STATE_EFFECTIVE_BODY_FIELDS = (
+    "state_anchor_id",
+    "context",
+    "conditions",
     "evaluation_basis",
 )
 
@@ -99,6 +109,28 @@ def _behavior_effective_body_bytes(record) -> bytes:
         raise ModelIntegrityError(
             "MODEL_RECORD_INVALID",
             "behavior body is not canonically serializable") from error
+
+
+def _state_effective_body_bytes(record) -> bytes:
+    """Canonical, non-persisted ST engineering-body projection.
+
+    Slice A exposes no public lifecycle result. This private primitive gives
+    later kernel disclosure a deterministic projection without confusing
+    evidence or audit metadata with state engineering content.
+    """
+    try:
+        dumped = record.model_dump(
+            mode="python", include=set(_STATE_EFFECTIVE_BODY_FIELDS))
+        if tuple(sorted(dumped)) != tuple(sorted(_STATE_EFFECTIVE_BODY_FIELDS)):
+            raise ValueError("record is not a state declaration")
+        return json.dumps(
+            _canonical_value(dumped), sort_keys=True, separators=(",", ":"),
+            ensure_ascii=False,
+        ).encode("utf-8")
+    except (AttributeError, UnicodeError, TypeError, ValueError) as error:
+        raise ModelIntegrityError(
+            "MODEL_RECORD_INVALID",
+            "state body is not canonically serializable") from error
 
 
 def compute_record_id(record) -> str:

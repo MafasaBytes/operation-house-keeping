@@ -358,6 +358,8 @@ def test_model_kernel_public_exports_include_accepted_pt_and_vp_slice_a_names():
         "BehaviorLookupResult", "BehaviorRuleResult",
         "VariableBehaviorEntry", "VariableBehaviorsResult",
         "BehaviorAssertionDisclosureResult",
+        "StateRegistration", "StateConstraintDeclarationPin",
+        "StateDeclaration", "StateDeclarationWithdrawal",
     }
     old = {
         "EntityRegistration", "VariableRegistration",

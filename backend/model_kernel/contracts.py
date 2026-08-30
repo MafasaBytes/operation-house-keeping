@@ -36,18 +36,20 @@ from backend.system_identity import (
     CONSTRAINT_ANCHOR_ID_PATTERN,
     ENTITY_ANCHOR_ID_PATTERN,
     PORT_ANCHOR_ID_PATTERN,
+    STATE_ANCHOR_ID_PATTERN,
     VARIABLE_ANCHOR_ID_PATTERN,
     BehaviorAnchor,
     ConstraintAnchor,
     EntityAnchor,
     PortAnchor,
+    StateAnchor,
     VariableAnchor,
 )
 
 UtcDatetime = Annotated[AwareDatetime, AfterValidator(lambda v: v.astimezone(UTC))]
 
 MODEL_ID_PATTERN = r"^[a-z0-9-]+$"
-MODEL_RECORD_ID_PATTERN = r"^(reg|rtd|rel|rwd|vrg|vsp|vsm|crg|vcn|prg|pif|pcn|pcm|ptw|vpa|vpw|brg|bhd|bhw)_[0-9a-f]{64}$"
+MODEL_RECORD_ID_PATTERN = r"^(reg|rtd|rel|rwd|vrg|vsp|vsm|crg|vcn|prg|pif|pcn|pcm|ptw|vpa|vpw|brg|bhd|bhw|srg|std|stw)_[0-9a-f]{64}$"
 
 ReferentKind = Literal[
     "logical_instance", "physical_instance", "type_definition", "unknown"
@@ -111,7 +113,7 @@ class ModelRecordEvidence(_Frozen):
     # uncitable
     kind: Literal["model_record"]
     record_id: str = Field(
-        pattern=r"^(reg|rtd|rel|vrg|vsp|vsm|crg|vcn|prg|pif|pcn|pcm|vpa|brg|bhd)_[0-9a-f]{64}$")
+        pattern=r"^(reg|rtd|rel|vrg|vsp|vsm|crg|vcn|prg|pif|pcn|pcm|vpa|brg|bhd|srg|std)_[0-9a-f]{64}$")
 
 
 class IdentityBindingRecordEvidence(_Frozen):
@@ -866,6 +868,162 @@ class BehaviorRuleWithdrawal(BaseModel):
         return value
 
 
+# ---------------------------------------------------- explicit state claims
+def _canonical_state_constraint_ids(value: tuple[str, ...]) -> tuple[str, ...]:
+    """Canonical permanent all-of condition set for one state identity."""
+    if not 1 <= len(value) <= 64:
+        raise ValueError("a state registration requires 1 to 64 constraints")
+    if len(set(value)) != len(value):
+        raise ValueError("state constraint anchor ids must be unique")
+    if any(not isinstance(item, str) or not re.fullmatch(
+            CONSTRAINT_ANCHOR_ID_PATTERN, item) for item in value):
+        raise ValueError("a state condition is not a constraint anchor id")
+    return tuple(sorted(value))
+
+
+CanonicalStateConstraintAnchorIdTuple = Annotated[
+    tuple[str, ...], AfterValidator(_canonical_state_constraint_ids)]
+
+
+class StateConstraintDeclarationPin(BaseModel):
+    """Exact VCN identity pinned for one permanent state condition."""
+
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", revalidate_instances="always")
+
+    constraint_anchor_id: str = Field(pattern=CONSTRAINT_ANCHOR_ID_PATTERN)
+    constraint_declaration_record_id: str = Field(
+        pattern=r"^vcn_[0-9a-f]{64}$")
+
+
+def _canonical_state_condition_pins(
+    value: tuple[StateConstraintDeclarationPin, ...],
+) -> tuple[StateConstraintDeclarationPin, ...]:
+    if not 1 <= len(value) <= 64:
+        raise ValueError("a state declaration requires 1 to 64 pins")
+    anchor_ids = tuple(pin.constraint_anchor_id for pin in value)
+    if len(set(anchor_ids)) != len(anchor_ids):
+        raise ValueError("state condition pins must name unique constraints")
+    by_anchor = {pin.constraint_anchor_id: pin for pin in value}
+    return tuple(by_anchor[anchor_id] for anchor_id in sorted(by_anchor))
+
+
+CanonicalStateConstraintDeclarationPinTuple = Annotated[
+    tuple[StateConstraintDeclarationPin, ...],
+    AfterValidator(_canonical_state_condition_pins),
+]
+
+
+class StateRegistration(BaseModel):
+    """Permanent evidence-backed identity of one entity-scoped state region."""
+
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", revalidate_instances="always")
+
+    record_kind: Literal["state_registration"] = "state_registration"
+    schema_version: Literal["1"] = "1"
+    record_id: str = Field(pattern=r"^srg_[0-9a-f]{64}$")
+    anchor: StateAnchor
+    subject_entity_anchor_id: str = Field(pattern=ENTITY_ANCHOR_ID_PATTERN)
+    condition_constraint_anchor_ids: CanonicalStateConstraintAnchorIdTuple
+    condition_family: Literal["all_of_constraints"] = "all_of_constraints"
+    evidence: Annotated[tuple[EvidenceRef, ...], Field(min_length=1),
+                        AfterValidator(_canonical_evidence)]
+    recorded_at: UtcDatetime
+    authority: AuthorityRef
+    note: str = ""
+
+    @field_validator("anchor", "authority", mode="before")
+    @classmethod
+    def _reconstruct_nested_model(cls, value):
+        if isinstance(value, BaseModel):
+            return value.model_dump(mode="python", warnings=False)
+        return value
+
+    @field_validator("evidence", mode="before")
+    @classmethod
+    def _reconstruct_evidence(cls, value):
+        if isinstance(value, (tuple, list)):
+            return tuple(
+                item.model_dump(mode="python", warnings=False)
+                if isinstance(item, BaseModel) else item
+                for item in value)
+        return value
+
+
+class StateDeclaration(BaseModel):
+    """Correctable exact-context declaration of one registered state region."""
+
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", revalidate_instances="always")
+
+    record_kind: Literal["state_declaration"] = "state_declaration"
+    schema_version: Literal["1"] = "1"
+    record_id: str = Field(pattern=r"^std_[0-9a-f]{64}$")
+    state_anchor_id: str = Field(pattern=STATE_ANCHOR_ID_PATTERN)
+    context: AssertionContext
+    conditions: CanonicalStateConstraintDeclarationPinTuple
+    evaluation_basis: Literal[
+        "independent_latest_at_or_before_cutoff"
+    ] = "independent_latest_at_or_before_cutoff"
+    evidence: Annotated[tuple[EvidenceRef, ...], Field(min_length=1),
+                        AfterValidator(_canonical_evidence)]
+    supersedes: Annotated[tuple[str, ...],
+                          AfterValidator(_canonical_parents)] = ()
+    recorded_at: UtcDatetime
+    authority: AuthorityRef
+    note: str = ""
+
+    @field_validator("context", "authority", mode="before")
+    @classmethod
+    def _reconstruct_nested_model(cls, value):
+        if isinstance(value, BaseModel):
+            return value.model_dump(mode="python", warnings=False)
+        return value
+
+    @field_validator("conditions", "evidence", mode="before")
+    @classmethod
+    def _reconstruct_nested_tuple(cls, value):
+        if isinstance(value, (tuple, list)):
+            return tuple(
+                item.model_dump(mode="python", warnings=False)
+                if isinstance(item, BaseModel) else item
+                for item in value)
+        return value
+
+    @model_validator(mode="after")
+    def _parents_are_well_formed(self):
+        if any(not re.fullmatch(r"std_[0-9a-f]{64}", parent)
+               for parent in self.supersedes):
+            raise ValueError("a state parent is not an STD record id")
+        if self.record_id in self.supersedes:
+            raise ValueError("a state declaration cannot supersede itself")
+        return self
+
+
+class StateDeclarationWithdrawal(BaseModel):
+    """Membership-relative retraction of one current STD tip only."""
+
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", revalidate_instances="always")
+
+    record_kind: Literal["state_declaration_withdrawal"] = (
+        "state_declaration_withdrawal")
+    schema_version: Literal["1"] = "1"
+    record_id: str = Field(pattern=r"^stw_[0-9a-f]{64}$")
+    withdraws: str = Field(pattern=r"^std_[0-9a-f]{64}$")
+    recorded_at: UtcDatetime
+    authority: AuthorityRef
+    note: str = ""
+
+    @field_validator("authority", mode="before")
+    @classmethod
+    def _reconstruct_authority(cls, value):
+        if isinstance(value, BaseModel):
+            return value.model_dump(mode="python", warnings=False)
+        return value
+
+
 class InterfaceDomainToken(_Frozen):
     """Exact interface-domain identity token; no ontology is implied."""
 
@@ -1181,6 +1339,7 @@ ModelRecord = Union[
     VariableSemanticDeclaration,
     ConstraintRegistration, VariableConstraintDeclaration,
     BehaviorRegistration, BehaviorRuleDeclaration, BehaviorRuleWithdrawal,
+    StateRegistration, StateDeclaration, StateDeclarationWithdrawal,
     RelationshipTypeDefinition, RelationshipAssertion,
     RelationshipWithdrawal,
     PortRegistration, PortInterfaceDeclaration, PortConnectionAssertion,
