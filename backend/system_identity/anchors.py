@@ -18,6 +18,7 @@ VARIABLE_ANCHOR_ID_PATTERN = r"^var_[0-9a-f]{32}$"
 CONSTRAINT_ANCHOR_ID_PATTERN = r"^con_[0-9a-f]{32}$"
 PORT_ANCHOR_ID_PATTERN = r"^prt_[0-9a-f]{32}$"
 BEHAVIOR_ANCHOR_ID_PATTERN = r"^bhv_[0-9a-f]{32}$"
+STATE_ANCHOR_ID_PATTERN = r"^sta_[0-9a-f]{32}$"
 _NAME_PATTERN = r"^[a-z0-9-]+$"
 
 
@@ -103,6 +104,23 @@ class BehaviorAnchor(BaseModel):
         frozen=True, extra="forbid", revalidate_instances="always")
 
     anchor_id: str = Field(pattern=BEHAVIOR_ANCHOR_ID_PATTERN)
+    namespace: str = Field(pattern=_NAME_PATTERN)
+    display_name: str = Field(min_length=1)
+    role_name: str | None = Field(default=None, pattern=_NAME_PATTERN)
+
+
+class StateAnchor(BaseModel):
+    """One stable state identity and no state-region or runtime claim.
+
+    Subject entity, permanent constraints, context, evidence, lifecycle, and
+    every classification or transition meaning belong to separately admitted
+    model records. Names are human context and never identity material.
+    """
+
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", revalidate_instances="always")
+
+    anchor_id: str = Field(pattern=STATE_ANCHOR_ID_PATTERN)
     namespace: str = Field(pattern=_NAME_PATTERN)
     display_name: str = Field(min_length=1)
     role_name: str | None = Field(default=None, pattern=_NAME_PATTERN)

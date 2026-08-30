@@ -19,6 +19,7 @@ from backend.system_identity.anchors import (
     BehaviorAnchor,
     ConstraintAnchor,
     PortAnchor,
+    StateAnchor,
     VariableAnchor,
 )
 
@@ -70,6 +71,21 @@ def mint_port_anchor(
     """Mint one fresh opaque UUID4-backed ``PortAnchor``."""
     return PortAnchor(
         anchor_id=f"prt_{uuid4().hex}",
+        namespace=namespace,
+        display_name=display_name,
+        role_name=role_name,
+    )
+
+
+def mint_state_anchor(
+    *,
+    namespace: str,
+    display_name: str,
+    role_name: str | None = None,
+) -> StateAnchor:
+    """Mint one fresh opaque UUID4-backed ``StateAnchor``."""
+    return StateAnchor(
+        anchor_id=f"sta_{uuid4().hex}",
         namespace=namespace,
         display_name=display_name,
         role_name=role_name,

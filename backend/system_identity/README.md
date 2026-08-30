@@ -2,13 +2,14 @@
 
 The canonical identity namespace shared between `identity_binding` and
 the model kernel: pure anchor value contracts (`EntityAnchor`,
-`VariableAnchor`, `ConstraintAnchor`, `PortAnchor`, and `BehaviorAnchor`) plus
-pure public UUID4 minters for constraint, port, behavior, and variable
+`VariableAnchor`, `ConstraintAnchor`, `PortAnchor`, `BehaviorAnchor`, and
+`StateAnchor`) plus pure public UUID4 minters for constraint, port, behavior,
+state, and variable
 identities — no
 storage, no I/O, no authority,
 and no dependency on any other backend module (enforced by test).
 
-Anchor IDs are opaque (`ent_`/`var_`/`con_`/`prt_`/`bhv_` + uuid4 hex) by accepted decision
+Anchor IDs are opaque (`ent_`/`var_`/`con_`/`prt_`/`bhv_`/`sta_` + uuid4 hex) by accepted decision
 (ADR-0006): identity survives renames and role reassignment, and a
 replacement physical component always receives a new anchor even when
 its display name and source address are unchanged. `namespace`,
@@ -29,6 +30,12 @@ two-variable membership and fixed BH-001 rule family begin only at an explicit,
 evidence-bearing model-kernel `BehaviorRegistration`; names and shared
 ownership never create behavior. `mint_behavior_anchor()` creates only the
 opaque identity.
+
+`StateAnchor` contains no subject entity, constraint set, context, evidence,
+lifecycle, classification, or transition meaning. `mint_state_anchor()`
+creates only a fresh opaque UUID4 identity. State model knowledge begins only
+with the separately admitted ST-001 `StateRegistration`; names never create or
+classify a state.
 
 `mint_variable_anchor()` creates one fresh opaque `var_` UUID4 identity and
 returns the unchanged `VariableAnchor` contract containing the explicitly
