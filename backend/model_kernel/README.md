@@ -242,6 +242,7 @@ remains the accepted 29-record VP revision and contains zero `brg_`, `bhd_`, or
 `05177f7306ce745d093bd5f11abafc13a6274d0f`. Its preimplementation
 discrepancy is owner accepted at
 `eedae19a9b2542958f44e66af7117a981c7faeef` and all four contract questions
-are resolved without changing kernel contracts. BH-001 Slices A and B are
-owner accepted. Slice C is implemented and adversarially reviewed; awaiting
-owner acceptance. Slice D has not started.
+are resolved without changing kernel contracts. BH-001 Slices A, B, and C are
+owner accepted. Slice C is accepted at
+`8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521`. Only the Slice D pre-append
+rehearsal gate is owner authorized; the authoritative append has not started.

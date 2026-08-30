@@ -4,9 +4,10 @@ Status: BH-001 corrected final design and Slice A owner accepted. Slice A is
 accepted at `57edec37b40c5da0c300cc1333fbb3cf5d7bb41a`. Slice B is owner accepted
 at `05177f7306ce745d093bd5f11abafc13a6274d0f`. The Slice C discrepancy stop is
 owner accepted at `eedae19a9b2542958f44e66af7117a981c7faeef`; all four contract
-questions are resolved. BH-001 Slices A and B are owner accepted. Slice C is
-implemented and adversarially reviewed; awaiting owner acceptance. Slice D
-has not started.
+questions are resolved. BH-001 Slices A, B, and C are owner accepted. Slice C
+is accepted at `8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521`. Only the Slice D
+pre-append rehearsal gate is owner authorized; the authoritative append has
+not started.
 
 Accepted base: `main` at
 `46c04ed6f6f09b254b2f52f07611e2efbdd1d4f6`.
@@ -116,12 +117,12 @@ composition.
     evaluator, no observation selection or comparison, and no fixture record.
 15. Slice B adds exactly the four accepted read-only kernel queries after
     Slice A owner acceptance and is owner accepted at
-    `05177f7306ce745d093bd5f11abafc13a6274d0f`. Slice C may now add the separate read-only
-    `backend.behavior_evaluation` composition with explicit source selectors,
-    exact same-acquisition-envelope admission, and the public bounded CN
-    exact-number parser. Slice D remains a separately gated declaration-only
-    29-to-32-record demonstration after deterministic disposable rehearsal and
-    owner approval of its exact derived identities and artifact contract.
+    `05177f7306ce745d093bd5f11abafc13a6274d0f`. Slice C adds the separate
+    read-only `backend.behavior_evaluation` composition and is owner accepted
+    at `8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521`. Only Slice D's deterministic
+    disposable pre-append rehearsal is now authorized; the declaration-only
+    29-to-32 authoritative append still requires owner approval of its exact
+    derived identities and artifact contract.
 16. Slice C validation proves internal coherence of carried public lower
     results and BH-derived fields, not raw-source authenticity. The exact
     22-reason refusal vocabulary, public three-class BH error tree, 21-name

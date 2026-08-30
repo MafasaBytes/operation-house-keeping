@@ -821,6 +821,7 @@ read-only model-kernel queries and their authoritatively revalidated carry-once
 result contracts. The Slice C preimplementation discrepancy report is owner
 accepted at `eedae19a9b2542958f44e66af7117a981c7faeef`; its refusal mapping,
 carried-material integrity boundary, public errors/exports, and cohort/parser
-scheduling questions are resolved. BH-001 Slices A and B are owner accepted.
-Slice C is implemented and adversarially reviewed; awaiting owner acceptance.
-Slice D has not started.
+scheduling questions are resolved. BH-001 Slices A, B, and C are owner
+accepted. Slice C is accepted at
+`8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521`. Only the Slice D pre-append
+rehearsal gate is owner authorized; the authoritative append has not started.

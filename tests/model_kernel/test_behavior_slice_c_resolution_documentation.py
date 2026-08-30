@@ -183,7 +183,9 @@ def test_discrepancy_is_resolved_and_slice_d_remains_unstarted():
     assert "ALL FOUR QUESTIONS RESOLVED" in discrepancy
     assert "eedae19a9b2542958f44e66af7117a981c7faeef" in claude
     assert "all four contract\nquestions are resolved" in adr
-    assert "Slice D has not started" in spec
-    assert "Slice D has not\nstarted" in plan
-    assert "Slice D has not started" in matrix
+    for text in (spec, plan, matrix):
+        normalized = " ".join(text.split())
+        assert "8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521" in normalized
+        assert "Only the Slice D pre-append rehearsal gate is owner authorized" in normalized
+        assert "the authoritative append has not started" in normalized
     assert "Slice D remains\nunstarted" in discrepancy

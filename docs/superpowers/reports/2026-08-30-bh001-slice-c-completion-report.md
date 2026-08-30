@@ -1,7 +1,8 @@
 # BH-001 Slice C completion report
 
-Status: BH-001 Slices A and B are owner accepted. Slice C is implemented and
-adversarially reviewed; awaiting owner acceptance. Slice D has not started.
+Status: owner accepted at
+`8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521`. Only the Slice D pre-append
+rehearsal gate is owner authorized; the authoritative append has not started.
 
 Date: 2026-08-30
 
@@ -1136,7 +1137,8 @@ invent it.
 
 ## 24. Slice D and remaining owner gates
 
-Slice D has not started. Specifically, this slice minted or appended no:
+Only the Slice D pre-append rehearsal gate is owner authorized; the
+authoritative append has not started. Slice C minted or appended no:
 
 - `VariableRegistration`;
 - `BehaviorRegistration`;
@@ -1205,14 +1207,14 @@ No remote operation was performed. No commit was pushed or merged.
 
 ## 27. Final status
 
-BH-001 Slices A and B are owner accepted. Slice C is implemented,
-adversarially reviewed, full-suite verified, and reproduced in base-only and
-all-extras clean checkouts; it is awaiting owner acceptance. Slice D has not
-started.
+BH-001 Slices A, B, and C are owner accepted. Slice C is accepted at
+`8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521`, after adversarial review,
+full-suite verification, and base-only/all-extras reproduction. Only the
+Slice D pre-append rehearsal gate is owner authorized; the authoritative
+append has not started.
 
-The only genuine next owner question is whether to accept Slice C at the exact
-implementation HEAD recorded above. Acceptance would authorize only a future,
-separately bounded Slice D request; it would not itself authorize fixture or
+The exact candidate identities and artifact contract remain a separate Slice
+D owner question. Slice C acceptance does not itself authorize fixture or
 ledger mutation.
 
 END OF BH-001 SLICE C COMPLETION REPORT

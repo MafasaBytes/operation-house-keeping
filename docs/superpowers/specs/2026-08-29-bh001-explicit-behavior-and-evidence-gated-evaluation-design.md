@@ -6,8 +6,9 @@ at `05177f7306ce745d093bd5f11abafc13a6274d0f`. The Slice C preimplementation
 discrepancy report is owner accepted at
 `eedae19a9b2542958f44e66af7117a981c7faeef`; its four contract questions are
 resolved normatively in this document. All four contract questions are
-resolved. Slice C implementation is authorized
-but not yet implemented. Slice D has not started.
+resolved. BH-001 Slices A, B, and C are owner accepted. Slice C is accepted at
+`8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521`. Only the Slice D pre-append
+rehearsal gate is owner authorized; the authoritative append has not started.
 
 Repository baseline: `main` at
 `46c04ed6f6f09b254b2f52f07611e2efbdd1d4f6`.
@@ -1717,8 +1718,9 @@ Implementation status: owner accepted at
 `05177f7306ce745d093bd5f11abafc13a6274d0f`. The exact four-query surface, carry-once results, lifecycle and
 effective-body agreement disclosure, deterministic ordering, historical
 revival, and store-independent hostile revalidation are present. BH-001 Slices
-A and B are owner accepted. Slice C is implemented and adversarially reviewed;
-awaiting owner acceptance. Slice D has not started.
+A, B, and C are owner accepted. Slice C is accepted at
+`8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521`. Only the Slice D pre-append
+rehearsal gate is owner authorized; the authoritative append has not started.
 
 ### 26.3 Slice C — evidence-gated evaluator
 
@@ -1758,9 +1760,10 @@ or structural fixtures. Stop for owner acceptance.
 
 Implementation status: the preimplementation discrepancy at
 `eedae19a9b2542958f44e66af7117a981c7faeef` is owner accepted and all four
-contract questions are resolved. BH-001 Slices A and B are owner accepted.
-Slice C is implemented and adversarially reviewed; awaiting owner acceptance.
-Slice D has not started.
+contract questions are resolved. BH-001 Slices A, B, and C are owner accepted.
+Slice C is accepted at `8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521`.
+Only the Slice D pre-append rehearsal gate is owner authorized; the
+authoritative append has not started.
 
 ### 26.4 Slice D — bounded synthetic demonstration
 
@@ -1907,9 +1910,10 @@ parser scheduling are deterministic; BH-specific public errors and exact
 exports are pinned; and carried-material validation is scoped to internal
 coherence without claiming raw-source authentication.
 
-Slice C implementation is owner authorized after these corrections are
-committed and their focused documentation assertions pass. Slice D still
-requires its separate owner gate.
+Slice C is owner accepted at
+`8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521`. The Slice D pre-append rehearsal
+gate is owner authorized. The exact candidate identities and artifact contract
+still require owner approval before the authoritative append.
 
 ## 30. Decision change log
 

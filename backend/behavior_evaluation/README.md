@@ -18,6 +18,7 @@ raw-source authenticity. A fully coherent lower-evidence content mutation
 accepted by the lower public contracts is outside BH's store-independent
 detection boundary.
 
-BH-001 Slices A and B are owner accepted. Slice C is implemented and
-adversarially reviewed; awaiting owner acceptance. Slice D has not started.
+BH-001 Slices A, B, and C are owner accepted. Slice C is accepted at
+`8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521`. Only the Slice D pre-append
+rehearsal gate is owner authorized; the authoritative append has not started.
 No committed behavior fixture or demonstration artifact exists.

@@ -131,10 +131,12 @@ def test_slice_b_exports_no_evaluator_port_or_outcome_surface():
     assert forbidden.isdisjoint(kernel.__all__)
 
 
-def test_slice_b_acceptance_and_slice_c_review_status_are_exact():
+def test_slice_b_and_c_acceptance_and_slice_d_gate_status_are_exact():
     slice_c_status = (
-        "Slice C is implemented and adversarially reviewed; awaiting owner "
-        "acceptance. Slice D has not started.")
+        "Slice C is accepted at "
+        "`8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521`. Only the Slice D pre-append "
+        "rehearsal gate is owner authorized; the authoritative append has not "
+        "started.")
     paths = (
         Path("CLAUDE.md"),
         Path("backend/model_kernel/README.md"),
