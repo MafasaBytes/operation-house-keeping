@@ -360,6 +360,13 @@ def test_model_kernel_public_exports_include_accepted_pt_and_vp_slice_a_names():
         "BehaviorAssertionDisclosureResult",
         "StateRegistration", "StateConstraintDeclarationPin",
         "StateDeclaration", "StateDeclarationWithdrawal",
+        "StateLookupStatus", "StateDeclarationConclusion",
+        "StateDeclarationLineageSummary", "StateAgreementFinding",
+        "EntityStatesStatus", "StateAssertionLookupStatus",
+        "StateConditionReferenceResult", "StateEffectiveBodyGroupResult",
+        "StateDeclarationRootResult", "StateLookupResult",
+        "StateDeclarationResult", "EntityStateEntry", "EntityStatesResult",
+        "StateAssertionDisclosureResult",
     }
     old = {
         "EntityRegistration", "VariableRegistration",
