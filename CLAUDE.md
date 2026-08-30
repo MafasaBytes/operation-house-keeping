@@ -848,3 +848,17 @@ SHA-256
 `3d0485e92dff57df43f31fcd2774acf6099f4f61102246dc6d8777c7ee326b5a`.
 Final acceptance does not convert the demonstration's `not_executed` result
 into observed equality or any claim about real-machine truth.
+
+ST-001's corrected final design is owner accepted at SHA-256
+`febe18fa291896021708d09c10d5cf4ef955201bcd3e59199e74c6c4e630cc95`.
+Slice A is authorized on branch `st001` from accepted base
+`0ed77df7ea4870faec1eae9b89668add97aa855d`. Slice A is limited to opaque
+`StateAnchor` identity and the evidence-backed `srg_`/`std_`/`stw_`
+model-ledger foundation, canonical/store integration, immutable indexes,
+membership-relative declaration lifecycle, replay, tests, and documentation.
+The permanent state subject is one registered entity; every registered
+condition must target a variable whose embedded owner exactly equals that
+entity. Declarations pin exact VCN records. State classification, state
+queries, fixture records, state families, and every transition capability
+remain unauthorized in Slices B-D. The authoritative demo remains 32 records
+through Slice A.
