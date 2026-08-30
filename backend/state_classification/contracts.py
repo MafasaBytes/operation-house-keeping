@@ -60,30 +60,50 @@ class _Frozen(BaseModel):
     @classmethod
     def _reject_hidden_instance_fields(cls, value):
         """Reject fields hidden in forged nested Pydantic instances."""
-        pending = [value]
-        seen: set[int] = set()
-        while pending:
-            item = pending.pop()
-            identity = id(item)
-            if identity in seen:
-                continue
-            seen.add(identity)
-            if isinstance(item, BaseModel):
-                fields = type(item).model_fields
-                private = set(getattr(
-                    type(item), "__private_attributes__", {}))
-                stored = vars(item)
-                extras = getattr(item, "__pydantic_extra__", None)
-                if set(stored).difference(fields).difference(private) or extras:
-                    raise ValueError(
-                        "pydantic result instance contains extra fields")
-                pending.extend(stored[name] for name in fields if name in stored)
-            elif isinstance(item, Mapping):
-                pending.extend(item.keys())
-                pending.extend(item.values())
-            elif isinstance(item, (tuple, list, set, frozenset)):
-                pending.extend(item)
+        _assert_no_hidden_instance_fields(value)
         return value
+
+
+def _assert_no_hidden_instance_fields(value):
+    """Walk arbitrary carried content without trusting model serialization."""
+    strict_names = {"sweep_position"}
+
+    def require_strict_named_ints(items):
+        for name, field_value in items:
+            if (isinstance(name, str)
+                    and (name.endswith("_index")
+                         or name.endswith("_count")
+                         or name in strict_names)
+                    and field_value is not None
+                    and type(field_value) is not int):
+                raise ValueError(f"{name} must be a strict integer")
+
+    pending = [value]
+    seen: set[int] = set()
+    while pending:
+        item = pending.pop()
+        identity = id(item)
+        if identity in seen:
+            continue
+        seen.add(identity)
+        if isinstance(item, BaseModel):
+            fields = type(item).model_fields
+            private = set(getattr(
+                type(item), "__private_attributes__", {}))
+            stored = vars(item)
+            extras = getattr(item, "__pydantic_extra__", None)
+            if set(stored).difference(fields).difference(private) or extras:
+                raise ValueError(
+                    "pydantic result instance contains extra fields")
+            require_strict_named_ints(
+                (name, stored[name]) for name in fields if name in stored)
+            pending.extend(stored[name] for name in fields if name in stored)
+        elif isinstance(item, Mapping):
+            require_strict_named_ints(item.items())
+            pending.extend(item.keys())
+            pending.extend(item.values())
+        elif isinstance(item, (tuple, list, set, frozenset)):
+            pending.extend(item)
 
 
 def _dump(value):
@@ -149,6 +169,7 @@ class StateClassificationResult(_Frozen):
     @model_validator(mode="before")
     @classmethod
     def _reconstruct_all_inputs(cls, value):
+        _assert_no_hidden_instance_fields(value)
         payload = dict(_dump(value)) if isinstance(_dump(value), Mapping) else value
         if not isinstance(payload, dict):
             return payload

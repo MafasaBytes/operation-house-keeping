@@ -119,7 +119,7 @@ class StateClassificationQueries:
             if not isinstance(condition_sources, (tuple, list)):
                 raise ValueError("condition_sources must be a tuple")
             sources = tuple(
-                StateConditionSource.model_validate(_dump(item))
+                StateConditionSource.model_validate(item)
                 for item in condition_sources)
         except (ValidationError, ValueError, TypeError, AttributeError) as error:
             raise _input_error(

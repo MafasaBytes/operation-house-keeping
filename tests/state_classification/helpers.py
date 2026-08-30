@@ -79,6 +79,42 @@ def state_model(tmp_path, *, include_registration=True,
     return model_store(tmp_path, extra_records=tuple(extras)), registration, declarations
 
 
+def reported_constraint_declaration(constraint_anchor_id=CON_B, *,
+                                    upper="80", **overrides):
+    return constraint_declaration(
+        constraint_anchor_id,
+        predicate=upper_bound(upper),
+        expected_semantics=constraint_signature().model_copy(update={
+            "observation_role": observation_role("reported")}),
+        **overrides,
+    )
+
+
+def custom_state_model(tmp_path, *, declarations_a, declarations_b,
+                       pinned_a=None, pinned_b=None,
+                       state_declarations=None):
+    """Build a state over explicit disposable VCN lineages."""
+    registration = state_registration(
+        subject=E1, constraints=(CON_A, CON_B), second_owner=E1)
+    pinned = {
+        CON_A: pinned_a or declarations_a[0],
+        CON_B: pinned_b or declarations_b[0],
+    }
+    if state_declarations is None:
+        state_declarations = (state_declaration(
+            registration, context=AS_OPERATED,
+            condition_pins=pins(declarations=pinned)),)
+    extras = (
+        constraint_registration(CON_A, variable_anchor_id=VAR_A),
+        *declarations_a,
+        constraint_registration(CON_B, variable_anchor_id=VAR_B),
+        *declarations_b,
+        registration,
+        *state_declarations,
+    )
+    return model_store(tmp_path, extra_records=extras), registration
+
+
 def condition_sources(*, reverse=False):
     rows = (
         StateConditionSource(
@@ -146,6 +182,6 @@ def conflicted_model(tmp_path):
 __all__ = [
     "AS_DESIGNED", "AS_OF", "AS_OPERATED", "CON_A", "CON_B", "E1",
     "STATE_A", "VAR_A", "VAR_B", "classify", "condition_records",
-    "condition_sources", "conflicted_model", "facade", "inactive_model",
-    "state_model",
+    "condition_sources", "conflicted_model", "custom_state_model", "facade",
+    "inactive_model", "reported_constraint_declaration", "state_model",
 ]
