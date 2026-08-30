@@ -103,13 +103,16 @@ def registration_evidence(*, constraints=(CON_A, CON_B), owner=ENT_A,
 
 def state_registration(*, state_anchor_id=STATE_A, subject=ENT_A,
                        constraints=(CON_A, CON_B), evidence=None,
+                       second_owner=ENT_A,
                        recorded_at=T0, note="", **overrides):
     fields = dict(
         anchor=state_anchor(state_anchor_id),
         subject_entity_anchor_id=subject,
         condition_constraint_anchor_ids=constraints,
         condition_family="all_of_constraints",
-        evidence=(registration_evidence(constraints=constraints, owner=subject)
+        evidence=(registration_evidence(
+            constraints=constraints, owner=subject,
+            second_owner=second_owner)
                   if evidence is None else evidence),
         recorded_at=recorded_at, authority=AUTHORITY, note=note)
     fields.update(overrides)
@@ -189,7 +192,7 @@ def world(tmp_path, *extra, state_anchor_id=STATE_A, subject=ENT_A,
         store.append(record)
     registration = state_registration(
         state_anchor_id=state_anchor_id, subject=subject,
-        constraints=constraints)
+        constraints=constraints, second_owner=second_owner)
     if include_registration:
         store.append(registration)
     for record in extra:
