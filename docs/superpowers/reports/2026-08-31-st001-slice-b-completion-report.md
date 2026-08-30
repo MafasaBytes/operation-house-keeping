@@ -50,9 +50,9 @@ the complete milestone range, not merely the then-clean working tree:
 git diff --check 0ed77df7ea4870faec1eae9b89668add97aa855d..9adcf4d9613ac96e5fb430a4b750f3053679b64d
 
 docs/superpowers/reports/2026-08-30-st001-slice-a-completion-report.md:3: trailing whitespace.
-+Date: 2026-08-30  
++Date: 2026-08-30 [two trailing spaces]
 docs/superpowers/reports/2026-08-30-st001-slice-a-completion-report.md:4: trailing whitespace.
-+Status: implemented and adversarially reviewed; awaiting owner acceptance  
++Status: implemented and adversarially reviewed; awaiting owner acceptance [two trailing spaces]
 ```
 
 Commit `dbc09283e26345192e096236680e455ce72c1c1e` removed exactly those
