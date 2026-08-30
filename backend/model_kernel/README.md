@@ -261,3 +261,17 @@ state. BH-001 complete, owner accepted, adversarially reviewed, full-suite
 verified, and dual-clean-checkout verified. The accepted evaluator
 demonstration remains `not_executed` and asserts no observed equality or
 real-machine truth.
+
+ST-001's corrected final design is owner accepted and Slice A is implemented
+for owner review. Slice A adds only the foundational ledger contracts:
+permanent entity-scoped `StateRegistration` (`srg_`), exact-context
+`StateDeclaration` (`std_`), and minimal current-tip
+`StateDeclarationWithdrawal` (`stw_`). A registration permanently fixes one
+`all_of_constraints` set; a declaration pins one exact VCN per permanent
+constraint and fixes `independent_latest_at_or_before_cutoff` as its later
+classification basis. State records remain explicit evidence-bearing model
+knowledge. Slice A performs no constraint evaluation or temporal
+classification, does not infer state from observations, and does not implement state transitions.
+The committed demo ledger remains the accepted 32-record
+BH-001 revision with zero SRG, STD, or STW records. Slices B-D and all ST-002
+transition work remain unstarted pending separate owner gates.
