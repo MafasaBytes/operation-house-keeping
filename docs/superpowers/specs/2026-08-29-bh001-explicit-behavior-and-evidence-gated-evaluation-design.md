@@ -1994,6 +1994,25 @@ return fields, UUID version and variant, uniqueness, supplied-field preservation
 invalid/coercive input rejection, non-I/O architecture, and preservation of all
 existing public identity and canonical vectors.
 
+The exact ordered `backend.system_identity.__all__` becomes:
+
+```text
+BEHAVIOR_ANCHOR_ID_PATTERN
+CONSTRAINT_ANCHOR_ID_PATTERN
+ENTITY_ANCHOR_ID_PATTERN
+PORT_ANCHOR_ID_PATTERN
+VARIABLE_ANCHOR_ID_PATTERN
+BehaviorAnchor
+ConstraintAnchor
+EntityAnchor
+PortAnchor
+VariableAnchor
+mint_behavior_anchor
+mint_constraint_anchor
+mint_port_anchor
+mint_variable_anchor
+```
+
 No candidate may be minted before the minter commit is green.
 
 After that separate commit, invoke each public minter exactly once: first the

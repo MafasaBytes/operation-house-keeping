@@ -2,7 +2,10 @@
 
 Date: 2026-08-30
 
-Status: blocked before candidate generation by a public-identity-minter discrepancy
+Historical stop status: blocked before candidate generation by a public-identity-minter discrepancy
+
+Current status: owner-resolved; minter implementation and disposable rehearsal
+resumption authorized, authoritative append prohibited
 
 Branch: `bh001`
 

@@ -11,7 +11,7 @@ The accepted Slice C HEAD is
 commit is `a619ed14d36aeb508e4db8602adbbdce4b1b4e2d`. The authoritative demo remains
 29 records at `mrv_18da4ce963ab5c4b1121cdcc009eaaef4cd1c5c11034f4678c6437361ffd7652`.
 The current owner-amended BH specification SHA-256 is
-`26607abd4b1a6e05d6893ea1641a5fbc35e0c6c6d00dd7daafca9d95316135d4`.
+`520bf74823ab5e206bef8a56de9ba872ef8f3167451ad9c57e02a364532cd873`.
 
 The authoritative append remains prohibited. This plan permits one public
 identity-minter repair, one-time candidate allocation after that repair is

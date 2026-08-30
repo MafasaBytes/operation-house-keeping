@@ -21,7 +21,7 @@ at SHA-256
 
 Current owner-amended authoritative specification at the Slice D minter
 resolution gate: SHA-256
-`26607abd4b1a6e05d6893ea1641a5fbc35e0c6c6d00dd7daafca9d95316135d4`.
+`520bf74823ab5e206bef8a56de9ba872ef8f3167451ad9c57e02a364532cd873`.
 
 ## Context
 
