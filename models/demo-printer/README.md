@@ -91,3 +91,11 @@ attach the observation to the variable, and makes no clock-synchronization
 claim. The accepted PT-001 artifact remains byte-identical at SHA-256
 `53dd32846956d10331dfca8fc370ef7d7019325904a062db5f037605aa4cf3d8`
 and is regenerated from the explicit 28-record membership.
+
+BH-001 Slice D pre-append status: the owner approved the exact frozen
+candidate inputs and 29-to-32 contract committed at `0905de0`. The bounded
+authoritative VRG-then-BRG-then-BHD append and final verification are
+authorized. At this approval-documentation boundary this ledger still contains
+29 records and no BRG, BHD, or BHW; the actual append must remain a separate
+commit and must match the approved bytes exactly at revision
+`mrv_d7d9b3918eb3f04157fb862164fe1d5fb17b4ef18d627fb89ff9bc429a94506b`.

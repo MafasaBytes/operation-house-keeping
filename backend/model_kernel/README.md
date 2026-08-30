@@ -244,9 +244,13 @@ discrepancy is owner accepted at
 `eedae19a9b2542958f44e66af7117a981c7faeef` and all four contract questions
 are resolved without changing kernel contracts. BH-001 Slices A, B, and C are
 owner accepted. Slice C is accepted at
-`8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521`. Only the Slice D pre-append
-rehearsal gate is owner authorized; the authoritative append has not started.
-The missing public variable-anchor minter is owner resolved by a separately
-committed, narrowly scoped `mint_variable_anchor()` addition before candidate
-allocation. The authoritative append remains prohibited pending approval of
-the frozen candidate identities and deterministic rehearsal outputs.
+`8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521`. The Slice D variable-anchor
+minter discrepancy is owner resolved and the deterministic pre-append contract
+at `0905de0` is owner approved. The bounded authoritative append and final
+verification are authorized for exactly anchors
+`var_ab2d312466054c20b0ac764e9bc0114e` and
+`bhv_80e21f1682e449ca9c65a5e2ee051ea0`, revision
+`mrv_d7d9b3918eb3f04157fb862164fe1d5fb17b4ef18d627fb89ff9bc429a94506b`,
+and the 122406-byte artifact at SHA-256
+`4c29928156ceb2e1947473039bc20d07af4f3ff9e25a1b664b17c3e96ac415b3`.
+Final BH-001 owner acceptance remains pending.

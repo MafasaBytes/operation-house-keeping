@@ -41,3 +41,10 @@ The bounded VP-001 disclosure is documented in `demo-printer/README.md`,
 including the exact synthetic-fixture disclaimer and the warning that showing
 variable state beside an associated port does not make the observation a port
 fact.
+
+BH-001 Slice D pre-append status: the exact candidate contract at `0905de0`
+is owner approved and the bounded authoritative append is authorized. At this
+approval-documentation boundary the ledger remains the accepted 29-record VP
+revision; no BH record has yet been appended. The authorized continuation may
+add only the approved VRG, BRG, and parentless BHD and must reproduce revision
+`mrv_d7d9b3918eb3f04157fb862164fe1d5fb17b4ef18d627fb89ff9bc429a94506b`.

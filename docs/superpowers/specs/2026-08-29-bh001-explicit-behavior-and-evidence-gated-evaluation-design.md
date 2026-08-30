@@ -7,10 +7,12 @@ discrepancy report is owner accepted at
 `eedae19a9b2542958f44e66af7117a981c7faeef`; its four contract questions are
 resolved normatively in this document. All four contract questions are
 resolved. BH-001 Slices A, B, and C are owner accepted. Slice C is accepted at
-`8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521`. Only the Slice D pre-append
-rehearsal gate is owner authorized; the authoritative append has not started.
-The Slice D public-variable-minter discrepancy is owner resolved by the exact
-narrow API and sequencing contract in Section 31.
+`8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521`. The Slice D public-variable-
+minter discrepancy is owner resolved by the exact narrow API and sequencing
+contract in Section 31. The exact Slice D candidate identities, canonical
+records, 32-record revision, and 122406-byte disclosure-artifact contract are
+owner approved; the bounded authoritative append and final verification are
+authorized but have not yet been performed.
 
 Repository baseline: `main` at
 `46c04ed6f6f09b254b2f52f07611e2efbdd1d4f6`.
@@ -1802,6 +1804,12 @@ Only after Slices A-C acceptance:
 No BHW, correction, second root, binding record, VSP, VSM, port, VPA,
 constraint, temporal record, interpretation, or source datum is committed.
 
+Implementation authorization status: the pre-append contract committed at
+`0905de0` is owner approved with the exact identities, record bytes, revision,
+and artifact identity pinned in Section 31. Steps 6 through 12 are authorized;
+Slice D is not owner accepted until their verification is reported and the
+owner performs the final acceptance gate.
+
 ## 27. Explicit exclusions and known limitations
 
 BH-001 does not provide or imply:
@@ -1923,9 +1931,9 @@ exports are pinned; and carried-material validation is scoped to internal
 coherence without claiming raw-source authentication.
 
 Slice C is owner accepted at
-`8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521`. The Slice D pre-append rehearsal
-gate is owner authorized. The exact candidate identities and artifact contract
-still require owner approval before the authoritative append.
+`8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521`. The exact Slice D pre-append
+contract is owner approved. Its frozen inputs are committed at `0905de0`; the
+bounded authoritative append and final verification are now authorized.
 
 ## 30. Decision change log
 
@@ -2027,9 +2035,29 @@ identical outputs are required only from identical frozen candidate inputs.
 The historical discrepancy report remains authoritative evidence of the
 fail-closed stop. Its missing-minter finding is resolved, not erased.
 
-The authoritative append remains prohibited until the owner approves the exact
-candidate anchors, canonical records and hashes, explicit membership, final
-revision, query/evaluator disclosures, and artifact bytes and SHA-256 produced
-by the two disposable rehearsals.
+Before the owner decision recorded below, the authoritative append remained
+prohibited pending approval of the exact candidate anchors, canonical records
+and hashes, explicit membership, final revision, query/evaluator disclosures,
+and artifact bytes and SHA-256 produced by the two disposable rehearsals.
+
+Owner approval: the exact Slice D candidate identities, canonical records,
+32-record revision, and 122406-byte disclosure-artifact contract are approved;
+the bounded authoritative append and final verification are authorized. The
+approved gate report is
+`docs/superpowers/reports/2026-08-30-bh001-slice-d-preappend-rehearsal-results.md`
+at SHA-256
+`0a559255359440f54f370eaf11645122089d4c0744e537c9446e20c12ffd4778`.
+The immutable allocation manifest remains labeled
+`non_authoritative_candidate` as historical allocation-state evidence and is
+approved without mutation at SHA-256
+`8524e9219ee7e1e452d7390f00df99c790bc8d91068e04fc4ec4f7463f75ea07`.
+Approval fixes the anchors `var_ab2d312466054c20b0ac764e9bc0114e` and
+`bhv_80e21f1682e449ca9c65a5e2ee051ea0`, the VRG/BRG/BHD IDs and stored bytes
+recorded in that report, revision
+`mrv_d7d9b3918eb3f04157fb862164fe1d5fb17b4ef18d627fb89ff9bc429a94506b`,
+and artifact SHA-256
+`4c29928156ceb2e1947473039bc20d07af4f3ff9e25a1b664b17c3e96ac415b3`.
+No field, identity, record byte, membership order, revision, or artifact byte
+may drift during the authoritative append.
 
 END OF BH-001 CORRECTED FINAL SYNTHESIS

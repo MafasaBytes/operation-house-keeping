@@ -1,6 +1,6 @@
 # BH-001 Slice D Pre-Append Rehearsal Plan
 
-Status: owner-authorized remediation and disposable rehearsal; no authoritative append
+Status: pre-append contract owner approved; authoritative append and final verification authorized
 
 ## 1. Authority and boundary
 
@@ -13,9 +13,10 @@ commit is `a619ed14d36aeb508e4db8602adbbdce4b1b4e2d`. The authoritative demo rem
 The current owner-amended BH specification SHA-256 is
 `520bf74823ab5e206bef8a56de9ba872ef8f3167451ad9c57e02a364532cd873`.
 
-The authoritative append remains prohibited. This plan permits one public
-identity-minter repair, one-time candidate allocation after that repair is
-committed and green, and two disposable rehearsals only.
+Historical gate: the authoritative append remained prohibited while this plan
+permitted one public identity-minter repair, one-time candidate allocation, and
+two disposable rehearsals only. The exact resulting contract is now owner
+approved under Section 9.
 
 ## 2. Public minter repair
 
@@ -159,5 +160,27 @@ earlier discrepancy report. Report exact anchors, record content and hashes,
 membership, revision, disclosures, artifact bytes/hash, predecessor aggregate,
 seam attacks, commands, and Git state. Stop for owner approval. Do not append
 to `models/demo-printer` and do not begin final Slice D fixture work.
+
+## 9. Owner approval and authorized continuation
+
+Owner approval: the exact Slice D candidate identities, canonical records,
+32-record revision, and 122406-byte disclosure-artifact contract are approved;
+the bounded authoritative append and final verification are authorized. The
+frozen gate inputs are committed at `0905de0`.
+
+Approved report SHA-256:
+`0a559255359440f54f370eaf11645122089d4c0744e537c9446e20c12ffd4778`.
+Unchanged historical manifest SHA-256:
+`8524e9219ee7e1e452d7390f00df99c790bc8d91068e04fc4ec4f7463f75ea07`.
+Approved final revision:
+`mrv_d7d9b3918eb3f04157fb862164fe1d5fb17b4ef18d627fb89ff9bc429a94506b`.
+Approved artifact: 122406 bytes at
+`4c29928156ceb2e1947473039bc20d07af4f3ff9e25a1b664b17c3e96ac415b3`.
+
+Before any authoritative write, reproduce those exact values from a clean
+checkout of the approval commit. Then append only the approved VRG, BRG, and
+BHD through public builders and `ModelStore`, in that physical order, checking
+each file immediately. Stop on any mismatch. Final owner acceptance remains a
+separate gate after the complete Slice D verification report.
 
 END OF BH-001 SLICE D PRE-APPEND REHEARSAL PLAN

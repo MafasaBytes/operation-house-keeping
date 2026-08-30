@@ -11,13 +11,23 @@ ADR = ROOT / "docs/adr/0015-explicit-behavior-declarations-and-evidence-gated-ev
 PLAN = ROOT / "docs/superpowers/plans/2026-08-30-bh001-slice-d-preappend-rehearsal-plan.md"
 MATRIX = ROOT / "docs/superpowers/plans/2026-08-30-bh001-slice-d-preappend-acceptance-matrix.md"
 DISCREPANCY = ROOT / "docs/superpowers/reports/2026-08-30-bh001-slice-d-preappend-rehearsal-report.md"
+REHEARSAL_RESULTS = ROOT / "docs/superpowers/reports/2026-08-30-bh001-slice-d-preappend-rehearsal-results.md"
+MANIFEST = ROOT / "docs/superpowers/reports/2026-08-30-bh001-slice-d-candidate-identities.json"
+GLOBAL_MATRIX = ROOT / "docs/superpowers/plans/2026-08-29-bh001-adversarial-acceptance-matrix.md"
 
 RESOLUTION = (
     "Owner resolution: add the narrowly scoped public "
     "`mint_variable_anchor()` API, commit it green before candidate allocation, "
     "then resume only the disposable pre-append rehearsal."
 )
-SPEC_SHA256 = "520bf74823ab5e206bef8a56de9ba872ef8f3167451ad9c57e02a364532cd873"
+APPROVAL = (
+    "Owner approval: the exact Slice D candidate identities, canonical records, "
+    "32-record revision, and 122406-byte disclosure-artifact contract are approved; "
+    "the bounded authoritative append and final verification are authorized."
+)
+REPORT_SHA256 = "0a559255359440f54f370eaf11645122089d4c0744e537c9446e20c12ffd4778"
+MANIFEST_SHA256 = "8524e9219ee7e1e452d7390f00df99c790bc8d91068e04fc4ec4f7463f75ea07"
+SPEC_SHA256 = "b6a8268780426aee7db6b0bce3d69ac092710bf41836d26d3606e9e4f9f4b652"
 SIGNATURE = """def mint_variable_anchor(
     *,
     entity_anchor_id: str,
@@ -72,10 +82,38 @@ def test_minter_scope_and_candidate_freeze_order_are_exact():
         assert "non_authoritative_candidate" in content
 
 
-def test_authoritative_append_remains_prohibited():
-    for path in (SPEC, ADR, PLAN, MATRIX, ROOT / "CLAUDE.md"):
+def test_exact_contract_is_owner_approved_before_authoritative_append():
+    for path in (SPEC, ADR, PLAN, MATRIX):
         content = read(path)
-        assert "The authoritative append remains prohibited" in content
+        assert APPROVAL in " ".join(content.split()), path
+    for path in (
+        ROOT / "CLAUDE.md",
+        ROOT / "backend/model_kernel/README.md",
+        ROOT / "backend/behavior_evaluation/README.md",
+        ROOT / "backend/system_identity/README.md",
+        ROOT / "models/README.md",
+        ROOT / "models/demo-printer/README.md",
+        GLOBAL_MATRIX,
+    ):
+        content = read(path)
+        assert "0905de0" in content, path
+        assert "mrv_d7d9b3918eb3f04157fb862164fe1d5fb17b4ef18d627fb89ff9bc429a94506b" in content, path
+
+
+def test_approved_gate_artifacts_and_fixed_outputs_are_exact():
+    assert hashlib.sha256(REHEARSAL_RESULTS.read_bytes()).hexdigest() == REPORT_SHA256
+    assert hashlib.sha256(MANIFEST.read_bytes()).hexdigest() == MANIFEST_SHA256
+    manifest = read(MANIFEST)
+    assert '"status":"non_authoritative_candidate"' in manifest
+    assert "var_ab2d312466054c20b0ac764e9bc0114e" in manifest
+    assert "bhv_80e21f1682e449ca9c65a5e2ee051ea0" in manifest
+    for record_id in (
+        "vrg_399bbea96bc27689ecab5b6162967b7d7320978117bfe7acddeb05c5ab9aeac6",
+        "brg_1fd13b69377257d987775c56f7abf9eedd466d4ca6555ff33ba6b8cf6e815d5e",
+        "bhd_fd567f57a0ac6a48309b6d04bb4585ed453a143c7789acc18469525f3536be7e",
+    ):
+        assert record_id in read(REHEARSAL_RESULTS)
+    assert "4c29928156ceb2e1947473039bc20d07af4f3ff9e25a1b664b17c3e96ac415b3" in read(REHEARSAL_RESULTS)
 
 
 def test_plan_and_matrix_have_exact_markers():

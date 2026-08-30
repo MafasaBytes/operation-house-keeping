@@ -823,11 +823,14 @@ accepted at `eedae19a9b2542958f44e66af7117a981c7faeef`; its refusal mapping,
 carried-material integrity boundary, public errors/exports, and cohort/parser
 scheduling questions are resolved. BH-001 Slices A, B, and C are owner
 accepted. Slice C is accepted at
-`8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521`. Only the Slice D pre-append
-rehearsal gate is owner authorized; the authoritative append has not started.
-The Slice D public-variable-minter discrepancy is owner resolved: add and
-separately commit the exact narrow `mint_variable_anchor()` API before any
-candidate allocation, then resume only two independent disposable-ledger
-rehearsals. Each disposable ledger contains one parentless BHD and exactly one
-behavior lineage root. The authoritative append remains prohibited until the
-exact candidates and artifact contract receive owner approval.
+`8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521`. The Slice D public-variable-
+minter discrepancy is owner resolved; the exact minter is committed and the
+two independent disposable rehearsals are complete. The pre-append contract
+committed at `0905de0` is owner approved: fixed anchors
+`var_ab2d312466054c20b0ac764e9bc0114e` and
+`bhv_80e21f1682e449ca9c65a5e2ee051ea0`, revision
+`mrv_d7d9b3918eb3f04157fb862164fe1d5fb17b4ef18d627fb89ff9bc429a94506b`,
+and 122406-byte artifact SHA-256
+`4c29928156ceb2e1947473039bc20d07af4f3ff9e25a1b664b17c3e96ac415b3`.
+Only the bounded authoritative VRG-then-BRG-then-BHD append and final Slice D
+verification are authorized. BH-001 final owner acceptance remains pending.

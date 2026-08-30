@@ -5,11 +5,12 @@ accepted at `57edec37b40c5da0c300cc1333fbb3cf5d7bb41a`. Slice B is owner accepte
 at `05177f7306ce745d093bd5f11abafc13a6274d0f`. The Slice C discrepancy stop is
 owner accepted at `eedae19a9b2542958f44e66af7117a981c7faeef`; all four contract
 questions are resolved. BH-001 Slices A, B, and C are owner accepted. Slice C
-is accepted at `8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521`. Only the Slice D
-pre-append rehearsal gate is owner authorized; the authoritative append has
-not started. The public variable-minter discrepancy is owner resolved by the
-exact narrow API addition described in Decision 17; candidate allocation may
-start only after that addition is separately committed and green.
+is accepted at `8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521`. The public
+variable-minter discrepancy is owner resolved by the exact narrow API addition
+described in Decision 17. The exact Slice D candidate identities, canonical
+records, 32-record revision, and 122406-byte disclosure artifact are owner
+approved; the bounded authoritative append and final verification are
+authorized but have not yet been performed.
 
 Accepted base: `main` at
 `46c04ed6f6f09b254b2f52f07611e2efbdd1d4f6`.
@@ -125,10 +126,10 @@ composition.
     Slice A owner acceptance and is owner accepted at
     `05177f7306ce745d093bd5f11abafc13a6274d0f`. Slice C adds the separate
     read-only `backend.behavior_evaluation` composition and is owner accepted
-    at `8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521`. Only Slice D's deterministic
-    disposable pre-append rehearsal is now authorized; the declaration-only
-    29-to-32 authoritative append still requires owner approval of its exact
-    derived identities and artifact contract.
+    at `8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521`. Slice D's deterministic
+    disposable pre-append contract is owner approved at commit `0905de0`; the
+    exact declaration-only 29-to-32 authoritative append and final
+    verification are authorized.
 16. Slice C validation proves internal coherence of carried public lower
     results and BH-derived fields, not raw-source authenticity. The exact
     22-reason refusal vocabulary, public three-class BH error tree, 21-name
@@ -137,8 +138,22 @@ composition.
     authentication remains separately owner-gated future work.
 17. Owner resolution: add the narrowly scoped public `mint_variable_anchor()` API, commit it green before candidate allocation, then resume only the disposable pre-append rehearsal. The function is keyword-only, calls standard-library `uuid4()` exactly once, uses `uuid4().hex` with the `var_` prefix, and returns the unchanged `VariableAnchor` contract. Export `mint_variable_anchor` after `mint_port_anchor`. It adds no entity minter, storage, I/O, authority, registration, binding, persistence, injected randomness, or semantic meaning. No candidate may be minted before the minter commit is green. After the implementation commit, invoke each public minter exactly once, freeze both serialized anchors, and never invoke either minter again; reconstruct the frozen values in both independent disposable ledger roots.
 
-The authoritative append remains prohibited until the exact candidates and
-artifact contract are owner approved.
+Before the current owner decision, the authoritative append remained
+prohibited until the exact candidates and artifact contract were approved.
+That condition is now satisfied. The approved report SHA-256 is
+`0a559255359440f54f370eaf11645122089d4c0744e537c9446e20c12ffd4778`;
+the unchanged manifest SHA-256 is
+`8524e9219ee7e1e452d7390f00df99c790bc8d91068e04fc4ec4f7463f75ea07`;
+the approved 32-record revision is
+`mrv_d7d9b3918eb3f04157fb862164fe1d5fb17b4ef18d627fb89ff9bc429a94506b`;
+and the approved 122406-byte artifact SHA-256 is
+`4c29928156ceb2e1947473039bc20d07af4f3ff9e25a1b664b17c3e96ac415b3`.
+No identity, record content, byte, ordering, revision, or artifact value may
+change during the authorized append.
+
+Owner approval: the exact Slice D candidate identities, canonical records,
+32-record revision, and 122406-byte disclosure-artifact contract are approved;
+the bounded authoritative append and final verification are authorized.
 
 ## Consequences
 

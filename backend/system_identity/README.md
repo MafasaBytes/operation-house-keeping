@@ -36,3 +36,12 @@ supplied entity identity and human-facing names. The helper performs no lookup,
 registration, binding, authority assertion, storage, or persistence; its output
 becomes model knowledge only through an independently admitted
 `VariableRegistration`.
+
+The BH-001 Slice D minter repair is committed at
+`2bee0f3808335d57d5d835f66892d1c21004d519`. Its one-time candidate output
+`var_ab2d312466054c20b0ac764e9bc0114e` and the independently allocated behavior
+anchor `bhv_80e21f1682e449ca9c65a5e2ee051ea0` are now owner approved through the
+frozen pre-append contract at `0905de0`; they must never be reminted or
+replaced. The authorized exact model revision is
+`mrv_d7d9b3918eb3f04157fb862164fe1d5fb17b4ef18d627fb89ff9bc429a94506b`.
+That approval changes no identity or minter semantics.

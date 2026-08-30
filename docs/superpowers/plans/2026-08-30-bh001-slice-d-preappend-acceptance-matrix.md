@@ -1,10 +1,16 @@
 # BH-001 Slice D Pre-Append Acceptance Matrix
 
-Status: owner-authorized remediation and disposable rehearsal; no authoritative append
+Status: exact pre-append contract owner approved; bounded authoritative append and final verification authorized
 
 Owner resolution: add the narrowly scoped public `mint_variable_anchor()` API, commit it green before candidate allocation, then resume only the disposable pre-append rehearsal.
 
-The authoritative append remains prohibited.
+Historical gate: the authoritative append remained prohibited until the exact
+rehearsal contract received owner approval. That gate is now satisfied; only
+the approved three-record append and final verification are authorized.
+
+Owner approval: the exact Slice D candidate identities, canonical records,
+32-record revision, and 122406-byte disclosure-artifact contract are approved;
+the bounded authoritative append and final verification are authorized.
 
 ## 1. Public minter gate
 
@@ -107,8 +113,23 @@ behavior lineage root.
 | D52 | Exact accepted disclaimer | Present verbatim |
 | D53 | `not_executed` explanation | Honest admission, not false relation |
 | D54 | Non-inference warnings | Ownership/names/topology/VPA/semantics/constraints/correlation do not create declaration |
-| D55 | Candidate identities/hashes/revision/artifact | Reported for owner approval |
-| D56 | Authoritative append before owner approval | Prohibited |
+| D55 | Candidate identities/hashes/revision/artifact | Owner approved exactly as committed at `0905de0` |
+| D56 | Authoritative append before owner approval | Historical prohibition satisfied; clean pre-append reproduction required before write |
 | D57 | Push/merge/rebase/reset/cherry-pick/amend/history rewrite | Prohibited |
+
+## 8. Approved append gate
+
+| ID | Assertion or attack | Required result |
+|---|---|---|
+| D58 | Approved report | SHA-256 `0a559255359440f54f370eaf11645122089d4c0744e537c9446e20c12ffd4778` |
+| D59 | Immutable allocation manifest | SHA-256 `8524e9219ee7e1e452d7390f00df99c790bc8d91068e04fc4ec4f7463f75ea07`; historical status label unchanged |
+| D60 | Clean pre-append reproduction | Exact VRG/BRG/BHD bytes, hashes, membership, revision, and artifact before authoritative write |
+| D61 | Authoritative physical append sequence | VRG, then BRG, then BHD through public builders and `ModelStore` |
+| D62 | Per-file immediate check | Approved ID, byte count, and SHA after each append; stop on mismatch |
+| D63 | Canonical membership | Exact sorted 32-record membership; physical order is not revision order |
+| D64 | Approved final revision | `mrv_d7d9b3918eb3f04157fb862164fe1d5fb17b4ef18d627fb89ff9bc429a94506b` |
+| D65 | Approved artifact | 122406 bytes, SHA-256 `4c29928156ceb2e1947473039bc20d07af4f3ff9e25a1b664b17c3e96ac415b3` |
+| D66 | Scope | Exactly three model records; no binding/VSP/VSM/port/VPA/constraint/BHW/correction/evidence mutation |
+| D67 | Final owner gate | Completion report delivered; BH-001 not self-declared owner accepted |
 
 END OF BH-001 SLICE D PRE-APPEND ACCEPTANCE MATRIX

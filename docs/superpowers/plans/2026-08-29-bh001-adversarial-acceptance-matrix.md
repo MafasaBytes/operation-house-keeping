@@ -1,9 +1,11 @@
 # BH-001 — Adversarial Acceptance Matrix
 
 Status: BH-001 Slices A, B, and C are owner accepted; Slice C is accepted at
-`8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521`. Only the owner-resolved Slice D
-public-variable-minter repair and disposable pre-append rehearsal are
-authorized. The authoritative append remains prohibited.
+`8002e6ae7ca85ab1c7e7ccf25a5ea504ff971521`. The owner-resolved Slice D
+public-variable-minter repair and disposable pre-append contract are complete.
+The exact candidate identities, canonical records, 32-record revision, and
+122406-byte artifact are owner approved; the bounded authoritative append and
+final verification are authorized.
 
 Authoritative specification:
 `docs/superpowers/specs/2026-08-29-bh001-explicit-behavior-and-evidence-gated-evaluation-design.md`
@@ -270,7 +272,17 @@ Owner resolution: add the narrowly scoped public `mint_variable_anchor()` API, c
 No candidate may be minted before the minter commit is green. Thereafter mint
 each candidate with one invocation of its public minter, freeze it, never invoke
 either minter again, and reuse it in both independent disposable ledger roots.
-Each ledger has one behavior lineage root. This matrix does not authorize the authoritative Slice D fixture append,
-a push, merge, rebase, reset, cherry-pick, amend, or history rewrite.
+Each ledger has one behavior lineage root. Historically, this matrix did not
+authorize the Slice D fixture append. Owner approval now authorizes only the
+exact contract committed at `0905de0`: approved report SHA-256
+`0a559255359440f54f370eaf11645122089d4c0744e537c9446e20c12ffd4778`,
+unchanged manifest SHA-256
+`8524e9219ee7e1e452d7390f00df99c790bc8d91068e04fc4ec4f7463f75ea07`,
+revision
+`mrv_d7d9b3918eb3f04157fb862164fe1d5fb17b4ef18d627fb89ff9bc429a94506b`,
+and 122406-byte artifact SHA-256
+`4c29928156ceb2e1947473039bc20d07af4f3ff9e25a1b664b17c3e96ac415b3`.
+A push, merge, rebase, reset, cherry-pick, amend, or history rewrite remains
+prohibited. Final BH-001 owner acceptance remains a separate gate.
 
 END OF BH-001 SLICE A ADVERSARIAL ACCEPTANCE MATRIX
