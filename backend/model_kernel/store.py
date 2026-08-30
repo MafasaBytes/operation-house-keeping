@@ -21,7 +21,7 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Iterable, Mapping
 
-from pydantic import TypeAdapter, ValidationError
+from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from backend.model_kernel.canonical import (
     canonical_payload,
@@ -305,6 +305,33 @@ def revalidate(record) -> ModelRecord:
     they would raise) surface as a typed, path-free
     ``MODEL_RECORD_INVALID``."""
     try:
+        # ``model_copy(update={unknown: ...})`` can place fields in a
+        # Pydantic instance's storage that its serializer silently omits
+        # under ``extra='forbid'``. Inspect the supplied object graph before
+        # serialization so neither top-level nor nested implication-bearing
+        # extras are laundered away. The explicit stack also makes this
+        # hostile-instance check independent of Python recursion depth.
+        pending = [record]
+        seen: set[int] = set()
+        while pending:
+            value = pending.pop()
+            identity = id(value)
+            if identity in seen:
+                continue
+            seen.add(identity)
+            if isinstance(value, BaseModel):
+                fields = type(value).model_fields
+                stored = vars(value)
+                extras = getattr(value, "__pydantic_extra__", None)
+                if set(stored).difference(fields) or extras:
+                    raise ValueError("pydantic instance contains extra fields")
+                pending.extend(stored[field] for field in fields
+                               if field in stored)
+            elif isinstance(value, Mapping):
+                pending.extend(value.keys())
+                pending.extend(value.values())
+            elif isinstance(value, (tuple, list, set, frozenset)):
+                pending.extend(value)
         # warnings=False keeps pydantic's serializer warnings from escaping
         # as the public outcome without mutating global warning filters
         payload = record.model_dump(mode="python", warnings=False)
