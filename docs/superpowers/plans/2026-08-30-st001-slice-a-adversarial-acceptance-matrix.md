@@ -1,6 +1,6 @@
 # ST-001 Slice A — Adversarial Acceptance Matrix
 
-Status: owner-approved design; Slice A authorized; red-first controls
+Status: owner-approved design; Slice A implemented and adversarially reviewed, awaiting owner acceptance; Slices B-D unstarted
 
 Date: 2026-08-30
 

@@ -511,3 +511,26 @@ def test_slice_a_readme_documents_state_truth_and_non_transition_boundary():
         "does not implement state transitions",
     ):
         assert required in text
+
+
+def test_slice_a_status_documents_are_exact_and_later_slices_remain_unstarted():
+    paths = (
+        Path("CLAUDE.md"),
+        Path("docs/adr/0016-explicit-state-identity-and-evidence-gated-classification.md"),
+        Path("docs/superpowers/specs/2026-08-30-st001-explicit-state-identity-and-evidence-gated-classification-design.md"),
+        Path("docs/superpowers/plans/2026-08-30-st001-slice-a-implementation-plan.md"),
+        Path("docs/superpowers/plans/2026-08-30-st001-slice-a-adversarial-acceptance-matrix.md"),
+        Path("backend/model_kernel/README.md"),
+        Path("backend/system_identity/README.md"),
+    )
+    texts = {path: path.read_text(encoding="utf-8") for path in paths}
+    combined = "\n".join(texts.values())
+    assert "Slice A" in combined
+    assert "implemented and adversarially reviewed" in combined
+    assert "awaiting owner acceptance" in combined
+    assert "Slices B-D" in combined
+    assert "unstarted" in combined
+    assert "StateClassificationQueries" not in kernel.__all__
+    specification = texts[paths[2]]
+    assert specification.endswith(
+        "END OF ST-001 CORRECTED FINAL SYNTHESIS\n")

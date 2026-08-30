@@ -37,6 +37,10 @@ creates only a fresh opaque UUID4 identity. State model knowledge begins only
 with the separately admitted ST-001 `StateRegistration`; names never create or
 classify a state.
 
+ST-001 Slice A implements this identity and record foundation and awaits owner
+acceptance. It adds no state query, classification, fixture, or transition
+capability; Slices B-D remain unstarted and separately owner-gated.
+
 `mint_variable_anchor()` creates one fresh opaque `var_` UUID4 identity and
 returns the unchanged `VariableAnchor` contract containing the explicitly
 supplied entity identity and human-facing names. The helper performs no lookup,

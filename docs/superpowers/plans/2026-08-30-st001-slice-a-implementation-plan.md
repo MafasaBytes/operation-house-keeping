@@ -1,6 +1,6 @@
 # ST-001 Slice A — Identity and Model-Record Foundation Implementation Plan
 
-Status: corrected final design owner accepted; Slice A authorized; Slices B-D unauthorized
+Status: corrected final design owner accepted; Slice A implemented and adversarially reviewed, awaiting owner acceptance; Slices B-D unstarted and unauthorized
 
 Date: 2026-08-30
 

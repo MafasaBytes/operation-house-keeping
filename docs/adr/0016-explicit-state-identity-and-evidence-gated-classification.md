@@ -1,6 +1,6 @@
 # ADR-0016 — Explicit state identity and evidence-gated classification
 
-Status: ST-001 corrected final design owner accepted; Slice A authorized and in progress; Slices B-D not authorized
+Status: ST-001 corrected final design owner accepted; Slice A implemented and adversarially reviewed, awaiting owner acceptance; Slices B-D unstarted and not authorized
 
 Date: 2026-08-30
 

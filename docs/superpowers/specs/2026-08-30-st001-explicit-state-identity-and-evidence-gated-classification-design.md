@@ -1,6 +1,6 @@
 # ST-001 — Explicit State Identity and Evidence-Gated Classification
 
-Status: Corrected final synthesis for owner review
+Status: Corrected final synthesis owner accepted; Slice A implemented and adversarially reviewed, awaiting owner acceptance; Slices B-D unstarted
 
 Date: 2026-08-30
 
@@ -2368,6 +2368,7 @@ artifact hashes are intentionally deferred to the Slice D rehearsal/owner
 gate. That is a planned gate, not an unresolved design or implementation
 blocker for Slices A-C.
 
-Genuine unresolved owner questions: none; awaiting final design approval.
+Genuine unresolved owner questions: acceptance of Slice A and separate
+authorization for Slice B.
 
 END OF ST-001 CORRECTED FINAL SYNTHESIS
