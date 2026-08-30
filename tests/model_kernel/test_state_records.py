@@ -92,6 +92,38 @@ def test_constraint_and_pin_input_order_is_canonical_and_identity_stable():
     assert forward.record_id == reverse.record_id
 
 
+def test_duplicate_extra_coercive_and_wrong_kind_pins_fail_closed():
+    declaration = state_declaration()
+    first, second = declaration.conditions
+    with pytest.raises(kernel.ModelIntegrityError):
+        state_declaration(condition_pins=(first, first))
+    for payload in (
+        {**first.model_dump(), "direction": "input"},
+        {**first.model_dump(), "constraint_anchor_id": True},
+        {**first.model_dump(), "constraint_declaration_record_id": True},
+        {**first.model_dump(),
+         "constraint_declaration_record_id": "std_" + "a" * 64},
+        {**second.model_dump(), "constraint_anchor_id": "vpa_" + "a" * 64},
+    ):
+        with pytest.raises(ValidationError):
+            kernel.StateConstraintDeclarationPin(**payload)
+
+
+def test_public_builder_and_direct_contract_construction_have_canonical_parity():
+    built_registration = state_registration()
+    direct_registration = kernel.StateRegistration(
+        **built_registration.model_dump())
+    assert direct_registration == built_registration
+    built_declaration = state_declaration(built_registration)
+    direct_declaration = kernel.StateDeclaration(
+        **built_declaration.model_dump())
+    assert direct_declaration == built_declaration
+    built_withdrawal = state_withdrawal(built_declaration)
+    direct_withdrawal = kernel.StateDeclarationWithdrawal(
+        **built_withdrawal.model_dump())
+    assert direct_withdrawal == built_withdrawal
+
+
 @pytest.mark.parametrize("parents", [
     ("std_" + "a" * 64, "std_" + "a" * 64),
     ("srg_" + "a" * 64,),

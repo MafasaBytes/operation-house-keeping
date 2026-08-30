@@ -149,7 +149,9 @@ class TestStateRegistrationAdmission:
                            if ref.kind == "model_record")
         attacks = (
             (REGISTRATION_DECLARATION,),
-            (*model_refs[:-1], REGISTRATION_DECLARATION),
+            *(tuple(ref for position, ref in enumerate(model_refs)
+                    if position != omitted) + (REGISTRATION_DECLARATION,)
+              for omitted in range(len(model_refs))),
             model_refs,
             (citation(entity_registration(ENT_B).record_id),
              REGISTRATION_DECLARATION),
@@ -245,7 +247,9 @@ class TestStateDeclarationAdmission:
                            if ref.kind == "model_record")
         attacks = (
             (STATE_DECLARATION,),
-            (*model_refs[:-1], STATE_DECLARATION),
+            *(tuple(ref for position, ref in enumerate(model_refs)
+                    if position != omitted) + (STATE_DECLARATION,)
+              for omitted in range(len(model_refs))),
             model_refs,
             (citation(registration.record_id), STATE_DECLARATION),
         )
@@ -417,6 +421,23 @@ class TestStateWithdrawals:
             left_event, right_event).load()
         assert inactive.current_state_declaration_tips_by_root[
             root.record_id] == ()
+
+    def test_one_identical_independent_root_can_withdraw_while_other_stays_live(
+            self, tmp_path):
+        registration = state_registration()
+        first = state_declaration(registration, note="authority one")
+        second = state_declaration(
+            registration, recorded_at=T1, note="authority two")
+        assert _state_effective_body_bytes(first) == \
+            _state_effective_body_bytes(second)
+        event = state_withdrawal(first)
+        loaded = world(tmp_path, first, second, event).load()
+        assert loaded.current_state_declaration_tips_by_root[
+            first.record_id] == ()
+        assert loaded.current_state_declaration_tips_by_root[
+            second.record_id] == (second,)
+        assert loaded.state_declaration_withdrawn_by[first.record_id] == (
+            event.record_id,)
 
     def test_unknown_superseded_duplicate_and_successor_race_reject(self,
                                                                     tmp_path):

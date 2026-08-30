@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+from collections.abc import Mapping
 
 import pytest
 
@@ -18,7 +19,6 @@ from tests.model_kernel.st001_slice_a_helpers import (
     AS_OPERATED,
     STATE_DECLARATION,
     condition_world_records,
-    snapshot,
     state_declaration,
     state_registration,
     state_withdrawal,
@@ -58,6 +58,10 @@ from tests.model_kernel.test_demo_model import (
 DEMO_MODEL = Path("models/demo-printer")
 
 
+def citation(record_id):
+    return kernel.ModelRecordEvidence(kind="model_record", record_id=record_id)
+
+
 def complete_records(*claims):
     registration = state_registration()
     records = (*condition_world_records(), registration, *claims)
@@ -71,6 +75,46 @@ def write_crafted(store, record, *, filename=None):
         json.dumps(payload, sort_keys=True, indent=2) + "\n",
         encoding="utf-8")
     return path
+
+
+def ledger_tree_snapshot(store):
+    """All ledger-tree files, including any staging residue."""
+    return {
+        path.relative_to(store.records_dir.parent).as_posix(): path.read_bytes()
+        for path in sorted(store.records_dir.parent.rglob("*"))
+        if path.is_file()
+    }
+
+
+def _normalized_index_value(value):
+    if isinstance(value, Mapping):
+        items = [(_normalized_index_value(key), _normalized_index_value(item))
+                 for key, item in value.items()]
+        return sorted(items, key=lambda item: json.dumps(
+            item[0], sort_keys=True, separators=(",", ":")))
+    if isinstance(value, (tuple, list)):
+        return [_normalized_index_value(item) for item in value]
+    if hasattr(value, "record_id"):
+        return value.record_id
+    if hasattr(value, "model_dump"):
+        return value.model_dump(mode="json")
+    return value
+
+
+def state_index_projection(loaded):
+    names = (
+        "state_registrations", "state_registrations_by_anchor",
+        "state_anchor_ids_by_subject_entity",
+        "state_condition_constraint_ids_by_anchor", "state_declarations",
+        "state_declaration_ids_by_key", "state_declaration_parent_ids",
+        "state_declaration_successor_ids", "state_declaration_root_by_id",
+        "state_declaration_ancestry_by_id",
+        "current_state_declaration_tips_by_root",
+        "state_declaration_withdrawals", "state_declaration_withdrawn_by",
+        "state_declaration_withdrawals_by_target",
+    )
+    return {name: _normalized_index_value(getattr(loaded, name))
+            for name in names}
 
 
 def test_collection_reconstructs_forged_anchor_pin_context_evidence_authority():
@@ -101,6 +145,44 @@ def test_collection_reconstructs_forged_anchor_pin_context_evidence_authority():
         with pytest.raises(kernel.ModelIntegrityError) as error:
             validate_record_collection(
                 "demo-printer", records, verify_hashes=False)
+        assert error.value.error_code == "MODEL_RECORD_INVALID"
+
+
+def test_hidden_model_copy_extra_fields_fail_at_every_state_nesting_level():
+    registration = state_registration()
+    declaration = state_declaration(registration)
+    withdrawal = state_withdrawal(declaration)
+    nested_attacks = (
+        registration.model_copy(update={"transition": "forged"}),
+        declaration.model_copy(update={"computed_match": "matches"}),
+        withdrawal.model_copy(update={"reason_code": "false"}),
+        registration.model_copy(update={
+            "anchor": registration.anchor.model_copy(
+                update={"subject_entity_anchor_id": "ent_" + "a" * 32})}),
+        declaration.model_copy(update={
+            "context": declaration.context.model_copy(
+                update={"acceptable_skew_seconds": 1})}),
+        declaration.model_copy(update={
+            "conditions": (
+                declaration.conditions[0].model_copy(
+                    update={"predicate": "forged"}),
+                declaration.conditions[1])}),
+        declaration.model_copy(update={
+            "evidence": (
+                declaration.evidence[0].model_copy(
+                    update={"port_anchor_id": "prt_" + "a" * 32}),
+                *declaration.evidence[1:])}),
+        declaration.model_copy(update={
+            "authority": declaration.authority.model_copy(
+                update={"priority": 1})}),
+    )
+    for forged in nested_attacks:
+        records = complete_records(declaration, withdrawal)
+        original_id = forged.record_id
+        records.pop(original_id, None)
+        records[original_id] = forged
+        with pytest.raises(kernel.ModelIntegrityError) as error:
+            validate_record_collection("demo-printer", records)
         assert error.value.error_code == "MODEL_RECORD_INVALID"
 
 
@@ -143,7 +225,7 @@ def test_hostile_on_disk_nested_content_and_filename_mismatch_fail_closed(
 
 def test_failed_hostile_append_is_atomic(tmp_path):
     store = world(tmp_path)
-    before = snapshot(store)
+    before = ledger_tree_snapshot(store)
     revision = store.load().revision
     declaration = state_declaration()
     forged = declaration.model_copy(update={
@@ -151,8 +233,95 @@ def test_failed_hostile_append_is_atomic(tmp_path):
             update={"statement": ""}),)})
     with pytest.raises(kernel.ModelIntegrityError):
         store.append(forged)
-    assert snapshot(store) == before
+    assert ledger_tree_snapshot(store) == before
     assert store.load().revision == revision
+
+    registration = state_registration()
+    first = state_declaration(registration, note="first root")
+    second = state_declaration(registration, note="second root")
+    semantic_store = world(tmp_path / "semantic", first, second)
+    before = ledger_tree_snapshot(semantic_store)
+    revision = semantic_store.load().revision
+    invalid_merge = state_declaration(
+        registration, supersedes=(first.record_id, second.record_id),
+        note="cross-root merge")
+    with pytest.raises(kernel.ModelIntegrityError) as error:
+        semantic_store.append(invalid_merge)
+    assert error.value.error_code == "MODEL_STATE_LINEAGE_INVALID"
+    assert ledger_tree_snapshot(semantic_store) == before
+    assert semantic_store.load().revision == revision
+
+
+def test_correctly_hashed_semantically_invalid_state_files_fail_on_load(
+        tmp_path):
+    # Cross-owner SRG: structurally valid and correctly content-hashed, but
+    # its second condition targets a variable owned by another entity.
+    cross_store = kernel.ModelStore(tmp_path / "cross-owner")
+    cross_records = condition_world_records(second_owner="ent_" + "b" * 32)
+    for record in cross_records:
+        cross_store.append(record)
+    cross_registration = state_registration(
+        second_owner="ent_" + "b" * 32,
+        evidence=(
+            citation(next(record.record_id for record in cross_records
+                          if record.record_kind == "entity_registration"
+                          and record.anchor.anchor_id ==
+                          "ent_" + "a" * 32)),
+            *(citation(record.record_id) for record in cross_records
+              if record.record_kind == "constraint_registration"),
+            kernel.OwnerDeclarationEvidence(
+                kind="owner_declaration", statement="explicit state"),
+        ))
+    write_crafted(cross_store, cross_registration)
+    with pytest.raises(kernel.ModelIntegrityError) as error:
+        cross_store.load()
+    assert error.value.error_code == "MODEL_STATE_REGISTRATION_INVALID"
+
+    # Cross-context parent STD: every hash is valid, but the lineage key is
+    # different from its named parent.
+    registration = state_registration()
+    root = state_declaration(registration)
+    lineage_store = world(tmp_path / "cross-context", root)
+    child = state_declaration(
+        registration,
+        context={"kind": "lifecycle_view", "view": "as_designed"},
+        supersedes=(root.record_id,), note="cross-context")
+    write_crafted(lineage_store, child)
+    with pytest.raises(kernel.ModelIntegrityError) as error:
+        lineage_store.load()
+    assert error.value.error_code == "MODEL_STATE_LINEAGE_INVALID"
+
+    # Superseded and duplicate withdrawals are structurally valid event
+    # files but invalid against the complete membership.
+    child = state_declaration(
+        registration, supersedes=(root.record_id,), note="child")
+    withdrawal_store = world(tmp_path / "superseded-withdrawal", root, child)
+    write_crafted(withdrawal_store, state_withdrawal(root))
+    with pytest.raises(kernel.ModelIntegrityError) as error:
+        withdrawal_store.load()
+    assert error.value.error_code == "MODEL_STATE_WITHDRAWAL_INVALID"
+
+    duplicate_store = world(tmp_path / "duplicate-withdrawal", root)
+    write_crafted(duplicate_store, state_withdrawal(root))
+    write_crafted(duplicate_store, state_withdrawal(root, note="second"))
+    with pytest.raises(kernel.ModelIntegrityError) as error:
+        duplicate_store.load()
+    assert error.value.error_code == "MODEL_STATE_WITHDRAWAL_INVALID"
+
+
+def test_on_disk_stale_ids_fail_for_all_three_state_arms(tmp_path):
+    registration = state_registration()
+    declaration = state_declaration(registration)
+    withdrawal = state_withdrawal(declaration)
+    for index, record in enumerate((registration, declaration, withdrawal)):
+        store = world(tmp_path / f"stale-{index}", declaration, withdrawal)
+        path = store.records_dir / f"{record.record_id}.json"
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        payload["note"] = "mutated without changing content-derived id"
+        path.write_text(json.dumps(payload), encoding="utf-8")
+        with pytest.raises(kernel.ModelIntegrityError) as error:
+            store.load()
+        assert error.value.error_code == "MODEL_RECORD_HASH_MISMATCH"
 
 
 def test_all_explicit_pre_st_histories_replay_with_empty_immutable_indexes():
@@ -222,19 +391,19 @@ def test_hash_seed_does_not_change_state_identity_or_index_order():
 import json
 from backend.model_kernel.store import validate_record_collection
 from tests.model_kernel.st001_slice_a_helpers import (
-    condition_world_records, state_declaration, state_registration)
+    condition_world_records, state_declaration, state_registration,
+    state_withdrawal)
+from tests.model_kernel.test_state_revalidation import state_index_projection
 r = state_registration()
 one = state_declaration(r, note='one')
 two = state_declaration(r, note='two')
-records = (*condition_world_records(), r, one, two)
+event = state_withdrawal(one)
+records = (*condition_world_records(), r, one, two, event)
 loaded = validate_record_collection(
     'demo-printer', {item.record_id: item for item in reversed(records)})
 print(json.dumps({
-    'registration': r.record_id,
-    'declarations': sorted((one.record_id, two.record_id)),
     'revision': loaded.revision.revision_id,
-    'keys': [str(key) for key in loaded.state_declaration_ids_by_key],
-    'roots': list(loaded.current_state_declaration_tips_by_root),
+    'indexes': state_index_projection(loaded),
 }, sort_keys=True, separators=(',', ':')))
 """
     outputs = []
@@ -244,6 +413,49 @@ print(json.dumps({
             [sys.executable, "-c", script], text=True,
             env=environment, cwd=Path.cwd()))
     assert len(set(outputs)) == 1
+
+
+def test_physical_append_and_enumeration_order_do_not_change_state_indexes(
+        tmp_path):
+    base = condition_world_records()
+    by_kind = {
+        kind: [record for record in base if record.record_kind == kind]
+        for kind in {
+            "entity_registration", "variable_registration",
+            "constraint_registration", "variable_constraint_declaration",
+        }
+    }
+    registration = state_registration()
+    one = state_declaration(registration, note="one")
+    two = state_declaration(registration, note="two")
+    event = state_withdrawal(one)
+
+    def make_store(path, *, reverse):
+        store = kernel.ModelStore(path / "demo-printer")
+        for kind in (
+            "entity_registration", "variable_registration",
+            "constraint_registration", "variable_constraint_declaration",
+        ):
+            records = by_kind[kind]
+            for record in (reversed(records) if reverse else records):
+                store.append(record)
+        store.append(registration)
+        for record in ((two, one) if reverse else (one, two)):
+            store.append(record)
+        store.append(event)
+        return store
+
+    forward = make_store(tmp_path / "forward", reverse=False).load()
+    reverse = make_store(tmp_path / "reverse", reverse=True).load()
+    assert forward.revision == reverse.revision
+    assert state_index_projection(forward) == state_index_projection(reverse)
+
+    direct_records = (*base, registration, one, two, event)
+    direct = validate_record_collection(
+        "demo-printer", {record.record_id: record
+                         for record in reversed(direct_records)})
+    assert direct.revision == forward.revision
+    assert state_index_projection(direct) == state_index_projection(forward)
 
 
 def test_kernel_import_direction_and_slice_boundary_remain_exact():
