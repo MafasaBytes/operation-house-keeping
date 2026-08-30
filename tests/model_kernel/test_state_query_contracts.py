@@ -58,6 +58,23 @@ RESULT_FIELDS = {
         "root_record_index", "successor_indices", "withdrawal_indices"),
 }
 
+SLICE_B_EXPORTS = (
+    "StateLookupStatus",
+    "StateDeclarationConclusion",
+    "StateDeclarationLineageSummary",
+    "StateAgreementFinding",
+    "EntityStatesStatus",
+    "StateAssertionLookupStatus",
+    "StateConditionReferenceResult",
+    "StateEffectiveBodyGroupResult",
+    "StateDeclarationRootResult",
+    "StateLookupResult",
+    "StateDeclarationResult",
+    "EntityStateEntry",
+    "EntityStatesResult",
+    "StateAssertionDisclosureResult",
+)
+
 
 def test_exact_state_query_aliases_and_literal_order():
     for name, values in ALIASES.items():
@@ -73,6 +90,9 @@ def test_exact_state_query_result_names_fields_and_exports():
         assert name in kernel.__all__
     assert len(kernel.__all__) == 162
     assert len(kernel.__all__) == len(set(kernel.__all__))
+    start = kernel.__all__.index(SLICE_B_EXPORTS[0])
+    assert tuple(kernel.__all__[start:start + len(SLICE_B_EXPORTS)]) == \
+        SLICE_B_EXPORTS
     assert {name for name in kernel.__all__
             if name.startswith("State") or name.startswith("EntityState")} == (
         set(ALIASES) | set(RESULT_FIELDS) | {

@@ -279,6 +279,32 @@ def test_inactive_roots_and_surviving_identical_root_are_disclosed(tmp_path):
         "healthy", "inactive"]
 
 
+def test_withdrawn_root_beside_two_surviving_corroborating_roots(tmp_path):
+    registration = state_registration()
+    withdrawn_root = state_declaration(registration, note="withdrawn root")
+    event = state_withdrawal(withdrawn_root)
+    survivor_one = state_declaration(
+        registration, recorded_at=T1 + timedelta(seconds=1),
+        note="survivor one")
+    survivor_two = state_declaration(
+        registration, recorded_at=T1 + timedelta(seconds=2),
+        note="survivor two")
+    result = kernel.ModelQueries(world(
+        tmp_path, withdrawn_root, event, survivor_one, survivor_two).load()
+                                 ).state_declaration(
+                                     STATE_A, context=AS_OPERATED)
+    assert (result.conclusion, result.lineage_summary,
+            result.agreement_findings) == (
+                "declared", "healthy",
+                ("corroborating_healthy_roots", "inactive_roots_present"))
+    assert len(result.roots) == 3
+    assert len(result.effective_body_groups) == 1
+    assert record_ids(
+        result.material,
+        result.effective_body_groups[0].current_tip_indices) == tuple(sorted(
+            (survivor_one.record_id, survivor_two.record_id)))
+
+
 def test_selective_fork_withdrawal_restores_one_healthy_tip(tmp_path):
     registration = state_registration()
     root = state_declaration(registration, note="root")
@@ -327,6 +353,40 @@ def test_entity_reverse_discovery_includes_lifecycle_and_registered_empty(
             absent.entries) == ("entity_not_registered", None, ())
 
 
+def test_entity_collection_includes_every_lifecycle_conclusion(tmp_path):
+    state_c = "sta_" + "c" * 32
+    state_d = "sta_" + "d" * 32
+    registration_a = state_registration()
+    registration_b = state_registration(state_anchor_id=STATE_B)
+    declaration_b = state_declaration(
+        registration_b, state_anchor_id=STATE_B, note="declared")
+    registration_c = state_registration(state_anchor_id=state_c)
+    declaration_c = state_declaration(
+        registration_c, state_anchor_id=state_c, note="inactive")
+    withdrawal_c = state_withdrawal(declaration_c)
+    registration_d = state_registration(state_anchor_id=state_d)
+    root_d = state_declaration(
+        registration_d, state_anchor_id=state_d, note="root")
+    left_d = state_declaration(
+        registration_d, state_anchor_id=state_d,
+        supersedes=(root_d.record_id,), recorded_at=T1, note="left")
+    right_d = state_declaration(
+        registration_d, state_anchor_id=state_d,
+        supersedes=(root_d.record_id,),
+        recorded_at=T1 + timedelta(seconds=1), note="right")
+    loaded = world(
+        tmp_path, registration_b, declaration_b, registration_c,
+        declaration_c, withdrawal_c, registration_d, root_d, left_d,
+        right_d).load()
+    result = kernel.ModelQueries(loaded).states_of_entity(
+        ENT_A, context=AS_OPERATED)
+    assert tuple(entry.entry_index for entry in result.entries) == (0, 1, 2, 3)
+    assert tuple(entry.state_anchor_id for entry in result.entries) == (
+        STATE_A, STATE_B, state_c, state_d)
+    assert tuple(entry.conclusion for entry in result.entries) == (
+        "not_declared", "declared", "inactive", "conflicted")
+
+
 def test_constraint_existence_and_ownership_do_not_infer_state(tmp_path):
     loaded = world(tmp_path, include_registration=False).load()
     result = kernel.ModelQueries(loaded).states_of_entity(
@@ -373,6 +433,24 @@ def test_assertion_discloses_events_activity_and_subject_health(tmp_path):
     assert event.lookup_status == "found"
     assert event.activity is None
     assert event.root_record_index is None
+
+
+def test_individual_assertion_is_current_while_its_root_is_conflicted(tmp_path):
+    registration = state_registration()
+    root = state_declaration(registration, note="root")
+    left = state_declaration(
+        registration, supersedes=(root.record_id,), recorded_at=T1,
+        note="left")
+    right = state_declaration(
+        registration, supersedes=(root.record_id,),
+        recorded_at=T1 + timedelta(seconds=1), note="right")
+    queries = kernel.ModelQueries(world(tmp_path, root, left, right).load())
+    for tip in (left, right):
+        result = queries.state_assertion(tip.record_id)
+        assert result.activity == "current"
+        assert result.containing_lineage_health == "conflicted"
+        assert result.containing_subject_conclusion == "conflicted"
+        assert result.containing_agreement_findings == ("same_root_conflict",)
 
 
 def test_valid_shaped_absent_assertions_are_structured_not_found(tmp_path):
