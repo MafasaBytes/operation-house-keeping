@@ -1,6 +1,6 @@
 # ST-001 — Explicit State Identity and Evidence-Gated Classification
 
-Status: Slices A, B, and C are owner accepted. Slice D pre-append rehearsal is authorized; authoritative append remains prohibited. Slice D authoritative append remains unauthorized.
+Status: ST-001 Slices A-D are implemented and verified; Slice D final owner acceptance is pending.
 
 Date: 2026-08-30
 
@@ -2370,12 +2370,13 @@ blocker for Slices A-C.
 
 Slice A is owner accepted at
 `9adcf4d9613ac96e5fb430a4b750f3053679b64d`. Slice B is owner accepted at
-`23eca10a52c0124d22b4e90d80bef952ef5f9381`. Slices A, B, and C are owner
-accepted. Slice D pre-append rehearsal is authorized; authoritative append
-remains prohibited. Slice D authoritative append remains unauthorized. Slice C is accepted at
-`f2c6e4e12c3004615e3b0a6f321f6c2b3edec7d6`.
+`23eca10a52c0124d22b4e90d80bef952ef5f9381`. Slice C is owner accepted at
+`f2c6e4e12c3004615e3b0a6f321f6c2b3edec7d6`. The owner approved the exact
+corrected frozen Slice D candidate and separately authorized the authoritative
+SRG-then-STD append. The resulting exact 34-record revision is
+`mrv_67fb4be22bd50683cc427d3d4e4abf97c0ffe6b800f764b156f671cd18bb5b41`.
 
-Genuine unresolved owner questions: approval of the exact rehearsed Slice D
-candidate contract and separate authorization for authoritative append.
+Genuine unresolved owner question: final acceptance of the implemented and
+verified exact Slice D contract.
 
 END OF ST-001 CORRECTED FINAL SYNTHESIS

@@ -54,6 +54,7 @@ from tests.model_kernel.test_demo_model import (
     PRE_VARIABLE_REVISION,
     PRE_VP001_REVISION,
     PT001_MEMBERSHIP,
+    ST001_MEMBERSHIP,
     VP001_MEMBERSHIP,
     VS001_MEMBERSHIP,
 )
@@ -216,13 +217,13 @@ def test_all_explicit_pre_bh_histories_replay_with_empty_immutable_indexes():
 
 def test_current_demo_ledger_and_every_model_byte_remain_frozen():
     paths = sorted((DEMO_MODEL / "records").glob("*.json"))
-    assert len(paths) == 32
+    assert len(paths) == 34
     assert sum(path.name.startswith("brg_") for path in paths) == 1
     assert sum(path.name.startswith("bhd_") for path in paths) == 1
     assert not any(path.name.startswith("bhw_") for path in paths)
     loaded = kernel.ModelStore(DEMO_MODEL).load()
     assert loaded.revision.revision_id == CURRENT_REVISION
-    assert loaded.revision.record_ids == BH001_MEMBERSHIP
+    assert loaded.revision.record_ids == ST001_MEMBERSHIP
     frozen = {
         **FROZEN_MK001_RECORDS,
         **FROZEN_VM001_RECORD,
@@ -235,7 +236,7 @@ def test_current_demo_ledger_and_every_model_byte_remain_frozen():
         **FROZEN_BH001_MODEL_RECORDS,
     }
     assert len(frozen) == 32
-    assert set(frozen) == {path.name for path in paths}
+    assert set(frozen).issubset({path.name for path in paths})
     for filename, digest in frozen.items():
         assert hashlib.sha256(
             (DEMO_MODEL / "records" / filename).read_bytes()).hexdigest() == digest

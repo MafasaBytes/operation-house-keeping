@@ -12,7 +12,7 @@ def read(path):
     return Path(path).read_text(encoding="utf-8")
 
 
-def test_slice_b_acceptance_and_slice_c_authorization_are_pinned():
+def test_slice_b_acceptance_remains_pinned_after_slice_d():
     paths = (
         "CLAUDE.md",
         "backend/model_kernel/README.md",
@@ -28,8 +28,6 @@ def test_slice_b_acceptance_and_slice_c_authorization_are_pinned():
     for path in paths:
         normalized = " ".join(read(path).split())
         assert STATUS in normalized, path
-        assert "Slice C" in normalized and "authorized" in normalized
-        assert "Slice D" in normalized and "unauthorized" in normalized
 
 
 def test_kernel_documentation_pins_exact_slice_b_surface_and_non_inference():
@@ -41,7 +39,7 @@ def test_kernel_documentation_pins_exact_slice_b_surface_and_non_inference():
     assert "carry `ModelQueryMaterial` exactly once" in documentation
     assert "without a store or filesystem" in documentation
     assert "No query infers state" in documentation
-    assert "zero SRG, STD, or STW records" in documentation
+    assert "one SRG, one parentless STD, and zero STW records" in documentation
 
 
 def test_slice_b_documents_retain_their_exact_ending_markers():

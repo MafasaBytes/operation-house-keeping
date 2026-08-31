@@ -20,8 +20,10 @@ PRE_VP001_REVISION = ("mrv_c6244b6dc41de599de9894b55f4064e41ba5260e7d00f50"
                       "bffc1e1e63da560a2")  # 28 records (PT-001)
 PRE_BH001_REVISION = ("mrv_18da4ce963ab5c4b1121cdcc009eaaef4cd1c5c11034f467"
                       "8c6437361ffd7652")  # 29 records (VP-001)
-CURRENT_REVISION = ("mrv_d7d9b3918eb3f04157fb862164fe1d5fb17b4ef18d627fb8"
-                    "9ff9bc429a94506b")  # 32 records (BH-001)
+PRE_ST001_REVISION = ("mrv_d7d9b3918eb3f04157fb862164fe1d5fb17b4ef18d627fb8"
+                      "9ff9bc429a94506b")  # 32 records (BH-001)
+CURRENT_REVISION = ("mrv_67fb4be22bd50683cc427d3d4e4abf97c0ffe6b800f764b1"
+                    "56f671cd18bb5b41")  # 34 records (ST-001)
 PRE_ES001_REVISION = ("mrv_702c840f7da00617feb1be252838105d8b001b2e19978842"
                       "bdcbec56996c99ff")  # 14 records (SN-001)
 GOLDEN_REVISION = ("mrv_25afc0ebf17ed12bd6ef0a95795798a53ef2"
@@ -75,6 +77,11 @@ BH001_MODEL_RECORDS = (
     "bhd_fd567f57a0ac6a48309b6d04bb4585ed453a143c7789acc18469525f3536be7e",
 )
 
+ST001_MODEL_RECORDS = (
+    "srg_ebd6195325325e67aaa911f06c27aa3d454908878f6091690cdc38b2041de60a",
+    "std_d787ddfec94485f5348fd6a66097a8e26d77973ff157917b8d0f5c06016564a0",
+)
+
 VS001_MEMBERSHIP = (
     "reg_5776a541a04b428f35af40203294a34a8a9978f0bdf3572a8745e6febddd5941",
     "reg_9b5491aaa131b0df070cee792c83e002bdc4232cbbaba443f967cd3e5b780451",
@@ -111,6 +118,7 @@ CN001_MEMBERSHIP = (*PRE_CN001_MEMBERSHIP, *CN001_MODEL_RECORDS)
 PT001_MEMBERSHIP = tuple(sorted((*CN001_MEMBERSHIP, *PT001_MODEL_RECORDS)))
 VP001_MEMBERSHIP = tuple(sorted((*PT001_MEMBERSHIP, *VP001_MODEL_RECORDS)))
 BH001_MEMBERSHIP = tuple(sorted((*VP001_MEMBERSHIP, *BH001_MODEL_RECORDS)))
+ST001_MEMBERSHIP = tuple(sorted((*BH001_MEMBERSHIP, *ST001_MODEL_RECORDS)))
 
 
 def eleven_ids(loaded):
@@ -128,8 +136,8 @@ class TestCommittedLedger:
         store = ModelStore(DEMO_MODEL)
         loaded = store.load()
         assert loaded.revision.revision_id == CURRENT_REVISION
-        assert loaded.revision.record_ids == BH001_MEMBERSHIP
-        assert loaded.revision.record_count == 32
+        assert loaded.revision.record_ids == ST001_MEMBERSHIP
+        assert loaded.revision.record_count == 34
         assert len(loaded.variable_registrations_by_anchor) == 2
         assert len(loaded.specifications) == 1
         assert len(loaded.types) == 3
@@ -154,11 +162,15 @@ class TestCommittedLedger:
         pre_bh001 = store.replay(VP001_MEMBERSHIP)
         assert pre_bh001.revision.revision_id == PRE_BH001_REVISION
         assert pre_bh001.revision.record_count == 29
-        current = store.replay(BH001_MEMBERSHIP)
-        assert current.revision == loaded.revision
-        assert len(current.behavior_registrations) == 1
-        assert len(current.behavior_rule_declarations) == 1
-        assert not current.behavior_rule_withdrawals
+        pre_st001 = store.replay(BH001_MEMBERSHIP)
+        assert pre_st001.revision.revision_id == PRE_ST001_REVISION
+        assert pre_st001.revision.record_count == 32
+        assert len(pre_st001.behavior_registrations) == 1
+        assert len(pre_st001.behavior_rule_declarations) == 1
+        assert not pre_st001.behavior_rule_withdrawals
+        assert len(loaded.state_registrations) == 1
+        assert len(loaded.state_declarations) == 1
+        assert not loaded.state_declaration_withdrawals
 
     def test_fixture_authority_never_human_owner(self):
         """Mandatory regression, per-record form (AU2): every record is
@@ -181,9 +193,11 @@ class TestCommittedLedger:
                for record_id in VP001_MODEL_RECORDS},
             **{record_id: "bh001_demo_fixture"
                for record_id in BH001_MODEL_RECORDS},
+            **{record_id: "st001_demo_fixture"
+               for record_id in ST001_MODEL_RECORDS},
         }
         paths = sorted((DEMO_MODEL / "records").glob("*.json"))
-        assert len(paths) == len(expected) == 32
+        assert len(paths) == len(expected) == 34
         for path in paths:
             record = json.loads(path.read_text())
             assert record["authority"]["kind"] == "test_fixture", path.name

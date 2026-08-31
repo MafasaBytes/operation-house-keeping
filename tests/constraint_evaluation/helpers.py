@@ -176,7 +176,7 @@ def cn_stack(tmp_path, *, constraint_records=(), model_records_override=None,
             # Slice B fixtures retain their accepted isolated pre-CN model.
             # Only disposable copied files are removed; the authoritative
             # ledger is never touched.
-            for prefix in ("crg_", "vcn_"):
+            for prefix in ("crg_", "vcn_", "srg_", "std_", "stw_"):
                 for path in (dst_dir / "records").glob(f"{prefix}*.json"):
                     path.unlink()
         dst_store = ModelStore(dst_dir)

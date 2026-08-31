@@ -136,3 +136,48 @@ declared relation is false. Its `authoritative_append_performed=false` and
 repository state. BH-001 complete, owner accepted, adversarially reviewed,
 full-suite verified, and dual-clean-checkout verified. Final acceptance does
 not convert `not_executed` into observed equality or real-machine truth.
+
+## ST-001 synthetic state declaration and evidence classification
+
+ST-001 Slice D appends exactly the owner-approved frozen state registration
+`srg_ebd6195325325e67aaa911f06c27aa3d454908878f6091690cdc38b2041de60a`
+followed by the parentless state declaration
+`std_d787ddfec94485f5348fd6a66097a8e26d77973ff157917b8d0f5c06016564a0`.
+Both use the one frozen neutral state anchor
+`sta_ec739d80d5a843d28a91f4cf96de3883`. There is no STW, successor,
+correction, fork, second root, state family, aggregate selection, or
+transition record.
+
+The exact current membership contains 34 records at revision
+`mrv_67fb4be22bd50683cc427d3d4e4abf97c0ffe6b800f764b156f671cd18bb5b41`.
+The complete 32-record BH-001 membership remains the explicit unchanged
+historical predecessor. The SRG stored file is 1,278 bytes at SHA-256
+`a0056abafdb5ad51496952721bec4d8eb7ff4a8b562f168c693ab8cd2f964781`;
+the STD stored file is 1,474 bytes at SHA-256
+`5dbc8c57e6dd91a987b1fef7373d6864d20786d19751bc6a822a84dec9574ea6`.
+
+Public kernel queries disclose one registered state and one declared,
+healthy, parentless root in exact `lifecycle_view/as_operated` context.
+At cutoff `2026-08-07T20:30:00+00:00`, the explicitly selected admitted
+observation has canonical value `60.4` and satisfies the exact-current VCN's
+inclusive upper bound `80`. Classification therefore executes with complete
+coverage and returns `matches`; temporal alignment remains `not_asserted`.
+The later model declaration is applied relative to evidence at that cutoff.
+This does not claim that the declaration existed then or that the observation
+persisted.
+
+> This is an illustrative synthetic ST-001 state declaration and evidence classification fixture. `matches` means only that the explicitly selected admitted observation satisfied the referenced synthetic constraint under the stated context, cutoff, and revisions. It does not claim that a real printer is currently in this state, that the state is exclusive or complete, that any transition occurred, or that temporal order establishes cause, control, safety, health, diagnosis, correctness, or recommended action.
+
+Names, shared ownership, hierarchy, CAD, ports, VPA, PIF, PCN, PCM, BH
+declarations, semantic compatibility, CN satisfaction alone, temporal
+correlation, and observation changes did not create the state. Displaying an
+observation beside a state does not persist it as state truth. The classifier
+also does not independently authenticate uncaptured raw payload bytes.
+
+The corrected owner-gate manifest remains byte-frozen at SHA-256
+`990807c2b81ad4a8ec256869bdb5271bf54b360132ca3ab063d5e837bcde43f7`.
+The deterministic pre-append disclosure remains byte-frozen at SHA-256
+`23baf7961570aa1eca4c3a7b08e19673c69cfbc53a61e912d86a887f775ef7b9`;
+its `authoritative_append_performed=false` field describes its approved
+pre-append scope, not the current repository state. Slice D final owner
+acceptance remains pending.

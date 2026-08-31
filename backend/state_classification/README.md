@@ -1,10 +1,14 @@
 # State classification
 
-Status: Slices A, B, and C are owner accepted. Slice D pre-append rehearsal is
-authorized; authoritative append remains prohibited.
+Status: ST-001 Slices A-D are implemented and verified; Slice D final owner
+acceptance is pending.
 
 Slice C is owner accepted at
 `f2c6e4e12c3004615e3b0a6f321f6c2b3edec7d6`.
+
+The approved Slice D SRG-then-STD append yields the exact 34-record revision
+`mrv_67fb4be22bd50683cc427d3d4e4abf97c0ffe6b800f764b156f671cd18bb5b41`.
+The 32-record predecessor remains an explicit historical replay boundary.
 
 `backend.state_classification` is the read-only ST-001 composition layer. It
 combines an exact-context model state declaration with explicitly selected,

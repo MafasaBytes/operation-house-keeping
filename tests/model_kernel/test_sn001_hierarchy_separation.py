@@ -119,7 +119,7 @@ class TestD6Separation:
             self):
         occurrences = 0
         records = sorted((DEMO_MODEL / "records").glob("*.json"))
-        assert len(records) == 32
+        assert len(records) == 34
         for path in records:
             occurrences += path.read_text("utf-8").count(
                 "assembly_definition_contains")

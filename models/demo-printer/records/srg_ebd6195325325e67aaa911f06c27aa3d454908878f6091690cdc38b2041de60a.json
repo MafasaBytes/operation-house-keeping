@@ -1,0 +1,37 @@
+{
+  "anchor": {
+    "anchor_id": "sta_ec739d80d5a843d28a91f4cf96de3883",
+    "display_name": "Synthetic Region Alpha",
+    "namespace": "demo-printer",
+    "role_name": null
+  },
+  "authority": {
+    "agent": "st001_demo_fixture",
+    "kind": "test_fixture",
+    "method": "manual_declaration"
+  },
+  "condition_constraint_anchor_ids": [
+    "con_4b768cf843f5474cb5e564e31d239a59"
+  ],
+  "condition_family": "all_of_constraints",
+  "evidence": [
+    {
+      "kind": "model_record",
+      "record_id": "crg_870fe60d91056b6b1da9e3f734e5156cbb52722f6a0fc5f366f66cd40102a3df"
+    },
+    {
+      "kind": "model_record",
+      "record_id": "reg_9b5491aaa131b0df070cee792c83e002bdc4232cbbaba443f967cd3e5b780451"
+    },
+    {
+      "kind": "owner_declaration",
+      "statement": "ST-001 fixture authority explicitly registers this opaque synthetic state identity for the cited entity and permanent singleton constraint; illustrative fixture only."
+    }
+  ],
+  "note": "ST-001 bounded synthetic state registration.",
+  "record_id": "srg_ebd6195325325e67aaa911f06c27aa3d454908878f6091690cdc38b2041de60a",
+  "record_kind": "state_registration",
+  "recorded_at": "2026-08-31T12:00:00+00:00",
+  "schema_version": "1",
+  "subject_entity_anchor_id": "ent_a3f1c2d4e5b6478899aa0b1c2d3e4f50"
+}

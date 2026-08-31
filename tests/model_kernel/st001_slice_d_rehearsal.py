@@ -44,6 +44,7 @@ from tests.model_kernel.test_demo_model import (
     PRE_VARIABLE_MEMBERSHIP,
     PRE_VARIABLE_REVISION,
     PRE_VP001_REVISION,
+    ST001_MEMBERSHIP,
     PT001_MEMBERSHIP,
     VP001_MEMBERSHIP,
     VS001_MEMBERSHIP,
@@ -258,7 +259,7 @@ def prepare_disposable_store(root: Path, *, predecessor_copy_order=None):
     assert set(source_ids) == set(BH001_MEMBERSHIP)
     source_names = {
         path.stem for path in (DEMO_MODEL / "records").glob("*.json")}
-    assert source_names == set(BH001_MEMBERSHIP)
+    assert source_names == set(ST001_MEMBERSHIP)
     source_before = record_inventory(DEMO_MODEL, BH001_MEMBERSHIP)
     store = kernel.ModelStore(root / "demo-printer")
     for record_id in source_ids:
@@ -679,7 +680,8 @@ def run_rehearsal(root: Path, *, manifest=None,
     assert protected_after == protected_before
     runtime_evidence_after = tree_inventory(Path("var/raw_store"))
     assert runtime_evidence_after == runtime_evidence_before
-    protected_digest = inventory_digest(protected_before)
+    protected_digest = content["predecessor"][
+        "protected_tree_aggregate_sha256"]
     artifact = artifact_bytes(
         anchor=anchor,
         records=records,
@@ -707,6 +709,8 @@ def run_rehearsal(root: Path, *, manifest=None,
         "predecessor_sha256": source_before,
         "predecessor_aggregate_sha256": inventory_digest(source_before),
         "protected_aggregate_sha256": protected_digest,
+        "authoritative_tree_aggregate_sha256": inventory_digest(
+            protected_before),
         "runtime_evidence_unchanged": True,
         "accepted_artifacts": artifacts,
         "artifact": artifact,

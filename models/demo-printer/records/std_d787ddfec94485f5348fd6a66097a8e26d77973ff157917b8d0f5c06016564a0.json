@@ -1,0 +1,43 @@
+{
+  "authority": {
+    "agent": "st001_demo_fixture",
+    "kind": "test_fixture",
+    "method": "manual_declaration"
+  },
+  "conditions": [
+    {
+      "constraint_anchor_id": "con_4b768cf843f5474cb5e564e31d239a59",
+      "constraint_declaration_record_id": "vcn_2fcac4a3c7b1ce656bddac5348fce9f82d4e3b66907209603fe58eb0b5ba37ec"
+    }
+  ],
+  "context": {
+    "kind": "lifecycle_view",
+    "view": "as_operated"
+  },
+  "evaluation_basis": "independent_latest_at_or_before_cutoff",
+  "evidence": [
+    {
+      "kind": "model_record",
+      "record_id": "crg_870fe60d91056b6b1da9e3f734e5156cbb52722f6a0fc5f366f66cd40102a3df"
+    },
+    {
+      "kind": "model_record",
+      "record_id": "srg_ebd6195325325e67aaa911f06c27aa3d454908878f6091690cdc38b2041de60a"
+    },
+    {
+      "kind": "model_record",
+      "record_id": "vcn_2fcac4a3c7b1ce656bddac5348fce9f82d4e3b66907209603fe58eb0b5ba37ec"
+    },
+    {
+      "kind": "owner_declaration",
+      "statement": "ST-001 fixture authority explicitly declares the exact pinned all-of constraint region under the stated lifecycle context and evaluation basis; illustrative fixture only."
+    }
+  ],
+  "note": "ST-001 bounded synthetic state declaration.",
+  "record_id": "std_d787ddfec94485f5348fd6a66097a8e26d77973ff157917b8d0f5c06016564a0",
+  "record_kind": "state_declaration",
+  "recorded_at": "2026-08-31T12:01:00+00:00",
+  "schema_version": "1",
+  "state_anchor_id": "sta_ec739d80d5a843d28a91f4cf96de3883",
+  "supersedes": []
+}

@@ -34,7 +34,11 @@ from tests.model_kernel.st001_slice_d_rehearsal import (
     run_rehearsal,
     sha256_bytes,
 )
-from tests.model_kernel.test_demo_model import BH001_MEMBERSHIP
+from tests.model_kernel.test_demo_model import (
+    BH001_MEMBERSHIP,
+    ST001_MEMBERSHIP,
+    ST001_MODEL_RECORDS,
+)
 
 
 STATE_ID = "sta_ec739d80d5a843d28a91f4cf96de3883"
@@ -357,16 +361,18 @@ def test_explicit_histories_predecessors_and_accepted_artifacts_are_frozen(
     }
 
 
-def test_authoritative_ledger_remains_exactly_32_and_has_no_state_records():
+def test_authoritative_ledger_is_exact_approved_34_record_append():
     loaded = ModelStore(DEMO_MODEL).load()
-    assert loaded.revision.revision_id == BASE_REVISION
-    assert loaded.revision.record_count == 32
-    assert loaded.revision.record_ids == BH001_MEMBERSHIP
-    assert not loaded.state_registrations
-    assert not loaded.state_declarations
+    assert loaded.revision.revision_id == FINAL_REVISION
+    assert loaded.revision.record_count == 34
+    assert loaded.revision.record_ids == ST001_MEMBERSHIP
+    assert set(ST001_MEMBERSHIP) - set(BH001_MEMBERSHIP) == set(
+        ST001_MODEL_RECORDS)
+    assert len(loaded.state_registrations) == 1
+    assert len(loaded.state_declarations) == 1
     assert not loaded.state_declaration_withdrawals
     for record_id in (SRG_ID, STD_ID):
-        assert not (DEMO_MODEL / "records" / f"{record_id}.json").exists()
+        assert (DEMO_MODEL / "records" / f"{record_id}.json").exists()
 
 
 def test_rehearsal_helper_cannot_remint_and_imports_only_normative_canonical():

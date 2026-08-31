@@ -44,11 +44,13 @@ from tests.model_kernel.test_demo_model import (
     PRE_ES001_MEMBERSHIP,
     PRE_ES001_REVISION,
     PRE_PT001_REVISION,
+    PRE_ST001_REVISION,
     PRE_SPECIFICATION_MEMBERSHIP,
     PRE_SPECIFICATION_REVISION,
     PRE_VARIABLE_MEMBERSHIP,
     PRE_VARIABLE_REVISION,
     PRE_VP001_REVISION,
+    ST001_MEMBERSHIP,
     PT001_MEMBERSHIP,
     VP001_MEMBERSHIP,
     VS001_MEMBERSHIP,
@@ -334,7 +336,7 @@ def test_all_explicit_pre_st_histories_replay_with_empty_immutable_indexes():
         (CN001_MEMBERSHIP, PRE_PT001_REVISION, 18),
         (PT001_MEMBERSHIP, PRE_VP001_REVISION, 28),
         (VP001_MEMBERSHIP, PRE_BH001_REVISION, 29),
-        (BH001_MEMBERSHIP, CURRENT_REVISION, 32),
+        (BH001_MEMBERSHIP, PRE_ST001_REVISION, 32),
     )
     empty_names = (
         "state_registrations", "state_registrations_by_anchor",
@@ -359,14 +361,15 @@ def test_all_explicit_pre_st_histories_replay_with_empty_immutable_indexes():
                 mapping["forged"] = ()
 
 
-def test_current_32_record_ledger_and_every_predecessor_byte_remain_frozen():
+def test_current_34_record_ledger_and_every_predecessor_byte_remain_frozen():
     paths = sorted((DEMO_MODEL / "records").glob("*.json"))
-    assert len(paths) == 32
-    assert not any(path.name.startswith(prefix)
-                   for path in paths for prefix in ("srg_", "std_", "stw_"))
+    assert len(paths) == 34
+    assert sum(path.name.startswith("srg_") for path in paths) == 1
+    assert sum(path.name.startswith("std_") for path in paths) == 1
+    assert not any(path.name.startswith("stw_") for path in paths)
     loaded = kernel.ModelStore(DEMO_MODEL).load()
     assert loaded.revision.revision_id == CURRENT_REVISION
-    assert loaded.revision.record_ids == BH001_MEMBERSHIP
+    assert loaded.revision.record_ids == ST001_MEMBERSHIP
     frozen = {
         **FROZEN_MK001_RECORDS,
         **FROZEN_VM001_RECORD,
@@ -379,7 +382,7 @@ def test_current_32_record_ledger_and_every_predecessor_byte_remain_frozen():
         **FROZEN_BH001_MODEL_RECORDS,
     }
     assert len(frozen) == 32
-    assert set(frozen) == {path.name for path in paths}
+    assert set(frozen).issubset({path.name for path in paths})
     for filename, digest in frozen.items():
         assert hashlib.sha256(
             (DEMO_MODEL / "records" / filename).read_bytes()).hexdigest() == \

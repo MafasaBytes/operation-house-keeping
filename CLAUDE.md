@@ -862,11 +862,11 @@ condition must target a variable whose embedded owner exactly equals that
 entity. Declarations pin exact VCN records. Slice B implements exactly four
 read-only model-kernel state queries and their carry-once, store-independent,
 authoritatively reconstructed result contracts. Slice B is owner accepted at
-`23eca10a52c0124d22b4e90d80bef952ef5f9381`. Slices A, B, and C are owner
-accepted. Slice D pre-append rehearsal is authorized; authoritative append
-remains prohibited. Slice D authoritative append remains unauthorized. Slice C is accepted at
-`f2c6e4e12c3004615e3b0a6f321f6c2b3edec7d6`. The rehearsal may only
-allocate and freeze one candidate, use disposable ledgers, reproduce the
-candidate artifact, and present the exact contract for a separate owner gate.
-The authoritative demo remains 32 records, and state families and every
-transition capability remain excluded.
+`23eca10a52c0124d22b4e90d80bef952ef5f9381`. ST-001 Slices A-D are
+implemented and verified; Slice D final owner acceptance is pending. Slice C
+is accepted at `f2c6e4e12c3004615e3b0a6f321f6c2b3edec7d6`. The separately
+approved Slice D append added only the frozen SRG followed by the frozen STD.
+The authoritative demo is the exact 34-record revision
+`mrv_67fb4be22bd50683cc427d3d4e4abf97c0ffe6b800f764b156f671cd18bb5b41`;
+the 32-record BH-001 membership remains an explicit historical boundary.
+State families and every transition capability remain excluded.

@@ -17,7 +17,7 @@ from tests.model_kernel.bh001_slice_d_rehearsal import (
 from tests.model_kernel.test_demo_model import (
     BH001_MEMBERSHIP,
     BH001_MODEL_RECORDS,
-    CURRENT_REVISION,
+    PRE_ST001_REVISION,
     PRE_BH001_REVISION,
     VP001_MEMBERSHIP,
 )
@@ -87,9 +87,9 @@ def test_owner_accepted_completion_report_remains_byte_frozen():
 
 def test_exact_three_record_append_and_explicit_revision(disclosure):
     store = ModelStore(DEMO_MODEL)
-    current = store.load()
+    current = store.replay(BH001_MEMBERSHIP)
     predecessor = store.replay(VP001_MEMBERSHIP)
-    assert current.revision.revision_id == CURRENT_REVISION
+    assert current.revision.revision_id == PRE_ST001_REVISION
     assert current.revision.record_ids == BH001_MEMBERSHIP
     assert current.revision.record_count == 32
     assert predecessor.revision.revision_id == PRE_BH001_REVISION
@@ -119,7 +119,7 @@ def test_canonical_records_and_files_equal_the_approved_contract(disclosure):
         record.model_dump(mode="json") for record in built]
     assert disclosure["candidate_files"] == FILE_GOLDENS
     paths = sorted((DEMO_MODEL / "records").glob("*.json"))
-    assert len(paths) == 32
+    assert len(paths) == 34
     for filename, expected in FILE_GOLDENS.items():
         raw = (DEMO_MODEL / "records" / filename).read_bytes()
         assert len(raw) == expected["bytes"]
@@ -317,7 +317,7 @@ def test_living_documentation_pins_final_slice_d_status_and_limits():
     )
     for path in paths:
         normalized = " ".join(path.read_text(encoding="utf-8").split())
-        assert CURRENT_REVISION in normalized, path
+        assert PRE_ST001_REVISION in normalized, path
         assert FINAL_STATUS in normalized, path
     demo = (Path("models/demo-printer/README.md").read_text(encoding="utf-8"))
     normalized_demo = " ".join(demo.split())

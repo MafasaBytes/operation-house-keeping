@@ -1,6 +1,6 @@
 # ST-001 Slice C — Adversarial Acceptance Matrix
 
-Status: Slices A, B, and C are owner accepted. Slice D pre-append rehearsal is authorized; authoritative append remains prohibited.
+Status: ST-001 Slices A-D are implemented and verified; Slice D final owner acceptance is pending.
 
 Date: 2026-08-31
 
@@ -102,5 +102,11 @@ defensive-unreachable consequences of accepted public reference closure, not
 as fabricated private worlds. Slice C is owner accepted at
 `f2c6e4e12c3004615e3b0a6f321f6c2b3edec7d6`. Only Slice D pre-append rehearsal
 is authorized; authoritative append remains prohibited.
+
+Subsequent status: the owner approved the corrected frozen Slice D contract
+and separately authorized the exact SRG-then-STD append. It produced the
+34-record revision
+`mrv_67fb4be22bd50683cc427d3d4e4abf97c0ffe6b800f764b156f671cd18bb5b41`;
+final Slice D owner acceptance is pending.
 
 END OF ST-001 SLICE C ADVERSARIAL ACCEPTANCE MATRIX

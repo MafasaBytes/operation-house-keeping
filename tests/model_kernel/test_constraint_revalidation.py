@@ -323,10 +323,12 @@ class TestAcceptedDemoLedgerFreeze:
             **FROZEN_BH001_MODEL_RECORDS,
         }
         paths = sorted((DEMO_MODEL / "records").glob("*.json"))
-        assert {path.name for path in paths} == set(expected)
+        assert set(expected).issubset({path.name for path in paths})
         assert sum(path.name.startswith("crg_") for path in paths) == 1
         assert sum(path.name.startswith("vcn_") for path in paths) == 1
         for path in paths:
+            if path.name not in expected:
+                continue
             assert hashlib.sha256(path.read_bytes()).hexdigest() == expected[path.name]
             payload = json.loads(path.read_text(encoding="utf-8"))
             assert path.name == f"{payload['record_id']}.json"
@@ -334,7 +336,7 @@ class TestAcceptedDemoLedgerFreeze:
     def test_revision_and_authorities_remain_exactly_accepted(self):
         model = ModelStore(DEMO_MODEL).load()
         assert model.revision.revision_id == CURRENT_REVISION
-        assert model.revision.record_count == 32
+        assert model.revision.record_count == 34
         assert len(model.constraint_registrations_by_anchor) == 1
         assert len(model.constraint_declarations) == 1
         expected_agents = {
@@ -345,6 +347,7 @@ class TestAcceptedDemoLedgerFreeze:
             "pt001_demo_fixture": 10,
             "vp001_demo_fixture": 1,
             "bh001_demo_fixture": 3,
+            "st001_demo_fixture": 2,
         }
         actual = {}
         for record in model.records.values():
