@@ -864,7 +864,7 @@ read-only model-kernel state queries and their carry-once, store-independent,
 authoritatively reconstructed result contracts. Slice B is owner accepted at
 `23eca10a52c0124d22b4e90d80bef952ef5f9381`. Slices A, B, and C are owner
 accepted. Slice D pre-append rehearsal is authorized; authoritative append
-remains prohibited. Slice C is accepted at
+remains prohibited. Slice D authoritative append remains unauthorized. Slice C is accepted at
 `f2c6e4e12c3004615e3b0a6f321f6c2b3edec7d6`. The rehearsal may only
 allocate and freeze one candidate, use disposable ledgers, reproduce the
 candidate artifact, and present the exact contract for a separate owner gate.

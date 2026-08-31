@@ -1,6 +1,6 @@
 # ST-001 — Explicit State Identity and Evidence-Gated Classification
 
-Status: Slices A, B, and C are owner accepted. Slice D pre-append rehearsal is authorized; authoritative append remains prohibited.
+Status: Slices A, B, and C are owner accepted. Slice D pre-append rehearsal is authorized; authoritative append remains prohibited. Slice D authoritative append remains unauthorized.
 
 Date: 2026-08-30
 
@@ -2372,7 +2372,7 @@ Slice A is owner accepted at
 `9adcf4d9613ac96e5fb430a4b750f3053679b64d`. Slice B is owner accepted at
 `23eca10a52c0124d22b4e90d80bef952ef5f9381`. Slices A, B, and C are owner
 accepted. Slice D pre-append rehearsal is authorized; authoritative append
-remains prohibited. Slice C is accepted at
+remains prohibited. Slice D authoritative append remains unauthorized. Slice C is accepted at
 `f2c6e4e12c3004615e3b0a6f321f6c2b3edec7d6`.
 
 Genuine unresolved owner questions: approval of the exact rehearsed Slice D
