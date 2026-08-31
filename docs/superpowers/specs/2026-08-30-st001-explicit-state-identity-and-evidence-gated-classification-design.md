@@ -1,6 +1,8 @@
 # ST-001 — Explicit State Identity and Evidence-Gated Classification
 
-Status: ST-001 Slices A-D are implemented and verified; Slice D final owner acceptance is pending.
+Status: ST-001 complete, owner accepted, adversarially reviewed, full-suite verified, and dual-clean-checkout verified.
+
+The preceding implementation gate was recorded exactly as: ST-001 Slices A-D are implemented and verified; Slice D final owner acceptance is pending.
 
 Date: 2026-08-30
 
@@ -2376,7 +2378,14 @@ corrected frozen Slice D candidate and separately authorized the authoritative
 SRG-then-STD append. The resulting exact 34-record revision is
 `mrv_67fb4be22bd50683cc427d3d4e4abf97c0ffe6b800f764b156f671cd18bb5b41`.
 
-Genuine unresolved owner question: final acceptance of the implemented and
-verified exact Slice D contract.
+The former unresolved owner question was final acceptance of the implemented
+and verified exact Slice D contract. It is closed: the owner grants final
+ST-001 acceptance at implementation HEAD
+`0f05903af4f11fd94d6e6987247ceb9795faebd6`. The accepted completion-report
+SHA-256 is
+`2ccc501a4ff7c930518e75adc6f991cbb585637e04dbd768bca713cfbcce24b3`.
+Acceptance changes no runtime contract, identity, record, membership,
+canonical byte, artifact, or disclosure meaning and authorizes no STW or
+ST-002 work.
 
 END OF ST-001 CORRECTED FINAL SYNTHESIS

@@ -114,4 +114,13 @@ explicitly that Slices C and D remain unstarted and unauthorized.
 
 Owner question after delivery: accept Slice B and separately authorize Slice C?
 
+## 11. Final ST-001 owner acceptance
+
+The subsequent owner-gated Slices C-D are complete. ST-001 is owner accepted,
+adversarially reviewed, full-suite verified, and dual-clean-checkout verified
+at implementation HEAD `0f05903af4f11fd94d6e6987247ceb9795faebd6`.
+The accepted completion-report SHA-256 is
+`2ccc501a4ff7c930518e75adc6f991cbb585637e04dbd768bca713cfbcce24b3`.
+All historical Slice B acceptance rows remain unchanged.
+
 END OF ST-001 SLICE B ADVERSARIAL ACCEPTANCE MATRIX

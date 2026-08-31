@@ -37,9 +37,10 @@ creates only a fresh opaque UUID4 identity. State model knowledge begins only
 with the separately admitted ST-001 `StateRegistration`; names never create or
 classify a state.
 
-ST-001 Slice A implements this identity and record foundation and awaits owner
-acceptance. It adds no state query, classification, fixture, or transition
-capability; Slices B-D remain unstarted and separately owner-gated.
+ST-001 Slice A implemented this identity and record foundation without adding
+state query, classification, fixture, or transition capability. The later
+owner-gated Slices B-D are complete and finally accepted; that later status
+does not alter the historical Slice A boundary.
 
 `mint_variable_anchor()` creates one fresh opaque `var_` UUID4 identity and
 returns the unchanged `VariableAnchor` contract containing the explicitly
@@ -62,3 +63,10 @@ BH-001 complete, owner accepted, adversarially reviewed, full-suite verified,
 and dual-clean-checkout verified. Acceptance changes no identity or minter
 semantics and does not turn the `not_executed` demonstration into observed
 equality or real-machine truth.
+
+ST-001 is complete and owner accepted at implementation HEAD
+`0f05903af4f11fd94d6e6987247ceb9795faebd6`. Its one-time state anchor
+`sta_ec739d80d5a843d28a91f4cf96de3883` remains unchanged; no minter was rerun.
+The accepted completion-report SHA-256 is
+`2ccc501a4ff7c930518e75adc6f991cbb585637e04dbd768bca713cfbcce24b3`.
+Acceptance changes no identity or minter semantics.

@@ -202,4 +202,13 @@ This stop gate was satisfied: Slice A was owner accepted at
 `9adcf4d9613ac96e5fb430a4b750f3053679b64d`, and Slice B was separately
 authorized. Slices C and D remain unauthorized.
 
+## 12. Final ST-001 owner acceptance
+
+The subsequent owner-gated Slices B-D are complete. ST-001 is owner accepted,
+adversarially reviewed, full-suite verified, and dual-clean-checkout verified
+at implementation HEAD `0f05903af4f11fd94d6e6987247ceb9795faebd6`.
+The accepted completion-report SHA-256 is
+`2ccc501a4ff7c930518e75adc6f991cbb585637e04dbd768bca713cfbcce24b3`.
+This later status does not alter the historical Slice A scope or stop gate.
+
 END OF ST-001 SLICE A IMPLEMENTATION PLAN

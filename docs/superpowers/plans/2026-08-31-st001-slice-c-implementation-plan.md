@@ -1,6 +1,8 @@
 # ST-001 Slice C — Evidence-Gated State Classification Plan
 
-Status: ST-001 Slices A-D are implemented and verified; Slice D final owner acceptance is pending.
+Status: ST-001 complete, owner accepted, adversarially reviewed, full-suite verified, and dual-clean-checkout verified.
+
+The preceding implementation gate was recorded exactly as: ST-001 Slices A-D are implemented and verified; Slice D final owner acceptance is pending.
 
 Date: 2026-08-31
 
@@ -142,6 +144,15 @@ Subsequent status: the owner approved the corrected frozen Slice D contract
 and separately authorized the exact SRG-then-STD append. It produced the
 34-record revision
 `mrv_67fb4be22bd50683cc427d3d4e4abf97c0ffe6b800f764b156f671cd18bb5b41`;
-final Slice D owner acceptance is pending.
+final Slice D owner acceptance was pending at that gate.
+
+## 12. Final ST-001 owner acceptance
+
+The owner grants final acceptance at implementation HEAD
+`0f05903af4f11fd94d6e6987247ceb9795faebd6`. The exact 34-record revision and
+SRG-then-STD append are accepted with no STW or additional record. The accepted
+completion-report SHA-256 is
+`2ccc501a4ff7c930518e75adc6f991cbb585637e04dbd768bca713cfbcce24b3`.
+This later status does not alter the historical Slice C scope or stop gate.
 
 END OF ST-001 SLICE C IMPLEMENTATION PLAN

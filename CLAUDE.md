@@ -862,11 +862,21 @@ condition must target a variable whose embedded owner exactly equals that
 entity. Declarations pin exact VCN records. Slice B implements exactly four
 read-only model-kernel state queries and their carry-once, store-independent,
 authoritatively reconstructed result contracts. Slice B is owner accepted at
-`23eca10a52c0124d22b4e90d80bef952ef5f9381`. ST-001 Slices A-D are
-implemented and verified; Slice D final owner acceptance is pending. Slice C
-is accepted at `f2c6e4e12c3004615e3b0a6f321f6c2b3edec7d6`. The separately
+`23eca10a52c0124d22b4e90d80bef952ef5f9381`. The preceding implementation
+gate was recorded exactly as: ST-001 Slices A-D are implemented and verified;
+Slice D final owner acceptance is pending. ST-001 is now complete, owner
+accepted, adversarially reviewed, full-suite verified, and
+dual-clean-checkout verified at implementation HEAD
+`0f05903af4f11fd94d6e6987247ceb9795faebd6`. The accepted completion report
+is `docs/superpowers/reports/2026-08-31-st001-slice-d-completion-report.md` at
+SHA-256
+`2ccc501a4ff7c930518e75adc6f991cbb585637e04dbd768bca713cfbcce24b3`.
+Slice C is accepted at `f2c6e4e12c3004615e3b0a6f321f6c2b3edec7d6`. The separately
 approved Slice D append added only the frozen SRG followed by the frozen STD.
 The authoritative demo is the exact 34-record revision
 `mrv_67fb4be22bd50683cc427d3d4e4abf97c0ffe6b800f764b156f671cd18bb5b41`;
 the 32-record BH-001 membership remains an explicit historical boundary.
 State families and every transition capability remain excluded.
+Final acceptance does not turn `matches` into current physical state,
+exclusivity, completeness, transition, cause, control, safety, health,
+diagnosis, correctness, or recommended action.

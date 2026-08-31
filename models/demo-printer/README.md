@@ -179,5 +179,14 @@ The corrected owner-gate manifest remains byte-frozen at SHA-256
 The deterministic pre-append disclosure remains byte-frozen at SHA-256
 `23baf7961570aa1eca4c3a7b08e19673c69cfbc53a61e912d86a887f775ef7b9`;
 its `authoritative_append_performed=false` field describes its approved
-pre-append scope, not the current repository state. Slice D final owner
-acceptance remains pending.
+pre-append scope, not the current repository state. The preacceptance handoff
+recorded that Slice D final owner acceptance remains pending.
+
+ST-001 is now complete, owner accepted, adversarially reviewed, full-suite
+verified, and dual-clean-checkout verified at implementation HEAD
+`0f05903af4f11fd94d6e6987247ceb9795faebd6`. The accepted completion report is
+`docs/superpowers/reports/2026-08-31-st001-slice-d-completion-report.md` at
+SHA-256
+`2ccc501a4ff7c930518e75adc6f991cbb585637e04dbd768bca713cfbcce24b3`.
+Acceptance changes no anchor, record ID, canonical byte, stored byte,
+membership, artifact, or classification meaning and adds no STW.

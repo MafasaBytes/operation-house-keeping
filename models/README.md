@@ -25,7 +25,7 @@ the PT artifact SHA-256 is
 Displaying variable state beside a port does not mean the observation occurred
 at, originated at, travelled through, or describes the port.
 
-`demo-printer/` is the accepted validation model, currently 32 synthetic
+`demo-printer/` is the accepted validation model, currently 34 synthetic
 records under `test_fixture` authorities. Its explicit historical memberships
 preserve the 9-record MK-001 model, VM-001, VS-001, SN-001, ES-001, CN-001, and
 the 28-record PT-001 fixture. VP-001 adds exactly one parentless, role-free,
@@ -56,3 +56,14 @@ the byte-identical reproduction does not relabel them as current state.
 BH-001 complete, owner accepted, adversarially reviewed, full-suite verified,
 and dual-clean-checkout verified. Acceptance does not convert `not_executed`
 into observed equality or real-machine truth.
+
+ST-001 is complete and owner accepted at implementation HEAD
+`0f05903af4f11fd94d6e6987247ceb9795faebd6`. It adds exactly the frozen SRG
+followed by the frozen parentless STD to the unchanged 32-record predecessor,
+yielding the exact 34-record revision
+`mrv_67fb4be22bd50683cc427d3d4e4abf97c0ffe6b800f764b156f671cd18bb5b41`.
+There is no STW or additional record. The accepted completion-report SHA-256 is
+`2ccc501a4ff7c930518e75adc6f991cbb585637e04dbd768bca713cfbcce24b3`.
+Acceptance does not make `matches` a claim of current physical state,
+exclusivity, completeness, transition, cause, control, safety, health,
+diagnosis, correctness, or recommended action.

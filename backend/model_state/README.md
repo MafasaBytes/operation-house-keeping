@@ -52,6 +52,14 @@ BH-001 complete, owner accepted, adversarially reviewed, full-suite verified,
 and dual-clean-checkout verified. Its accepted demonstration remains
 `not_executed` and supplies no observed equality or real-machine truth.
 
+ST-001 is complete and owner accepted at implementation HEAD
+`0f05903af4f11fd94d6e6987247ceb9795faebd6`. Its exact SRG-then-STD append
+yields the 34-record revision
+`mrv_67fb4be22bd50683cc427d3d4e4abf97c0ffe6b800f764b156f671cd18bb5b41`
+without changing any binding, temporal, source-selection, or model-state
+contract. The accepted completion-report SHA-256 is
+`2ccc501a4ff7c930518e75adc6f991cbb585637e04dbd768bca713cfbcce24b3`.
+
 ## Composition
 
 `ModelStateQueries(model: LoadedModel, resolver: BindingResolver,

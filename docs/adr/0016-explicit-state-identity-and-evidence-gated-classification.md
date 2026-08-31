@@ -1,6 +1,8 @@
 # ADR-0016 — Explicit state identity and evidence-gated classification
 
-Status: ST-001 Slices A-D are implemented and verified; Slice D final owner acceptance is pending.
+Status: ST-001 complete, owner accepted, adversarially reviewed, full-suite verified, and dual-clean-checkout verified.
+
+The preceding implementation gate was recorded exactly as: ST-001 Slices A-D are implemented and verified; Slice D final owner acceptance is pending.
 
 Date: 2026-08-30
 
@@ -101,11 +103,22 @@ Slices A, B, and C are owner accepted. Slice C is accepted at
 the exact frozen Slice D contract and authorized its authoritative
 SRG-then-STD append. The resulting 34-record revision is
 `mrv_67fb4be22bd50683cc427d3d4e4abf97c0ffe6b800f764b156f671cd18bb5b41`;
-final Slice D owner acceptance remains pending. Slice C composes the
+final Slice D owner acceptance was pending at that implementation gate. Slice C composes the
 public CN facade, uses exact explicit
 sources, independently selected evidence at one cutoff, strict VCN pins, and
 the bounded all-of truth table. It performs no persistence and asserts no
 simultaneity, synchronization, current physical state, or transition.
+
+## Final owner acceptance
+
+The owner grants final ST-001 acceptance at implementation HEAD
+`0f05903af4f11fd94d6e6987247ceb9795faebd6` for the exact 34-record revision
+`mrv_67fb4be22bd50683cc427d3d4e4abf97c0ffe6b800f764b156f671cd18bb5b41`.
+The accepted completion-report SHA-256 is
+`2ccc501a4ff7c930518e75adc6f991cbb585637e04dbd768bca713cfbcce24b3`.
+Acceptance changes no runtime contract, identity, record, membership,
+canonical byte, artifact, or disclosure meaning. It authorizes no STW or
+ST-002 work.
 
 ## Consequences
 

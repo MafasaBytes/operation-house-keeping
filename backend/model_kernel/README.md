@@ -281,9 +281,14 @@ without a store or filesystem. Identical independent healthy roots
 corroborate; same-root forks and differing active effective bodies remain
 conflicted; inactive roots remain visible. IDs order disclosure only and
 never select a winner. Slice B is owner accepted at
-`23eca10a52c0124d22b4e90d80bef952ef5f9381`. ST-001 Slices A-D are
-implemented and verified; Slice D final owner acceptance is pending. Slice C
-is accepted at `f2c6e4e12c3004615e3b0a6f321f6c2b3edec7d6`. The Slice C classifier
+`23eca10a52c0124d22b4e90d80bef952ef5f9381`. The immediately preceding gate
+was: ST-001 Slices A-D are implemented and verified; Slice D final owner
+acceptance is pending. ST-001 is now complete, owner accepted, adversarially
+reviewed, full-suite verified, and dual-clean-checkout verified at
+implementation HEAD `0f05903af4f11fd94d6e6987247ceb9795faebd6`. The accepted
+completion-report SHA-256 is
+`2ccc501a4ff7c930518e75adc6f991cbb585637e04dbd768bca713cfbcce24b3`.
+Slice C is accepted at `f2c6e4e12c3004615e3b0a6f321f6c2b3edec7d6`. The Slice C classifier
 is a read-only upper-layer composition and does not alter these kernel query
 contracts.
 
@@ -294,3 +299,5 @@ BH-001 revision remains an explicit historical membership. All ST-002
 transition work remains excluded.
 No query infers state from a
 constraint, observation, hierarchy, port, VPA, behavior, name, or ownership.
+Final acceptance changes no kernel contract, record identity, canonical byte,
+membership, or query result and adds no STW.

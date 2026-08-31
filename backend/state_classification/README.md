@@ -1,7 +1,14 @@
 # State classification
 
-Status: ST-001 Slices A-D are implemented and verified; Slice D final owner
-acceptance is pending.
+Status: ST-001 complete, owner accepted, adversarially reviewed, full-suite
+verified, and dual-clean-checkout verified.
+
+The preceding implementation gate was recorded exactly as: ST-001 Slices A-D
+are implemented and verified; Slice D final owner acceptance is pending. The
+accepted implementation HEAD is
+`0f05903af4f11fd94d6e6987247ceb9795faebd6`; the accepted completion-report
+SHA-256 is
+`2ccc501a4ff7c930518e75adc6f991cbb585637e04dbd768bca713cfbcce24b3`.
 
 Slice C is owner accepted at
 `f2c6e4e12c3004615e3b0a6f321f6c2b3edec7d6`.
