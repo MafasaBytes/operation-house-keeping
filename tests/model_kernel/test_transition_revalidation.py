@@ -190,10 +190,14 @@ def test_crafted_cycle_rejects_iteratively_without_hash_verification():
 def test_hash_seed_does_not_change_transition_identity_revision_or_indexes():
     script = r'''
 import json
+from datetime import timedelta
+from backend.model_kernel import ModelQueries
 from backend.model_kernel.canonical import canonical_bytes
 from backend.model_kernel.store import validate_record_collection
+from tests.model_kernel.st001_slice_a_helpers import state_declaration
 from tests.model_kernel.st002_slice_a_helpers import (
-    transition_declaration, transition_fixture, transition_withdrawal)
+    AS_OPERATED, STATE_A, T1, TRANSITION_A, transition_declaration,
+    transition_fixture, transition_withdrawal)
 
 records, registration, from_registration, to_registration, from_std, to_std = (
     transition_fixture())
@@ -205,16 +209,34 @@ def claim(**kwargs):
 root = claim(note="root")
 left = claim(supersedes=(root.record_id,), note="left")
 right = claim(supersedes=(root.record_id,), note="right")
-event = transition_withdrawal(left)
-values = (*records, registration, root, left, right, event)
+corroborating_one = claim(recorded_at=T1, note="corroborating-one")
+corroborating_two = claim(
+    recorded_at=T1 + timedelta(seconds=1), note="corroborating-two")
+successor = state_declaration(
+    from_registration, state_anchor_id=STATE_A,
+    supersedes=(from_std.record_id,), recorded_at=T1,
+    note="hash-seed endpoint successor")
+divergent = transition_declaration(
+    registration, from_registration=from_registration,
+    to_registration=to_registration, from_declaration=successor,
+    to_declaration=to_std, recorded_at=T1 + timedelta(seconds=2),
+    note="divergent")
+inactive = claim(
+    recorded_at=T1 + timedelta(seconds=3), note="inactive")
+event = transition_withdrawal(
+    inactive, recorded_at=T1 + timedelta(seconds=4))
+transition_records = (
+    registration, root, left, right, corroborating_one, corroborating_two,
+    divergent, inactive, event)
+values = (*records, successor, *transition_records)
 loaded = validate_record_collection(
     "test-model", {record.record_id: record for record in reversed(values)})
+queries = ModelQueries(loaded)
 print(json.dumps({
-    "ids": [registration.record_id, root.record_id, left.record_id,
-            right.record_id, event.record_id],
+    "ids": [record.record_id for record in transition_records],
     "revision": loaded.revision.revision_id,
     "canonical": [[item.record_id, canonical_bytes(item).hex()] for item in
-                  (registration, root, left, right, event)],
+                  transition_records],
     "registrations": [[key, value.record_id] for key, value in
                       loaded.transition_registrations.items()],
     "anchors": [[key, value.record_id] for key, value in
@@ -243,6 +265,18 @@ print(json.dumps({
                     loaded.transition_declaration_withdrawals.items()],
     "withdrawals_by_target": [[key, list(value)] for key, value in
         loaded.transition_declaration_withdrawals_by_target.items()],
+    "query_serialization": {
+        "lookup": json.loads(queries.transition(
+            TRANSITION_A).model_dump_json()),
+        "declaration": json.loads(queries.transition_declaration(
+            TRANSITION_A, context=AS_OPERATED).model_dump_json()),
+        "entity": json.loads(queries.transitions_of_entity(
+            registration.subject_entity_anchor_id,
+            context=AS_OPERATED).model_dump_json()),
+        "assertions": [json.loads(queries.transition_assertion(
+            record.record_id).model_dump_json())
+            for record in transition_records],
+    },
 }, sort_keys=True, separators=(",", ":")))
 '''
     outputs = []

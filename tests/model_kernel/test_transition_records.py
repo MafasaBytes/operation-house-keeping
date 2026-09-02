@@ -179,10 +179,6 @@ def test_slice_a_exports_only_four_transition_record_contracts():
         "TransitionDeclaration", "TransitionDeclarationWithdrawal",
     }
     assert required <= set(kernel.__all__)
-    for forbidden in (
-        "TransitionLookupResult", "TransitionDeclarationResult",
-        "EntityTransitionsResult", "TransitionAssertionDisclosureResult",
-        "TransitionAssessment", "TransitionOccurrence",
-    ):
+    for forbidden in ("TransitionAssessment", "TransitionOccurrence"):
         assert forbidden not in kernel.__all__
         assert not hasattr(kernel, forbidden)

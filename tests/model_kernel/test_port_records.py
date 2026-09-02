@@ -369,6 +369,14 @@ def test_model_kernel_public_exports_include_accepted_pt_and_vp_slice_a_names():
         "StateDeclarationRootResult", "StateLookupResult",
         "StateDeclarationResult", "EntityStateEntry", "EntityStatesResult",
         "StateAssertionDisclosureResult",
+        "TransitionLookupStatus", "TransitionDeclarationConclusion",
+        "TransitionDeclarationLineageSummary", "TransitionAgreementFinding",
+        "TransitionEndpointRole", "TransitionEndpointPinAlignment",
+        "EntityTransitionsStatus", "TransitionAssertionLookupStatus",
+        "TransitionEndpointResult", "TransitionEffectiveBodyGroupResult",
+        "TransitionDeclarationRootResult", "TransitionLookupResult",
+        "TransitionDeclarationResult", "EntityTransitionEntry",
+        "EntityTransitionsResult", "TransitionAssertionDisclosureResult",
     }
     old = {
         "EntityRegistration", "VariableRegistration",

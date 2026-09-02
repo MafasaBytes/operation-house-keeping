@@ -53,7 +53,7 @@ TRANSITION_INDEX_NAMES = (
 )
 
 
-def test_slice_a_public_query_surface_is_exactly_pre_transition():
+def test_slice_b_public_query_surface_adds_exactly_four_transition_queries():
     public_methods = {
         name for name, value in vars(kernel.ModelQueries).items()
         if not name.startswith("_") and callable(value)
@@ -67,13 +67,14 @@ def test_slice_a_public_query_surface_is_exactly_pre_transition():
         "port", "port_assertion", "port_interface",
         "ports_associated_with_variable", "ports_of_entity", "relationships",
         "state", "state_assertion", "state_declaration", "states_of_entity",
+        "transition", "transition_assertion", "transition_declaration",
+        "transitions_of_entity",
         "variable", "variable_port_assertion", "variable_port_association",
         "variable_semantics", "variable_value_specification",
         "variables_associated_with_port", "variables_of",
     }
     for forbidden in (
-        "transition", "transition_declaration", "transitions_of_entity",
-        "transition_assertion", "assess_transition", "detect_transition",
+        "assess_transition", "detect_transition",
         "transition_assessment", "transition_occurrence", "transition_history",
         "current_transition", "possible_transitions", "enabled_transitions",
         "next_state", "transition_path",
@@ -81,18 +82,22 @@ def test_slice_a_public_query_surface_is_exactly_pre_transition():
         assert forbidden not in public_methods
 
 
-def test_slice_a_kernel_exports_exactly_four_transition_contracts():
-    assert len(kernel.__all__) == 166
+def test_slice_b_kernel_exports_exact_transition_contract_and_result_surface():
+    assert len(kernel.__all__) == 182
     assert {name for name in kernel.__all__
             if name.startswith("Transition")} == {
         "TransitionRegistration", "TransitionStateDeclarationPin",
         "TransitionDeclaration", "TransitionDeclarationWithdrawal",
+        "TransitionLookupStatus", "TransitionDeclarationConclusion",
+        "TransitionDeclarationLineageSummary", "TransitionAgreementFinding",
+        "TransitionEndpointRole", "TransitionEndpointPinAlignment",
+        "TransitionAssertionLookupStatus", "TransitionEndpointResult",
+        "TransitionEffectiveBodyGroupResult",
+        "TransitionDeclarationRootResult", "TransitionLookupResult",
+        "TransitionDeclarationResult", "TransitionAssertionDisclosureResult",
     }
     for forbidden in (
-        "TransitionLookupResult", "TransitionDeclarationResult",
-        "EntityTransitionsResult", "TransitionAssertionDisclosureResult",
-        "TransitionEndpointPinAlignment", "TransitionAssessment",
-        "TransitionOccurrence",
+        "TransitionAssessment", "TransitionOccurrence",
     ):
         assert not hasattr(kernel, forbidden)
 
@@ -117,7 +122,7 @@ def test_import_direction_and_no_assessment_occurrence_package_are_exact():
     assert not any(name.startswith(forbidden_imports) for name in imports)
     assert not Path("backend/transition_assessment").exists()
     assert not Path("backend/transition_occurrence").exists()
-    assert not Path("backend/model_kernel/transition_results.py").exists()
+    assert Path("backend/model_kernel/transition_results.py").is_file()
     helper = Path(
         "tests/model_kernel/st002_slice_a_helpers.py").read_text(encoding="utf-8")
     assert "mint_transition_anchor" not in helper
