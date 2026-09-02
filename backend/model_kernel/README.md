@@ -272,6 +272,16 @@ constraint and fixes `independent_latest_at_or_before_cutoff` as its later
 classification basis. State records remain explicit evidence-bearing model
 knowledge. Slice A performs no constraint evaluation or temporal
 classification, does not infer state from observations, and does not implement state transitions.
+ST-002 Slice A adds declaration-only transition foundations for owner
+validation: permanent evidence-bearing `TransitionRegistration` (`trg_`),
+exact-context `TransitionDeclaration` (`trd_`) with exact from/to STD pins, and
+minimal current-tip `TransitionDeclarationWithdrawal` (`trw_`). Both endpoint
+states must have the exact registered subject, self-transitions and duplicate
+ordered endpoint identities reject, and correction DAGs support independent
+roots, same-root fork convergence, withdrawal, and historical replay. Slice A
+adds no transition query or result contract, assessment, occurrence, fixture
+identity, or authoritative ledger record; the demo ledger remains the accepted
+34-record ST-001 revision.
 Slice B adds exactly four read-only `ModelQueries` methods: `state()`,
 `state_declaration()`, `states_of_entity()`, and `state_assertion()`. Their
 frozen results carry `ModelQueryMaterial` exactly once, disclose canonical
@@ -295,8 +305,9 @@ contracts.
 The committed demo ledger is the exact 34-record ST-001 revision
 `mrv_67fb4be22bd50683cc427d3d4e4abf97c0ffe6b800f764b156f671cd18bb5b41`
 with one SRG, one parentless STD, and zero STW records. The accepted 32-record
-BH-001 revision remains an explicit historical membership. All ST-002
-transition work remains excluded.
+BH-001 revision remains an explicit historical membership. ST-002 Slice A
+adds no authoritative transition record; its read-only query, assessment, and
+occurrence work remains excluded.
 No query infers state from a
 constraint, observation, hierarchy, port, VPA, behavior, name, or ownership.
 Final acceptance changes no kernel contract, record identity, canonical byte,

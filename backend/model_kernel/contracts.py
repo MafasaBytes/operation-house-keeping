@@ -37,19 +37,21 @@ from backend.system_identity import (
     ENTITY_ANCHOR_ID_PATTERN,
     PORT_ANCHOR_ID_PATTERN,
     STATE_ANCHOR_ID_PATTERN,
+    TRANSITION_ANCHOR_ID_PATTERN,
     VARIABLE_ANCHOR_ID_PATTERN,
     BehaviorAnchor,
     ConstraintAnchor,
     EntityAnchor,
     PortAnchor,
     StateAnchor,
+    TransitionAnchor,
     VariableAnchor,
 )
 
 UtcDatetime = Annotated[AwareDatetime, AfterValidator(lambda v: v.astimezone(UTC))]
 
 MODEL_ID_PATTERN = r"^[a-z0-9-]+$"
-MODEL_RECORD_ID_PATTERN = r"^(reg|rtd|rel|rwd|vrg|vsp|vsm|crg|vcn|prg|pif|pcn|pcm|ptw|vpa|vpw|brg|bhd|bhw|srg|std|stw)_[0-9a-f]{64}$"
+MODEL_RECORD_ID_PATTERN = r"^(reg|rtd|rel|rwd|vrg|vsp|vsm|crg|vcn|prg|pif|pcn|pcm|ptw|vpa|vpw|brg|bhd|bhw|srg|std|stw|trg|trd|trw)_[0-9a-f]{64}$"
 
 ReferentKind = Literal[
     "logical_instance", "physical_instance", "type_definition", "unknown"
@@ -113,7 +115,7 @@ class ModelRecordEvidence(_Frozen):
     # uncitable
     kind: Literal["model_record"]
     record_id: str = Field(
-        pattern=r"^(reg|rtd|rel|vrg|vsp|vsm|crg|vcn|prg|pif|pcn|pcm|vpa|brg|bhd|srg|std)_[0-9a-f]{64}$")
+        pattern=r"^(reg|rtd|rel|vrg|vsp|vsm|crg|vcn|prg|pif|pcn|pcm|vpa|brg|bhd|srg|std|trg|trd)_[0-9a-f]{64}$")
 
 
 class IdentityBindingRecordEvidence(_Frozen):
@@ -1024,6 +1026,168 @@ class StateDeclarationWithdrawal(BaseModel):
         return value
 
 
+# ---------------------------------------------- explicit transition claims
+def _strict_transition_nested_dump(value: BaseModel) -> dict:
+    """Reject hidden fields before reconstructing a nested transition value.
+
+    ``model_copy(update=...)`` can inject unknown fields that pydantic's
+    serializer omits. Transition public constructors must not launder those
+    fields by dumping the instance before validation, so inspect the complete
+    nested object graph first. Store boundaries retain their independent
+    whole-record reconstruction defense.
+    """
+    pending = [value]
+    seen: set[int] = set()
+    while pending:
+        item = pending.pop()
+        identity = id(item)
+        if identity in seen:
+            continue
+        seen.add(identity)
+        if isinstance(item, BaseModel):
+            fields = type(item).model_fields
+            stored = vars(item)
+            extras = getattr(item, "__pydantic_extra__", None)
+            if set(stored).difference(fields) or extras:
+                raise ValueError("nested model contains extra fields")
+            pending.extend(stored[field] for field in fields if field in stored)
+        elif isinstance(item, dict):
+            pending.extend(item.keys())
+            pending.extend(item.values())
+        elif isinstance(item, (tuple, list, set, frozenset)):
+            pending.extend(item)
+    return value.model_dump(mode="python", warnings=False)
+
+
+class TransitionStateDeclarationPin(BaseModel):
+    """Exact endpoint StateAnchor and STD identities; role is supplied by
+    the containing declaration field."""
+
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", revalidate_instances="always")
+
+    state_anchor_id: str = Field(pattern=STATE_ANCHOR_ID_PATTERN)
+    declaration_record_id: str = Field(pattern=r"^std_[0-9a-f]{64}$")
+
+
+def _canonical_transition_parents(value: tuple[str, ...]) -> tuple[str, ...]:
+    if len(set(value)) != len(value):
+        raise ValueError("transition declaration parent ids must be unique")
+    if any(not isinstance(item, str) or not re.fullmatch(
+            r"trd_[0-9a-f]{64}", item) for item in value):
+        raise ValueError("a transition parent is not a TRD record id")
+    return tuple(sorted(value))
+
+
+CanonicalTransitionDeclarationIdTuple = Annotated[
+    tuple[str, ...], AfterValidator(_canonical_transition_parents)]
+
+
+class TransitionRegistration(BaseModel):
+    """Permanent same-subject directed endpoint transition identity."""
+
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", revalidate_instances="always")
+
+    record_kind: Literal["transition_registration"] = "transition_registration"
+    schema_version: Literal["1"] = "1"
+    record_id: str = Field(pattern=r"^trg_[0-9a-f]{64}$")
+    anchor: TransitionAnchor
+    subject_entity_anchor_id: str = Field(pattern=ENTITY_ANCHOR_ID_PATTERN)
+    from_state_anchor_id: str = Field(pattern=STATE_ANCHOR_ID_PATTERN)
+    to_state_anchor_id: str = Field(pattern=STATE_ANCHOR_ID_PATTERN)
+    evidence: Annotated[tuple[EvidenceRef, ...], Field(min_length=1),
+                        AfterValidator(_canonical_evidence)]
+    recorded_at: UtcDatetime
+    authority: AuthorityRef
+    note: str = ""
+
+    @field_validator("anchor", "authority", mode="before")
+    @classmethod
+    def _reconstruct_nested_model(cls, value):
+        if isinstance(value, BaseModel):
+            return _strict_transition_nested_dump(value)
+        return value
+
+    @field_validator("evidence", mode="before")
+    @classmethod
+    def _reconstruct_evidence(cls, value):
+        if isinstance(value, (tuple, list)):
+            return tuple(
+                _strict_transition_nested_dump(item)
+                if isinstance(item, BaseModel) else item
+                for item in value)
+        return value
+
+
+class TransitionDeclaration(BaseModel):
+    """Correctable exact-context declaration with exact endpoint STD pins."""
+
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", revalidate_instances="always")
+
+    record_kind: Literal["transition_declaration"] = "transition_declaration"
+    schema_version: Literal["1"] = "1"
+    record_id: str = Field(pattern=r"^trd_[0-9a-f]{64}$")
+    transition_anchor_id: str = Field(pattern=TRANSITION_ANCHOR_ID_PATTERN)
+    context: AssertionContext
+    from_endpoint: TransitionStateDeclarationPin
+    to_endpoint: TransitionStateDeclarationPin
+    evidence: Annotated[tuple[EvidenceRef, ...], Field(min_length=1),
+                        AfterValidator(_canonical_evidence)]
+    supersedes: CanonicalTransitionDeclarationIdTuple = ()
+    recorded_at: UtcDatetime
+    authority: AuthorityRef
+    note: str = ""
+
+    @field_validator(
+        "context", "from_endpoint", "to_endpoint", "authority", mode="before")
+    @classmethod
+    def _reconstruct_nested_model(cls, value):
+        if isinstance(value, BaseModel):
+            return _strict_transition_nested_dump(value)
+        return value
+
+    @field_validator("evidence", mode="before")
+    @classmethod
+    def _reconstruct_evidence(cls, value):
+        if isinstance(value, (tuple, list)):
+            return tuple(
+                _strict_transition_nested_dump(item)
+                if isinstance(item, BaseModel) else item
+                for item in value)
+        return value
+
+    @model_validator(mode="after")
+    def _parents_are_well_formed(self):
+        if self.record_id in self.supersedes:
+            raise ValueError("a transition declaration cannot supersede itself")
+        return self
+
+
+class TransitionDeclarationWithdrawal(BaseModel):
+    """Membership-relative retraction of one current TRD tip only."""
+
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", revalidate_instances="always")
+
+    record_kind: Literal["transition_declaration_withdrawal"] = (
+        "transition_declaration_withdrawal")
+    schema_version: Literal["1"] = "1"
+    record_id: str = Field(pattern=r"^trw_[0-9a-f]{64}$")
+    withdraws: str = Field(pattern=r"^trd_[0-9a-f]{64}$")
+    recorded_at: UtcDatetime
+    authority: AuthorityRef
+    note: str = ""
+
+    @field_validator("authority", mode="before")
+    @classmethod
+    def _reconstruct_authority(cls, value):
+        if isinstance(value, BaseModel):
+            return _strict_transition_nested_dump(value)
+        return value
+
+
 class InterfaceDomainToken(_Frozen):
     """Exact interface-domain identity token; no ontology is implied."""
 
@@ -1340,6 +1504,8 @@ ModelRecord = Union[
     ConstraintRegistration, VariableConstraintDeclaration,
     BehaviorRegistration, BehaviorRuleDeclaration, BehaviorRuleWithdrawal,
     StateRegistration, StateDeclaration, StateDeclarationWithdrawal,
+    TransitionRegistration, TransitionDeclaration,
+    TransitionDeclarationWithdrawal,
     RelationshipTypeDefinition, RelationshipAssertion,
     RelationshipWithdrawal,
     PortRegistration, PortInterfaceDeclaration, PortConnectionAssertion,

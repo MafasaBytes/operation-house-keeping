@@ -51,6 +51,9 @@ from backend.model_kernel.contracts import (
     StateDeclaration,
     StateDeclarationWithdrawal,
     StateRegistration,
+    TransitionDeclaration,
+    TransitionDeclarationWithdrawal,
+    TransitionRegistration,
     VariableConstraintDeclaration,
     VariablePortAssociation,
     VariablePortAssociationWithdrawal,
@@ -62,7 +65,7 @@ from backend.model_kernel.contracts import (
 _RECORD_ADAPTER: TypeAdapter = TypeAdapter(ModelRecord)
 _RECORD_ID = re.compile(MODEL_RECORD_ID_PATTERN)
 _FILENAME = re.compile(
-    r"^(reg|rtd|rel|rwd|vrg|vsp|vsm|crg|vcn|prg|pif|pcn|pcm|ptw|vpa|vpw|brg|bhd|bhw|srg|std|stw)_[0-9a-f]{64}\.json$")
+    r"^(reg|rtd|rel|rwd|vrg|vsp|vsm|crg|vcn|prg|pif|pcn|pcm|ptw|vpa|vpw|brg|bhd|bhw|srg|std|stw|trg|trd|trw)_[0-9a-f]{64}\.json$")
 
 _EMPTY: Mapping = MappingProxyType({})
 
@@ -195,6 +198,32 @@ class LoadedModel:
         str, StateDeclarationWithdrawal] = _EMPTY
     state_declaration_withdrawn_by: Mapping[str, tuple[str, ...]] = _EMPTY
     state_declaration_withdrawals_by_target: Mapping[
+        str, tuple[str, ...]] = _EMPTY
+    transition_registrations: Mapping[
+        str, TransitionRegistration] = _EMPTY
+    transition_registrations_by_anchor: Mapping[
+        str, TransitionRegistration] = _EMPTY
+    transition_anchor_ids_by_subject_entity: Mapping[
+        str, tuple[str, ...]] = _EMPTY
+    transition_registration_id_by_ordered_subject_endpoints: Mapping[
+        tuple[str, str, str], str] = _EMPTY
+    transition_declarations: Mapping[
+        str, TransitionDeclaration] = _EMPTY
+    transition_declaration_ids_by_key: Mapping[tuple, tuple[str, ...]] = _EMPTY
+    transition_declaration_parent_ids: Mapping[
+        str, tuple[str, ...]] = _EMPTY
+    transition_declaration_successor_ids: Mapping[
+        str, tuple[str, ...]] = _EMPTY
+    transition_declaration_root_by_id: Mapping[str, str] = _EMPTY
+    transition_declaration_ancestry_by_id: Mapping[
+        str, tuple[str, ...]] = _EMPTY
+    current_transition_declaration_tips_by_root: Mapping[
+        str, tuple[TransitionDeclaration, ...]] = _EMPTY
+    transition_declaration_withdrawals: Mapping[
+        str, TransitionDeclarationWithdrawal] = _EMPTY
+    transition_declaration_withdrawn_by: Mapping[
+        str, tuple[str, ...]] = _EMPTY
+    transition_declaration_withdrawals_by_target: Mapping[
         str, tuple[str, ...]] = _EMPTY
 
 
@@ -377,6 +406,10 @@ def validate_record_collection(
     state_declarations: dict[str, StateDeclaration] = {}
     state_declaration_withdrawals: dict[
         str, StateDeclarationWithdrawal] = {}
+    transition_registrations: dict[str, TransitionRegistration] = {}
+    transition_declarations: dict[str, TransitionDeclaration] = {}
+    transition_declaration_withdrawals: dict[
+        str, TransitionDeclarationWithdrawal] = {}
     types: dict[str, RelationshipTypeDefinition] = {}
     assertions: dict[str, RelationshipAssertion] = {}
     withdrawals: dict[str, RelationshipWithdrawal] = {}
@@ -423,6 +456,10 @@ def validate_record_collection(
             "state_registration": state_registrations,
             "state_declaration": state_declarations,
             "state_declaration_withdrawal": state_declaration_withdrawals,
+            "transition_registration": transition_registrations,
+            "transition_declaration": transition_declarations,
+            "transition_declaration_withdrawal": (
+                transition_declaration_withdrawals),
             "relationship_type_definition": types,
             "relationship_assertion": assertions,
             "relationship_withdrawal": withdrawals,
@@ -1449,6 +1486,204 @@ def validate_record_collection(
                 *current_state_declaration_tips_by_root[root],
                 state_declarations[record_id])
 
+    # -- transitions: permanent same-subject directed state endpoints plus
+    # exact-context declarations pinning exact admitted STD identities. This
+    # layer validates declared model knowledge only; it neither evaluates
+    # state evidence nor infers assessment or occurrence.
+    transition_registrations_by_anchor: dict[
+        str, TransitionRegistration] = {}
+    transition_anchor_ids_by_subject_entity: dict[str, tuple[str, ...]] = {}
+    transition_registration_id_by_ordered_subject_endpoints: dict[
+        tuple[str, str, str], str] = {}
+    for record_id in sorted(transition_registrations):
+        registration = transition_registrations[record_id]
+        anchor_id = registration.anchor.anchor_id
+        existing = transition_registrations_by_anchor.get(anchor_id)
+        if existing is not None:
+            _fail("MODEL_DUPLICATE_REGISTRATION",
+                  f"transition {anchor_id} is registered more than once "
+                  f"({existing.record_id}, {record_id})")
+        subject_id = registration.subject_entity_anchor_id
+        from_anchor_id = registration.from_state_anchor_id
+        to_anchor_id = registration.to_state_anchor_id
+        endpoint_key = (subject_id, from_anchor_id, to_anchor_id)
+        if endpoint_key in \
+                transition_registration_id_by_ordered_subject_endpoints:
+            _fail("MODEL_TRANSITION_REGISTRATION_INVALID",
+                  f"transition registration {record_id} duplicates an "
+                  "ordered subject endpoint tuple")
+        subject = registrations_by_anchor.get(subject_id)
+        if subject is None:
+            _fail("MODEL_REFERENCE_INVALID",
+                  f"transition registration {record_id} references an "
+                  "unregistered subject entity")
+        from_state = state_registrations_by_anchor.get(from_anchor_id)
+        to_state = state_registrations_by_anchor.get(to_anchor_id)
+        if from_state is None or to_state is None:
+            _fail("MODEL_REFERENCE_INVALID",
+                  f"transition registration {record_id} references an "
+                  "unregistered endpoint state")
+        if (from_state.subject_entity_anchor_id != subject_id
+                or to_state.subject_entity_anchor_id != subject_id):
+            _fail("MODEL_TRANSITION_REGISTRATION_INVALID",
+                  f"transition registration {record_id} has an endpoint "
+                  "whose subject differs from the transition subject")
+        if from_anchor_id == to_anchor_id:
+            _fail("MODEL_TRANSITION_REGISTRATION_INVALID",
+                  f"transition registration {record_id} is a "
+                  "self-transition")
+        _check_model_record_evidence(
+            records, registration, "transition registration")
+        required_citations = {
+            subject.record_id, from_state.record_id, to_state.record_id}
+        supplied_citations = {
+            reference.record_id for reference in registration.evidence
+            if reference.kind == "model_record"
+        }
+        has_claim_basis = any(reference.kind == "owner_declaration"
+                              for reference in registration.evidence)
+        if (not required_citations <= supplied_citations
+                or not has_claim_basis):
+            _fail("MODEL_TRANSITION_REGISTRATION_INVALID",
+                  f"transition registration {record_id} lacks its exact "
+                  "subject and endpoint-state citations or claim basis")
+        transition_registrations_by_anchor[anchor_id] = registration
+        transition_registration_id_by_ordered_subject_endpoints[
+            endpoint_key] = record_id
+        transition_anchor_ids_by_subject_entity[subject_id] = tuple(sorted((
+            *transition_anchor_ids_by_subject_entity.get(subject_id, ()),
+            anchor_id)))
+
+    def transition_declaration_key(record):
+        return (record.transition_anchor_id, record.context)
+
+    transition_declaration_ids_by_key: dict[tuple, tuple[str, ...]] = {}
+    transition_declaration_parent_ids: dict[str, tuple[str, ...]] = {}
+    for record_id in sorted(transition_declarations):
+        declaration = transition_declarations[record_id]
+        registration = transition_registrations_by_anchor.get(
+            declaration.transition_anchor_id)
+        if registration is None:
+            _fail("MODEL_REFERENCE_INVALID",
+                  f"transition declaration {record_id} references an "
+                  "unregistered transition")
+        expected_from = registration.from_state_anchor_id
+        expected_to = registration.to_state_anchor_id
+        if (declaration.from_endpoint.state_anchor_id != expected_from
+                or declaration.to_endpoint.state_anchor_id != expected_to):
+            _fail("MODEL_TRANSITION_DECLARATION_INVALID",
+                  f"transition declaration {record_id} substitutes an "
+                  "endpoint role or state anchor")
+        from_state = state_registrations_by_anchor[expected_from]
+        to_state = state_registrations_by_anchor[expected_to]
+        from_declaration = state_declarations.get(
+            declaration.from_endpoint.declaration_record_id)
+        to_declaration = state_declarations.get(
+            declaration.to_endpoint.declaration_record_id)
+        if from_declaration is None or to_declaration is None:
+            _fail("MODEL_REFERENCE_INVALID",
+                  f"transition declaration {record_id} pins a missing "
+                  "state declaration")
+        if (from_declaration.state_anchor_id != expected_from
+                or to_declaration.state_anchor_id != expected_to):
+            _fail("MODEL_TRANSITION_DECLARATION_INVALID",
+                  f"transition declaration {record_id} pins an STD from "
+                  "another endpoint state")
+        if (from_declaration.context != declaration.context
+                or to_declaration.context != declaration.context):
+            _fail("MODEL_TRANSITION_DECLARATION_INVALID",
+                  f"transition declaration {record_id} does not exactly "
+                  "match both endpoint declaration contexts")
+        _check_model_record_evidence(
+            records, declaration, "transition declaration")
+        required_citations = {
+            registration.record_id,
+            from_state.record_id,
+            to_state.record_id,
+            from_declaration.record_id,
+            to_declaration.record_id,
+        }
+        supplied_citations = {
+            reference.record_id for reference in declaration.evidence
+            if reference.kind == "model_record"
+        }
+        has_claim_basis = any(reference.kind == "owner_declaration"
+                              for reference in declaration.evidence)
+        if (not required_citations <= supplied_citations
+                or not has_claim_basis):
+            _fail("MODEL_TRANSITION_DECLARATION_INVALID",
+                  f"transition declaration {record_id} lacks its exact "
+                  "TRG, endpoint SRG and STD citations or claim basis")
+        key = transition_declaration_key(declaration)
+        transition_declaration_ids_by_key[key] = tuple(sorted((
+            *transition_declaration_ids_by_key.get(key, ()), record_id)))
+        transition_declaration_parent_ids[record_id] = declaration.supersedes
+
+    (transition_declaration_successor_ids,
+     transition_declaration_root_by_id) = _pt_dag_indexes(
+         transition_declarations, transition_declaration_key,
+         "MODEL_TRANSITION_LINEAGE_INVALID", "transition declaration")
+
+    transition_declaration_ancestry_by_id: dict[str, tuple[str, ...]] = {}
+    pending_transition_ancestry = set(transition_declarations)
+    while pending_transition_ancestry:
+        progressed = False
+        for record_id in sorted(tuple(pending_transition_ancestry)):
+            parents = transition_declarations[record_id].supersedes
+            if any(parent not in transition_declaration_ancestry_by_id
+                   for parent in parents):
+                continue
+            ancestors = {
+                ancestor
+                for parent in parents
+                for ancestor in (
+                    parent, *transition_declaration_ancestry_by_id[parent])
+            }
+            transition_declaration_ancestry_by_id[record_id] = tuple(
+                sorted(ancestors))
+            pending_transition_ancestry.remove(record_id)
+            progressed = True
+        if not progressed:
+            _fail("MODEL_TRANSITION_LINEAGE_INVALID",
+                  "transition declaration ancestry could not be derived")
+
+    transition_declaration_withdrawals_by_target: dict[
+        str, tuple[str, ...]] = {}
+    for withdrawal_id in sorted(transition_declaration_withdrawals):
+        withdrawal = transition_declaration_withdrawals[withdrawal_id]
+        target = withdrawal.withdraws
+        if target not in transition_declarations:
+            _fail("MODEL_REFERENCE_INVALID",
+                  f"transition withdrawal {withdrawal_id} targets a missing "
+                  "declaration")
+        if transition_declaration_successor_ids[target]:
+            _fail("MODEL_TRANSITION_WITHDRAWAL_INVALID",
+                  f"transition withdrawal {withdrawal_id} targets a "
+                  "superseded declaration")
+        if target in transition_declaration_withdrawals_by_target:
+            _fail("MODEL_TRANSITION_WITHDRAWAL_INVALID",
+                  f"transition declaration {target} is withdrawn more than "
+                  "once")
+        transition_declaration_withdrawals_by_target[target] = (withdrawal_id,)
+
+    transition_declaration_withdrawn_by = {
+        record_id: transition_declaration_withdrawals_by_target.get(
+            record_id, ())
+        for record_id in transition_declarations
+    }
+    current_transition_declaration_tips_by_root: dict[
+        str, tuple[TransitionDeclaration, ...]] = {
+            root: () for root in sorted(set(
+                transition_declaration_root_by_id.values()))
+        }
+    for record_id in sorted(transition_declarations):
+        if (not transition_declaration_successor_ids[record_id]
+                and not transition_declaration_withdrawn_by[record_id]):
+            root = transition_declaration_root_by_id[record_id]
+            current_transition_declaration_tips_by_root[root] = (
+                *current_transition_declaration_tips_by_root[root],
+                transition_declarations[record_id])
+
     record_ids = tuple(sorted(records))
     revision = ModelRevision(
         revision_id=compute_revision_id(model_id, record_ids),
@@ -1609,6 +1844,41 @@ def validate_record_collection(
             for record_id in sorted(state_declaration_withdrawn_by)}),
         state_declaration_withdrawals_by_target=_frozen_mapping(
             state_declaration_withdrawals_by_target),
+        transition_registrations=_frozen_mapping({
+            record_id: transition_registrations[record_id]
+            for record_id in sorted(transition_registrations)}),
+        transition_registrations_by_anchor=_frozen_mapping(
+            transition_registrations_by_anchor),
+        transition_anchor_ids_by_subject_entity=_frozen_mapping(
+            transition_anchor_ids_by_subject_entity),
+        transition_registration_id_by_ordered_subject_endpoints=(
+            _frozen_mapping(
+                transition_registration_id_by_ordered_subject_endpoints)),
+        transition_declarations=_frozen_mapping({
+            record_id: transition_declarations[record_id]
+            for record_id in sorted(transition_declarations)}),
+        transition_declaration_ids_by_key=_frozen_mapping(
+            transition_declaration_ids_by_key),
+        transition_declaration_parent_ids=_frozen_mapping({
+            record_id: transition_declaration_parent_ids[record_id]
+            for record_id in sorted(transition_declaration_parent_ids)}),
+        transition_declaration_successor_ids=_frozen_mapping({
+            record_id: transition_declaration_successor_ids[record_id]
+            for record_id in sorted(transition_declaration_successor_ids)}),
+        transition_declaration_root_by_id=_frozen_mapping(
+            transition_declaration_root_by_id),
+        transition_declaration_ancestry_by_id=_frozen_mapping(
+            transition_declaration_ancestry_by_id),
+        current_transition_declaration_tips_by_root=_frozen_mapping(
+            current_transition_declaration_tips_by_root),
+        transition_declaration_withdrawals=_frozen_mapping({
+            record_id: transition_declaration_withdrawals[record_id]
+            for record_id in sorted(transition_declaration_withdrawals)}),
+        transition_declaration_withdrawn_by=_frozen_mapping({
+            record_id: transition_declaration_withdrawn_by[record_id]
+            for record_id in sorted(transition_declaration_withdrawn_by)}),
+        transition_declaration_withdrawals_by_target=_frozen_mapping(
+            transition_declaration_withdrawals_by_target),
         superseded_by=_frozen_mapping(superseded_by),
         withdrawn_by=_frozen_mapping(withdrawn_by))
 

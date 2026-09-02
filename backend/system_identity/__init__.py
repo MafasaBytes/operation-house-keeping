@@ -12,12 +12,14 @@ from backend.system_identity.anchors import (
     ENTITY_ANCHOR_ID_PATTERN,
     PORT_ANCHOR_ID_PATTERN,
     STATE_ANCHOR_ID_PATTERN,
+    TRANSITION_ANCHOR_ID_PATTERN,
     VARIABLE_ANCHOR_ID_PATTERN,
     BehaviorAnchor,
     ConstraintAnchor,
     EntityAnchor,
     PortAnchor,
     StateAnchor,
+    TransitionAnchor,
     VariableAnchor,
 )
 from backend.system_identity.minting import (
@@ -25,6 +27,7 @@ from backend.system_identity.minting import (
     mint_constraint_anchor,
     mint_port_anchor,
     mint_state_anchor,
+    mint_transition_anchor,
     mint_variable_anchor,
 )
 
@@ -34,16 +37,19 @@ __all__ = [
     "ENTITY_ANCHOR_ID_PATTERN",
     "PORT_ANCHOR_ID_PATTERN",
     "STATE_ANCHOR_ID_PATTERN",
+    "TRANSITION_ANCHOR_ID_PATTERN",
     "VARIABLE_ANCHOR_ID_PATTERN",
     "BehaviorAnchor",
     "ConstraintAnchor",
     "EntityAnchor",
     "PortAnchor",
     "StateAnchor",
+    "TransitionAnchor",
     "VariableAnchor",
     "mint_behavior_anchor",
     "mint_constraint_anchor",
     "mint_port_anchor",
     "mint_state_anchor",
+    "mint_transition_anchor",
     "mint_variable_anchor",
 ]

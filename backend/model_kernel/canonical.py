@@ -40,6 +40,9 @@ _PREFIX_BY_KIND = {
     "state_registration": "srg",
     "state_declaration": "std",
     "state_declaration_withdrawal": "stw",
+    "transition_registration": "trg",
+    "transition_declaration": "trd",
+    "transition_declaration_withdrawal": "trw",
 }
 
 _BEHAVIOR_EFFECTIVE_BODY_FIELDS = (
@@ -55,6 +58,13 @@ _STATE_EFFECTIVE_BODY_FIELDS = (
     "context",
     "conditions",
     "evaluation_basis",
+)
+
+_TRANSITION_EFFECTIVE_BODY_FIELDS = (
+    "transition_anchor_id",
+    "context",
+    "from_endpoint",
+    "to_endpoint",
 )
 
 
@@ -131,6 +141,29 @@ def _state_effective_body_bytes(record) -> bytes:
         raise ModelIntegrityError(
             "MODEL_RECORD_INVALID",
             "state body is not canonically serializable") from error
+
+
+def _transition_effective_body_bytes(record) -> bytes:
+    """Canonical, non-persisted ST-002 declaration-body projection.
+
+    Slice A exposes no public transition lifecycle result. The projection
+    preserves the semantic from/to roles and excludes evidence and audit
+    fields so a later read-only disclosure can group exact engineering bodies.
+    """
+    try:
+        dumped = record.model_dump(
+            mode="python", include=set(_TRANSITION_EFFECTIVE_BODY_FIELDS))
+        if tuple(sorted(dumped)) != tuple(sorted(
+                _TRANSITION_EFFECTIVE_BODY_FIELDS)):
+            raise ValueError("record is not a transition declaration")
+        return json.dumps(
+            _canonical_value(dumped), sort_keys=True, separators=(",", ":"),
+            ensure_ascii=False,
+        ).encode("utf-8")
+    except (AttributeError, UnicodeError, TypeError, ValueError) as error:
+        raise ModelIntegrityError(
+            "MODEL_RECORD_INVALID",
+            "transition body is not canonically serializable") from error
 
 
 def compute_record_id(record) -> str:

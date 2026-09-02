@@ -3,13 +3,14 @@
 The canonical identity namespace shared between `identity_binding` and
 the model kernel: pure anchor value contracts (`EntityAnchor`,
 `VariableAnchor`, `ConstraintAnchor`, `PortAnchor`, `BehaviorAnchor`, and
-`StateAnchor`) plus pure public UUID4 minters for constraint, port, behavior,
-state, and variable
+`StateAnchor`, and `TransitionAnchor`) plus pure public UUID4 minters for
+constraint, port, behavior, state, transition, and variable
 identities — no
 storage, no I/O, no authority,
 and no dependency on any other backend module (enforced by test).
 
-Anchor IDs are opaque (`ent_`/`var_`/`con_`/`prt_`/`bhv_`/`sta_` + uuid4 hex) by accepted decision
+Anchor IDs are opaque
+(`ent_`/`var_`/`con_`/`prt_`/`bhv_`/`sta_`/`trn_` + uuid4 hex) by accepted decision
 (ADR-0006): identity survives renames and role reassignment, and a
 replacement physical component always receives a new anchor even when
 its display name and source address are unchanged. `namespace`,
@@ -36,6 +37,12 @@ lifecycle, classification, or transition meaning. `mint_state_anchor()`
 creates only a fresh opaque UUID4 identity. State model knowledge begins only
 with the separately admitted ST-001 `StateRegistration`; names never create or
 classify a state.
+
+`TransitionAnchor` contains no subject, endpoint, context, declaration,
+lifecycle, assessment, or occurrence meaning. `mint_transition_anchor()`
+creates one fresh opaque UUID4 identity and performs no lookup or persistence.
+ST-002 model knowledge begins only with a separately admitted
+`TransitionRegistration`; names and changed observations create nothing.
 
 ST-001 Slice A implemented this identity and record foundation without adding
 state query, classification, fixture, or transition capability. The later

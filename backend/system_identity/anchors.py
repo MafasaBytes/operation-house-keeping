@@ -19,6 +19,7 @@ CONSTRAINT_ANCHOR_ID_PATTERN = r"^con_[0-9a-f]{32}$"
 PORT_ANCHOR_ID_PATTERN = r"^prt_[0-9a-f]{32}$"
 BEHAVIOR_ANCHOR_ID_PATTERN = r"^bhv_[0-9a-f]{32}$"
 STATE_ANCHOR_ID_PATTERN = r"^sta_[0-9a-f]{32}$"
+TRANSITION_ANCHOR_ID_PATTERN = r"^trn_[0-9a-f]{32}$"
 _NAME_PATTERN = r"^[a-z0-9-]+$"
 
 
@@ -121,6 +122,24 @@ class StateAnchor(BaseModel):
         frozen=True, extra="forbid", revalidate_instances="always")
 
     anchor_id: str = Field(pattern=STATE_ANCHOR_ID_PATTERN)
+    namespace: str = Field(pattern=_NAME_PATTERN)
+    display_name: str = Field(min_length=1)
+    role_name: str | None = Field(default=None, pattern=_NAME_PATTERN)
+
+
+class TransitionAnchor(BaseModel):
+    """One stable transition identity and no transition meaning.
+
+    Subject entity, ordered endpoint states, exact endpoint declarations,
+    context, evidence, and lifecycle belong to separately admitted model-ledger
+    records. Assessment and occurrence are deferred and absent. Names are
+    human context and never identity material.
+    """
+
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", revalidate_instances="always")
+
+    anchor_id: str = Field(pattern=TRANSITION_ANCHOR_ID_PATTERN)
     namespace: str = Field(pattern=_NAME_PATTERN)
     display_name: str = Field(min_length=1)
     role_name: str | None = Field(default=None, pattern=_NAME_PATTERN)
