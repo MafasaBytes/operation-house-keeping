@@ -76,7 +76,12 @@ def _graph_children(item, outer_material):
         extras = getattr(item, "__pydantic_extra__", None)
         if set(stored).difference(fields) or extras:
             raise ValueError("pydantic result instance contains extra fields")
-        private = getattr(item, "__pydantic_private__", None) or {}
+        private = getattr(item, "__pydantic_private__", None)
+        if private is None:
+            private = {}
+        elif type(private) is not dict:
+            raise ValueError(
+                "pydantic result instance contains private cache")
         permitted_private = (
             {"_material"}
             if "_material" in getattr(type(item),

@@ -354,6 +354,10 @@ def revalidate(record) -> ModelRecord:
                 extras = getattr(value, "__pydantic_extra__", None)
                 if set(stored).difference(fields) or extras:
                     raise ValueError("pydantic instance contains extra fields")
+                private = getattr(value, "__pydantic_private__", None)
+                if private is not None and (
+                        type(private) is not dict or len(private) != 0):
+                    raise ValueError("pydantic instance contains private state")
                 pending.extend(stored[field] for field in fields
                                if field in stored)
             elif isinstance(value, Mapping):

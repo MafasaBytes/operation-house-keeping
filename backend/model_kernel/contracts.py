@@ -1050,6 +1050,10 @@ def _strict_transition_nested_dump(value: BaseModel) -> dict:
             extras = getattr(item, "__pydantic_extra__", None)
             if set(stored).difference(fields) or extras:
                 raise ValueError("nested model contains extra fields")
+            private = getattr(item, "__pydantic_private__", None)
+            if private is not None and (
+                    type(private) is not dict or len(private) != 0):
+                raise ValueError("nested model contains private state")
             pending.extend(stored[field] for field in fields if field in stored)
         elif isinstance(item, dict):
             pending.extend(item.keys())

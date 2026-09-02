@@ -1,6 +1,8 @@
 """ST-002 Slice A red-first contracts for opaque transition identity."""
 
 import inspect
+from pathlib import Path
+import socket
 from uuid import RFC_4122, UUID
 
 import pytest
@@ -83,6 +85,32 @@ def test_minter_is_keyword_only_calls_uuid4_once_and_preserves_fields(
         "namespace": "test-model", "display_name": "Synthetic transition",
         "role_name": "synthetic-transition",
     }
+
+
+def test_minter_calls_uuid_only_and_has_no_filesystem_or_network_capability(
+        monkeypatch):
+    class FrozenUuid:
+        hex = "fedcba0987654321fedcba0987654321"
+
+    calls = []
+
+    def fake_uuid4():
+        calls.append("uuid4")
+        return FrozenUuid()
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("transition minter performed I/O")
+
+    monkeypatch.setattr(minting, "uuid4", fake_uuid4)
+    for name in ("open", "read_text", "read_bytes", "write_text",
+                 "write_bytes"):
+        monkeypatch.setattr(Path, name, forbidden)
+    monkeypatch.setattr(socket, "socket", forbidden)
+    value = identity.mint_transition_anchor(
+        namespace="test-model", display_name="Synthetic transition",
+        role_name="synthetic-transition")
+    assert calls == ["uuid4"]
+    assert value.anchor_id == "trn_fedcba0987654321fedcba0987654321"
 
 
 def test_minter_emits_distinct_rfc4122_uuid4_lowercase_ids():

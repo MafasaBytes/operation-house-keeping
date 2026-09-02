@@ -238,6 +238,11 @@ class ModelQueries:
                 if set(stored).difference(fields) or extras:
                     raise ValueError(
                         "assertion context instance contains extra fields")
+                private = getattr(context, "__pydantic_private__", None)
+                if private is not None and (
+                        type(private) is not dict or len(private) != 0):
+                    raise ValueError(
+                        "assertion context instance contains private state")
                 payload = context.model_dump(mode="python")
             else:
                 payload = context
