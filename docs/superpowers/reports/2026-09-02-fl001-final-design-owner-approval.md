@@ -2,8 +2,8 @@
 
 Date: 2026-09-02
 
-Status: final design owner approved; Slice A separately authorized and not yet
-complete
+Status: final design owner approved; Slice A owner accepted; Slice B
+separately authorized
 
 The owner approves the final FL-001 design at:
 
@@ -19,8 +19,11 @@ The accepted FL-001 design record consists of:
 - `docs/superpowers/reports/2026-09-02-fl001-codex-lead-proposal-challenger-audit.md`; and
 - `docs/superpowers/specs/2026-09-02-fl001-explicit-flow-identity-and-evidence-gated-flow-declaration-design.md`.
 
-The owner separately authorizes FL-001 Slice A only, as bounded by Section
-29.1 of the accepted synthesis and the authorization dated 2026-09-02. Slices
-B, C, and D remain unauthorized. This administrative record does not claim
-that Slice A is implemented, verified, or accepted, and changes no runtime,
-identity, record, fixture, ledger, membership, canonical byte, or artifact.
+The owner accepted FL-001 Slice A at
+`0071b5599f7d3a52f74573a37163ecc50f51dff8` and separately authorized Slice B
+as bounded by Sections 18–20 and 29.2 of the accepted synthesis. Slice C is
+absent from FL-001 v1. Slice D remains unauthorized.
+
+This status update changes no runtime behavior, identity, record, fixture,
+ledger membership, canonical byte sequence, golden ID, historical revision,
+accepted artifact, or test contract.
