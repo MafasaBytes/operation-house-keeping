@@ -50,7 +50,8 @@ EXPECTED_METHODS = {
     "port_interface", "ports_associated_with_variable", "ports_of_entity",
     "relationships", "state", "state_assertion", "state_declaration",
     "states_of_entity", "transition", "transition_assertion",
-    "transition_declaration", "transitions_of_entity", "variable",
+    "transition_declaration", "transitions_of_entity", "flow",
+    "flow_assertion", "flow_declaration", "flows_involving_port", "variable",
     "variable_port_assertion", "variable_port_association",
     "variable_semantics", "variable_value_specification",
     "variables_associated_with_port", "variables_of",
@@ -129,7 +130,7 @@ def test_exact_transition_literals_are_public_in_normative_order():
 
 
 def test_exact_transition_result_field_order_and_exports():
-    assert len(kernel.__all__) == 187
+    assert len(kernel.__all__) == 203
     expected = {
         "TransitionEndpointResult": (
             "role", "state_anchor_id", "state_registration_index",

@@ -168,6 +168,24 @@ from backend.model_kernel.transition_results import (
     TransitionLookupResult,
     TransitionLookupStatus,
 )
+from backend.model_kernel.flow_results import (
+    FlowAgreementFinding,
+    FlowAssertionDisclosureResult,
+    FlowAssertionLookupStatus,
+    FlowConnectionSupportResult,
+    FlowDeclarationConclusion,
+    FlowDeclarationLineageSummary,
+    FlowDeclarationResult,
+    FlowDeclarationRootResult,
+    FlowDirectionSupportResult,
+    FlowEffectiveBodyGroupResult,
+    FlowLookupResult,
+    FlowLookupStatus,
+    FlowPortRole,
+    PortFlowEntry,
+    PortFlowsResult,
+    PortFlowsStatus,
+)
 from backend.model_kernel.port_results import (
     AssertionActivity,
     CompatibilityEndpointStatus,
@@ -327,6 +345,13 @@ __all__ = [
     "TransitionDeclarationRootResult", "TransitionLookupResult",
     "TransitionDeclarationResult", "EntityTransitionEntry",
     "EntityTransitionsResult", "TransitionAssertionDisclosureResult",
+    "FlowLookupStatus", "FlowDeclarationConclusion",
+    "FlowDeclarationLineageSummary", "FlowAgreementFinding",
+    "FlowPortRole", "PortFlowsStatus", "FlowAssertionLookupStatus",
+    "FlowLookupResult", "FlowConnectionSupportResult",
+    "FlowDirectionSupportResult", "FlowEffectiveBodyGroupResult",
+    "FlowDeclarationRootResult", "FlowDeclarationResult", "PortFlowEntry",
+    "PortFlowsResult", "FlowAssertionDisclosureResult",
     # operations
     "build_record",
     "ModelStore",

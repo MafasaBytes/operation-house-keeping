@@ -68,7 +68,8 @@ def test_slice_b_public_query_surface_adds_exactly_four_transition_queries():
         "ports_associated_with_variable", "ports_of_entity", "relationships",
         "state", "state_assertion", "state_declaration", "states_of_entity",
         "transition", "transition_assertion", "transition_declaration",
-        "transitions_of_entity",
+        "transitions_of_entity", "flow", "flow_assertion",
+        "flow_declaration", "flows_involving_port",
         "variable", "variable_port_assertion", "variable_port_association",
         "variable_semantics", "variable_value_specification",
         "variables_associated_with_port", "variables_of",
@@ -83,7 +84,7 @@ def test_slice_b_public_query_surface_adds_exactly_four_transition_queries():
 
 
 def test_slice_b_kernel_exports_exact_transition_contract_and_result_surface():
-    assert len(kernel.__all__) == 187
+    assert len(kernel.__all__) == 203
     assert {name for name in kernel.__all__
             if name.startswith("Transition")} == {
         "TransitionRegistration", "TransitionStateDeclarationPin",

@@ -62,6 +62,11 @@ from backend.model_kernel.transition_results import (
     _entity_transitions_payload, _transition_assertion_payload,
     _transition_declaration_payload, _transition_lookup_payload,
 )
+from backend.model_kernel.flow_results import (
+    FlowAssertionDisclosureResult, FlowDeclarationResult, FlowLookupResult,
+    PortFlowsResult, _flow_assertion_payload, _flow_declaration_payload,
+    _flow_lookup_payload, _port_flows_payload,
+)
 from backend.model_kernel.port_results import (
     ConnectionRootResult, ConnectionSubjectResult, SharedConnectionsResult,
     EndpointInterfaceResult,
@@ -72,12 +77,15 @@ from backend.model_kernel.port_results import (
     PortVariablesResult, VariablePortAssociationEntry,
     VariablePortAssociationResult, VariablePortAssociationRootResult,
     VariablePortAssertionDisclosureResult, VariablePortsResult,
+    _connection_parts_payload, _port_assertion_payload,
+    _port_interface_payload,
 )
 from backend.model_kernel.store import LoadedModel
 from backend.system_identity import (
     BEHAVIOR_ANCHOR_ID_PATTERN,
     CONSTRAINT_ANCHOR_ID_PATTERN,
     ENTITY_ANCHOR_ID_PATTERN,
+    FLOW_ANCHOR_ID_PATTERN,
     PORT_ANCHOR_ID_PATTERN,
     STATE_ANCHOR_ID_PATTERN,
     TRANSITION_ANCHOR_ID_PATTERN,
@@ -91,11 +99,13 @@ _PORT_ANCHOR_ID = re.compile(PORT_ANCHOR_ID_PATTERN)
 _BEHAVIOR_ANCHOR_ID = re.compile(BEHAVIOR_ANCHOR_ID_PATTERN)
 _STATE_ANCHOR_ID = re.compile(STATE_ANCHOR_ID_PATTERN)
 _TRANSITION_ANCHOR_ID = re.compile(TRANSITION_ANCHOR_ID_PATTERN)
+_FLOW_ANCHOR_ID = re.compile(FLOW_ANCHOR_ID_PATTERN)
 _PORT_RECORD_ID = re.compile(r"^(?:prg|pif|pcn|pcm|ptw)_[0-9a-f]{64}$")
 _VARIABLE_PORT_RECORD_ID = re.compile(r"^(?:vpa|vpw)_[0-9a-f]{64}$")
 _BEHAVIOR_RECORD_ID = re.compile(r"^(?:brg|bhd|bhw)_[0-9a-f]{64}$")
 _STATE_RECORD_ID = re.compile(r"^(?:srg|std|stw)_[0-9a-f]{64}$")
 _TRANSITION_RECORD_ID = re.compile(r"^(?:trg|trd|trw)_[0-9a-f]{64}$")
+_FLOW_RECORD_ID = re.compile(r"^(?:frg|fld|flw)_[0-9a-f]{64}$")
 _CONTEXT_ADAPTER: TypeAdapter = TypeAdapter(AssertionContext)
 _LIFECYCLE_VIEWS = frozenset(typing.get_args(LifecycleView))
 
@@ -165,6 +175,14 @@ class ModelQueries:
                 f"{anchor_id!r} is not a canonical transition anchor id")
         return anchor_id
 
+    def _require_flow_anchor_id(self, anchor_id: str) -> str:
+        if (not isinstance(anchor_id, str)
+                or not _FLOW_ANCHOR_ID.fullmatch(anchor_id)):
+            raise ModelQueryError(
+                "MODEL_ANCHOR_ID_INVALID",
+                f"{anchor_id!r} is not a canonical flow anchor id")
+        return anchor_id
+
     def _require_port_record_id(self, record_id: str) -> str:
         if (not isinstance(record_id, str)
                 or not _PORT_RECORD_ID.fullmatch(record_id)):
@@ -204,6 +222,14 @@ class ModelQueries:
                 f"{record_id!r} is not an ST-002 transition record id")
         return record_id
 
+    def _require_flow_record_id(self, record_id: str) -> str:
+        if (not isinstance(record_id, str)
+                or not _FLOW_RECORD_ID.fullmatch(record_id)):
+            raise ModelQueryError(
+                "MODEL_RECORD_ID_INVALID",
+                f"{record_id!r} is not an FL-001 flow record id")
+        return record_id
+
     def _material(self) -> ModelQueryMaterial:
         return ModelQueryMaterial(
             revision=self.loaded.revision,
@@ -235,7 +261,11 @@ class ModelQueries:
                 fields = type(context).model_fields
                 stored = vars(context)
                 extras = getattr(context, "__pydantic_extra__", None)
-                if set(stored).difference(fields) or extras:
+                if set(stored).difference(fields):
+                    raise ValueError(
+                        "assertion context instance contains extra fields")
+                if (extras is not None
+                        and (type(extras) is not dict or len(extras) != 0)):
                     raise ValueError(
                         "assertion context instance contains extra fields")
                 private = getattr(context, "__pydantic_private__", None)
@@ -757,105 +787,19 @@ class ModelQueries:
     def port_interface(self, port_anchor_id: str, *, context) -> PortInterfaceResult:
         port_anchor_id = self._require_port_anchor_id(port_anchor_id)
         context = self._require_context(context)
-        registered = port_anchor_id in self.loaded.port_registrations_by_anchor
         material = self._material()
-        indices = self._record_index()
-        rows = []
-        for dimension in ("interface_domain", "direction_role", "interface_type"):
-            key = (port_anchor_id, context, dimension)
-            ids = self.loaded.port_interface_ids_by_key.get(key, ()) if registered else ()
-            tips = self.loaded.current_port_interface_tips_by_key.get(key, ()) if ids else ()
-            withdrawals = tuple(sorted(
-                withdrawal_id for record_id in ids
-                for withdrawal_id in self.loaded.port_interface_withdrawn_by[record_id]))
-            if not registered:
-                status = "port_not_registered"
-            elif not ids:
-                status = "not_declared"
-            elif len(tips) == 1:
-                status = "declared"
-            elif len(tips) > 1:
-                status = "conflicted"
-            else:
-                status = "inactive"
-            rows.append(InterfaceDimensionResult(
-                dimension=dimension, status=status,
-                lineage_health=(
-                    "healthy" if status == "declared" else
-                    "conflicted" if status == "conflicted" else
-                    "inactive" if status == "inactive" else
-                    "not_applicable"),
-                lineage_record_indices=tuple(indices[i] for i in ids),
-                current_tip_indices=tuple(indices[r.record_id] for r in tips),
-                withdrawal_indices=tuple(indices[i] for i in withdrawals),
-                declaration_index=(indices[tips[0].record_id]
-                                   if status == "declared" else None),
-                conflicting_declaration_indices=(
-                    tuple(indices[r.record_id] for r in tips)
-                    if status == "conflicted" else ()),
-                superseded_declaration_indices=(
-                    tuple(indices[i] for i in ids
-                          if self.loaded.port_interface_superseded_by[i])
-                    if registered else ()),
-                inactive_declaration_indices=(
-                    tuple(indices[i] for i in ids
-                          if self.loaded.port_interface_withdrawn_by[i]))))
-        return PortInterfaceResult(
-            material=material, port_anchor_id=port_anchor_id,
-            status="registered" if registered else "not_registered",
-            context=context, dimensions=tuple(rows))
+        payload = _port_interface_payload(
+            material, self.loaded, port_anchor_id, context,
+            record_indices=self._record_index())
+        return PortInterfaceResult(material=material, **payload)
 
     def port_assertion(self, record_id: str) -> PortAssertionDisclosureResult:
         record_id = self._require_port_record_id(record_id)
         material = self._material()
-        indices = self._record_index()
-        record = self.loaded.records.get(record_id)
-        if record is None or record.record_kind not in {
-                "port_registration", "port_interface_declaration",
-                "port_connection_assertion", "port_compatibility_declaration",
-                "port_claim_withdrawal"}:
-            return PortAssertionDisclosureResult(
-                material=material, record_id=record_id, status="not_found")
-        if record.record_kind in {"port_registration", "port_claim_withdrawal"}:
-            return PortAssertionDisclosureResult(
-                material=material, record_id=record_id,
-                status="found", record_index=indices[record_id])
-        if record.record_kind == "port_interface_declaration":
-            roots = self.loaded.port_interface_root_by_id
-            successors = self.loaded.port_interface_superseded_by
-            withdrawn = self.loaded.port_interface_withdrawn_by
-            current_by_root = {
-                root: tuple(item for item in self.loaded.port_interface_declarations.values()
-                            if roots[item.record_id] == root
-                            and not successors[item.record_id]
-                            and not withdrawn[item.record_id])
-                for root in set(roots.values())}
-        elif record.record_kind == "port_connection_assertion":
-            roots = self.loaded.port_connection_root_by_id
-            successors = self.loaded.port_connection_superseded_by
-            withdrawn = self.loaded.port_connection_withdrawn_by
-            current_by_root = self.loaded.current_port_connection_tips_by_root
-        else:
-            roots = self.loaded.port_compatibility_root_by_id
-            successors = self.loaded.port_compatibility_superseded_by
-            withdrawn = self.loaded.port_compatibility_withdrawn_by
-            current_by_root = {
-                root: tuple(item for item in self.loaded.port_compatibility_declarations.values()
-                            if roots[item.record_id] == root
-                            and not successors[item.record_id]
-                            and not withdrawn[item.record_id])
-                for root in set(roots.values())}
-        root = roots[record_id]
-        tips = current_by_root[root]
-        health = "inactive" if not tips else ("conflicted" if len(tips) > 1 else "healthy")
-        activity = ("superseded" if successors[record_id] else
-                    "withdrawn" if withdrawn[record_id] else "current")
-        return PortAssertionDisclosureResult(
-            material=material, record_id=record_id, status="found",
-            record_index=indices[record_id], activity=activity,
-            lineage_health=health, root_record_index=indices[root],
-            successor_indices=tuple(indices[i] for i in successors[record_id]),
-            withdrawal_indices=tuple(indices[i] for i in withdrawn[record_id]))
+        payload = _port_assertion_payload(
+            material, self.loaded, record_id,
+            record_indices=self._record_index())
+        return PortAssertionDisclosureResult(material=material, **payload)
 
     def _require_endpoint_set(self, endpoint_ids, *, minimum: int = 2):
         if not isinstance(endpoint_ids, (tuple, list)):
@@ -876,44 +820,19 @@ class ModelQueries:
         return tuple(sorted(values))
 
     def _connection_result_parts(self, roots, requested):
-        indices = self._record_index()
-        entries = []
-        for position, root_id in enumerate(sorted(roots)):
-            lineage_ids = tuple(sorted(
-                record_id for record_id, candidate_root
-                in self.loaded.port_connection_root_by_id.items()
-                if candidate_root == root_id))
-            tips = self.loaded.current_port_connection_tips_by_root[root_id]
-            withdrawals = tuple(sorted(
-                withdrawal_id for record_id in lineage_ids
-                for withdrawal_id in self.loaded.port_connection_withdrawn_by[record_id]))
-            health = "inactive" if not tips else ("conflicted" if len(tips) > 1 else "healthy")
-            entries.append(ConnectionRootResult(
-                root_index=position, root_record_index=indices[root_id],
-                lineage_record_indices=tuple(indices[i] for i in lineage_ids),
-                current_tip_indices=tuple(indices[r.record_id] for r in tips),
-                withdrawal_indices=tuple(indices[i] for i in withdrawals),
-                lineage_health=health,
-                exact_endpoint_set=(self.loaded.port_connections[root_id].endpoint_port_anchor_ids
-                                    == requested)))
-        status = ("unknown" if not entries else
-                  "asserted" if any(entry.current_tip_indices for entry in entries)
-                  else "inactive")
-        roots_by_subject = {}
-        for root_index, root_id in enumerate(sorted(roots)):
-            subject = self.loaded.port_connections[
-                root_id].endpoint_port_anchor_ids
-            roots_by_subject.setdefault(subject, []).append(root_index)
-        subjects = tuple(ConnectionSubjectResult(
-            subject_index=subject_index,
-            endpoint_port_anchor_ids=subject,
-            conclusion=("asserted" if any(
-                entries[root_index].current_tip_indices
-                for root_index in root_indices) else "inactive"),
-            root_indices=tuple(root_indices),
-        ) for subject_index, (subject, root_indices) in enumerate(
-            sorted(roots_by_subject.items())))
-        return status, tuple(entries), subjects
+        selected = tuple(
+            record_id for record_id, root_id
+            in self.loaded.port_connection_root_by_id.items()
+            if root_id in roots)
+        material = self._material()
+        payload = _connection_parts_payload(
+            material, self.loaded, selected, requested,
+            record_indices=self._record_index())
+        entries = tuple(ConnectionRootResult(**row)
+                        for row in payload["roots"])
+        subjects = tuple(ConnectionSubjectResult(**row)
+                         for row in payload["subjects"])
+        return payload["conclusion"], entries, subjects
 
     def connections_exact(
             self, endpoint_port_anchor_ids, *, context
@@ -1241,6 +1160,46 @@ class ModelQueries:
             material=material,
             **_transition_assertion_payload(
                 material, self.loaded, record_id))
+
+    # -- FL-001 explicit logical-flow declarations -----------------------
+
+    def flow(self, flow_anchor_id) -> FlowLookupResult:
+        flow_anchor_id = self._require_flow_anchor_id(flow_anchor_id)
+        material = self._material()
+        return FlowLookupResult(
+            material=material,
+            **_flow_lookup_payload(material, self.loaded, flow_anchor_id))
+
+    def flow_declaration(
+            self, flow_anchor_id, *, context
+    ) -> FlowDeclarationResult:
+        flow_anchor_id = self._require_flow_anchor_id(flow_anchor_id)
+        context = self._require_context(context)
+        material = self._material()
+        return FlowDeclarationResult(
+            material=material,
+            **_flow_declaration_payload(
+                material, self.loaded, flow_anchor_id, context))
+
+    def flows_involving_port(
+            self, port_anchor_id, *, context
+    ) -> PortFlowsResult:
+        port_anchor_id = self._require_port_anchor_id(port_anchor_id)
+        context = self._require_context(context)
+        material = self._material()
+        return PortFlowsResult(
+            material=material,
+            **_port_flows_payload(
+                material, self.loaded, port_anchor_id, context))
+
+    def flow_assertion(
+            self, record_id
+    ) -> FlowAssertionDisclosureResult:
+        record_id = self._require_flow_record_id(record_id)
+        material = self._material()
+        return FlowAssertionDisclosureResult(
+            material=material,
+            **_flow_assertion_payload(material, self.loaded, record_id))
 
     # -- VP-001 explicit variable-to-port associations --------------------
 

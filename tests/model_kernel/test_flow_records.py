@@ -270,17 +270,16 @@ def test_declaration_and_withdrawal_forbid_assessment_occurrence_and_effects():
             flow_withdrawal(declaration, **{field: value})
 
 
-def test_slice_a_exports_exactly_five_flow_kernel_contracts():
+def test_slice_b_preserves_all_five_slice_a_flow_kernel_contracts():
     expected = {
         "FlowKindToken", "FlowDirectionDeclarationPin",
         "FlowRegistration", "FlowDeclaration",
         "FlowDeclarationWithdrawal",
     }
-    assert {name for name in kernel.__all__ if name.startswith("Flow")} == \
-        expected
+    assert expected <= {
+        name for name in kernel.__all__ if name.startswith("Flow")}
     for forbidden in (
-        "FlowLookupResult", "FlowAssessment", "FlowOccurrence",
-        "ConnectionAnchor",
+        "FlowAssessment", "FlowOccurrence", "ConnectionAnchor",
     ):
         assert forbidden not in kernel.__all__
         assert not hasattr(kernel, forbidden)

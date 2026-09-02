@@ -55,22 +55,27 @@ FLOW_INDEX_NAMES = (
 )
 
 
-def test_slice_a_adds_exact_contract_exports_and_no_flow_query_surface():
-    assert len(kernel.__all__) == 187
+def test_slice_b_preserves_foundation_and_adds_exact_flow_query_surface():
+    assert len(kernel.__all__) == 203
     assert {name for name in kernel.__all__ if name.startswith("Flow")} == {
         "FlowKindToken", "FlowDirectionDeclarationPin",
         "FlowRegistration", "FlowDeclaration",
-        "FlowDeclarationWithdrawal",
+        "FlowDeclarationWithdrawal", "FlowLookupStatus",
+        "FlowDeclarationConclusion", "FlowDeclarationLineageSummary",
+        "FlowAgreementFinding", "FlowPortRole",
+        "FlowAssertionLookupStatus", "FlowLookupResult",
+        "FlowConnectionSupportResult", "FlowDirectionSupportResult",
+        "FlowEffectiveBodyGroupResult", "FlowDeclarationRootResult",
+        "FlowDeclarationResult", "FlowAssertionDisclosureResult",
     }
     public_methods = {
         name for name, value in vars(kernel.ModelQueries).items()
         if not name.startswith("_") and callable(value)}
-    assert not public_methods & {
-        "flow", "flow_declaration", "flows_involving_port",
-        "flow_assertion", "assess_flow", "detect_flow", "flow_history",
-    }
+    assert public_methods & {
+        "flow", "flow_declaration", "flows_involving_port", "flow_assertion",
+    } == {"flow", "flow_declaration", "flows_involving_port", "flow_assertion"}
+    assert not public_methods & {"assess_flow", "detect_flow", "flow_history"}
     for forbidden in (
-        "FlowLookupResult", "FlowDeclarationResult",
         "FlowAssessment", "FlowOccurrence", "ConnectionAnchor",
     ):
         assert not hasattr(kernel, forbidden)
@@ -96,7 +101,7 @@ def test_import_direction_and_no_flow_assessment_occurrence_package():
     assert not any(name.startswith(forbidden_imports) for name in imports)
     assert not Path("backend/flow_assessment").exists()
     assert not Path("backend/flow_occurrence").exists()
-    assert not Path("backend/model_kernel/flow_results.py").exists()
+    assert Path("backend/model_kernel/flow_results.py").is_file()
     helper = Path(
         "tests/model_kernel/fl001_slice_a_helpers.py").read_text(
             encoding="utf-8")

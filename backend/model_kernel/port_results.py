@@ -118,6 +118,206 @@ class ModelQueryMaterial(_Result):
             {record.record_id: record for record in validated.records})
 
 
+def _material_indices(material: ModelQueryMaterial) -> dict[str, int]:
+    return {record_id: index for index, record_id
+            in enumerate(material.revision.record_ids)}
+
+
+def _port_interface_payload(material: ModelQueryMaterial, loaded,
+                            port_anchor_id: str, context: AssertionContext,
+                            *, record_indices=None) -> dict:
+    """One authoritative PT interface payload derivation."""
+    indices = (_material_indices(material) if record_indices is None
+               else record_indices)
+    registered = port_anchor_id in loaded.port_registrations_by_anchor
+    rows = []
+    for dimension in ("interface_domain", "direction_role", "interface_type"):
+        key = (port_anchor_id, context, dimension)
+        ids = (loaded.port_interface_ids_by_key.get(key, ())
+               if registered else ())
+        tips = (loaded.current_port_interface_tips_by_key.get(key, ())
+                if ids else ())
+        withdrawals = tuple(sorted(
+            withdrawal_id for record_id in ids
+            for withdrawal_id in loaded.port_interface_withdrawn_by[record_id]))
+        status = (
+            "port_not_registered" if not registered else
+            "not_declared" if not ids else
+            "declared" if len(tips) == 1 else
+            "conflicted" if tips else "inactive")
+        rows.append({
+            "dimension": dimension,
+            "status": status,
+            "lineage_health": (
+                "healthy" if status == "declared" else
+                "conflicted" if status == "conflicted" else
+                "inactive" if status == "inactive" else
+                "not_applicable"),
+            "lineage_record_indices": tuple(indices[item] for item in ids),
+            "current_tip_indices": tuple(
+                indices[record.record_id] for record in tips),
+            "withdrawal_indices": tuple(
+                indices[item] for item in withdrawals),
+            "declaration_index": (
+                indices[tips[0].record_id] if status == "declared" else None),
+            "conflicting_declaration_indices": (
+                tuple(indices[record.record_id] for record in tips)
+                if status == "conflicted" else ()),
+            "superseded_declaration_indices": (
+                tuple(indices[item] for item in ids
+                      if loaded.port_interface_superseded_by[item])
+                if registered else ()),
+            "inactive_declaration_indices": tuple(
+                indices[item] for item in ids
+                if loaded.port_interface_withdrawn_by[item]),
+        })
+    return {
+        "port_anchor_id": port_anchor_id,
+        "status": "registered" if registered else "not_registered",
+        "context": context.model_dump(mode="python"),
+        "dimensions": tuple(rows),
+    }
+
+
+def _port_assertion_payload(material: ModelQueryMaterial, loaded,
+                            record_id: str, *, record_indices=None) -> dict:
+    """One authoritative PT assertion lifecycle payload derivation."""
+    indices = (_material_indices(material) if record_indices is None
+               else record_indices)
+    record = loaded.records.get(record_id)
+    pt_kinds = {
+        "port_registration", "port_interface_declaration",
+        "port_connection_assertion", "port_compatibility_declaration",
+        "port_claim_withdrawal",
+    }
+    found = record is not None and record.record_kind in pt_kinds
+    base = {"record_id": record_id,
+            "status": "found" if found else "not_found"}
+    empty = {
+        "record_index": None,
+        "activity": None,
+        "lineage_health": None,
+        "root_record_index": None,
+        "successor_indices": (),
+        "withdrawal_indices": (),
+    }
+    if not found:
+        return {**base, **empty}
+    if record.record_kind in {"port_registration", "port_claim_withdrawal"}:
+        return {**base, **empty, "record_index": indices[record_id]}
+    if record.record_kind == "port_interface_declaration":
+        roots = loaded.port_interface_root_by_id
+        successors = loaded.port_interface_superseded_by
+        withdrawn = loaded.port_interface_withdrawn_by
+    elif record.record_kind == "port_connection_assertion":
+        roots = loaded.port_connection_root_by_id
+        successors = loaded.port_connection_superseded_by
+        withdrawn = loaded.port_connection_withdrawn_by
+    else:
+        roots = loaded.port_compatibility_root_by_id
+        successors = loaded.port_compatibility_superseded_by
+        withdrawn = loaded.port_compatibility_withdrawn_by
+    root = roots[record_id]
+    lineage_ids = tuple(item for item, candidate_root in roots.items()
+                        if candidate_root == root)
+    tips = tuple(item for item in lineage_ids
+                 if not successors[item] and not withdrawn[item])
+    return {
+        **base,
+        "record_index": indices[record_id],
+        "activity": (
+            "superseded" if successors[record_id] else
+            "withdrawn" if withdrawn[record_id] else "current"),
+        "lineage_health": (
+            "inactive" if not tips else
+            "conflicted" if len(tips) > 1 else "healthy"),
+        "root_record_index": indices[root],
+        "successor_indices": tuple(indices[item]
+                                   for item in successors[record_id]),
+        "withdrawal_indices": tuple(indices[item]
+                                    for item in withdrawn[record_id]),
+    }
+
+
+def _connection_parts_payload(material: ModelQueryMaterial, loaded,
+                              selected_record_ids, requested,
+                              *, record_indices=None) -> dict:
+    """One authoritative PT connection-root and conclusion derivation."""
+    indices = (_material_indices(material) if record_indices is None
+               else record_indices)
+    root_ids = tuple(sorted({
+        loaded.port_connection_root_by_id[item]
+        for item in selected_record_ids
+    }))
+    roots = []
+    for position, root_id in enumerate(root_ids):
+        lineage = tuple(sorted(
+            item for item, candidate_root
+            in loaded.port_connection_root_by_id.items()
+            if candidate_root == root_id))
+        tips = loaded.current_port_connection_tips_by_root[root_id]
+        withdrawals = tuple(sorted(
+            withdrawal_id for item in lineage
+            for withdrawal_id in loaded.port_connection_withdrawn_by[item]))
+        roots.append({
+            "root_index": position,
+            "root_record_index": indices[root_id],
+            "lineage_record_indices": tuple(indices[item] for item in lineage),
+            "current_tip_indices": tuple(
+                indices[record.record_id] for record in tips),
+            "withdrawal_indices": tuple(
+                indices[item] for item in withdrawals),
+            "lineage_health": (
+                "inactive" if not tips else
+                "conflicted" if len(tips) > 1 else "healthy"),
+            "exact_endpoint_set": (
+                loaded.port_connections[root_id].endpoint_port_anchor_ids
+                == requested),
+        })
+    conclusion = (
+        "unknown" if not roots else
+        "asserted" if any(row["current_tip_indices"] for row in roots)
+        else "inactive")
+    roots_by_subject = {}
+    for root_position, root_id in enumerate(root_ids):
+        subject = loaded.port_connections[root_id].endpoint_port_anchor_ids
+        roots_by_subject.setdefault(subject, []).append(root_position)
+    subjects = tuple({
+        "subject_index": position,
+        "endpoint_port_anchor_ids": subject,
+        "conclusion": (
+            "asserted" if any(roots[root_index]["current_tip_indices"]
+                              for root_index in root_indices)
+            else "inactive"),
+        "root_indices": tuple(root_indices),
+    } for position, (subject, root_indices) in enumerate(
+        sorted(roots_by_subject.items())))
+    return {"conclusion": conclusion, "roots": tuple(roots),
+            "subjects": subjects}
+
+
+def _exact_connections_payload(material: ModelQueryMaterial, loaded,
+                               endpoint_port_anchor_ids,
+                               context: AssertionContext,
+                               *, record_indices=None) -> dict:
+    selected = loaded.port_connection_ids_by_subject.get(
+        (endpoint_port_anchor_ids, context), ())
+    parts = _connection_parts_payload(
+        material, loaded, selected, endpoint_port_anchor_ids,
+        record_indices=record_indices)
+    missing = tuple(
+        port_id for port_id in endpoint_port_anchor_ids
+        if port_id not in loaded.port_registrations_by_anchor)
+    return {
+        "context": context.model_dump(mode="python"),
+        **parts,
+        "admission_status": (
+            "endpoint_not_registered" if missing else "admitted"),
+        "requested_port_anchor_ids": endpoint_port_anchor_ids,
+        "unregistered_port_anchor_ids": missing,
+    }
+
+
 class _WithMaterial(_Result):
     material: ModelQueryMaterial
 
@@ -259,44 +459,10 @@ class PortInterfaceResult(_WithMaterial):
     def _bind(self):
         loaded = self.material.loaded()
         context = _validated_context(self.context)
-        registered = self.port_anchor_id in loaded.port_registrations_by_anchor
-        ids_to_index = {value: index for index, value
-                        in enumerate(self.material.revision.record_ids)}
-        expected = []
-        for dimension in ("interface_domain", "direction_role", "interface_type"):
-            key = (self.port_anchor_id, context, dimension)
-            ids = loaded.port_interface_ids_by_key.get(key, ()) if registered else ()
-            tips = loaded.current_port_interface_tips_by_key.get(key, ()) if ids else ()
-            withdrawals = tuple(sorted(w for record_id in ids
-                                       for w in loaded.port_interface_withdrawn_by[record_id]))
-            status = ("port_not_registered" if not registered else
-                      "not_declared" if not ids else
-                      "declared" if len(tips) == 1 else
-                      "conflicted" if tips else "inactive")
-            expected.append(dict(
-                dimension=dimension, status=status,
-                lineage_health=(
-                    "healthy" if status == "declared" else
-                    "conflicted" if status == "conflicted" else
-                    "inactive" if status == "inactive" else
-                    "not_applicable"),
-                lineage_record_indices=tuple(ids_to_index[i] for i in ids),
-                current_tip_indices=tuple(ids_to_index[r.record_id] for r in tips),
-                withdrawal_indices=tuple(ids_to_index[i] for i in withdrawals),
-                declaration_index=(ids_to_index[tips[0].record_id]
-                                   if status == "declared" else None),
-                conflicting_declaration_indices=(tuple(
-                    ids_to_index[r.record_id] for r in tips)
-                    if status == "conflicted" else ()),
-                superseded_declaration_indices=(tuple(
-                    ids_to_index[i] for i in ids
-                    if loaded.port_interface_superseded_by[i]) if registered else ()),
-                inactive_declaration_indices=tuple(
-                    ids_to_index[i] for i in ids
-                    if loaded.port_interface_withdrawn_by[i])))
-        if self.status != ("registered" if registered else "not_registered"):
-            raise ValueError("interface port status is forged")
-        if tuple(row.model_dump() for row in self.dimensions) != tuple(expected):
+        expected = _port_interface_payload(
+            self.material, loaded, self.port_anchor_id, context)
+        supplied = self.model_dump(mode="python", exclude={"material"})
+        if supplied != expected:
             raise ValueError("interface dimension disclosure is forged")
         for row in self.dimensions:
             object.__setattr__(row, "_material", self.material)
@@ -338,56 +504,10 @@ class PortAssertionDisclosureResult(_WithMaterial):
     @model_validator(mode="after")
     def _coherent(self):
         loaded = self.material.loaded()
-        indices = {value: index for index, value
-                   in enumerate(self.material.revision.record_ids)}
-        record = loaded.records.get(self.record_id)
-        pt_kinds = {"port_registration", "port_interface_declaration",
-                    "port_connection_assertion", "port_compatibility_declaration",
-                    "port_claim_withdrawal"}
-        found = record is not None and record.record_kind in pt_kinds
-        if self.status != ("found" if found else "not_found"):
-            raise ValueError("assertion membership status is forged")
-        if not found:
-            if any((self.record_index is not None, self.activity is not None,
-                    self.lineage_health is not None, self.root_record_index is not None,
-                    self.successor_indices, self.withdrawal_indices)):
-                raise ValueError("missing assertion carries no lifecycle")
-            return self
-        if self.record_index != indices[self.record_id]:
-            raise ValueError("assertion record index is forged")
-        if record.record_kind in {"port_registration", "port_claim_withdrawal"}:
-            if any((self.activity is not None, self.lineage_health is not None,
-                    self.root_record_index is not None, self.successor_indices,
-                    self.withdrawal_indices)):
-                raise ValueError("permanent/event disclosure has no claim lifecycle")
-            return self
-        if record.record_kind == "port_interface_declaration":
-            roots, successors, withdrawn = (
-                loaded.port_interface_root_by_id,
-                loaded.port_interface_superseded_by,
-                loaded.port_interface_withdrawn_by)
-        elif record.record_kind == "port_connection_assertion":
-            roots, successors, withdrawn = (
-                loaded.port_connection_root_by_id,
-                loaded.port_connection_superseded_by,
-                loaded.port_connection_withdrawn_by)
-        else:
-            roots, successors, withdrawn = (
-                loaded.port_compatibility_root_by_id,
-                loaded.port_compatibility_superseded_by,
-                loaded.port_compatibility_withdrawn_by)
-        root = roots[self.record_id]
-        lineage_ids = tuple(i for i, value in roots.items() if value == root)
-        tips = tuple(i for i in lineage_ids if not successors[i] and not withdrawn[i])
-        expected_activity = ("superseded" if successors[self.record_id] else
-                             "withdrawn" if withdrawn[self.record_id] else "current")
-        expected_health = ("inactive" if not tips else
-                           "conflicted" if len(tips) > 1 else "healthy")
-        if (self.activity != expected_activity
-                or self.lineage_health != expected_health
-                or self.root_record_index != indices[root]
-                or self.successor_indices != tuple(indices[i] for i in successors[self.record_id])
-                or self.withdrawal_indices != tuple(indices[i] for i in withdrawn[self.record_id])):
+        expected = _port_assertion_payload(
+            self.material, loaded, self.record_id)
+        supplied = self.model_dump(mode="python", exclude={"material"})
+        if supplied != expected:
             raise ValueError("assertion lifecycle disclosure is forged")
         return self
 
@@ -923,47 +1043,14 @@ class _ConnectionsResult(_WithMaterial):
                 raise ValueError("shared topology admission status is forged")
         else:
             raise ValueError("unsupported connection result contract")
-        root_ids = sorted({loaded.port_connection_root_by_id[i] for i in selected})
-        expected_rows = []
-        for position, root_id in enumerate(root_ids):
-            lineage = tuple(sorted(i for i, root in loaded.port_connection_root_by_id.items()
-                                   if root == root_id))
-            tips = loaded.current_port_connection_tips_by_root[root_id]
-            withdrawals = tuple(sorted(w for i in lineage
-                                       for w in loaded.port_connection_withdrawn_by[i]))
-            expected_rows.append(dict(
-                root_index=position, root_record_index=ids_to_index[root_id],
-                lineage_record_indices=tuple(ids_to_index[i] for i in lineage),
-                current_tip_indices=tuple(ids_to_index[i.record_id] for i in tips),
-                withdrawal_indices=tuple(ids_to_index[i] for i in withdrawals),
-                lineage_health=("inactive" if not tips else
-                                "conflicted" if len(tips) > 1 else "healthy"),
-                exact_endpoint_set=(loaded.port_connections[root_id].endpoint_port_anchor_ids
-                                    == requested)))
-        expected_conclusion = ("unknown" if not expected_rows else "asserted"
-                               if any(row["current_tip_indices"]
-                                      for row in expected_rows)
-                               else "inactive")
-        roots_by_subject = {}
-        for root_position, root_id in enumerate(root_ids):
-            subject = loaded.port_connections[root_id].endpoint_port_anchor_ids
-            roots_by_subject.setdefault(subject, []).append(root_position)
-        expected_subjects = tuple(
-            dict(
-                subject_index=position,
-                endpoint_port_anchor_ids=subject,
-                conclusion=("asserted" if any(
-                    expected_rows[root_index]["current_tip_indices"]
-                    for root_index in root_indices) else "inactive"),
-                root_indices=tuple(root_indices),
-            )
-            for position, (subject, root_indices) in enumerate(
-                sorted(roots_by_subject.items()))
-        )
-        if self.conclusion != expected_conclusion or tuple(
-                row.model_dump() for row in self.roots) != tuple(expected_rows) \
-                or tuple(row.model_dump() for row in self.subjects) != \
-                expected_subjects:
+        expected = _connection_parts_payload(
+            self.material, loaded, selected, requested,
+            record_indices=ids_to_index)
+        if (self.conclusion != expected["conclusion"]
+                or tuple(row.model_dump() for row in self.roots)
+                != expected["roots"]
+                or tuple(row.model_dump() for row in self.subjects)
+                != expected["subjects"]):
             raise ValueError("connection disclosure is forged")
         for row in self.roots:
             object.__setattr__(row, "_material", self.material)

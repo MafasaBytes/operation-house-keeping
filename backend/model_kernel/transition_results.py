@@ -6,18 +6,25 @@ the accepted state payload derivations; it does not evaluate observations,
 classifications, transition assessment, or occurrence.
 """
 
-from collections.abc import Mapping
 from typing import Annotated, Literal
 
 from pydantic import (
     BaseModel, ConfigDict, Field, PrivateAttr, StrictInt, field_validator,
-    model_validator, TypeAdapter,
+    model_validator,
 )
 
 from backend.model_kernel.canonical import _transition_effective_body_bytes
 from backend.model_kernel.contracts import AssertionContext
 from backend.model_kernel.port_results import (
     AssertionActivity, ContainingLineageHealth, ModelQueryMaterial,
+)
+from backend.model_kernel.result_revalidation import (
+    inspect_supplied_graph as _inspect_supplied_graph,
+    material_indices as _indices,
+    rebuild_context as _rebuild_context,
+    rebuild_material as _rebuild_material,
+    rebuild_row as _rebuild_row,
+    rebuild_rows as _rebuild_rows,
 )
 from backend.model_kernel.state_results import (
     StateDeclarationConclusion,
@@ -56,94 +63,6 @@ EntityTransitionsStatus = Literal["entity_not_registered", "registered"]
 TransitionAssertionLookupStatus = Literal["not_found", "found"]
 
 _TransitionIndex = Annotated[StrictInt, Field(ge=0)]
-_MAX_RESULT_GRAPH_DEPTH = 128
-_MAX_RESULT_GRAPH_NODES = 100_000
-_CONTEXT_ADAPTER = TypeAdapter(AssertionContext)
-
-
-def _field(container, name, missing):
-    if isinstance(container, BaseModel):
-        return vars(container).get(name, missing)
-    if isinstance(container, Mapping):
-        return container.get(name, missing)
-    return missing
-
-
-def _graph_children(item, outer_material):
-    if isinstance(item, BaseModel):
-        fields = type(item).model_fields
-        stored = vars(item)
-        extras = getattr(item, "__pydantic_extra__", None)
-        if set(stored).difference(fields) or extras:
-            raise ValueError("pydantic result instance contains extra fields")
-        private = getattr(item, "__pydantic_private__", None)
-        if private is None:
-            private = {}
-        elif type(private) is not dict:
-            raise ValueError(
-                "pydantic result instance contains private cache")
-        permitted_private = (
-            {"_material"}
-            if "_material" in getattr(type(item),
-                                      "__private_attributes__", {})
-            else set())
-        if set(private).difference(permitted_private):
-            raise ValueError("pydantic result instance contains private cache")
-        if "_material" in private:
-            bound_material = private["_material"]
-            if (not isinstance(outer_material, ModelQueryMaterial)
-                    or bound_material is not outer_material):
-                raise ValueError(
-                    "nested result is bound to another material snapshot")
-        return tuple(stored[name] for name in fields if name in stored)
-    if isinstance(item, Mapping):
-        return tuple(item.keys()) + tuple(item.values())
-    if isinstance(item, (tuple, list, set, frozenset)):
-        return tuple(item)
-    return None
-
-
-def _inspect_supplied_graph(value) -> None:
-    """Reject hidden extras, cycles, excessive depth, and coercive counts.
-
-    The traversal is iterative so a hostile caller cannot make validation rely
-    on Python recursion. Shared acyclic objects are allowed, but no supplied
-    private/cached value is trusted or copied into the reconstructed result.
-    """
-    missing = object()
-    material = _field(value, "material", missing)
-    revision = _field(material, "revision", missing)
-    record_count = _field(revision, "record_count", missing)
-    if record_count is not missing and type(record_count) is not int:
-        raise ValueError("material revision record_count must be strict int")
-
-    stack = [(False, value, 0)]
-    active: set[int] = set()
-    complete: set[int] = set()
-    visited = 0
-    while stack:
-        exiting, item, depth = stack.pop()
-        children = _graph_children(item, material)
-        if children is None:
-            continue
-        identity = id(item)
-        if exiting:
-            active.remove(identity)
-            complete.add(identity)
-            continue
-        if identity in active:
-            raise ValueError("result object graph contains a cycle")
-        if identity in complete:
-            continue
-        if depth > _MAX_RESULT_GRAPH_DEPTH:
-            raise ValueError("result object graph exceeds maximum depth")
-        visited += 1
-        if visited > _MAX_RESULT_GRAPH_NODES:
-            raise ValueError("result object graph exceeds maximum size")
-        active.add(identity)
-        stack.append((True, item, depth))
-        stack.extend((False, child, depth + 1)
-                     for child in reversed(children))
 
 
 class _TransitionResult(BaseModel):
@@ -158,34 +77,6 @@ class _TransitionResult(BaseModel):
         # laundering while keeping rejection inside the typed validation path.
         _inspect_supplied_graph(value)
         return handler(value)
-
-
-def _dump_nested(value):
-    return (value.model_dump(mode="python")
-            if isinstance(value, BaseModel) else value)
-
-
-def _rebuild_material(value) -> ModelQueryMaterial:
-    return ModelQueryMaterial.model_validate(_dump_nested(value))
-
-
-def _rebuild_context(value) -> AssertionContext:
-    return _CONTEXT_ADAPTER.validate_python(_dump_nested(value))
-
-
-def _rebuild_rows(value, contract, label: str):
-    if not isinstance(value, (list, tuple)):
-        raise ValueError(f"{label} must be a tuple of result rows")
-    return tuple(contract.model_validate(_dump_nested(row)) for row in value)
-
-
-def _rebuild_row(value, contract):
-    return contract.model_validate(_dump_nested(value))
-
-
-def _indices(material: ModelQueryMaterial) -> dict[str, int]:
-    return {record_id: index for index, record_id
-            in enumerate(material.revision.record_ids)}
 
 
 def _transition_lookup_payload(material: ModelQueryMaterial, loaded,

@@ -6,6 +6,15 @@ from pathlib import Path
 import typing
 
 import backend.model_kernel as kernel
+from tests.model_kernel.test_demo_model import (
+    BH001_MEMBERSHIP, CN001_MEMBERSHIP, GOLDEN_REVISION,
+    PRE_BH001_REVISION, PRE_CN001_MEMBERSHIP, PRE_CN001_REVISION,
+    PRE_ES001_MEMBERSHIP, PRE_ES001_REVISION, PRE_PT001_REVISION,
+    PRE_SPECIFICATION_MEMBERSHIP, PRE_SPECIFICATION_REVISION,
+    PRE_ST001_REVISION, PRE_VARIABLE_MEMBERSHIP, PRE_VARIABLE_REVISION,
+    PRE_VP001_REVISION, PT001_MEMBERSHIP, ST001_MEMBERSHIP,
+    VP001_MEMBERSHIP, VS001_MEMBERSHIP,
+)
 
 
 DEMO_MODEL = Path("models/demo-printer")
@@ -215,3 +224,37 @@ def test_flow_results_carry_material_once():
         "roots": decoded["roots"],
         "groups": decoded["effective_body_groups"],
     })
+
+
+def test_every_explicit_historical_membership_has_structured_flow_absence():
+    cases = (
+        (PRE_VARIABLE_MEMBERSHIP, PRE_VARIABLE_REVISION, 9),
+        (PRE_SPECIFICATION_MEMBERSHIP, PRE_SPECIFICATION_REVISION, 10),
+        (VS001_MEMBERSHIP, GOLDEN_REVISION, 11),
+        (PRE_ES001_MEMBERSHIP, PRE_ES001_REVISION, 14),
+        (PRE_CN001_MEMBERSHIP, PRE_CN001_REVISION, 16),
+        (CN001_MEMBERSHIP, PRE_PT001_REVISION, 18),
+        (PT001_MEMBERSHIP, PRE_VP001_REVISION, 28),
+        (VP001_MEMBERSHIP, PRE_BH001_REVISION, 29),
+        (BH001_MEMBERSHIP, PRE_ST001_REVISION, 32),
+        (ST001_MEMBERSHIP, CURRENT_REVISION, 34),
+    )
+    store = kernel.ModelStore(DEMO_MODEL)
+    for membership, revision, count in cases:
+        loaded = store.replay(membership)
+        queries = kernel.ModelQueries(loaded)
+        assert loaded.revision.revision_id == revision
+        assert loaded.revision.record_count == count
+        assert queries.flow(ABSENT_FLOW).status == "not_registered"
+        assert queries.flow_declaration(
+            ABSENT_FLOW, context=CONTEXT).conclusion == "not_registered"
+        port_result = queries.flows_involving_port(
+            REGISTERED_PORT, context=CONTEXT)
+        assert port_result.status == (
+            "registered" if REGISTERED_PORT
+            in loaded.port_registrations_by_anchor else
+            "port_not_registered")
+        assert port_result.entries == ()
+        for record_id in ABSENT_RECORDS:
+            assert queries.flow_assertion(record_id).lookup_status == \
+                "not_found"
