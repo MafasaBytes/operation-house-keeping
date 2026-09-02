@@ -24,6 +24,7 @@ from typing import Iterable, Mapping
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from backend.model_kernel.canonical import (
+    _flow_effective_body_bytes,
     canonical_payload,
     compute_revision_id,
     verify_record_id,
@@ -34,6 +35,9 @@ from backend.model_kernel.contracts import (
     BehaviorRuleWithdrawal,
     ConstraintRegistration,
     EntityRegistration,
+    FlowDeclaration,
+    FlowDeclarationWithdrawal,
+    FlowRegistration,
     MODEL_ID_PATTERN,
     MODEL_RECORD_ID_PATTERN,
     ModelConfigurationError,
@@ -65,7 +69,7 @@ from backend.model_kernel.contracts import (
 _RECORD_ADAPTER: TypeAdapter = TypeAdapter(ModelRecord)
 _RECORD_ID = re.compile(MODEL_RECORD_ID_PATTERN)
 _FILENAME = re.compile(
-    r"^(reg|rtd|rel|rwd|vrg|vsp|vsm|crg|vcn|prg|pif|pcn|pcm|ptw|vpa|vpw|brg|bhd|bhw|srg|std|stw|trg|trd|trw)_[0-9a-f]{64}\.json$")
+    r"^(reg|rtd|rel|rwd|vrg|vsp|vsm|crg|vcn|prg|pif|pcn|pcm|ptw|vpa|vpw|brg|bhd|bhw|srg|std|stw|trg|trd|trw|frg|fld|flw)_[0-9a-f]{64}\.json$")
 
 _EMPTY: Mapping = MappingProxyType({})
 
@@ -224,6 +228,27 @@ class LoadedModel:
     transition_declaration_withdrawn_by: Mapping[
         str, tuple[str, ...]] = _EMPTY
     transition_declaration_withdrawals_by_target: Mapping[
+        str, tuple[str, ...]] = _EMPTY
+    flow_registrations: Mapping[str, FlowRegistration] = _EMPTY
+    flow_registrations_by_anchor: Mapping[str, FlowRegistration] = _EMPTY
+    flow_anchor_id_by_semantic_signature: Mapping[tuple, str] = _EMPTY
+    flow_anchor_ids_by_port: Mapping[str, tuple[str, ...]] = _EMPTY
+    flow_role_by_anchor_and_port: Mapping[tuple[str, str], str] = _EMPTY
+    flow_declarations: Mapping[str, FlowDeclaration] = _EMPTY
+    flow_declaration_ids_by_key: Mapping[tuple, tuple[str, ...]] = _EMPTY
+    flow_declaration_parent_ids: Mapping[str, tuple[str, ...]] = _EMPTY
+    flow_declaration_successor_ids: Mapping[str, tuple[str, ...]] = _EMPTY
+    flow_declaration_root_by_id: Mapping[str, str] = _EMPTY
+    flow_declaration_ancestry_by_id: Mapping[str, tuple[str, ...]] = _EMPTY
+    current_flow_declaration_tips_by_root: Mapping[
+        str, tuple[FlowDeclaration, ...]] = _EMPTY
+    flow_declaration_effective_body_by_id: Mapping[str, bytes] = _EMPTY
+    flow_declaration_ids_by_effective_body: Mapping[
+        bytes, tuple[str, ...]] = _EMPTY
+    flow_declaration_withdrawals: Mapping[
+        str, FlowDeclarationWithdrawal] = _EMPTY
+    flow_declaration_withdrawn_by: Mapping[str, tuple[str, ...]] = _EMPTY
+    flow_declaration_withdrawals_by_target: Mapping[
         str, tuple[str, ...]] = _EMPTY
 
 
@@ -414,6 +439,10 @@ def validate_record_collection(
     transition_declarations: dict[str, TransitionDeclaration] = {}
     transition_declaration_withdrawals: dict[
         str, TransitionDeclarationWithdrawal] = {}
+    flow_registrations: dict[str, FlowRegistration] = {}
+    flow_declarations: dict[str, FlowDeclaration] = {}
+    flow_declaration_withdrawals: dict[
+        str, FlowDeclarationWithdrawal] = {}
     types: dict[str, RelationshipTypeDefinition] = {}
     assertions: dict[str, RelationshipAssertion] = {}
     withdrawals: dict[str, RelationshipWithdrawal] = {}
@@ -464,6 +493,9 @@ def validate_record_collection(
             "transition_declaration": transition_declarations,
             "transition_declaration_withdrawal": (
                 transition_declaration_withdrawals),
+            "flow_registration": flow_registrations,
+            "flow_declaration": flow_declarations,
+            "flow_declaration_withdrawal": flow_declaration_withdrawals,
             "relationship_type_definition": types,
             "relationship_assertion": assertions,
             "relationship_withdrawal": withdrawals,
@@ -1688,6 +1720,220 @@ def validate_record_collection(
                 *current_transition_declaration_tips_by_root[root],
                 transition_declarations[record_id])
 
+    # -- flows: permanent logical directed port-group identities and
+    # exact-context declarations that pin structural PT claims.  These
+    # indexes deliberately disclose model support only; no activity,
+    # occurrence, transfer, compatibility, or causality is inferred.
+    flow_registrations_by_anchor: dict[str, FlowRegistration] = {}
+    flow_anchor_id_by_semantic_signature: dict[tuple, str] = {}
+    flow_anchor_ids_by_port: dict[str, tuple[str, ...]] = {}
+    flow_role_by_anchor_and_port: dict[tuple[str, str], str] = {}
+    for record_id in sorted(flow_registrations):
+        registration = flow_registrations[record_id]
+        anchor_id = registration.anchor.anchor_id
+        existing = flow_registrations_by_anchor.get(anchor_id)
+        if existing is not None:
+            _fail("MODEL_DUPLICATE_REGISTRATION",
+                  f"flow {anchor_id} is registered more than once "
+                  f"({existing.record_id}, {record_id})")
+        token = registration.flow_kind
+        signature = (
+            registration.source_port_anchor_ids,
+            registration.sink_port_anchor_ids,
+            token.token_kind, token.system_id, token.system_edition,
+            token.code)
+        if signature in flow_anchor_id_by_semantic_signature:
+            _fail("MODEL_FLOW_REGISTRATION_INVALID",
+                  f"flow registration {record_id} duplicates an exact "
+                  "logical flow signature")
+        participant_registrations = []
+        for port_id in (*registration.source_port_anchor_ids,
+                        *registration.sink_port_anchor_ids):
+            port_registration = port_registrations_by_anchor.get(port_id)
+            if port_registration is None:
+                _fail("MODEL_REFERENCE_INVALID",
+                      f"flow registration {record_id} references an "
+                      "unregistered participant port")
+            participant_registrations.append(port_registration)
+        _check_model_record_evidence(
+            records, registration, "flow registration")
+        required_citations = {
+            port.record_id for port in participant_registrations}
+        supplied_citations = {
+            reference.record_id for reference in registration.evidence
+            if reference.kind == "model_record"}
+        has_claim_basis = any(
+            reference.kind == "owner_declaration"
+            for reference in registration.evidence)
+        if (not required_citations <= supplied_citations
+                or not has_claim_basis):
+            _fail("MODEL_FLOW_REGISTRATION_INVALID",
+                  f"flow registration {record_id} lacks its exact "
+                  "participant PRG citations or claim basis")
+        flow_registrations_by_anchor[anchor_id] = registration
+        flow_anchor_id_by_semantic_signature[signature] = anchor_id
+        for role, ports in (
+                ("source", registration.source_port_anchor_ids),
+                ("sink", registration.sink_port_anchor_ids)):
+            for port_id in ports:
+                flow_anchor_ids_by_port[port_id] = tuple(sorted((
+                    *flow_anchor_ids_by_port.get(port_id, ()), anchor_id)))
+                flow_role_by_anchor_and_port[(anchor_id, port_id)] = role
+
+    def flow_declaration_key(record):
+        return (record.flow_anchor_id, record.context)
+
+    flow_declaration_ids_by_key: dict[tuple, tuple[str, ...]] = {}
+    flow_declaration_parent_ids: dict[str, tuple[str, ...]] = {}
+    flow_declaration_effective_body_by_id: dict[str, bytes] = {}
+    flow_declaration_ids_by_effective_body: dict[
+        bytes, tuple[str, ...]] = {}
+    for record_id in sorted(flow_declarations):
+        declaration = flow_declarations[record_id]
+        registration = flow_registrations_by_anchor.get(
+            declaration.flow_anchor_id)
+        if registration is None:
+            _fail("MODEL_REFERENCE_INVALID",
+                  f"flow declaration {record_id} references an "
+                  "unregistered flow")
+        source_ports = tuple(
+            pin.port_anchor_id for pin in declaration.source_direction_pins)
+        sink_ports = tuple(
+            pin.port_anchor_id for pin in declaration.sink_direction_pins)
+        if (source_ports != registration.source_port_anchor_ids
+                or sink_ports != registration.sink_port_anchor_ids):
+            _fail("MODEL_FLOW_DECLARATION_INVALID",
+                  f"flow declaration {record_id} substitutes or omits an "
+                  "exact registered port role")
+        connection = port_connections.get(
+            declaration.connection_assertion_record_id)
+        if connection is None:
+            _fail("MODEL_REFERENCE_INVALID",
+                  f"flow declaration {record_id} pins a missing connection "
+                  "assertion")
+        participants = tuple(sorted((*source_ports, *sink_ports)))
+        if connection.context != declaration.context:
+            _fail("MODEL_FLOW_DECLARATION_INVALID",
+                  f"flow declaration {record_id} pins a connection from "
+                  "another context")
+        if connection.endpoint_port_anchor_ids != participants:
+            _fail("MODEL_FLOW_DECLARATION_INVALID",
+                  f"flow declaration {record_id} pins a connection whose "
+                  "endpoint set is not the exact registered participant "
+                  "union")
+        pinned_interfaces = []
+        for role, pins, allowed in (
+                ("source", declaration.source_direction_pins,
+                 {"output", "bidirectional"}),
+                ("sink", declaration.sink_direction_pins,
+                 {"input", "bidirectional"})):
+            for pin in pins:
+                interface = port_interface_declarations.get(
+                    pin.declaration_record_id)
+                if interface is None:
+                    _fail("MODEL_REFERENCE_INVALID",
+                          f"flow declaration {record_id} pins a missing "
+                          "port-interface declaration")
+                if (interface.port_anchor_id != pin.port_anchor_id
+                        or interface.context != declaration.context
+                        or interface.declaration.dimension != "direction_role"
+                        or interface.declaration.value not in allowed):
+                    _fail("MODEL_FLOW_DECLARATION_INVALID",
+                          f"flow declaration {record_id} has a structurally "
+                          f"incoherent {role} direction pin")
+                pinned_interfaces.append(interface)
+        _check_model_record_evidence(
+            records, declaration, "flow declaration")
+        required_citations = {
+            registration.record_id,
+            connection.record_id,
+            *(port_registrations_by_anchor[port_id].record_id
+              for port_id in participants),
+            *(interface.record_id for interface in pinned_interfaces),
+        }
+        supplied_citations = {
+            reference.record_id for reference in declaration.evidence
+            if reference.kind == "model_record"}
+        has_claim_basis = any(
+            reference.kind == "owner_declaration"
+            for reference in declaration.evidence)
+        if (not required_citations <= supplied_citations
+                or not has_claim_basis):
+            _fail("MODEL_FLOW_DECLARATION_INVALID",
+                  f"flow declaration {record_id} lacks its exact FRG, PRG, "
+                  "PCN and PIF citations or claim basis")
+        key = flow_declaration_key(declaration)
+        flow_declaration_ids_by_key[key] = tuple(sorted((
+            *flow_declaration_ids_by_key.get(key, ()), record_id)))
+        flow_declaration_parent_ids[record_id] = declaration.supersedes
+        body = _flow_effective_body_bytes(declaration)
+        flow_declaration_effective_body_by_id[record_id] = body
+        flow_declaration_ids_by_effective_body[body] = tuple(sorted((
+            *flow_declaration_ids_by_effective_body.get(body, ()),
+            record_id)))
+
+    (flow_declaration_successor_ids,
+     flow_declaration_root_by_id) = _pt_dag_indexes(
+         flow_declarations, flow_declaration_key,
+         "MODEL_FLOW_LINEAGE_INVALID", "flow declaration")
+
+    flow_declaration_ancestry_by_id: dict[str, tuple[str, ...]] = {}
+    pending_flow_ancestry = set(flow_declarations)
+    while pending_flow_ancestry:
+        progressed = False
+        for record_id in sorted(tuple(pending_flow_ancestry)):
+            parents = flow_declarations[record_id].supersedes
+            if any(parent not in flow_declaration_ancestry_by_id
+                   for parent in parents):
+                continue
+            ancestors = {
+                ancestor
+                for parent in parents
+                for ancestor in (
+                    parent, *flow_declaration_ancestry_by_id[parent])
+            }
+            flow_declaration_ancestry_by_id[record_id] = tuple(
+                sorted(ancestors))
+            pending_flow_ancestry.remove(record_id)
+            progressed = True
+        if not progressed:
+            _fail("MODEL_FLOW_LINEAGE_INVALID",
+                  "flow declaration ancestry could not be derived")
+
+    flow_declaration_withdrawals_by_target: dict[
+        str, tuple[str, ...]] = {}
+    for withdrawal_id in sorted(flow_declaration_withdrawals):
+        withdrawal = flow_declaration_withdrawals[withdrawal_id]
+        target = withdrawal.withdraws
+        if target not in flow_declarations:
+            _fail("MODEL_REFERENCE_INVALID",
+                  f"flow withdrawal {withdrawal_id} targets a missing "
+                  "declaration")
+        if flow_declaration_successor_ids[target]:
+            _fail("MODEL_FLOW_WITHDRAWAL_INVALID",
+                  f"flow withdrawal {withdrawal_id} targets a superseded "
+                  "declaration")
+        if target in flow_declaration_withdrawals_by_target:
+            _fail("MODEL_FLOW_WITHDRAWAL_INVALID",
+                  f"flow declaration {target} is withdrawn more than once")
+        flow_declaration_withdrawals_by_target[target] = (withdrawal_id,)
+
+    flow_declaration_withdrawn_by = {
+        record_id: flow_declaration_withdrawals_by_target.get(record_id, ())
+        for record_id in flow_declarations}
+    current_flow_declaration_tips_by_root: dict[
+        str, tuple[FlowDeclaration, ...]] = {
+            root: () for root in sorted(set(
+                flow_declaration_root_by_id.values()))
+        }
+    for record_id in sorted(flow_declarations):
+        if (not flow_declaration_successor_ids[record_id]
+                and not flow_declaration_withdrawn_by[record_id]):
+            root = flow_declaration_root_by_id[record_id]
+            current_flow_declaration_tips_by_root[root] = (
+                *current_flow_declaration_tips_by_root[root],
+                flow_declarations[record_id])
+
     record_ids = tuple(sorted(records))
     revision = ModelRevision(
         revision_id=compute_revision_id(model_id, record_ids),
@@ -1883,6 +2129,45 @@ def validate_record_collection(
             for record_id in sorted(transition_declaration_withdrawn_by)}),
         transition_declaration_withdrawals_by_target=_frozen_mapping(
             transition_declaration_withdrawals_by_target),
+        flow_registrations=_frozen_mapping({
+            record_id: flow_registrations[record_id]
+            for record_id in sorted(flow_registrations)}),
+        flow_registrations_by_anchor=_frozen_mapping(
+            flow_registrations_by_anchor),
+        flow_anchor_id_by_semantic_signature=_frozen_mapping(
+            flow_anchor_id_by_semantic_signature),
+        flow_anchor_ids_by_port=_frozen_mapping(flow_anchor_ids_by_port),
+        flow_role_by_anchor_and_port=_frozen_mapping(
+            flow_role_by_anchor_and_port),
+        flow_declarations=_frozen_mapping({
+            record_id: flow_declarations[record_id]
+            for record_id in sorted(flow_declarations)}),
+        flow_declaration_ids_by_key=_frozen_mapping(
+            flow_declaration_ids_by_key),
+        flow_declaration_parent_ids=_frozen_mapping({
+            record_id: flow_declaration_parent_ids[record_id]
+            for record_id in sorted(flow_declaration_parent_ids)}),
+        flow_declaration_successor_ids=_frozen_mapping({
+            record_id: flow_declaration_successor_ids[record_id]
+            for record_id in sorted(flow_declaration_successor_ids)}),
+        flow_declaration_root_by_id=_frozen_mapping(
+            flow_declaration_root_by_id),
+        flow_declaration_ancestry_by_id=_frozen_mapping(
+            flow_declaration_ancestry_by_id),
+        current_flow_declaration_tips_by_root=_frozen_mapping(
+            current_flow_declaration_tips_by_root),
+        flow_declaration_effective_body_by_id=_frozen_mapping(
+            flow_declaration_effective_body_by_id),
+        flow_declaration_ids_by_effective_body=_frozen_mapping(
+            flow_declaration_ids_by_effective_body),
+        flow_declaration_withdrawals=_frozen_mapping({
+            record_id: flow_declaration_withdrawals[record_id]
+            for record_id in sorted(flow_declaration_withdrawals)}),
+        flow_declaration_withdrawn_by=_frozen_mapping({
+            record_id: flow_declaration_withdrawn_by[record_id]
+            for record_id in sorted(flow_declaration_withdrawn_by)}),
+        flow_declaration_withdrawals_by_target=_frozen_mapping(
+            flow_declaration_withdrawals_by_target),
         superseded_by=_frozen_mapping(superseded_by),
         withdrawn_by=_frozen_mapping(withdrawn_by))
 
