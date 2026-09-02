@@ -105,6 +105,30 @@ def test_hidden_extras_and_private_state_fail_at_every_flow_nesting_level():
         assert error.value.error_code == "MODEL_RECORD_INVALID"
 
 
+def test_falsey_top_level_extra_rejects_collection_and_store_append(tmp_path):
+    class FalseyExtra(dict):
+        def __bool__(self):
+            return False
+
+    registration, declaration, _ = claims()
+    forged = registration.model_copy()
+    object.__setattr__(
+        forged, "__pydantic_extra__", FalseyExtra({"activity": True}))
+    records = complete_records(declaration)
+    records.pop(registration.record_id)
+    records[registration.record_id] = forged
+    with pytest.raises(kernel.ModelIntegrityError) as error:
+        validate_record_collection("test-model", records)
+    assert error.value.error_code == "MODEL_RECORD_INVALID"
+
+    store, *_ = world(tmp_path)
+    before = tree_snapshot(store)
+    with pytest.raises(kernel.ModelIntegrityError) as error:
+        store.append(forged)
+    assert error.value.error_code == "MODEL_RECORD_INVALID"
+    assert tree_snapshot(store) == before
+
+
 def test_equal_reappend_is_noop_and_same_id_different_content_rejects(
         tmp_path):
     registration, declaration, withdrawal = claims()
@@ -182,7 +206,12 @@ def test_crafted_cycle_rejects_iteratively_without_hash_verification():
 
 def test_replay_requires_every_flow_dependency_and_extra_evidence(tmp_path):
     registration, declaration, _ = claims()
-    support = flow_declaration(
+    parent = flow_declaration(
+        registration,
+        port_records=flow_fixture()[2], pcn=flow_fixture()[3],
+        source_pifs=flow_fixture()[4], sink_pifs=flow_fixture()[5],
+        note="required parent")
+    extra_support = flow_declaration(
         registration,
         port_records=flow_fixture()[2], pcn=flow_fixture()[3],
         source_pifs=flow_fixture()[4], sink_pifs=flow_fixture()[5],
@@ -192,16 +221,22 @@ def test_replay_requires_every_flow_dependency_and_extra_evidence(tmp_path):
         port_records=flow_fixture()[2], pcn=flow_fixture()[3],
         source_pifs=flow_fixture()[4], sink_pifs=flow_fixture()[5],
         evidence=(*declaration.evidence, kernel.ModelRecordEvidence(
-            kind="model_record", record_id=support.record_id)),
+            kind="model_record", record_id=extra_support.record_id)),
+        supersedes=(parent.record_id,),
         note="dependent")
-    store, *_ = world(tmp_path, support, dependent)
+    store, _, ports, *_ = world(
+        tmp_path, parent, extra_support, dependent)
     loaded = store.load()
     mandatory = (
+        next(record.record_id for record in loaded.records.values()
+             if record.record_kind == "entity_registration"),
         registration.record_id,
+        *(record.record_id for record in ports),
         dependent.connection_assertion_record_id,
         dependent.source_direction_pins[0].declaration_record_id,
         dependent.sink_direction_pins[0].declaration_record_id,
-        support.record_id,
+        parent.record_id,
+        extra_support.record_id,
     )
     for omitted in mandatory:
         membership = tuple(
@@ -210,6 +245,23 @@ def test_replay_requires_every_flow_dependency_and_extra_evidence(tmp_path):
         with pytest.raises(kernel.ModelIntegrityError) as error:
             store.replay(membership)
         assert error.value.error_code == "MODEL_REFERENCE_INVALID"
+
+
+def test_mixed_world_membership_cannot_substitute_another_flow_registration():
+    records, registration, ports, pcn, source_pifs, sink_pifs = flow_fixture()
+    declaration = flow_declaration(
+        registration, port_records=ports, pcn=pcn,
+        source_pifs=source_pifs, sink_pifs=sink_pifs)
+    other = flow_registration(
+        flow_anchor_id="flo_" + "b" * 32,
+        port_records=ports,
+        kind=registration.flow_kind.model_copy(update={
+            "code": "other_logical_flow"}))
+    mixed = {record.record_id: record for record in (
+        *records, other, declaration)}
+    with pytest.raises(kernel.ModelIntegrityError) as error:
+        validate_record_collection("test-model", mixed)
+    assert error.value.error_code == "MODEL_REFERENCE_INVALID"
 
 
 def test_hash_seed_does_not_change_flow_identity_revision_or_indexes():
@@ -263,6 +315,8 @@ print(json.dumps({
     "withdrawn": pairs(loaded.flow_declaration_withdrawn_by, list),
     "withdrawals": pairs(
         loaded.flow_declaration_withdrawals, lambda item: item.record_id),
+    "withdrawals_by_target": pairs(
+        loaded.flow_declaration_withdrawals_by_target, list),
 }, sort_keys=True, separators=(",", ":")))
 '''
     outputs = []

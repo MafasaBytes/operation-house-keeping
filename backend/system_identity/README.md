@@ -3,15 +3,15 @@
 The canonical identity namespace shared between `identity_binding` and
 the model kernel: pure anchor value contracts (`EntityAnchor`,
 `VariableAnchor`, `ConstraintAnchor`, `PortAnchor`, `BehaviorAnchor`, and
-`StateAnchor`, and `TransitionAnchor`) plus pure public UUID4 minters for
-constraint, port, behavior, state, transition, and variable
+`StateAnchor`, `TransitionAnchor`, and `FlowAnchor`) plus pure public UUID4
+minters for constraint, port, behavior, state, transition, flow, and variable
 identities — no
 storage, no I/O, no authority,
 and no dependency on any other backend module (enforced by test).
 
 Anchor IDs are opaque
-(`ent_`/`var_`/`con_`/`prt_`/`bhv_`/`sta_`/`trn_` + uuid4 hex) by accepted decision
-(ADR-0006): identity survives renames and role reassignment, and a
+(`ent_`/`var_`/`con_`/`prt_`/`bhv_`/`sta_`/`trn_`/`flo_` + uuid4 hex) by
+accepted decision (ADR-0006): identity survives renames and role reassignment, and a
 replacement physical component always receives a new anchor even when
 its display name and source address are unchanged. `namespace`,
 `display_name`, and `role_name` are human context and are never used for
@@ -43,6 +43,13 @@ lifecycle, assessment, or occurrence meaning. `mint_transition_anchor()`
 creates one fresh opaque UUID4 identity and performs no lookup or persistence.
 ST-002 model knowledge begins only with a separately admitted
 `TransitionRegistration`; names and changed observations create nothing.
+
+`FlowAnchor` contains no connection, port role, flow-kind, context, support,
+activity, rate, occurrence, mechanism, or causal meaning.
+`mint_flow_anchor()` creates one fresh opaque UUID4 identity and performs no
+lookup or persistence. FL-001 model knowledge begins only with a separately
+admitted `FlowRegistration`; connectivity, interface direction, names, and
+observations create no flow.
 
 ST-001 Slice A implemented this identity and record foundation without adding
 state query, classification, fixture, or transition capability. The later

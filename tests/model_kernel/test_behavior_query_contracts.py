@@ -67,7 +67,7 @@ def test_exact_public_result_names_ordered_fields_and_exports():
         contract = getattr(kernel, name)
         assert tuple(contract.model_fields) == fields
         assert name in kernel.__all__
-    assert len(kernel.__all__) == 182
+    assert len(kernel.__all__) == 187
     assert len(kernel.__all__) == len(set(kernel.__all__))
     assert {name for name in kernel.__all__
             if name.startswith("Behavior") or name.startswith("VariableBehavior")

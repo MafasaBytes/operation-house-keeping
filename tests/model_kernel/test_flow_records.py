@@ -126,6 +126,19 @@ def test_declaration_parents_accept_only_fld_ids(parents):
             **declaration.model_dump(mode="python"), "supersedes": parents})
 
 
+@pytest.mark.parametrize("target", [
+    "frg_" + "a" * 64,
+    "flw_" + "a" * 64,
+    "trd_" + "a" * 64,
+    "fld_NOT_HEX",
+])
+def test_withdrawal_accepts_only_exact_fld_target(target):
+    _, _, withdrawal = complete_claims()
+    with pytest.raises(ValidationError):
+        kernel.FlowDeclarationWithdrawal(**{
+            **withdrawal.model_dump(mode="python"), "withdraws": target})
+
+
 def test_flow_records_reject_hidden_nested_fields_at_direct_and_builder_edges():
     registration, declaration, withdrawal = complete_claims()
     cases = (
@@ -166,6 +179,42 @@ def test_private_state_on_nested_anchor_is_rejected_by_flow_record_boundary():
     with pytest.raises(kernel.ModelIntegrityError) as error:
         kernel.build_record(kernel.FlowRegistration, **payload)
     assert error.value.error_code == "MODEL_RECORD_INVALID"
+
+
+def test_falsey_extra_container_cannot_be_laundered_at_constructor_or_builder():
+    class FalseyExtra(dict):
+        def __bool__(self):
+            return False
+
+    registration, declaration, withdrawal = complete_claims()
+
+    def poison(value):
+        forged = value.model_copy()
+        object.__setattr__(
+            forged, "__pydantic_extra__",
+            FalseyExtra({"physical_mechanism": "forged"}))
+        return forged
+
+    cases = (
+        (registration, "anchor", poison(registration.anchor)),
+        (registration, "flow_kind", poison(registration.flow_kind)),
+        (registration, "authority", poison(registration.authority)),
+        (registration, "evidence", (
+            poison(registration.evidence[0]), *registration.evidence[1:])),
+        (declaration, "context", poison(declaration.context)),
+        (declaration, "source_direction_pins", (
+            poison(declaration.source_direction_pins[0]),)),
+        (withdrawal, "authority", poison(withdrawal.authority)),
+    )
+    for record, field, forged in cases:
+        payload = record.model_dump(mode="python")
+        payload[field] = forged
+        with pytest.raises(ValidationError):
+            type(record)(**payload)
+        payload.pop("record_id")
+        with pytest.raises(kernel.ModelIntegrityError) as error:
+            kernel.build_record(type(record), **payload)
+        assert error.value.error_code == "MODEL_RECORD_INVALID"
 
 
 def test_evidence_grammar_adds_only_frg_and_fld():

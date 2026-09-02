@@ -79,6 +79,17 @@ def test_nested_flow_anchor_forgery_is_rejected():
         identity.FlowAnchor.model_validate(forged)
 
 
+def test_names_neither_merge_distinct_ids_nor_split_one_opaque_id():
+    first = anchor(display_name="same", role_name="same")
+    distinct = anchor(
+        anchor_id="flo_" + "b" * 32,
+        display_name="same", role_name="same")
+    renamed = anchor(display_name="different", role_name="different")
+    assert first.anchor_id != distinct.anchor_id
+    assert first.anchor_id == renamed.anchor_id
+    assert first != renamed
+
+
 def test_minter_is_keyword_only_calls_uuid4_once_and_preserves_fields(
         monkeypatch):
     signature = inspect.signature(identity.mint_flow_anchor)

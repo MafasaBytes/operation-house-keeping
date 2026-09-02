@@ -377,7 +377,7 @@ def revalidate(record) -> ModelRecord:
                 fields = type(value).model_fields
                 stored = vars(value)
                 extras = getattr(value, "__pydantic_extra__", None)
-                if set(stored).difference(fields) or extras:
+                if set(stored).difference(fields) or extras is not None:
                     raise ValueError("pydantic instance contains extra fields")
                 private = getattr(value, "__pydantic_private__", None)
                 if private is not None and (

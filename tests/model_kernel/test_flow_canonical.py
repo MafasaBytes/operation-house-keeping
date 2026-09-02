@@ -118,6 +118,22 @@ def test_permutations_are_stable_but_roles_partitions_and_tokens_are_semantic():
     assert different_kind.record_id != base.record_id
 
 
+def test_every_qualified_token_field_is_exact_and_identity_defining():
+    _, base, ports, *_ = flow_fixture()
+    variants = (
+        flow_kind(system_id="other_system"),
+        flow_kind(system_edition="other_edition"),
+        flow_kind(code="other_code"),
+    )
+    records = tuple(flow_registration(
+        flow_anchor_id=FLOW_B, port_records=ports, kind=kind,
+        evidence=base.evidence, note=kind.code) for kind in variants)
+    assert len({record.record_id for record in (base, *records)}) == 4
+    with pytest.raises(ValidationError):
+        kernel.FlowKindToken(**{
+            **flow_kind().model_dump(), "token_kind": "commodity"})
+
+
 def test_equivalent_instant_and_parent_order_have_stable_identity():
     records, registration, ports, pcn, source_pifs, sink_pifs = flow_fixture()
     root = flow_declaration(

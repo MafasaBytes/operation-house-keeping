@@ -377,6 +377,9 @@ def test_model_kernel_public_exports_include_accepted_pt_and_vp_slice_a_names():
         "TransitionDeclarationRootResult", "TransitionLookupResult",
         "TransitionDeclarationResult", "EntityTransitionEntry",
         "EntityTransitionsResult", "TransitionAssertionDisclosureResult",
+        "FlowKindToken", "FlowDirectionDeclarationPin",
+        "FlowRegistration", "FlowDeclaration",
+        "FlowDeclarationWithdrawal",
     }
     old = {
         "EntityRegistration", "VariableRegistration",

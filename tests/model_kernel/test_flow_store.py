@@ -16,6 +16,7 @@ from tests.model_kernel.fl001_slice_a_helpers import (
     PORT_A,
     PORT_B,
     PORT_C,
+    PORT_D,
     T1,
     VIEW_INDEPENDENT,
     citation,
@@ -100,6 +101,42 @@ class TestFlowRegistrationAdmission:
             with pytest.raises(TypeError):
                 getattr(loaded, name)["forged"] = ()
 
+    def test_rc3_registration_ignores_conflicted_and_inactive_pt_support(
+            self, tmp_path):
+        records, registration, ports, *_ = flow_fixture(
+            include_support=False)
+        pcn_root = connection(note="PCN root")
+        pcn_left = connection(
+            supersedes=(pcn_root.record_id,), note="PCN left")
+        pcn_right = connection(
+            supersedes=(pcn_root.record_id,), note="PCN right")
+        source_root = direction_interface(PORT_A, "output", note="PIF root")
+        source_left = direction_interface(
+            PORT_A, "output", supersedes=(source_root.record_id,),
+            note="PIF left")
+        source_right = direction_interface(
+            PORT_A, "bidirectional", supersedes=(source_root.record_id,),
+            note="PIF right")
+        sink_root = direction_interface(PORT_B, "input", note="sink root")
+        store = kernel.ModelStore(tmp_path / "test-model")
+        for record in (
+                *records, pcn_root, pcn_left, pcn_right,
+                source_root, source_left, source_right, sink_root,
+                pt_withdrawal(sink_root), registration):
+            store.append(record)
+        loaded = store.load()
+        assert loaded.flow_registrations_by_anchor[FLOW_A] == registration
+        assert loaded.flow_declarations == {}
+        assert tuple(record.record_id for record in
+                     loaded.current_port_connection_tips_by_root[
+                         pcn_root.record_id]) == tuple(sorted((
+                             pcn_left.record_id, pcn_right.record_id)))
+        assert loaded.port_interface_superseded_by[source_root.record_id] == \
+            tuple(sorted((source_left.record_id, source_right.record_id)))
+        assert loaded.port_interface_withdrawn_by[sink_root.record_id]
+        assert not hasattr(loaded, "flow_occurrences")
+        assert len(ports) == 2
+
     def test_duplicate_anchor_and_exact_signature_reject_atomically(
             self, tmp_path):
         store, registration, ports, *_ = world(tmp_path)
@@ -129,14 +166,23 @@ class TestFlowRegistrationAdmission:
         assert loaded.flow_role_by_anchor_and_port[(FLOW_B, PORT_B)] == \
             "source"
 
-        records, _, third_ports, *_ = flow_fixture(
-            source_ports=(PORT_A, PORT_C), sink_ports=(PORT_B,))
-        third_registration = flow_registration(
-            flow_anchor_id=FLOW_B,
+        token_variant = flow_registration(
+            flow_anchor_id="flo_" + "c" * 32,
+            port_records=ports, kind=flow_kind(code="another_kind"))
+        store.append(token_variant)
+        third_port = port_registration(PORT_C)
+        store.append(third_port)
+        partition_variant = flow_registration(
+            flow_anchor_id="flo_" + "d" * 32,
             source_ports=(PORT_A, PORT_C), sink_ports=(PORT_B,),
-            port_records=third_ports, kind=flow_kind(code="another_kind"))
-        assert records and third_registration.record_id != \
-            registration.record_id
+            port_records=(*ports, third_port))
+        store.append(partition_variant)
+        loaded = store.load()
+        assert loaded.flow_registrations_by_anchor[
+            token_variant.anchor.anchor_id] == token_variant
+        assert loaded.flow_registrations_by_anchor[
+            partition_variant.anchor.anchor_id] == partition_variant
+        assert len(loaded.flow_registrations) == 4
 
     def test_cross_entity_many_to_many_signature_is_one_flow_not_pairs(
             self, tmp_path):
@@ -183,9 +229,14 @@ class TestFlowRegistrationAdmission:
 
         refs = tuple(item for item in registration.evidence
                      if item.kind == "model_record")
-        for index, evidence in enumerate((refs, (FLOW_REGISTRATION_CLAIM,),
-                                          refs[:-1] + (
-                                              FLOW_REGISTRATION_CLAIM,))):
+        attacks = (
+            refs,
+            (FLOW_REGISTRATION_CLAIM,),
+            *(tuple(ref for position, ref in enumerate(refs)
+                    if position != omitted) + (FLOW_REGISTRATION_CLAIM,)
+              for omitted in range(len(refs))),
+        )
+        for index, evidence in enumerate(attacks):
             candidate = flow_registration(
                 flow_anchor_id=FLOW_B, port_records=ports,
                 evidence=evidence, note=f"missing-basis-{index}")
@@ -222,19 +273,26 @@ class TestFlowDeclarationAdmission:
             declaration.record_id,)
         assert loaded.flow_registrations_by_anchor[FLOW_A] == registration
 
-    def test_view_independent_exact_context_admits(self, tmp_path):
+    @pytest.mark.parametrize("context", [
+        *(kernel.LifecycleViewContext(kind="lifecycle_view", view=view)
+          for view in ("as_designed", "as_built", "as_configured",
+                       "as_operated", "as_maintained")),
+        VIEW_INDEPENDENT,
+    ])
+    def test_every_exact_context_arm_admits_independently(
+            self, tmp_path, context):
         records, registration, ports, pcn, source_pifs, sink_pifs = \
-            flow_fixture(context=VIEW_INDEPENDENT)
+            flow_fixture(context=context)
         declaration = flow_declaration(
             registration, port_records=ports, pcn=pcn,
             source_pifs=source_pifs, sink_pifs=sink_pifs,
-            context=VIEW_INDEPENDENT)
+            context=context)
         store = kernel.ModelStore(tmp_path / "test-model")
         for record in (*records, registration, declaration):
             store.append(record)
         loaded = store.load()
         assert loaded.flow_declaration_ids_by_key[
-            (FLOW_A, VIEW_INDEPENDENT)] == (declaration.record_id,)
+            (FLOW_A, context)] == (declaration.record_id,)
 
     @pytest.mark.parametrize("source_value,sink_value,accepted", [
         (source, sink, source in {"output", "bidirectional"}
@@ -255,9 +313,12 @@ class TestFlowDeclarationAdmission:
               if record.record_kind != "port_interface_declaration"),
             source_pif, sink_pif, registration, declaration)}
         if accepted:
-            assert validate_record_collection(
-                "test-model", records).flow_declarations[
-                    declaration.record_id] == declaration
+            loaded = validate_record_collection("test-model", records)
+            assert loaded.flow_declarations[declaration.record_id] == \
+                declaration
+            assert tuple(loaded.flow_registrations_by_anchor) == (FLOW_A,)
+            assert loaded.flow_role_by_anchor_and_port == {
+                (FLOW_A, PORT_A): "source", (FLOW_A, PORT_B): "sink"}
         else:
             with pytest.raises(kernel.ModelIntegrityError) as error:
                 validate_record_collection("test-model", records)
@@ -296,6 +357,96 @@ class TestFlowDeclarationAdmission:
             assert_atomic_rejection(
                 store, candidate, "MODEL_FLOW_DECLARATION_INVALID")
 
+    def test_missing_frg_and_individual_pif_reject_reference_typed(self):
+        records, registration, ports, pcn, source_pifs, sink_pifs = \
+            flow_fixture()
+        missing_registration = flow_declaration(
+            registration, port_records=ports, pcn=pcn,
+            source_pifs=source_pifs, sink_pifs=sink_pifs,
+            flow_anchor_id=FLOW_B, note="missing FRG")
+        missing_pif = flow_declaration(
+            registration, port_records=ports, pcn=pcn,
+            source_pifs=source_pifs, sink_pifs=sink_pifs,
+            source_direction_pins=(direction_pin(
+                PORT_A, "pif_" + "f" * 64),), note="missing PIF")
+        for candidate in (missing_registration, missing_pif):
+            with pytest.raises(kernel.ModelIntegrityError) as error:
+                validate_record_collection("test-model", {
+                    record.record_id: record
+                    for record in (*records, registration, candidate)})
+            assert error.value.error_code == "MODEL_REFERENCE_INVALID"
+
+    def test_every_nonexact_connection_union_rejects(self):
+        records, registration, ports, _, source_pifs, sink_pifs = \
+            flow_fixture(source_ports=(PORT_A, PORT_C), sink_ports=(PORT_B,))
+        fourth = port_registration(PORT_D)
+        attacks = (
+            connection((PORT_A, PORT_B), note="proper subset"),
+            connection((PORT_A, PORT_B, PORT_D),
+                       note="same-cardinality different union"),
+            connection((PORT_A, PORT_D), note="overlap only"),
+            connection((PORT_A, PORT_B, PORT_C, PORT_D),
+                       note="proper superset"),
+        )
+        for index, candidate_pcn in enumerate(attacks):
+            declaration = flow_declaration(
+                registration, port_records=ports, pcn=candidate_pcn,
+                source_pifs=source_pifs, sink_pifs=sink_pifs,
+                note=f"nonexact-union-{index}")
+            collection = {record.record_id: record for record in (
+                *records, fourth, candidate_pcn, registration, declaration)}
+            with pytest.raises(kernel.ModelIntegrityError) as error:
+                validate_record_collection("test-model", collection)
+            assert error.value.error_code == "MODEL_FLOW_DECLARATION_INVALID"
+
+    def test_missing_extra_wrong_dimension_and_wrong_context_pins_reject(self):
+        records, registration, ports, pcn, source_pifs, sink_pifs = \
+            flow_fixture(source_ports=(PORT_A, PORT_C), sink_ports=(PORT_B,))
+        wrong_dimension = kernel.build_record(
+            kernel.PortInterfaceDeclaration,
+            port_anchor_id=PORT_A,
+            context=AS_DESIGNED,
+            declaration=kernel.InterfaceDomainDeclaration(
+                dimension="interface_domain",
+                value=kernel.InterfaceDomainToken(
+                    token_kind="interface_domain", system_id="project_local",
+                    system_edition="1", code="synthetic")),
+            evidence=source_pifs[0].evidence,
+            supersedes=(),
+            recorded_at=source_pifs[0].recorded_at,
+            authority=AUTHORITY,
+            note="wrong dimension",
+        )
+        wrong_context = direction_interface(
+            PORT_A, "output", context=VIEW_INDEPENDENT,
+            note="wrong context")
+        attacks = (
+            {"source_direction_pins": (direction_pin(
+                PORT_A, source_pifs[0].record_id),)},
+            {"source_direction_pins": (
+                *(direction_pin(item.port_anchor_id, item.record_id)
+                  for item in source_pifs),
+                direction_pin(PORT_D, "pif_" + "d" * 64))},
+            {"source_direction_pins": (direction_pin(
+                PORT_A, wrong_dimension.record_id),
+                direction_pin(PORT_C, source_pifs[1].record_id))},
+            {"source_direction_pins": (direction_pin(
+                PORT_A, wrong_context.record_id),
+                direction_pin(PORT_C, source_pifs[1].record_id))},
+        )
+        extras = (wrong_dimension, wrong_context)
+        for index, overrides in enumerate(attacks):
+            declaration = flow_declaration(
+                registration, port_records=ports, pcn=pcn,
+                source_pifs=source_pifs, sink_pifs=sink_pifs,
+                note=f"pin-shape-{index}", **overrides)
+            collection = {record.record_id: record for record in (
+                *records, *extras, registration, declaration)}
+            with pytest.raises(kernel.ModelIntegrityError) as error:
+                validate_record_collection("test-model", collection)
+            assert error.value.error_code in {
+                "MODEL_FLOW_DECLARATION_INVALID", "MODEL_REFERENCE_INVALID"}
+
     def test_missing_support_and_evidence_closure_precede_claim_basis(
             self, tmp_path):
         _, registration, ports, pcn, source_pifs, sink_pifs = flow_fixture()
@@ -318,9 +469,14 @@ class TestFlowDeclarationAdmission:
             source_pifs=source_pifs, sink_pifs=sink_pifs)
         refs = tuple(item for item in complete.evidence
                      if item.kind == "model_record")
-        for index, evidence in enumerate((refs, (FLOW_DECLARATION_CLAIM,),
-                                          refs[:-1] + (
-                                              FLOW_DECLARATION_CLAIM,))):
+        attacks = (
+            refs,
+            (FLOW_DECLARATION_CLAIM,),
+            *(tuple(ref for position, ref in enumerate(refs)
+                    if position != omitted) + (FLOW_DECLARATION_CLAIM,)
+              for omitted in range(len(refs))),
+        )
+        for index, evidence in enumerate(attacks):
             candidate = flow_declaration(
                 registration, port_records=ports, pcn=pcn,
                 source_pifs=source_pifs, sink_pifs=sink_pifs,
@@ -543,6 +699,57 @@ class TestFlowLifecycleAndReplay:
         assert inactive.port_connection_withdrawn_by[pcn.record_id]
         assert inactive.port_interface_withdrawn_by[source_pifs[0].record_id]
 
+    def test_valid_current_pif_cannot_repair_invalid_exact_stale_pin(self):
+        records, registration, ports, pcn, _, sink_pifs = flow_fixture()
+        records = tuple(
+            record for record in records
+            if not (record.record_kind == "port_interface_declaration"
+                    and record.port_anchor_id == PORT_A))
+        invalid_root = direction_interface(
+            PORT_A, "input", note="invalid source-role root")
+        valid_current = direction_interface(
+            PORT_A, "output", supersedes=(invalid_root.record_id,),
+            note="valid current replacement")
+        declaration = flow_declaration(
+            registration, port_records=ports, pcn=pcn,
+            source_pifs=(invalid_root,), sink_pifs=sink_pifs,
+            note="must not retarget")
+        collection = {record.record_id: record for record in (
+            *records, invalid_root, valid_current, registration, declaration)}
+        with pytest.raises(kernel.ModelIntegrityError) as error:
+            validate_record_collection("test-model", collection)
+        assert error.value.error_code == "MODEL_FLOW_DECLARATION_INVALID"
+
+    def test_exact_pins_admit_inside_conflicted_support_lineages(self):
+        records, registration, ports, pcn, source_pifs, sink_pifs = \
+            flow_fixture()
+        pcn_left = connection(
+            supersedes=(pcn.record_id,), note="PCN left fork")
+        pcn_right = connection(
+            supersedes=(pcn.record_id,), note="PCN right fork")
+        source_left = direction_interface(
+            PORT_A, "output", supersedes=(source_pifs[0].record_id,),
+            note="PIF left fork")
+        source_right = direction_interface(
+            PORT_A, "bidirectional", supersedes=(source_pifs[0].record_id,),
+            note="PIF right fork")
+        declaration = flow_declaration(
+            registration, port_records=ports, pcn=pcn,
+            source_pifs=source_pifs, sink_pifs=sink_pifs,
+            note="pins structurally valid conflicted roots")
+        loaded = validate_record_collection("test-model", {
+            record.record_id: record for record in (
+                *records, pcn_left, pcn_right, source_left, source_right,
+                registration, declaration)})
+        assert loaded.flow_declarations[declaration.record_id] == declaration
+        assert tuple(record.record_id for record in
+                     loaded.current_port_connection_tips_by_root[
+                         pcn.record_id]) == tuple(sorted((
+                             pcn_left.record_id, pcn_right.record_id)))
+        assert loaded.port_interface_superseded_by[
+            source_pifs[0].record_id] == tuple(sorted((
+                source_left.record_id, source_right.record_id)))
+
     def test_replay_omitting_successor_revives_predecessor_tip(self, tmp_path):
         root = fixture_claim(note="root")
         child = fixture_claim(supersedes=(root.record_id,), note="child")
@@ -642,6 +849,21 @@ def test_valid_independent_append_order_produces_identical_files_and_indexes(
     forward = build(tmp_path / "forward", False)
     reverse = build(tmp_path / "reverse", True)
     assert snapshot(forward) == snapshot(reverse)
-    assert forward.load().revision == reverse.load().revision
-    assert dict(forward.load().flow_declaration_root_by_id) == dict(
-        reverse.load().flow_declaration_root_by_id)
+    left = forward.load()
+    right = reverse.load()
+    assert left.revision == right.revision
+    names = (
+        "flow_registrations", "flow_registrations_by_anchor",
+        "flow_anchor_id_by_semantic_signature", "flow_anchor_ids_by_port",
+        "flow_role_by_anchor_and_port", "flow_declarations",
+        "flow_declaration_ids_by_key", "flow_declaration_parent_ids",
+        "flow_declaration_successor_ids", "flow_declaration_root_by_id",
+        "flow_declaration_ancestry_by_id",
+        "current_flow_declaration_tips_by_root",
+        "flow_declaration_effective_body_by_id",
+        "flow_declaration_ids_by_effective_body",
+        "flow_declaration_withdrawals", "flow_declaration_withdrawn_by",
+        "flow_declaration_withdrawals_by_target",
+    )
+    for name in names:
+        assert dict(getattr(left, name)) == dict(getattr(right, name))
