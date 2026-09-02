@@ -6,6 +6,7 @@ from pathlib import Path
 import typing
 
 import backend.model_kernel as kernel
+import pytest
 from tests.model_kernel.test_demo_model import (
     BH001_MEMBERSHIP, CN001_MEMBERSHIP, GOLDEN_REVISION,
     PRE_BH001_REVISION, PRE_CN001_MEMBERSHIP, PRE_CN001_REVISION,
@@ -258,3 +259,32 @@ def test_every_explicit_historical_membership_has_structured_flow_absence():
         for record_id in ABSENT_RECORDS:
             assert queries.flow_assertion(record_id).lookup_status == \
                 "not_found"
+
+
+@pytest.mark.parametrize(
+    "method,args,kwargs",
+    (
+        ("flow", ("flo_bad",), {}),
+        ("flow", (True,), {}),
+        ("flow_declaration", ("sta_" + "0" * 32,), {"context": CONTEXT}),
+        ("flows_involving_port", ("flo_" + "0" * 32,), {"context": CONTEXT}),
+        ("flow_assertion", ("pcn_" + "0" * 64,), {}),
+        ("flow_assertion", ("fld_bad",), {}),
+    ),
+)
+def test_flow_query_identifiers_are_typed_before_lookup(method, args, kwargs):
+    queries = kernel.ModelQueries(kernel.ModelStore(DEMO_MODEL).load())
+    with pytest.raises(kernel.ModelQueryError) as error:
+        getattr(queries, method)(*args, **kwargs)
+    assert error.value.error_code in {
+        "MODEL_ANCHOR_ID_INVALID", "MODEL_RECORD_ID_INVALID"}
+
+
+@pytest.mark.parametrize("method", ("flow_declaration", "flows_involving_port"))
+def test_flow_query_context_is_exact_and_typed(method):
+    queries = kernel.ModelQueries(kernel.ModelStore(DEMO_MODEL).load())
+    anchor = ABSENT_FLOW if method == "flow_declaration" else REGISTERED_PORT
+    with pytest.raises(kernel.ModelQueryError) as error:
+        getattr(queries, method)(anchor, context={
+            "kind": "view_independent", "fallback": "as_operated"})
+    assert error.value.error_code == "MODEL_CONTEXT_INVALID"

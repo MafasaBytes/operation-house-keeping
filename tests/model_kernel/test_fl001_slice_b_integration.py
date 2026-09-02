@@ -36,8 +36,11 @@ def reproduce(root: Path, *, reverse_roots: bool):
         source_pifs=sources, sink_pifs=sinks, recorded_at=T1,
         note="independent two")
     roots = (second, first) if reverse_roots else (first, second)
+    predecessors = (
+        (*records[:1], *reversed(records[1:3]), *reversed(records[3:]))
+        if reverse_roots else records)
     store = kernel.ModelStore(root / "test-model")
-    for record in (*records, registration, *roots):
+    for record in (*predecessors, registration, *roots):
         store.append(record)
     loaded = store.load()
     queries = kernel.ModelQueries(loaded)

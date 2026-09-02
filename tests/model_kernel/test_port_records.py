@@ -380,6 +380,14 @@ def test_model_kernel_public_exports_include_accepted_pt_and_vp_slice_a_names():
         "FlowKindToken", "FlowDirectionDeclarationPin",
         "FlowRegistration", "FlowDeclaration",
         "FlowDeclarationWithdrawal",
+        "FlowLookupStatus", "FlowDeclarationConclusion",
+        "FlowDeclarationLineageSummary", "FlowAgreementFinding",
+        "FlowPortRole", "PortFlowsStatus", "FlowAssertionLookupStatus",
+        "FlowLookupResult", "FlowConnectionSupportResult",
+        "FlowDirectionSupportResult", "FlowEffectiveBodyGroupResult",
+        "FlowDeclarationRootResult", "FlowDeclarationResult",
+        "PortFlowEntry", "PortFlowsResult",
+        "FlowAssertionDisclosureResult",
     }
     old = {
         "EntityRegistration", "VariableRegistration",

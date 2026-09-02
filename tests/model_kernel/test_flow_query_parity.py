@@ -5,6 +5,7 @@ from datetime import timedelta
 import pytest
 
 import backend.model_kernel as kernel
+import backend.model_kernel.flow_results as flow_results
 
 from tests.model_kernel.fl001_slice_a_helpers import (
     AS_DESIGNED, AUTHORITY, FLOW_A, PORT_A, PORT_B, T1, connection,
@@ -188,3 +189,81 @@ def test_current_direction_relation_is_a_current_pif_comparison_only(
     assert row.current_direction_relation == expected
     assert row.pinned_assertion_activity == "superseded"
     assert row.alignment == "pinned_direction_superseded"
+
+
+def test_active_other_topology_cannot_mask_pin_and_summary_precedence(
+        tmp_path):
+    records, registration, ports, pcn, sources, sinks = flow_fixture()
+    pcn_left = connection(
+        supersedes=(pcn.record_id,), recorded_at=T1, note="PCN fork left")
+    pcn_right = connection(
+        supersedes=(pcn.record_id,),
+        recorded_at=T1 + timedelta(seconds=1), note="PCN fork right")
+    alternate_root = connection(
+        recorded_at=T1 + timedelta(seconds=2), note="active other PCN root")
+    source_successor = direction_interface(
+        PORT_A, "output", supersedes=(sources[0].record_id,),
+        recorded_at=T1, note="terminal source PIF")
+    source_withdrawal = pt_withdrawal(
+        source_successor, seconds=3, note="inactive source PIF lineage")
+    sink_successor = direction_interface(
+        PORT_B, "input", supersedes=(sinks[0].record_id,),
+        recorded_at=T1, note="current sink successor")
+    declaration = flow_declaration(
+        registration, port_records=ports, pcn=pcn_left,
+        source_pifs=sources, sink_pifs=sinks,
+        recorded_at=T1 + timedelta(minutes=1), note="compound support")
+    store = kernel.ModelStore(tmp_path / "compound")
+    for record in (
+            *records, pcn_left, pcn_right, alternate_root, source_successor,
+            source_withdrawal, sink_successor, registration, declaration):
+        store.append(record)
+    queries = kernel.ModelQueries(store.load())
+    group = queries.flow_declaration(
+        FLOW_A, context=AS_DESIGNED).effective_body_groups[0]
+    assert group.connection_support.exact_topology_conclusion == "asserted"
+    assert group.connection_support.pinned_lineage_health == "conflicted"
+    assert group.connection_support.alignment == \
+        "connection_lineage_conflicted"
+    assert group.source_direction_supports[0].alignment == \
+        "direction_lineage_inactive"
+    assert group.sink_direction_supports[0].alignment == \
+        "pinned_direction_superseded"
+    assert group.support_alignment_summary == "conflicted"
+
+
+def test_active_other_pcn_root_does_not_hide_inactive_pinned_root(tmp_path):
+    records, registration, ports, pcn, sources, sinks = flow_fixture()
+    withdrawn = pt_withdrawal(pcn)
+    other = connection(recorded_at=T1, note="active other root")
+    declaration = flow_declaration(
+        registration, port_records=ports, pcn=pcn,
+        source_pifs=sources, sink_pifs=sinks,
+        recorded_at=T1 + timedelta(minutes=1), note="inactive exact pin")
+    store = kernel.ModelStore(tmp_path / "inactive-pin")
+    for record in (*records, withdrawn, other, registration, declaration):
+        store.append(record)
+    support = kernel.ModelQueries(store.load()).flow_declaration(
+        FLOW_A, context=AS_DESIGNED).effective_body_groups[
+            0].connection_support
+    assert support.exact_topology_conclusion == "asserted"
+    assert support.pinned_assertion_activity == "withdrawn"
+    assert support.pinned_lineage_health == "inactive"
+    assert support.alignment == "connection_lineage_inactive"
+
+
+def test_support_summary_function_has_exact_precedence():
+    def row(alignment):
+        return {"alignment": alignment}
+
+    assert flow_results._support_summary(
+        row("exact_current"), (), ()) == "aligned"
+    assert flow_results._support_summary(
+        row("pinned_connection_superseded"), (), ()) == "stale"
+    assert flow_results._support_summary(
+        row("pinned_connection_superseded"),
+        (row("direction_lineage_inactive"),), ()) == "inactive"
+    assert flow_results._support_summary(
+        row("pinned_connection_superseded"),
+        (row("direction_lineage_inactive"),),
+        (row("direction_lineage_conflicted"),)) == "conflicted"

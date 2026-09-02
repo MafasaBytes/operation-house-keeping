@@ -123,7 +123,36 @@ def test_authoritative_34_record_ledger_is_byte_frozen_and_flow_empty():
         "cf3a534b4b7d13a85fb1f23a3e81881b03e084fc508145950cbc8618f247d6cd")
     assert not any(path.name.startswith(("trg_", "trd_", "trw_",
                                          "frg_", "fld_", "flw_"))
-                   for path in paths)
+               for path in paths)
+
+
+def test_authoritative_cross_layer_material_never_creates_flow():
+    loaded = kernel.ModelStore(DEMO_MODEL).load()
+    assert loaded.port_connections
+    assert loaded.port_interface_declarations
+    assert loaded.port_compatibility_declarations
+    assert loaded.variable_port_associations
+    assert loaded.behavior_rule_declarations
+    assert loaded.state_declarations
+    assert not loaded.transition_declarations
+    assert not loaded.flow_registrations
+    assert not loaded.flow_declarations
+    queries = kernel.ModelQueries(loaded)
+    absent = "flo_" + "0" * 32
+    context = kernel.LifecycleViewContext(
+        kind="lifecycle_view", view="as_operated")
+    assert queries.flow(absent).status == "not_registered"
+    assert queries.flow_declaration(
+        absent, context=context).conclusion == "not_registered"
+    for port_anchor_id in loaded.port_registrations_by_anchor:
+        assert queries.flows_involving_port(
+            port_anchor_id, context=context).entries == ()
+    for forbidden in (
+        "observed_flow", "commanded_flow", "assess_flow", "detect_flow",
+        "flow_occurrence", "flow_rate", "balance", "conservation",
+        "upstream", "downstream", "flow_path",
+    ):
+        assert not hasattr(queries, forbidden)
     assert all(verify_record_id(record) for record in loaded.records.values())
     for name in FLOW_INDEX_NAMES:
         assert getattr(loaded, name) == {}

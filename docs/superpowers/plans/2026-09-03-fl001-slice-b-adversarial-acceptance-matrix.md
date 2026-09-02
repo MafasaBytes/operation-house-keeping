@@ -30,4 +30,3 @@ Status: executable Slice B matrix; evidence is completed by pinned tests
 | B22 | Preservation | Authoritative records, revision, Slice A golden bytes/IDs, and accepted PT/VP/BH/ST artifacts remain byte-identical. |
 | B23 | Import direction | Kernel flow disclosure imports no upper layer, source, temporal, assessment, occurrence, or fixture module. |
 | B24 | Semantic restraint | No result/API asserts physical occurrence, transfer, activity, compatibility, behavior, causality, safety, correctness, diagnosis, or recommendation. |
-

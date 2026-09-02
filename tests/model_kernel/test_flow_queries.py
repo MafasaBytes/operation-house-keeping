@@ -3,6 +3,7 @@
 from datetime import timedelta
 
 import backend.model_kernel as kernel
+import pytest
 
 from tests.model_kernel.fl001_slice_a_helpers import (
     AS_DESIGNED, FLOW_A, PORT_A, PORT_B, T0, T1, VIEW_INDEPENDENT,
@@ -135,6 +136,17 @@ def test_corroboration_disagreement_fork_and_inactive_conclusions(tmp_path):
     assert inactive.agreement_findings == ("inactive_roots_present",)
     assert inactive.effective_body_groups == ()
     assert inactive.current_declaration_indices == ()
+    inactive_queries = kernel.ModelQueries(inactive_store.load())
+    assert inactive_queries.flow(FLOW_A).status == "registered"
+    event = inactive_queries.flow_assertion(withdrawal.record_id)
+    assert event.lookup_status == "found"
+    assert event.record == withdrawal
+    assert event.activity is None
+    assert event.containing_lineage_health is None
+    assert event.containing_flow_conclusion is None
+    assert event.containing_agreement_findings is None
+    assert event.root_record is None
+    assert event.successors == event.withdrawals == ()
 
 
 def test_cross_root_body_disagreement_and_finding_order(tmp_path):
@@ -375,3 +387,36 @@ def test_compound_findings_keep_exact_normative_order(tmp_path):
         "cross_root_effective_body_disagreement",
         "inactive_roots_present",
     )
+
+
+@pytest.mark.parametrize("shape", ("declared", "conflicted", "inactive"))
+def test_port_collection_has_direct_parity_for_every_reachable_entry_shape(
+        tmp_path, shape):
+    records, registration, ports, pcn, sources, sinks = flow_fixture()
+    root = basic_claim(ports, registration, pcn, sources, sinks, note="root")
+    claims = [root]
+    if shape == "conflicted":
+        claims.extend((
+            basic_claim(
+                ports, registration, pcn, sources, sinks,
+                supersedes=(root.record_id,), recorded_at=T1, note="left"),
+            basic_claim(
+                ports, registration, pcn, sources, sinks,
+                supersedes=(root.record_id,),
+                recorded_at=T1 + timedelta(seconds=1), note="right"),
+        ))
+    elif shape == "inactive":
+        claims.append(flow_withdrawal(root))
+    store = kernel.ModelStore(tmp_path / shape)
+    for record in (*records, registration, *claims):
+        store.append(record)
+    queries = kernel.ModelQueries(store.load())
+    direct = queries.flow_declaration(FLOW_A, context=AS_DESIGNED)
+    entry = queries.flows_involving_port(
+        PORT_A, context=AS_DESIGNED).entries[0]
+    assert entry.conclusion == shape
+    assert entry.model_dump(mode="python", exclude={
+        "entry_index", "flow_anchor_id", "flow_registration_index", "role",
+    }) == direct.model_dump(mode="python", exclude={
+        "material", "flow_anchor_id", "context", "registration_index",
+    })

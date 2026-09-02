@@ -84,4 +84,3 @@ replay, artifact preservation, and fresh base-only/all-extras columns. Rerun
 only an environment-denied loopback test under the established permission
 procedure. Write the completion report, keep it as the sole final untracked
 file, and stop for exact Slice B owner acceptance.
-

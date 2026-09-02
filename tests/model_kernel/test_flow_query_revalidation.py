@@ -1,16 +1,23 @@
 """FL-001 Slice B authoritative reconstruction and forgery rejection."""
 
 import copy
+import os
+from pathlib import Path
+import socket
+import time
 
 import pytest
 from pydantic import ValidationError
 
 import backend.model_kernel as kernel
 import backend.model_kernel.flow_results as flow_results
+import backend.model_kernel.result_revalidation as result_revalidation
 
 from tests.model_kernel.fl001_slice_a_helpers import (
-    AS_DESIGNED, FLOW_A, PORT_A, T1, flow_declaration, flow_fixture,
+    AS_DESIGNED, FLOW_A, PORT_A, PORT_B, T1, VIEW_INDEPENDENT, connection,
+    direction_interface, flow_declaration, flow_fixture,
 )
+from tests.model_kernel.builders import ENT_B, registration as entity_registration
 
 
 def results(tmp_path):
@@ -49,6 +56,48 @@ def test_all_outer_results_reject_reordered_or_substituted_material(
     assert_rejects(type(result), revision)
 
 
+def test_complete_material_attack_matrix_rejects_before_derivation(tmp_path):
+    _, declaration, *_ = results(tmp_path)
+    contract = kernel.FlowDeclarationResult
+    base = declaration.model_dump(mode="python")
+    attacks = []
+
+    missing = copy.deepcopy(base)
+    missing["material"]["records"] = missing["material"]["records"][:-1]
+    attacks.append(missing)
+
+    duplicate = copy.deepcopy(base)
+    duplicate["material"]["records"] = (
+        *duplicate["material"]["records"],
+        duplicate["material"]["records"][-1])
+    attacks.append(duplicate)
+
+    extra = copy.deepcopy(base)
+    extra_record = entity_registration(ENT_B).model_dump(mode="python")
+    extra["material"]["records"] = (
+        *extra["material"]["records"], extra_record)
+    attacks.append(extra)
+
+    mixed = copy.deepcopy(base)
+    mixed["material"]["revision"] = kernel.ModelStore(
+        "models/demo-printer").load().revision.model_dump(mode="python")
+    attacks.append(mixed)
+
+    stale = copy.deepcopy(base)
+    target = next(record for record in stale["material"]["records"]
+                  if record["record_kind"] == "flow_declaration")
+    target["note"] = "content changed without recomputing record id"
+    attacks.append(stale)
+
+    wrong_union = copy.deepcopy(base)
+    wrong_union["material"]["records"][0]["record_kind"] = \
+        "flow_registration"
+    attacks.append(wrong_union)
+
+    for attack in attacks:
+        assert_rejects(contract, attack)
+
+
 def test_strict_indices_reject_boolean_wrong_kind_and_out_of_range(tmp_path):
     lookup, declaration, collection, assertion = results(tmp_path)
     cases = []
@@ -72,6 +121,18 @@ def test_strict_indices_reject_boolean_wrong_kind_and_out_of_range(tmp_path):
     assertion_payload = assertion.model_dump(mode="python")
     assertion_payload["root_record_index"] = -1
     cases.append((kernel.FlowAssertionDisclosureResult, assertion_payload))
+    float_payload = declaration.model_dump(mode="python")
+    float_payload["effective_body_groups"][0]["current_tip_indices"] = (1.0,)
+    cases.append((kernel.FlowDeclarationResult, float_payload))
+    string_payload = declaration.model_dump(mode="python")
+    string_payload["effective_body_groups"][0][
+        "source_direction_supports"][0]["port_registration_index"] = "1"
+    cases.append((kernel.FlowDeclarationResult, string_payload))
+    wrong_group = declaration.model_dump(mode="python")
+    wrong_group["roots"][0]["effective_body_group_indices"] = (
+        wrong_group["effective_body_groups"][0]["connection_support"][
+            "connection_assertion_index"],)
+    cases.append((kernel.FlowDeclarationResult, wrong_group))
     for contract, payload in cases:
         assert_rejects(contract, payload)
 
@@ -89,6 +150,13 @@ def test_every_derived_layer_rejects_substitution(tmp_path):
         assert_rejects(kernel.FlowDeclarationResult, payload)
     payload = declaration.model_dump(mode="python")
     payload["roots"][0]["lineage_health"] = "inactive"
+    assert_rejects(kernel.FlowDeclarationResult, payload)
+    payload = declaration.model_dump(mode="python")
+    payload["roots"][0]["connection_support"] = payload[
+        "effective_body_groups"][0]["connection_support"]
+    assert_rejects(kernel.FlowDeclarationResult, payload)
+    payload = declaration.model_dump(mode="python")
+    payload["effective_body_groups"][0]["root_record_indices"] = ()
     assert_rejects(kernel.FlowDeclarationResult, payload)
     payload = declaration.model_dump(mode="python")
     payload["effective_body_groups"][0]["support_alignment_summary"] = "stale"
@@ -137,6 +205,47 @@ def test_other_context_and_private_state_laundering_reject(tmp_path):
         {"occurred": True}))
     assert_rejects(kernel.FlowDeclarationResult, hidden)
 
+    constructed_payload = declaration.model_dump(mode="python")
+    constructed_payload["conclusion"] = "conflicted"
+    constructed = kernel.FlowDeclarationResult.model_construct(
+        **constructed_payload)
+    assert_rejects(kernel.FlowDeclarationResult, constructed)
+
+
+def test_other_context_nested_rows_and_cross_material_instances_reject(
+        tmp_path):
+    records, registration, ports, pcn, sources, sinks = flow_fixture()
+    designed = flow_declaration(
+        registration, port_records=ports, pcn=pcn,
+        source_pifs=sources, sink_pifs=sinks)
+    other_pcn = connection(context=VIEW_INDEPENDENT, recorded_at=T1)
+    other_sources = (direction_interface(
+        PORT_A, "output", context=VIEW_INDEPENDENT, recorded_at=T1),)
+    other_sinks = (direction_interface(
+        PORT_B, "input", context=VIEW_INDEPENDENT, recorded_at=T1),)
+    independent = flow_declaration(
+        registration, port_records=ports, pcn=other_pcn,
+        source_pifs=other_sources, sink_pifs=other_sinks,
+        context=VIEW_INDEPENDENT, recorded_at=T1)
+    store = kernel.ModelStore(tmp_path / "contexts")
+    for record in (*records, registration, designed, other_pcn,
+                   *other_sources, *other_sinks, independent):
+        store.append(record)
+    queries = kernel.ModelQueries(store.load())
+    designed_result = queries.flows_involving_port(
+        PORT_A, context=AS_DESIGNED)
+    independent_result = queries.flows_involving_port(
+        PORT_A, context=VIEW_INDEPENDENT)
+
+    plain = designed_result.model_dump(mode="python")
+    plain["entries"] = independent_result.model_dump(
+        mode="python")["entries"]
+    assert_rejects(kernel.PortFlowsResult, plain)
+
+    instance = designed_result.model_dump(mode="python")
+    instance["entries"] = (independent_result.entries[0],)
+    assert_rejects(kernel.PortFlowsResult, instance)
+
 
 def test_context_falsey_extra_is_rejected_at_query_boundary(tmp_path):
     lookup, *_ = results(tmp_path)
@@ -163,6 +272,20 @@ def test_hostile_cycle_rejects_before_nested_normalization(tmp_path):
     assert_rejects(kernel.FlowDeclarationResult, payload)
 
 
+def test_shared_graph_bounds_reject_excessive_depth_and_node_count():
+    deeply_nested = []
+    cursor = deeply_nested
+    for _ in range(130):
+        child = []
+        cursor.append(child)
+        cursor = child
+    with pytest.raises(ValueError, match="maximum depth"):
+        result_revalidation.inspect_supplied_graph(deeply_nested)
+    many_nodes = [[] for _ in range(100_001)]
+    with pytest.raises(ValueError, match="maximum size"):
+        result_revalidation.inspect_supplied_graph(many_nodes)
+
+
 def test_result_validation_is_store_independent(tmp_path, monkeypatch):
     values = results(tmp_path)
 
@@ -175,6 +298,23 @@ def test_result_validation_is_store_independent(tmp_path, monkeypatch):
         rebuilt = type(result).model_validate(result.model_dump(mode="python"))
         assert rebuilt.model_dump(mode="python") == result.model_dump(
             mode="python")
+
+
+def test_result_validation_uses_no_ambient_io_clock_or_environment(
+        tmp_path, monkeypatch):
+    result = results(tmp_path)[1]
+    payload = result.model_dump(mode="python")
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("result reconstruction used an ambient capability")
+
+    monkeypatch.setattr(Path, "read_bytes", forbidden)
+    monkeypatch.setattr(Path, "read_text", forbidden)
+    monkeypatch.setattr(socket, "socket", forbidden)
+    monkeypatch.setattr(os, "getenv", forbidden)
+    monkeypatch.setattr(time, "time", forbidden)
+    rebuilt = kernel.FlowDeclarationResult.model_validate(payload)
+    assert rebuilt.model_dump(mode="python") == payload
 
 
 def test_alignment_tables_reject_only_unreachable_current_inactive_pair():
