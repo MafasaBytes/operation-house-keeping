@@ -20,6 +20,7 @@ PORT_ANCHOR_ID_PATTERN = r"^prt_[0-9a-f]{32}$"
 BEHAVIOR_ANCHOR_ID_PATTERN = r"^bhv_[0-9a-f]{32}$"
 STATE_ANCHOR_ID_PATTERN = r"^sta_[0-9a-f]{32}$"
 TRANSITION_ANCHOR_ID_PATTERN = r"^trn_[0-9a-f]{32}$"
+FLOW_ANCHOR_ID_PATTERN = r"^flo_[0-9a-f]{32}$"
 _NAME_PATTERN = r"^[a-z0-9-]+$"
 
 
@@ -140,6 +141,25 @@ class TransitionAnchor(BaseModel):
         frozen=True, extra="forbid", revalidate_instances="always")
 
     anchor_id: str = Field(pattern=TRANSITION_ANCHOR_ID_PATTERN)
+    namespace: str = Field(pattern=_NAME_PATTERN)
+    display_name: str = Field(min_length=1)
+    role_name: str | None = Field(default=None, pattern=_NAME_PATTERN)
+
+
+class FlowAnchor(BaseModel):
+    """One stable logical directed flow identity and no flow claim.
+
+    Permanent source/sink port sets and nominal flow kind belong to one
+    separately admitted model registration. Topology/interface support,
+    context, declaration lifecycle, activity, observation, occurrence,
+    mechanism, rate, conservation, and causal meaning never belong to this
+    opaque identity. Names are human context and never identity material.
+    """
+
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", revalidate_instances="always")
+
+    anchor_id: str = Field(pattern=FLOW_ANCHOR_ID_PATTERN)
     namespace: str = Field(pattern=_NAME_PATTERN)
     display_name: str = Field(min_length=1)
     role_name: str | None = Field(default=None, pattern=_NAME_PATTERN)

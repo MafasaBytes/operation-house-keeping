@@ -18,6 +18,7 @@ from backend.system_identity.anchors import (
     _NAME_PATTERN,
     BehaviorAnchor,
     ConstraintAnchor,
+    FlowAnchor,
     PortAnchor,
     StateAnchor,
     TransitionAnchor,
@@ -57,6 +58,21 @@ def mint_constraint_anchor(
     the anchor (first via a ``ConstraintRegistration`` record)."""
     return ConstraintAnchor(
         anchor_id=f"con_{uuid4().hex}",
+        namespace=namespace,
+        display_name=display_name,
+        role_name=role_name,
+    )
+
+
+def mint_flow_anchor(
+    *,
+    namespace: str,
+    display_name: str,
+    role_name: str | None = None,
+) -> FlowAnchor:
+    """Mint one fresh opaque UUID4-backed ``FlowAnchor``."""
+    return FlowAnchor(
+        anchor_id=f"flo_{uuid4().hex}",
         namespace=namespace,
         display_name=display_name,
         role_name=role_name,

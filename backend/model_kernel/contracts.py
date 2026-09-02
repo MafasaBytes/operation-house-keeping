@@ -35,6 +35,7 @@ from backend.system_identity import (
     BEHAVIOR_ANCHOR_ID_PATTERN,
     CONSTRAINT_ANCHOR_ID_PATTERN,
     ENTITY_ANCHOR_ID_PATTERN,
+    FLOW_ANCHOR_ID_PATTERN,
     PORT_ANCHOR_ID_PATTERN,
     STATE_ANCHOR_ID_PATTERN,
     TRANSITION_ANCHOR_ID_PATTERN,
@@ -42,6 +43,7 @@ from backend.system_identity import (
     BehaviorAnchor,
     ConstraintAnchor,
     EntityAnchor,
+    FlowAnchor,
     PortAnchor,
     StateAnchor,
     TransitionAnchor,
@@ -51,7 +53,7 @@ from backend.system_identity import (
 UtcDatetime = Annotated[AwareDatetime, AfterValidator(lambda v: v.astimezone(UTC))]
 
 MODEL_ID_PATTERN = r"^[a-z0-9-]+$"
-MODEL_RECORD_ID_PATTERN = r"^(reg|rtd|rel|rwd|vrg|vsp|vsm|crg|vcn|prg|pif|pcn|pcm|ptw|vpa|vpw|brg|bhd|bhw|srg|std|stw|trg|trd|trw)_[0-9a-f]{64}$"
+MODEL_RECORD_ID_PATTERN = r"^(reg|rtd|rel|rwd|vrg|vsp|vsm|crg|vcn|prg|pif|pcn|pcm|ptw|vpa|vpw|brg|bhd|bhw|srg|std|stw|trg|trd|trw|frg|fld|flw)_[0-9a-f]{64}$"
 
 ReferentKind = Literal[
     "logical_instance", "physical_instance", "type_definition", "unknown"
@@ -115,7 +117,7 @@ class ModelRecordEvidence(_Frozen):
     # uncitable
     kind: Literal["model_record"]
     record_id: str = Field(
-        pattern=r"^(reg|rtd|rel|vrg|vsp|vsm|crg|vcn|prg|pif|pcn|pcm|vpa|brg|bhd|srg|std|trg|trd)_[0-9a-f]{64}$")
+        pattern=r"^(reg|rtd|rel|vrg|vsp|vsm|crg|vcn|prg|pif|pcn|pcm|vpa|brg|bhd|srg|std|trg|trd|frg|fld)_[0-9a-f]{64}$")
 
 
 class IdentityBindingRecordEvidence(_Frozen):
@@ -1192,6 +1194,208 @@ class TransitionDeclarationWithdrawal(BaseModel):
         return value
 
 
+# ------------------------------------------------------ explicit flow claims
+class FlowKindToken(BaseModel):
+    """Exact nominal identity of one logical flow kind; no ontology."""
+
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", revalidate_instances="always")
+
+    token_kind: Literal["flow_kind"]
+    system_id: LocalIdentifier
+    system_edition: LocalIdentifier
+    code: LocalIdentifier
+
+
+def _canonical_flow_ports(value: tuple[str, ...]) -> tuple[str, ...]:
+    if not 1 <= len(value) <= 63:
+        raise ValueError("a flow role requires between 1 and 63 ports")
+    if len(set(value)) != len(value):
+        raise ValueError("flow role ports must be unique")
+    if any(not isinstance(item, str) or not re.fullmatch(
+            PORT_ANCHOR_ID_PATTERN, item) for item in value):
+        raise ValueError("a flow role member is not a PortAnchor id")
+    return tuple(sorted(value))
+
+
+CanonicalNonEmptyFlowPortTuple = Annotated[
+    tuple[str, ...], AfterValidator(_canonical_flow_ports)]
+
+
+class FlowDirectionDeclarationPin(BaseModel):
+    """Exact port and direction-role PIF identity; role is supplied by the
+    containing declaration field."""
+
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", revalidate_instances="always")
+
+    port_anchor_id: str = Field(pattern=PORT_ANCHOR_ID_PATTERN)
+    declaration_record_id: str = Field(pattern=r"^pif_[0-9a-f]{64}$")
+
+
+def _canonical_flow_direction_pins(
+        value: tuple[FlowDirectionDeclarationPin, ...],
+) -> tuple[FlowDirectionDeclarationPin, ...]:
+    if not 1 <= len(value) <= 63:
+        raise ValueError(
+            "a flow direction role requires between 1 and 63 pins")
+    ports = tuple(item.port_anchor_id for item in value)
+    if len(set(ports)) != len(ports):
+        raise ValueError("flow direction pin ports must be unique")
+    return tuple(sorted(value, key=lambda item: item.port_anchor_id))
+
+
+CanonicalFlowDirectionPinTuple = Annotated[
+    tuple[FlowDirectionDeclarationPin, ...],
+    AfterValidator(_canonical_flow_direction_pins)]
+
+
+def _canonical_flow_parents(value: tuple[str, ...]) -> tuple[str, ...]:
+    if len(set(value)) != len(value):
+        raise ValueError("flow declaration parent ids must be unique")
+    if any(not isinstance(item, str) or not re.fullmatch(
+            r"fld_[0-9a-f]{64}", item) for item in value):
+        raise ValueError("a flow parent is not an FLD record id")
+    return tuple(sorted(value))
+
+
+CanonicalFlowDeclarationIdTuple = Annotated[
+    tuple[str, ...], AfterValidator(_canonical_flow_parents)]
+
+
+class FlowRegistration(BaseModel):
+    """Permanent logical directed port-group and nominal-kind identity."""
+
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", revalidate_instances="always")
+
+    record_kind: Literal["flow_registration"] = "flow_registration"
+    schema_version: Literal["1"] = "1"
+    record_id: str = Field(pattern=r"^frg_[0-9a-f]{64}$")
+    anchor: FlowAnchor
+    source_port_anchor_ids: CanonicalNonEmptyFlowPortTuple
+    sink_port_anchor_ids: CanonicalNonEmptyFlowPortTuple
+    flow_kind: FlowKindToken
+    evidence: Annotated[tuple[EvidenceRef, ...], Field(min_length=1),
+                        AfterValidator(_canonical_evidence)]
+    recorded_at: UtcDatetime
+    authority: AuthorityRef
+    note: str = ""
+
+    @field_validator("anchor", "flow_kind", "authority", mode="before")
+    @classmethod
+    def _reconstruct_nested_model(cls, value):
+        if isinstance(value, BaseModel):
+            return _strict_transition_nested_dump(value)
+        return value
+
+    @field_validator("evidence", mode="before")
+    @classmethod
+    def _reconstruct_evidence(cls, value):
+        if isinstance(value, (tuple, list)):
+            return tuple(
+                _strict_transition_nested_dump(item)
+                if isinstance(item, BaseModel) else item
+                for item in value)
+        return value
+
+    @model_validator(mode="after")
+    def _roles_are_disjoint_and_bounded(self):
+        source = set(self.source_port_anchor_ids)
+        sink = set(self.sink_port_anchor_ids)
+        if source & sink:
+            raise ValueError("flow source and sink roles must be disjoint")
+        if not 2 <= len(source | sink) <= 64:
+            raise ValueError("a flow requires between 2 and 64 ports")
+        return self
+
+
+class FlowDeclaration(BaseModel):
+    """Correctable exact-context flow capability with exact PCN/PIF pins."""
+
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", revalidate_instances="always")
+
+    record_kind: Literal["flow_declaration"] = "flow_declaration"
+    schema_version: Literal["1"] = "1"
+    record_id: str = Field(pattern=r"^fld_[0-9a-f]{64}$")
+    flow_anchor_id: str = Field(pattern=FLOW_ANCHOR_ID_PATTERN)
+    context: AssertionContext
+    connection_assertion_record_id: str = Field(
+        pattern=r"^pcn_[0-9a-f]{64}$")
+    source_direction_pins: CanonicalFlowDirectionPinTuple
+    sink_direction_pins: CanonicalFlowDirectionPinTuple
+    evidence: Annotated[tuple[EvidenceRef, ...], Field(min_length=1),
+                        AfterValidator(_canonical_evidence)]
+    supersedes: CanonicalFlowDeclarationIdTuple = ()
+    recorded_at: UtcDatetime
+    authority: AuthorityRef
+    note: str = ""
+
+    @field_validator("context", "authority", mode="before")
+    @classmethod
+    def _reconstruct_nested_model(cls, value):
+        if isinstance(value, BaseModel):
+            return _strict_transition_nested_dump(value)
+        return value
+
+    @field_validator("source_direction_pins", "sink_direction_pins",
+                     mode="before")
+    @classmethod
+    def _reconstruct_direction_pins(cls, value):
+        if isinstance(value, (tuple, list)):
+            return tuple(
+                _strict_transition_nested_dump(item)
+                if isinstance(item, BaseModel) else item
+                for item in value)
+        return value
+
+    @field_validator("evidence", mode="before")
+    @classmethod
+    def _reconstruct_evidence(cls, value):
+        if isinstance(value, (tuple, list)):
+            return tuple(
+                _strict_transition_nested_dump(item)
+                if isinstance(item, BaseModel) else item
+                for item in value)
+        return value
+
+    @model_validator(mode="after")
+    def _pins_and_parents_are_well_formed(self):
+        source = {item.port_anchor_id for item in self.source_direction_pins}
+        sink = {item.port_anchor_id for item in self.sink_direction_pins}
+        if source & sink:
+            raise ValueError("flow source and sink pins must be disjoint")
+        if not 2 <= len(source | sink) <= 64:
+            raise ValueError("a flow declaration requires 2 to 64 pin ports")
+        if self.record_id in self.supersedes:
+            raise ValueError("a flow declaration cannot supersede itself")
+        return self
+
+
+class FlowDeclarationWithdrawal(BaseModel):
+    """Membership-relative retraction of one current FLD tip only."""
+
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", revalidate_instances="always")
+
+    record_kind: Literal["flow_declaration_withdrawal"] = (
+        "flow_declaration_withdrawal")
+    schema_version: Literal["1"] = "1"
+    record_id: str = Field(pattern=r"^flw_[0-9a-f]{64}$")
+    withdraws: str = Field(pattern=r"^fld_[0-9a-f]{64}$")
+    recorded_at: UtcDatetime
+    authority: AuthorityRef
+    note: str = ""
+
+    @field_validator("authority", mode="before")
+    @classmethod
+    def _reconstruct_authority(cls, value):
+        if isinstance(value, BaseModel):
+            return _strict_transition_nested_dump(value)
+        return value
+
+
 class InterfaceDomainToken(_Frozen):
     """Exact interface-domain identity token; no ontology is implied."""
 
@@ -1510,6 +1714,7 @@ ModelRecord = Union[
     StateRegistration, StateDeclaration, StateDeclarationWithdrawal,
     TransitionRegistration, TransitionDeclaration,
     TransitionDeclarationWithdrawal,
+    FlowRegistration, FlowDeclaration, FlowDeclarationWithdrawal,
     RelationshipTypeDefinition, RelationshipAssertion,
     RelationshipWithdrawal,
     PortRegistration, PortInterfaceDeclaration, PortConnectionAssertion,

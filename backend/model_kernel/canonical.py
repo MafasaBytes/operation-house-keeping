@@ -43,6 +43,9 @@ _PREFIX_BY_KIND = {
     "transition_registration": "trg",
     "transition_declaration": "trd",
     "transition_declaration_withdrawal": "trw",
+    "flow_registration": "frg",
+    "flow_declaration": "fld",
+    "flow_declaration_withdrawal": "flw",
 }
 
 _BEHAVIOR_EFFECTIVE_BODY_FIELDS = (
@@ -65,6 +68,14 @@ _TRANSITION_EFFECTIVE_BODY_FIELDS = (
     "context",
     "from_endpoint",
     "to_endpoint",
+)
+
+_FLOW_EFFECTIVE_BODY_FIELDS = (
+    "flow_anchor_id",
+    "context",
+    "connection_assertion_record_id",
+    "source_direction_pins",
+    "sink_direction_pins",
 )
 
 
@@ -164,6 +175,24 @@ def _transition_effective_body_bytes(record) -> bytes:
         raise ModelIntegrityError(
             "MODEL_RECORD_INVALID",
             "transition body is not canonically serializable") from error
+
+
+def _flow_effective_body_bytes(record) -> bytes:
+    """Canonical, non-persisted FL-001 declaration-body projection."""
+    try:
+        dumped = record.model_dump(
+            mode="python", include=set(_FLOW_EFFECTIVE_BODY_FIELDS))
+        if tuple(sorted(dumped)) != tuple(sorted(
+                _FLOW_EFFECTIVE_BODY_FIELDS)):
+            raise ValueError("record is not a flow declaration")
+        return json.dumps(
+            _canonical_value(dumped), sort_keys=True, separators=(",", ":"),
+            ensure_ascii=False,
+        ).encode("utf-8")
+    except (AttributeError, UnicodeError, TypeError, ValueError) as error:
+        raise ModelIntegrityError(
+            "MODEL_RECORD_INVALID",
+            "flow body is not canonically serializable") from error
 
 
 def compute_record_id(record) -> str:
