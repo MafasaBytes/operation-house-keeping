@@ -13,6 +13,7 @@ import hashlib
 import json
 from pathlib import Path
 import shutil
+from tempfile import gettempdir
 
 from pydantic import TypeAdapter
 
@@ -360,10 +361,17 @@ def verify_authoritative_ledger(expected: str = "proposed"):
 def _safe_root(root: Path) -> Path:
     resolved = root.resolve()
     authoritative = AUTHORITATIVE_MODEL.resolve()
+    repository = REPO_ROOT.resolve()
+    system_temporary = Path(gettempdir()).resolve()
     _require(resolved != authoritative and
              authoritative not in resolved.parents and
              resolved not in authoritative.parents,
              "disposable root overlaps authoritative model")
+    _require(resolved != repository and repository not in resolved.parents,
+             "disposable root overlaps repository")
+    _require(resolved != system_temporary and
+             system_temporary in resolved.parents,
+             "disposable root must be below system temporary directory")
     if resolved.exists():
         _require(not any(resolved.iterdir()),
                  "disposable root must be absent or empty")

@@ -146,7 +146,7 @@ def test_append_order_or_extra_membership_fails_external_pin(mutation):
 
 
 def test_disposable_root_guards_reject_authoritative_and_nonempty_paths(
-        tmp_path):
+        tmp_path, monkeypatch):
     with pytest.raises(reproduction.FrozenContractError,
                        match="overlaps authoritative"):
         reproduction._safe_root(reproduction.AUTHORITATIVE_MODEL)
@@ -156,6 +156,21 @@ def test_disposable_root_guards_reject_authoritative_and_nonempty_paths(
     with pytest.raises(reproduction.FrozenContractError,
                        match="absent or empty"):
         reproduction._safe_root(occupied)
+
+    absent_in_repository = reproduction.REPO_ROOT / (
+        ".fl001-slice-d-unsafe-absent-root")
+    assert not absent_in_repository.exists()
+    with pytest.raises(reproduction.FrozenContractError,
+                       match="overlaps repository"):
+        reproduction._safe_root(absent_in_repository)
+
+    simulated_repository = tmp_path / "simulated-repository"
+    empty_in_repository = simulated_repository / "empty-root"
+    empty_in_repository.mkdir(parents=True)
+    monkeypatch.setattr(reproduction, "REPO_ROOT", simulated_repository)
+    with pytest.raises(reproduction.FrozenContractError,
+                       match="overlaps repository"):
+        reproduction._safe_root(empty_in_repository)
 
 
 def test_reproduction_is_hash_seed_independent():
