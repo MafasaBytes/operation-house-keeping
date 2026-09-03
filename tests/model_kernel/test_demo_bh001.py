@@ -119,7 +119,7 @@ def test_canonical_records_and_files_equal_the_approved_contract(disclosure):
         record.model_dump(mode="json") for record in built]
     assert disclosure["candidate_files"] == FILE_GOLDENS
     paths = sorted((DEMO_MODEL / "records").glob("*.json"))
-    assert len(paths) == 34
+    assert len(paths) == 36
     for filename, expected in FILE_GOLDENS.items():
         raw = (DEMO_MODEL / "records" / filename).read_bytes()
         assert len(raw) == expected["bytes"]

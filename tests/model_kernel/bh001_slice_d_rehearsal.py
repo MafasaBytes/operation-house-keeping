@@ -40,7 +40,7 @@ from tests.model_kernel.test_demo_model import (
     PRE_VP001_REVISION,
     PT001_MEMBERSHIP,
     VP001_MEMBERSHIP,
-    ST001_MEMBERSHIP,
+    FL001_MEMBERSHIP,
     VS001_MEMBERSHIP,
 )
 from tests.model_kernel.test_demo_pt001 import (
@@ -249,7 +249,7 @@ def prepare_disposable_store(root: Path, *, predecessor_copy_order=None):
     assert set(source_ids) == set(VP001_MEMBERSHIP)
     source_paths = {
         path.stem for path in (DEMO_MODEL / "records").glob("*.json")}
-    assert source_paths == set(ST001_MEMBERSHIP)
+    assert source_paths == set(FL001_MEMBERSHIP)
     source_before = record_inventory(DEMO_MODEL, source_ids)
     store = kernel.ModelStore(root / "demo-printer")
     for record_id in source_ids:
@@ -810,7 +810,7 @@ def authoritative_reproduction(work_root: Path):
     base = store.replay(VP001_MEMBERSHIP)
     final = store.replay(BH001_MEMBERSHIP)
     loaded = store.load()
-    assert loaded.revision.record_ids == ST001_MEMBERSHIP
+    assert loaded.revision.record_ids == FL001_MEMBERSHIP
     assert final.revision.revision_id == (
         "mrv_d7d9b3918eb3f04157fb862164fe1d5fb17b4ef18d627fb89ff9bc429a94506b")
     assert final.revision.record_count == 32

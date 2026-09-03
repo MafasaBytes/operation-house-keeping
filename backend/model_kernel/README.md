@@ -311,7 +311,7 @@ Slice C is accepted at `f2c6e4e12c3004615e3b0a6f321f6c2b3edec7d6`. The Slice C c
 is a read-only upper-layer composition and does not alter these kernel query
 contracts.
 
-The committed demo ledger is the exact 34-record ST-001 revision
+The accepted ST-001 historical membership is the exact 34-record revision
 `mrv_67fb4be22bd50683cc427d3d4e4abf97c0ffe6b800f764b156f671cd18bb5b41`
 with one SRG, one parentless STD, and zero STW records. It contains zero
 TRG/TRD/TRW records. The accepted 32-record BH-001 revision remains an explicit historical
@@ -321,3 +321,15 @@ No query infers state from a
 constraint, observation, hierarchy, port, VPA, behavior, name, or ownership.
 Final acceptance changes no kernel contract, record identity, canonical byte,
 membership, or query result and adds no STW.
+
+FL-001 Slice D adds exactly the frozen FRG followed by its parentless FLD,
+producing the exact 36-record revision
+`mrv_b8f03e1c03c23efc5c4454d00e43e6b89b8254ab87ce724d7418b8a94288c7ee`.
+The current ledger contains one FRG, one FLD, zero FLW, and still zero
+TRG/TRD/TRW. The 34-record revision above remains the explicit predecessor.
+The four flow queries disclose registration, exact-context declaration
+lifecycle, exact pinned PT support, incident port roles, and assertion
+lineage. They do not infer adjacency, traversal, physical flow, activity,
+occurrence, observation, command, quantity, conservation, behavior, cause,
+safety, health, correctness, diagnosis, or recommended action. Final FL-001
+owner acceptance remains pending.

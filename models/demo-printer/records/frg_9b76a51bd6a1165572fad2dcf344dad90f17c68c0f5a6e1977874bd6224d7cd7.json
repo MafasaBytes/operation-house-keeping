@@ -1,0 +1,44 @@
+{
+  "anchor": {
+    "anchor_id": "flo_ddefa85855ff4dc19f8ecfd022033883",
+    "display_name": "Synthetic Logical Flow Alpha",
+    "namespace": "demo-printer",
+    "role_name": null
+  },
+  "authority": {
+    "agent": "fl001_demo_fixture",
+    "kind": "test_fixture",
+    "method": "manual_declaration"
+  },
+  "evidence": [
+    {
+      "kind": "model_record",
+      "record_id": "prg_c06e49bef910d073a6af206d884a1bb68c0b9baa1cdb1d698d0c35c61025e057"
+    },
+    {
+      "kind": "model_record",
+      "record_id": "prg_c37057871b41bf873e317abde29dbba764be4974e195e21261d26942e5833af9"
+    },
+    {
+      "kind": "owner_declaration",
+      "statement": "FL-001 fixture authority explicitly registers this opaque synthetic logical-flow identity for the exact cited source-port set, sink-port set, and complete nominal flow-kind token; illustrative fixture only."
+    }
+  ],
+  "flow_kind": {
+    "code": "synthetic_fixture_kind",
+    "system_edition": "fl001-demo-1",
+    "system_id": "project_local",
+    "token_kind": "flow_kind"
+  },
+  "note": "FL-001 bounded synthetic logical-flow registration.",
+  "record_id": "frg_9b76a51bd6a1165572fad2dcf344dad90f17c68c0f5a6e1977874bd6224d7cd7",
+  "record_kind": "flow_registration",
+  "recorded_at": "2026-09-03T12:00:00+00:00",
+  "schema_version": "1",
+  "sink_port_anchor_ids": [
+    "prt_91a3d6db9df440e1a09dbdb185c7b182"
+  ],
+  "source_port_anchor_ids": [
+    "prt_c1d68d104a73405a950556b55f6a4d34"
+  ]
+}

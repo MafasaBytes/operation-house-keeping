@@ -123,7 +123,7 @@ class TestCommittedLedger:
     def test_exact_two_record_append_identity_authority_and_content(self):
         loaded = ModelStore(DEMO_MODEL).load()
         assert loaded.revision.revision_id == CURRENT_REVISION
-        assert loaded.revision.record_count == 34
+        assert loaded.revision.record_count == 36
         assert len(loaded.constraint_registrations_by_anchor) == 1
         assert len(loaded.constraint_declarations) == 1
         result = _loaded_declaration()

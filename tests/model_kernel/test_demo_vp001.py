@@ -252,7 +252,7 @@ def test_other_registered_port_remains_empty_and_no_claim_is_inferred():
 
 def test_fixture_scope_and_accepted_pt_artifact_are_unchanged():
     model_paths = sorted((DEMO_MODEL / "records").glob("*.json"))
-    assert len(model_paths) == 34
+    assert len(model_paths) == 36
     assert [path.stem for path in model_paths
             if path.name.startswith("vpa_")] == [VPA_ID]
     assert not any(path.name.startswith("vpw_") for path in model_paths)

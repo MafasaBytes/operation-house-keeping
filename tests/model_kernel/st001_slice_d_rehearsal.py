@@ -44,6 +44,7 @@ from tests.model_kernel.test_demo_model import (
     PRE_VARIABLE_MEMBERSHIP,
     PRE_VARIABLE_REVISION,
     PRE_VP001_REVISION,
+    FL001_MEMBERSHIP,
     ST001_MEMBERSHIP,
     PT001_MEMBERSHIP,
     VP001_MEMBERSHIP,
@@ -259,7 +260,7 @@ def prepare_disposable_store(root: Path, *, predecessor_copy_order=None):
     assert set(source_ids) == set(BH001_MEMBERSHIP)
     source_names = {
         path.stem for path in (DEMO_MODEL / "records").glob("*.json")}
-    assert source_names == set(ST001_MEMBERSHIP)
+    assert source_names == set(FL001_MEMBERSHIP)
     source_before = record_inventory(DEMO_MODEL, BH001_MEMBERSHIP)
     store = kernel.ModelStore(root / "demo-printer")
     for record_id in source_ids:

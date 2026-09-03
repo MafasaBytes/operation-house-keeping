@@ -29,6 +29,8 @@ from tests.model_kernel.st001_slice_d_rehearsal import (
 from tests.model_kernel.test_demo_model import (
     BH001_MEMBERSHIP,
     CURRENT_REVISION,
+    FL001_MEMBERSHIP,
+    PRE_FL001_REVISION,
     ST001_MEMBERSHIP,
     ST001_MODEL_RECORDS,
 )
@@ -82,9 +84,13 @@ def test_exact_authoritative_membership_revision_and_historical_boundary():
     store = ModelStore(DEMO_MODEL)
     current = store.load()
     predecessor = store.replay(BH001_MEMBERSHIP)
-    assert current.revision.record_ids == ST001_MEMBERSHIP
-    assert current.revision.record_count == 34
+    accepted_st001 = store.replay(ST001_MEMBERSHIP)
+    assert current.revision.record_ids == FL001_MEMBERSHIP
+    assert current.revision.record_count == 36
     assert current.revision.revision_id == CURRENT_REVISION
+    assert accepted_st001.revision.record_ids == ST001_MEMBERSHIP
+    assert accepted_st001.revision.record_count == 34
+    assert accepted_st001.revision.revision_id == PRE_FL001_REVISION
     assert predecessor.revision.record_ids == BH001_MEMBERSHIP
     assert predecessor.revision.record_count == 32
     assert predecessor.revision.revision_id == BASE_REVISION
@@ -147,7 +153,7 @@ def test_two_independent_reproductions_equal_the_approved_contract(reproduced):
         ST001_MODEL_RECORDS)
     assert first["membership"] == second["membership"] == list(
         ST001_MEMBERSHIP)
-    assert first["revision"]["revision_id"] == CURRENT_REVISION
+    assert first["revision"]["revision_id"] == PRE_FL001_REVISION
     assert first["predecessor_aggregate_sha256"] == (
         PREDECESSOR_AGGREGATE_SHA256)
     assert first["artifact"] == second["artifact"] == DISCLOSURE_PATH.read_bytes()

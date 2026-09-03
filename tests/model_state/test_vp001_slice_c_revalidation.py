@@ -10,7 +10,7 @@ from pydantic import ValidationError
 
 import backend.model_state as model_state
 from tests.model_kernel.test_demo_model import (
-    CURRENT_REVISION, PRE_VP001_REVISION, PT001_MEMBERSHIP, ST001_MEMBERSHIP,
+    CURRENT_REVISION, FL001_MEMBERSHIP, PRE_VP001_REVISION, PT001_MEMBERSHIP,
     VP001_MEMBERSHIP, VP001_MODEL_RECORDS,
 )
 from tests.model_kernel.test_demo_pt001 import (
@@ -249,14 +249,14 @@ def test_slice_c_import_direction_read_only_scope_and_non_inference_words():
 
 def test_committed_ledgers_and_accepted_pt_artifact_remain_unchanged():
     paths = sorted((DEMO / "records").glob("*.json"))
-    assert len(paths) == 34
+    assert len(paths) == 36
     assert [path.stem for path in paths if path.name.startswith("vpa_")] == \
         list(VP001_MODEL_RECORDS)
     assert not any(path.name.startswith("vpw_") for path in paths)
     from backend.model_kernel import ModelStore
     store = ModelStore(DEMO)
     assert store.load().revision.revision_id == CURRENT_REVISION
-    assert store.load().revision.record_ids == ST001_MEMBERSHIP
+    assert store.load().revision.record_ids == FL001_MEMBERSHIP
     historical = store.replay(PT001_MEMBERSHIP)
     assert historical.revision.revision_id == PRE_VP001_REVISION
     assert not historical.variable_port_associations

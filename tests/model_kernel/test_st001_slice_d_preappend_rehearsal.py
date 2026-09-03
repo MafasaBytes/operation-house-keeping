@@ -362,7 +362,7 @@ def test_explicit_histories_predecessors_and_accepted_artifacts_are_frozen(
 
 
 def test_authoritative_ledger_is_exact_approved_34_record_append():
-    loaded = ModelStore(DEMO_MODEL).load()
+    loaded = ModelStore(DEMO_MODEL).replay(ST001_MEMBERSHIP)
     assert loaded.revision.revision_id == FINAL_REVISION
     assert loaded.revision.record_count == 34
     assert loaded.revision.record_ids == ST001_MEMBERSHIP

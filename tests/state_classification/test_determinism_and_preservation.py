@@ -12,7 +12,7 @@ from tests.state_classification.helpers import classify, state_model
 
 DEMO_MODEL = Path("models/demo-printer")
 ACCEPTED_REVISION = (
-    "mrv_67fb4be22bd50683cc427d3d4e4abf97c0ffe6b800f764b156f671cd18bb5b41")
+    "mrv_b8f03e1c03c23efc5c4454d00e43e6b89b8254ab87ce724d7418b8a94288c7ee")
 
 
 def test_physical_record_creation_order_cannot_change_classification(tmp_path):
@@ -50,10 +50,10 @@ def test_serialized_classification_is_hash_seed_independent():
 
 def test_authoritative_ledger_is_the_approved_st_append():
     paths = tuple(sorted((DEMO_MODEL / "records").glob("*.json")))
-    assert len(paths) == 34
+    assert len(paths) == 36
     assert sum(path.name.startswith("srg_") for path in paths) == 1
     assert sum(path.name.startswith("std_") for path in paths) == 1
     assert not any(path.name.startswith("stw_") for path in paths)
     loaded = ModelStore(DEMO_MODEL).load()
-    assert loaded.revision.record_count == 34
+    assert loaded.revision.record_count == 36
     assert loaded.revision.revision_id == ACCEPTED_REVISION

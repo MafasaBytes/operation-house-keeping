@@ -873,10 +873,26 @@ SHA-256
 `2ccc501a4ff7c930518e75adc6f991cbb585637e04dbd768bca713cfbcce24b3`.
 Slice C is accepted at `f2c6e4e12c3004615e3b0a6f321f6c2b3edec7d6`. The separately
 approved Slice D append added only the frozen SRG followed by the frozen STD.
-The authoritative demo is the exact 34-record revision
+The accepted ST-001 historical boundary is the exact 34-record revision
 `mrv_67fb4be22bd50683cc427d3d4e4abf97c0ffe6b800f764b156f671cd18bb5b41`;
 the 32-record BH-001 membership remains an explicit historical boundary.
 State families and every transition capability remain excluded.
 Final acceptance does not turn `matches` into current physical state,
 exclusivity, completeness, transition, cause, control, safety, health,
 diagnosis, correctness, or recommended action.
+
+FL-001 Slices A and B are owner accepted, Slice C is absent, and the exact
+owner-approved Slice D append adds only
+`frg_9b76a51bd6a1165572fad2dcf344dad90f17c68c0f5a6e1977874bd6224d7cd7`
+followed by
+`fld_f5a192053bc42c53ce9e4d3bd49b011589d17191bdb97f9bac93fcc359872192`.
+The authoritative demo now contains exactly 36 records at
+`mrv_b8f03e1c03c23efc5c4454d00e43e6b89b8254ab87ce724d7418b8a94288c7ee`,
+with one FRG, one FLD, zero FLW, and unchanged 34-record predecessor bytes.
+The fixture declares one synthetic logical directed flow in exact
+`as_designed` context. Registration, declaration currentness, healthy model
+lineage, consistent direction declarations, and aligned pinned support do not
+establish physical flow, activity, occurrence, observation, command,
+quantity, conservation, behavior, cause, safety, health, correctness,
+diagnosis, or recommended action. Final FL-001 owner acceptance remains
+pending.

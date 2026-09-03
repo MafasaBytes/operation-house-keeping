@@ -14,6 +14,7 @@ from tests.model_kernel.test_demo_model import (
     BH001_MEMBERSHIP,
     CN001_MEMBERSHIP,
     CURRENT_REVISION,
+    FL001_MEMBERSHIP,
     GOLDEN_REVISION,
     PRE_BH001_REVISION,
     PRE_CN001_MEMBERSHIP,
@@ -24,6 +25,7 @@ from tests.model_kernel.test_demo_model import (
     PRE_SPECIFICATION_MEMBERSHIP,
     PRE_SPECIFICATION_REVISION,
     PRE_ST001_REVISION,
+    PRE_FL001_REVISION,
     PRE_VARIABLE_MEMBERSHIP,
     PRE_VARIABLE_REVISION,
     PRE_VP001_REVISION,
@@ -130,19 +132,19 @@ def test_import_direction_and_no_assessment_occurrence_package_are_exact():
     assert "uuid4" not in helper
 
 
-def test_authoritative_34_record_ledger_is_byte_frozen_and_transition_empty():
+def test_authoritative_36_record_ledger_is_byte_frozen_and_transition_empty():
     paths = sorted((DEMO_MODEL / "records").glob("*.json"))
     inventory = {
         path.name: hashlib.sha256(path.read_bytes()).hexdigest()
         for path in paths
     }
     loaded = kernel.ModelStore(DEMO_MODEL).load()
-    assert len(paths) == loaded.revision.record_count == 34
-    assert loaded.revision.record_ids == ST001_MEMBERSHIP
+    assert len(paths) == loaded.revision.record_count == 36
+    assert loaded.revision.record_ids == FL001_MEMBERSHIP
     assert loaded.revision.revision_id == CURRENT_REVISION == (
-        "mrv_67fb4be22bd50683cc427d3d4e4abf97c0ffe6b800f764b156f671cd18bb5b41")
+        "mrv_b8f03e1c03c23efc5c4454d00e43e6b89b8254ab87ce724d7418b8a94288c7ee")
     assert inventory_digest(inventory) == (
-        "cf3a534b4b7d13a85fb1f23a3e81881b03e084fc508145950cbc8618f247d6cd")
+        "bbb09d9be9b6096381394fd4f491e3ecfed3ebe071c78bd9276a03c8ddd5cd8a")
     assert sum(path.name.startswith("srg_") for path in paths) == 1
     assert sum(path.name.startswith("std_") for path in paths) == 1
     assert not any(path.name.startswith(("stw_", "trg_", "trd_", "trw_"))
@@ -163,7 +165,8 @@ def test_explicit_historical_memberships_replay_with_empty_immutable_indexes():
         (PT001_MEMBERSHIP, PRE_VP001_REVISION, 28),
         (VP001_MEMBERSHIP, PRE_BH001_REVISION, 29),
         (BH001_MEMBERSHIP, PRE_ST001_REVISION, 32),
-        (ST001_MEMBERSHIP, CURRENT_REVISION, 34),
+        (ST001_MEMBERSHIP, PRE_FL001_REVISION, 34),
+        (FL001_MEMBERSHIP, CURRENT_REVISION, 36),
     )
     store = kernel.ModelStore(DEMO_MODEL)
     for membership, revision, count in cases:
@@ -193,4 +196,4 @@ def test_accepted_st_owner_gate_artifacts_and_completion_report_are_frozen():
         assert hashlib.sha256(path.read_bytes()).hexdigest() == digest
     manifest = json.loads(next(iter(paths)).read_bytes())
     assert manifest["content"]["candidate_contract"]["revision"][
-        "revision_id"] == CURRENT_REVISION
+        "revision_id"] == PRE_FL001_REVISION

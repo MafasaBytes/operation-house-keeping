@@ -11,6 +11,7 @@ from tests.model_kernel.test_demo_model import (
     BH001_MEMBERSHIP, CN001_MEMBERSHIP, GOLDEN_REVISION,
     PRE_BH001_REVISION, PRE_CN001_MEMBERSHIP, PRE_CN001_REVISION,
     PRE_ES001_MEMBERSHIP, PRE_ES001_REVISION, PRE_PT001_REVISION,
+    PRE_FL001_REVISION,
     PRE_SPECIFICATION_MEMBERSHIP, PRE_SPECIFICATION_REVISION,
     PRE_ST001_REVISION, PRE_VARIABLE_MEMBERSHIP, PRE_VARIABLE_REVISION,
     PRE_VP001_REVISION, PT001_MEMBERSHIP, ST001_MEMBERSHIP,
@@ -26,10 +27,6 @@ REGISTERED_PORT = "prt_91a3d6db9df440e1a09dbdb185c7b182"
 ABSENT_PORT = "prt_" + "0" * 32
 CONTEXT = kernel.LifecycleViewContext(
     kind="lifecycle_view", view="as_operated")
-CURRENT_REVISION = (
-    "mrv_67fb4be22bd50683cc427d3d4e4abf97c0ffe6b800f764b156f671cd18bb5b41")
-
-
 def public_methods():
     return {
         name for name, value in vars(kernel.ModelQueries).items()
@@ -154,8 +151,8 @@ def test_exact_flow_result_field_order_and_exports():
         assert name in kernel.__all__
 
 
-def test_all_four_queries_have_exact_authoritative_34_record_absence():
-    loaded = kernel.ModelStore(DEMO_MODEL).load()
+def test_all_four_queries_have_exact_historical_34_record_absence():
+    loaded = kernel.ModelStore(DEMO_MODEL).replay(ST001_MEMBERSHIP)
     queries = kernel.ModelQueries(loaded)
     lookup = queries.flow(ABSENT_FLOW)
     assert without_material(lookup) == {
@@ -209,7 +206,7 @@ def test_all_four_queries_have_exact_authoritative_34_record_absence():
             "withdrawal_indices": (),
         }
     for result in (lookup, declaration, registered, absent):
-        assert result.material.revision.revision_id == CURRENT_REVISION
+        assert result.material.revision.revision_id == PRE_FL001_REVISION
         assert result.material.revision.record_count == 34
         assert len(result.material.records) == 34
 
@@ -220,7 +217,7 @@ def test_flow_results_carry_material_once():
                                      ABSENT_FLOW, context=CONTEXT)
     decoded = json.loads(result.model_dump_json())
     assert list(decoded).count("material") == 1
-    assert len(decoded["material"]["records"]) == 34
+    assert len(decoded["material"]["records"]) == 36
     assert "material" not in json.dumps({
         "roots": decoded["roots"],
         "groups": decoded["effective_body_groups"],
@@ -238,7 +235,7 @@ def test_every_explicit_historical_membership_has_structured_flow_absence():
         (PT001_MEMBERSHIP, PRE_VP001_REVISION, 28),
         (VP001_MEMBERSHIP, PRE_BH001_REVISION, 29),
         (BH001_MEMBERSHIP, PRE_ST001_REVISION, 32),
-        (ST001_MEMBERSHIP, CURRENT_REVISION, 34),
+        (ST001_MEMBERSHIP, PRE_FL001_REVISION, 34),
     )
     store = kernel.ModelStore(DEMO_MODEL)
     for membership, revision, count in cases:

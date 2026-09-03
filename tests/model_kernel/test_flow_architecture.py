@@ -12,7 +12,6 @@ from tests.model_kernel.st001_slice_d_rehearsal import inventory_digest
 from tests.model_kernel.test_demo_model import (
     BH001_MEMBERSHIP,
     CN001_MEMBERSHIP,
-    CURRENT_REVISION,
     GOLDEN_REVISION,
     PRE_BH001_REVISION,
     PRE_CN001_MEMBERSHIP,
@@ -20,6 +19,7 @@ from tests.model_kernel.test_demo_model import (
     PRE_ES001_MEMBERSHIP,
     PRE_ES001_REVISION,
     PRE_PT001_REVISION,
+    PRE_FL001_REVISION,
     PRE_SPECIFICATION_MEMBERSHIP,
     PRE_SPECIFICATION_REVISION,
     PRE_ST001_REVISION,
@@ -109,15 +109,16 @@ def test_import_direction_and_no_flow_assessment_occurrence_package():
     assert "uuid4" not in helper
 
 
-def test_authoritative_34_record_ledger_is_byte_frozen_and_flow_empty():
-    paths = sorted((DEMO_MODEL / "records").glob("*.json"))
+def test_historical_34_record_ledger_is_byte_frozen_and_flow_empty():
+    paths = [DEMO_MODEL / "records" / f"{record_id}.json"
+             for record_id in ST001_MEMBERSHIP]
     inventory = {
         path.name: hashlib.sha256(path.read_bytes()).hexdigest()
         for path in paths}
-    loaded = kernel.ModelStore(DEMO_MODEL).load()
+    loaded = kernel.ModelStore(DEMO_MODEL).replay(ST001_MEMBERSHIP)
     assert len(paths) == loaded.revision.record_count == 34
     assert loaded.revision.record_ids == ST001_MEMBERSHIP
-    assert loaded.revision.revision_id == CURRENT_REVISION == (
+    assert loaded.revision.revision_id == PRE_FL001_REVISION == (
         "mrv_67fb4be22bd50683cc427d3d4e4abf97c0ffe6b800f764b156f671cd18bb5b41")
     assert inventory_digest(inventory) == (
         "cf3a534b4b7d13a85fb1f23a3e81881b03e084fc508145950cbc8618f247d6cd")
@@ -126,8 +127,8 @@ def test_authoritative_34_record_ledger_is_byte_frozen_and_flow_empty():
                for path in paths)
 
 
-def test_authoritative_cross_layer_material_never_creates_flow():
-    loaded = kernel.ModelStore(DEMO_MODEL).load()
+def test_historical_cross_layer_material_did_not_create_flow():
+    loaded = kernel.ModelStore(DEMO_MODEL).replay(ST001_MEMBERSHIP)
     assert loaded.port_connections
     assert loaded.port_interface_declarations
     assert loaded.port_compatibility_declarations
@@ -169,7 +170,7 @@ def test_explicit_historical_memberships_replay_with_empty_flow_indexes():
         (PT001_MEMBERSHIP, PRE_VP001_REVISION, 28),
         (VP001_MEMBERSHIP, PRE_BH001_REVISION, 29),
         (BH001_MEMBERSHIP, PRE_ST001_REVISION, 32),
-        (ST001_MEMBERSHIP, CURRENT_REVISION, 34),
+        (ST001_MEMBERSHIP, PRE_FL001_REVISION, 34),
     )
     store = kernel.ModelStore(DEMO_MODEL)
     for membership, revision, count in cases:

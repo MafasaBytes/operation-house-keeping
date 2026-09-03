@@ -1,0 +1,61 @@
+{
+  "authority": {
+    "agent": "fl001_demo_fixture",
+    "kind": "test_fixture",
+    "method": "manual_declaration"
+  },
+  "connection_assertion_record_id": "pcn_4861ecf058add8a45686c9b9c4f2e28085f60575705d6d06f1890b8ef11f1726",
+  "context": {
+    "kind": "lifecycle_view",
+    "view": "as_designed"
+  },
+  "evidence": [
+    {
+      "kind": "model_record",
+      "record_id": "frg_9b76a51bd6a1165572fad2dcf344dad90f17c68c0f5a6e1977874bd6224d7cd7"
+    },
+    {
+      "kind": "model_record",
+      "record_id": "pcn_4861ecf058add8a45686c9b9c4f2e28085f60575705d6d06f1890b8ef11f1726"
+    },
+    {
+      "kind": "model_record",
+      "record_id": "pif_258ca8416b648b6d1fa4e89f9b482ebc23ac761d275992cd82f0a89062213242"
+    },
+    {
+      "kind": "model_record",
+      "record_id": "pif_80ce1f623bcec03fa2de7d6a40828a779d9005198b6629bb1839f3cf41e63e84"
+    },
+    {
+      "kind": "model_record",
+      "record_id": "prg_c06e49bef910d073a6af206d884a1bb68c0b9baa1cdb1d698d0c35c61025e057"
+    },
+    {
+      "kind": "model_record",
+      "record_id": "prg_c37057871b41bf873e317abde29dbba764be4974e195e21261d26942e5833af9"
+    },
+    {
+      "kind": "owner_declaration",
+      "statement": "FL-001 fixture authority explicitly declares this exact synthetic logical-flow capability/pathway in the as-designed lifecycle view with the cited exact-union topology assertion and exact source/sink direction declarations; illustrative fixture only."
+    }
+  ],
+  "flow_anchor_id": "flo_ddefa85855ff4dc19f8ecfd022033883",
+  "note": "FL-001 bounded synthetic logical-flow declaration.",
+  "record_id": "fld_f5a192053bc42c53ce9e4d3bd49b011589d17191bdb97f9bac93fcc359872192",
+  "record_kind": "flow_declaration",
+  "recorded_at": "2026-09-03T12:01:00+00:00",
+  "schema_version": "1",
+  "sink_direction_pins": [
+    {
+      "declaration_record_id": "pif_80ce1f623bcec03fa2de7d6a40828a779d9005198b6629bb1839f3cf41e63e84",
+      "port_anchor_id": "prt_91a3d6db9df440e1a09dbdb185c7b182"
+    }
+  ],
+  "source_direction_pins": [
+    {
+      "declaration_record_id": "pif_258ca8416b648b6d1fa4e89f9b482ebc23ac761d275992cd82f0a89062213242",
+      "port_anchor_id": "prt_c1d68d104a73405a950556b55f6a4d34"
+    }
+  ],
+  "supersedes": []
+}

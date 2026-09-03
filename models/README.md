@@ -25,7 +25,7 @@ the PT artifact SHA-256 is
 Displaying variable state beside a port does not mean the observation occurred
 at, originated at, travelled through, or describes the port.
 
-`demo-printer/` is the accepted validation model, currently 34 synthetic
+`demo-printer/` is the accepted validation model, currently 36 synthetic
 records under `test_fixture` authorities. Its explicit historical memberships
 preserve the 9-record MK-001 model, VM-001, VS-001, SN-001, ES-001, CN-001, and
 the 28-record PT-001 fixture. VP-001 adds exactly one parentless, role-free,
@@ -67,3 +67,13 @@ There is no STW or additional record. The accepted completion-report SHA-256 is
 Acceptance does not make `matches` a claim of current physical state,
 exclusivity, completeness, transition, cause, control, safety, health,
 diagnosis, correctness, or recommended action.
+
+FL-001 Slice D adds only the owner-approved frozen FRG followed by its
+parentless FLD. The resulting explicit 36-record revision is
+`mrv_b8f03e1c03c23efc5c4454d00e43e6b89b8254ab87ce724d7418b8a94288c7ee`;
+the 34-record ST-001 membership remains the exact historical predecessor.
+There is one FRG, one FLD, and zero FLW. The fixture declares one synthetic
+logical directed flow in exact `as_designed` context; it does not establish
+physical flow, activity, occurrence, observation, command, quantity,
+conservation, behavior, cause, safety, health, correctness, diagnosis, or
+recommended action. Final FL-001 owner acceptance remains pending.

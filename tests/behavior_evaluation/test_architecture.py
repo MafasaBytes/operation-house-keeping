@@ -68,14 +68,14 @@ def test_cn_dependency_is_narrow_and_no_parser_is_reexported():
 
 def test_slice_d_fixture_is_exact_and_has_no_persisted_evaluation_artifact():
     records = tuple(Path("models/demo-printer/records").glob("*.json"))
-    assert len(records) == 34
+    assert len(records) == 36
     assert sum(path.name.startswith("brg_") for path in records) == 1
     assert sum(path.name.startswith("bhd_") for path in records) == 1
     assert not any(path.name.startswith("bhw_") for path in records)
     assert not Path("artifacts/bh001").exists()
     loaded = ModelStore(Path("models/demo-printer")).load()
     assert loaded.revision.revision_id == (
-        "mrv_67fb4be22bd50683cc427d3d4e4abf97c0ffe6b800f764b156f671cd18bb5b41")
+        "mrv_b8f03e1c03c23efc5c4454d00e43e6b89b8254ab87ce724d7418b8a94288c7ee")
     vpa = Path(
         "models/demo-printer/records/"
         "vpa_f6443787fc9665e24cae80a5ba0650d0bda8abefe87cb60427c8b39068932e49.json")

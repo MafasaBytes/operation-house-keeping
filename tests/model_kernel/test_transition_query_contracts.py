@@ -12,6 +12,7 @@ from tests.model_kernel.test_demo_model import (
     BH001_MEMBERSHIP,
     CN001_MEMBERSHIP,
     CURRENT_REVISION,
+    FL001_MEMBERSHIP,
     GOLDEN_REVISION,
     PRE_BH001_REVISION,
     PRE_CN001_MEMBERSHIP,
@@ -22,6 +23,7 @@ from tests.model_kernel.test_demo_model import (
     PRE_SPECIFICATION_MEMBERSHIP,
     PRE_SPECIFICATION_REVISION,
     PRE_ST001_REVISION,
+    PRE_FL001_REVISION,
     PRE_VARIABLE_MEMBERSHIP,
     PRE_VARIABLE_REVISION,
     PRE_VP001_REVISION,
@@ -179,7 +181,7 @@ def test_exact_transition_result_field_order_and_exports():
         typing.get_args(kernel.ContainingLineageHealth)
 
 
-def test_rc5_all_four_query_families_have_exact_34_record_absence():
+def test_rc5_all_four_query_families_have_exact_36_record_absence():
     loaded = kernel.ModelStore(DEMO_MODEL).load()
     queries = kernel.ModelQueries(loaded)
     lookup = queries.transition(ABSENT_TRANSITION)
@@ -209,7 +211,7 @@ def test_rc5_all_four_query_families_have_exact_34_record_absence():
         "entity_anchor_id": ENTITY,
         "context": CONTEXT.model_dump(mode="python"),
         "status": "registered",
-        "entity_registration_index": 14,
+        "entity_registration_index": 16,
         "entries": (),
     }
     for record_id in ABSENT_RECORDS:
@@ -228,8 +230,8 @@ def test_rc5_all_four_query_families_have_exact_34_record_absence():
         }
     for result in (lookup, declaration, collection):
         assert result.material.revision.revision_id == CURRENT_REVISION
-        assert result.material.revision.record_count == 34
-        assert len(result.material.records) == 34
+        assert result.material.revision.record_count == 36
+        assert len(result.material.records) == 36
 
 
 def test_carry_once_serialization_for_authoritative_absence():
@@ -238,7 +240,7 @@ def test_carry_once_serialization_for_authoritative_absence():
                                      ABSENT_TRANSITION, context=CONTEXT)
     decoded = json.loads(result.model_dump_json())
     assert list(decoded).count("material") == 1
-    assert len(decoded["material"]["records"]) == 34
+    assert len(decoded["material"]["records"]) == 36
     assert "material" not in json.dumps({
         "roots": decoded["roots"],
         "groups": decoded["effective_body_groups"],
@@ -256,7 +258,8 @@ def test_historical_memberships_preserve_exact_absence_and_revisions():
         (PT001_MEMBERSHIP, PRE_VP001_REVISION, 28),
         (VP001_MEMBERSHIP, PRE_BH001_REVISION, 29),
         (BH001_MEMBERSHIP, PRE_ST001_REVISION, 32),
-        (ST001_MEMBERSHIP, CURRENT_REVISION, 34),
+        (ST001_MEMBERSHIP, PRE_FL001_REVISION, 34),
+        (FL001_MEMBERSHIP, CURRENT_REVISION, 36),
     )
     store = kernel.ModelStore(DEMO_MODEL)
     for membership, revision, count in cases:

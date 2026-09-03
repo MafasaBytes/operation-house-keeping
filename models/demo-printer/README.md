@@ -148,7 +148,7 @@ Both use the one frozen neutral state anchor
 correction, fork, second root, state family, aggregate selection, or
 transition record.
 
-The exact current membership contains 34 records at revision
+The accepted ST-001 historical membership contains 34 records at revision
 `mrv_67fb4be22bd50683cc427d3d4e4abf97c0ffe6b800f764b156f671cd18bb5b41`.
 The complete 32-record BH-001 membership remains the explicit unchanged
 historical predecessor. The SRG stored file is 1,278 bytes at SHA-256
@@ -190,3 +190,41 @@ SHA-256
 `2ccc501a4ff7c930518e75adc6f991cbb585637e04dbd768bca713cfbcce24b3`.
 Acceptance changes no anchor, record ID, canonical byte, stored byte,
 membership, artifact, or classification meaning and adds no STW.
+
+## FL-001 synthetic logical flow declaration
+
+FL-001 Slice D appends exactly the owner-approved frozen registration
+`frg_9b76a51bd6a1165572fad2dcf344dad90f17c68c0f5a6e1977874bd6224d7cd7`
+followed by the parentless declaration
+`fld_f5a192053bc42c53ce9e4d3bd49b011589d17191bdb97f9bac93fcc359872192`.
+Both use the single frozen logical directed flow anchor
+`flo_ddefa85855ff4dc19f8ecfd022033883`. There is no FLW, correction, second
+root, second anchor, or additional record.
+
+The exact current membership contains 36 records at revision
+`mrv_b8f03e1c03c23efc5c4454d00e43e6b89b8254ab87ce724d7418b8a94288c7ee`.
+The accepted 34-record ST-001 membership remains an explicit historical
+predecessor at revision
+`mrv_67fb4be22bd50683cc427d3d4e4abf97c0ffe6b800f764b156f671cd18bb5b41`.
+The FRG stored file is 1,445 bytes at SHA-256
+`67257f0d761b254ba0b10abd80a980621703c2047010c9a1c5260acde7fafb0c`;
+the FLD stored file is 2,206 bytes at SHA-256
+`f8aa47dd57c923037b8cc3c8aa199bb9df6dc96a466e9b2b44aa448c156f142d`.
+
+Public kernel queries disclose the registration and one healthy,
+parentless declaration root in exact `lifecycle_view/as_designed` context.
+The declaration pins the exact accepted PCN and complementary source-output
+and sink-input PIF declarations. Exact-current, healthy, consistent, and
+aligned describe only membership-relative model support; they do not describe
+physical flow activity or system health. Exact `lifecycle_view/as_operated`
+disclosure remains `not_declared`, with registered-empty port collections.
+
+> This is an illustrative synthetic FL-001 flow identity and declaration fixture. `declared` means only that the selected model membership contains an admitted evidence-bearing declaration over the stated exact port-role, topology, interface, context, and flow-kind claims. It does not claim that a real printer carries material, signal, energy, or data; that flow is active, observed, commanded, current, continuous, or occurred; that any rate, quantity, or observation occurred at or travelled through a port; that source and sink observations are simultaneous or persistent; that anything is conserved; or that topology, compatibility, values, state, transition, timing, or order establishes transport, influence, cause, control, safety, health, diagnosis, correctness, or recommended action.
+
+PT, PIF, PCM, VPA, BH, ST, ST-002, observations, geometry, hierarchy, names,
+and temporal relationships did not create this flow identity or declaration
+automatically. The approved 660,516-byte disclosure remains byte-frozen at
+SHA-256
+`096bb4d00600b861d5e127afe5a41a158f43bbb926017f62592307d0db43723b`.
+Its pre-append scope fields remain historical owner-gate facts. Final FL-001
+owner acceptance remains pending.

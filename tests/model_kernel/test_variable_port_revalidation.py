@@ -13,7 +13,7 @@ import pytest
 from backend.model_kernel import ModelIntegrityError, ModelQueries, ModelStore
 from backend.model_kernel.store import validate_record_collection
 from tests.model_kernel.test_demo_model import (
-    CN001_MEMBERSHIP, CURRENT_REVISION,
+    CN001_MEMBERSHIP, CURRENT_REVISION, FL001_MEMBERSHIP,
     FROZEN_CN001_MODEL_RECORDS,
     FROZEN_ES001_MODEL_RECORDS, FROZEN_MK001_RECORDS,
     FROZEN_PT001_MODEL_RECORDS, FROZEN_SN001_MODEL_RECORDS,
@@ -164,12 +164,12 @@ def test_all_explicit_histories_replay_with_empty_immutable_vp_indexes():
 
 def test_demo_28_predecessors_and_pt_artifact_are_frozen_after_vp_append():
     paths = sorted((DEMO_MODEL / "records").glob("*.json"))
-    assert len(paths) == 34
+    assert len(paths) == 36
     assert [path.stem for path in paths if path.name.startswith("vpa_")] == \
         list(VP001_MODEL_RECORDS)
     assert not any(path.name.startswith("vpw_") for path in paths)
     assert ModelStore(DEMO_MODEL).load().revision.revision_id == CURRENT_REVISION
-    assert ModelStore(DEMO_MODEL).load().revision.record_ids == ST001_MEMBERSHIP
+    assert ModelStore(DEMO_MODEL).load().revision.record_ids == FL001_MEMBERSHIP
     frozen = {
         **FROZEN_MK001_RECORDS, **FROZEN_VM001_RECORD,
         **FROZEN_VS001_RECORD, **FROZEN_SN001_MODEL_RECORDS,

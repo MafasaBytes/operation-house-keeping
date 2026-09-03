@@ -28,6 +28,7 @@ from tests.model_kernel.test_demo_model import (
     BH001_MEMBERSHIP,
     CN001_MEMBERSHIP,
     CURRENT_REVISION,
+    FL001_MEMBERSHIP,
     FROZEN_BH001_MODEL_RECORDS,
     FROZEN_CN001_MODEL_RECORDS,
     FROZEN_ES001_MODEL_RECORDS,
@@ -361,15 +362,15 @@ def test_all_explicit_pre_st_histories_replay_with_empty_immutable_indexes():
                 mapping["forged"] = ()
 
 
-def test_current_34_record_ledger_and_every_predecessor_byte_remain_frozen():
+def test_current_36_record_ledger_and_every_predecessor_byte_remain_frozen():
     paths = sorted((DEMO_MODEL / "records").glob("*.json"))
-    assert len(paths) == 34
+    assert len(paths) == 36
     assert sum(path.name.startswith("srg_") for path in paths) == 1
     assert sum(path.name.startswith("std_") for path in paths) == 1
     assert not any(path.name.startswith("stw_") for path in paths)
     loaded = kernel.ModelStore(DEMO_MODEL).load()
     assert loaded.revision.revision_id == CURRENT_REVISION
-    assert loaded.revision.record_ids == ST001_MEMBERSHIP
+    assert loaded.revision.record_ids == FL001_MEMBERSHIP
     frozen = {
         **FROZEN_MK001_RECORDS,
         **FROZEN_VM001_RECORD,

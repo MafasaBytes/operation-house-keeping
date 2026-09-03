@@ -336,7 +336,7 @@ class TestAcceptedDemoLedgerFreeze:
     def test_revision_and_authorities_remain_exactly_accepted(self):
         model = ModelStore(DEMO_MODEL).load()
         assert model.revision.revision_id == CURRENT_REVISION
-        assert model.revision.record_count == 34
+        assert model.revision.record_count == 36
         assert len(model.constraint_registrations_by_anchor) == 1
         assert len(model.constraint_declarations) == 1
         expected_agents = {
@@ -348,6 +348,7 @@ class TestAcceptedDemoLedgerFreeze:
             "vp001_demo_fixture": 1,
             "bh001_demo_fixture": 3,
             "st001_demo_fixture": 2,
+            "fl001_demo_fixture": 2,
         }
         actual = {}
         for record in model.records.values():
