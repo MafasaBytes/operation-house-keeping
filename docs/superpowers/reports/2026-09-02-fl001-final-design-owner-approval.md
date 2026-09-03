@@ -2,8 +2,8 @@
 
 Date: 2026-09-02
 
-Status: final design owner approved; Slices A and B owner accepted; exact Slice
-D candidate and FRG-then-FLD append authorized; final acceptance pending
+Status: FL-001 complete and owner accepted; Slices A, B, and D accepted; Slice C
+absent from FL-001 v1
 
 The owner approves the final FL-001 design at:
 
@@ -22,10 +22,10 @@ The accepted FL-001 design record consists of:
 The owner accepted FL-001 Slice A at
 `0071b5599f7d3a52f74573a37163ecc50f51dff8` and Slice B at
 `40af98793d812f5d9bd142079fdd2c454e122734`. Slice C is absent from FL-001
-v1. The exact frozen Slice D candidate is owner approved. Only its exact
-FRG-then-FLD authoritative 34-to-36 append is authorized; reminting,
-substitution, correction, FLW, a second root or anchor, and any additional
-record remain unauthorized. Final FL-001 owner acceptance remains pending.
+v1. The exact frozen Slice D candidate and its FRG-then-FLD authoritative
+34-to-36 append are owner accepted at implementation HEAD
+`fe3b15a3caf77974a795dad5b04c0a35abee37b4`. FL-001 is complete, owner
+accepted, adversarially reviewed, and dual-clean-checkout verified.
 
 This status update changes no runtime behavior, identity, record, fixture,
 ledger membership, canonical byte sequence, golden ID, historical revision,

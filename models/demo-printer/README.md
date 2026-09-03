@@ -226,5 +226,8 @@ and temporal relationships did not create this flow identity or declaration
 automatically. The approved 660,516-byte disclosure remains byte-frozen at
 SHA-256
 `096bb4d00600b861d5e127afe5a41a158f43bbb926017f62592307d0db43723b`.
-Its pre-append scope fields remain historical owner-gate facts. Final FL-001
-owner acceptance remains pending.
+Its pre-append scope fields remain historical owner-gate facts. FL-001 Slices
+A, B, and D are owner accepted, Slice C is absent from v1, and FL-001 is
+complete, adversarially reviewed, full-suite verified, and
+dual-clean-checkout verified at implementation HEAD
+`fe3b15a3caf77974a795dad5b04c0a35abee37b4`.

@@ -331,5 +331,8 @@ The four flow queries disclose registration, exact-context declaration
 lifecycle, exact pinned PT support, incident port roles, and assertion
 lineage. They do not infer adjacency, traversal, physical flow, activity,
 occurrence, observation, command, quantity, conservation, behavior, cause,
-safety, health, correctness, diagnosis, or recommended action. Final FL-001
-owner acceptance remains pending.
+safety, health, correctness, diagnosis, or recommended action. FL-001 Slices
+A, B, and D are owner accepted, Slice C is absent from v1, and FL-001 is
+complete, adversarially reviewed, full-suite verified, and
+dual-clean-checkout verified at implementation HEAD
+`fe3b15a3caf77974a795dad5b04c0a35abee37b4`.

@@ -881,7 +881,7 @@ Final acceptance does not turn `matches` into current physical state,
 exclusivity, completeness, transition, cause, control, safety, health,
 diagnosis, correctness, or recommended action.
 
-FL-001 Slices A and B are owner accepted, Slice C is absent, and the exact
+FL-001 Slices A, B, and D are owner accepted, Slice C is absent, and the exact
 owner-approved Slice D append adds only
 `frg_9b76a51bd6a1165572fad2dcf344dad90f17c68c0f5a6e1977874bd6224d7cd7`
 followed by
@@ -894,5 +894,6 @@ The fixture declares one synthetic logical directed flow in exact
 lineage, consistent direction declarations, and aligned pinned support do not
 establish physical flow, activity, occurrence, observation, command,
 quantity, conservation, behavior, cause, safety, health, correctness,
-diagnosis, or recommended action. Final FL-001 owner acceptance remains
-pending.
+diagnosis, or recommended action. FL-001 is complete, owner accepted,
+adversarially reviewed, full-suite verified, and dual-clean-checkout verified
+at implementation HEAD `fe3b15a3caf77974a795dad5b04c0a35abee37b4`.

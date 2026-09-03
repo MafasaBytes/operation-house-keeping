@@ -2,8 +2,8 @@
 
 Date: 2026-09-03
 
-Status: exact frozen candidate approved; bounded authoritative append
-authorized; final FL-001 owner acceptance pending
+Status: historical exact append authorization fulfilled; Slice D and FL-001
+owner accepted
 
 The owner approves the exact frozen FL-001 Slice D candidate contract and
 separately authorizes the authoritative 34-to-36 model-ledger append.
@@ -51,6 +51,8 @@ rate, conservation, traversal, causality, safety, diagnosis, push, merge, or
 history rewrite.
 
 Slices A and B are owner accepted. Slice C is absent from FL-001 v1. The exact
-Slice D candidate is approved and only its FRG-then-FLD append is authorized.
-Final FL-001 owner acceptance remains pending after append, verification, and
-completion reporting.
+Slice D candidate and its FRG-then-FLD append are owner accepted at
+implementation HEAD `fe3b15a3caf77974a795dad5b04c0a35abee37b4` after append,
+adversarial review, completion reporting, and dual-clean-checkout
+verification. This record remains the historical authorization boundary and
+does not authorize another append.
