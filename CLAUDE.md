@@ -26,46 +26,47 @@ must remain authoritative.
 ## Status (added 2026-08-07 — historical guidance below is preserved)
 
 The "Current Phase" and DS-001 sections below are the original milestone
-record, retained as written. Accepted since then: DS-001 (CSV/BOM),
-DS-002 (STEP Levels 0–3), DS-003 (PDF), DS-004 (read-only operational
-API; Moonraker validation source), and TS-001 (rebuildable temporal
-evidence projection), each with owner-mandated repair slices where
-independent validation found violations. `backend/data_sources/` and
-`backend/temporal_state/` are accepted and change only through
-owner-approved repair slices. Accepted since that note was written:
-IB-001 (canonical anchors in `backend/system_identity/` and the explicit
-identity-binding ledger in `backend/identity_binding/`) and MK-001 (the
-typed entity/relationship model kernel in `backend/model_kernel/`), each
-validated and repaired under owner mandate. Also accepted: VM-001
-(explicit variable membership in the model kernel plus the read-only
-`backend/model_state/` bound model-state query facade) and VS-001
-(explicit variable VALUE specification in the model kernel plus the
-read-only `backend/observation_compatibility/` facade that assesses
-whether an attached observation matches that specification). A model
-specification states what the model requires; a source observation states
-what a source supplied; the two are never conflated, and a model unit is
-never inherited into source evidence. Also accepted: SN-001 (payload-pinned
-structural claims in the read-only `backend/structural_evidence` module;
-identity mappings as ordinary `BindingAssertion` records; read-only
-multi-set reconciliation; inert proposals; separately hand-authored model
-acceptance), validated and repaired under owner mandate. Also accepted:
-ES-001 (explicit per-dimension variable semantics in `backend/model_kernel`;
-exact-locator authority interpretation in the append-only
-`backend/source_interpretation` ledger; and read-only
-`backend/semantic_compatibility` composition over the accepted
-value-compatibility result), implemented through its committed fixture and
-completion demonstration, adversarially reviewed, repaired, and
-dual-clean-checkout verified — see
-`docs/superpowers/specs/2026-08-13-es001-engineering-semantics-design.md` and
-`docs/adr/0011`. Source interpretation is authority knowledge, never source
-evidence or identity binding; compatibility compares exact identity tokens
-only, performs no conversion or value grading, and never fills an absent
-source unit. CN-001 is owner accepted. See
-docs/superpowers/specs/ and docs/adr/ for accepted designs. The
-historical sentence "Only `data_sources` is currently in scope" in the
-Current Phase section below is superseded by this Status section; the
-section itself is preserved as the original milestone record. All other
-sections of this document remain binding for new modules.
+record, retained as historical guidance. Their sentence "Only `data_sources`
+is currently in scope" is superseded by this Status section. All other general
+boundaries remain binding.
+
+The owner-accepted milestone sequence is DS-001, DS-002, DS-003, DS-004,
+TS-001, IB-001, MK-001, VM-001, VS-001, SN-001, ES-001, CN-001, PT-001,
+VP-001, BH-001, ST-001, ST-002, and FL-001. FL-001 is complete, owner
+accepted, adversarially reviewed, full-suite verified, and
+dual-clean-checkout verified. No successor milestone is currently approved
+or in implementation. Accepted designs and decisions are indexed in
+`README.md`, `docs/superpowers/specs/`, and `docs/adr/`.
+
+Also accepted: ES-001, adversarially reviewed, repaired, and
+dual-clean-checkout verified. CN-001 is owner accepted. These explicit status
+sentences are retained for the accepted documentation guard; the complete
+sequence above is authoritative for current milestone status.
+
+The accepted backend comprises `data_sources`, `temporal_state`,
+`system_identity`, `identity_binding`, `model_kernel`, `structural_evidence`,
+`model_state`, `observation_compatibility`, `source_interpretation`,
+`semantic_compatibility`, `constraint_evaluation`, `behavior_evaluation`, and
+`state_classification`. Lower evidence and identity packages do not import
+upper model or evaluation packages. Read-only composition layers own no
+authoritative ledger.
+
+The authoritative synthetic demo model contains exactly 36 records at
+`mrv_b8f03e1c03c23efc5c4454d00e43e6b89b8254ab87ce724d7418b8a94288c7ee`,
+including one FRG, one FLD, zero FLW, and zero TRG/TRD/TRW. Source evidence
+and observations, model declarations, evaluation/classification, transition
+or flow declarations, and accountable physical occurrence remain distinct.
+ST-002 declares transition identity and possibility but performs no transition
+assessment or occurrence assertion. FL-001 declares one synthetic logical
+directed flow but performs no measurement assessment and asserts no physical
+flow occurrence.
+
+The unapproved architectural frontier includes content-bound evidence
+authentication and immutable assessment selection; transition evidence
+assessment; flow measurement association and assessment; and eventual
+configuration identity, causality, diagnosis, impact analysis, goals, actions,
+and planning. This status assigns none of those concerns a permanent milestone
+contract or module name and authorizes no implementation.
 
 ## Current Phase
 

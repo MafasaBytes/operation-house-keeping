@@ -12,6 +12,12 @@ data_sources → temporal_state → identity_binding → model_kernel
 Spec: `docs/superpowers/specs/2026-08-08-mk001-model-kernel-design.md`;
 decisions: `docs/adr/0007-model-kernel-typed-graph-ledger.md`.
 
+Accepted additive kernel decisions now extend through explicit variables,
+constraints, ports, variable-port associations, behavior, state, transition,
+and flow records. Their accepted decisions are ADR-0012 through ADR-0018 in
+`docs/adr/`; ST-002 remains transition-declaration-only and FL-001 remains
+flow-declaration-only.
+
 ## Boundary
 
 Runtime code imports only `system_identity`, the standard library, and

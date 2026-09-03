@@ -1,45 +1,97 @@
 # operation-house-keeping
 
 Backend foundation for a living, constraint-aware representation of an
-engineered system. Model-centric, not LLM-centric: deterministic code,
-explicit models, evidence, and provenance are authoritative; an LLM is
-never the source of engineering truth. `CLAUDE.md` is the authoritative
-project specification.
+engineered system. The project is model-centric, not LLM-centric:
+deterministic code, explicit model declarations, evidence, and provenance are
+authoritative; an LLM is never the source of engineering truth. `CLAUDE.md`
+contains the binding project guidance.
+
+## Current status
+
+The accepted milestone sequence through FL-001 is complete. FL-001 is the
+latest owner-accepted milestone; no successor milestone is currently approved
+or in implementation.
+
+The authoritative synthetic demo model contains exactly 36 records at
+`mrv_b8f03e1c03c23efc5c4454d00e43e6b89b8254ab87ce724d7418b8a94288c7ee`.
+It contains one FRG, one FLD, and zero FLW, and still contains zero TRG, TRD,
+or TRW records. The flow fixture is an explicit declaration only; it is not a
+claim that physical flow was active, observed, commanded, measured, conserved,
+or occurred.
 
 ## Architecture
 
-```
-Source systems
-  -> backend/data_sources            evidence acquisition + format extraction
-        (CSV/BOM, STEP, PDF, Moonraker; raw store; provenance; quarantine)
-  -> backend/temporal_state          rebuildable temporal evidence projection
-  -> backend/system_identity         canonical anchors (opaque identity)
-  -> backend/identity_binding        explicit identity-binding ledger
-  -> backend/model_kernel            typed entity/relationship model ledger
-  -> backend/structural_evidence     structural claims + reconciliation (SN-001)
-  -> backend/model_state             bound model-state query facade
-  -> backend/observation_compatibility  value-specification compatibility
-```
+| Module | Accepted responsibility |
+| --- | --- |
+| `backend/data_sources` | Read-only evidence acquisition, immutable raw storage, format extraction, provenance, and quarantine for CSV/BOM, STEP, PDF, and the bounded operational API. |
+| `backend/temporal_state` | Rebuildable source-native observation projection with explicit receipt-axis cutoffs; never model truth. |
+| `backend/system_identity` | Pure opaque anchor value contracts and public minters; no storage or authority. |
+| `backend/identity_binding` | Append-only explicit source-to-model identity decisions and read-only resolution. |
+| `backend/model_kernel` | Append-only typed, evidence-bearing model declarations, exact `mrv_` replay, lifecycle/index derivation, and read-only model queries. |
+| `backend/structural_evidence` | Read-only normalization and reconciliation of source-reported structure; no model acceptance or ledger ownership. |
+| `backend/model_state` | Read-only composition of one loaded model with explicitly selected identity-bound temporal evidence. |
+| `backend/observation_compatibility` | Read-only comparison of an attached observation with explicit model value-shape and unit declarations. |
+| `backend/source_interpretation` | Append-only authority declarations for exact source-property quantity, role, and unit meaning. |
+| `backend/semantic_compatibility` | Read-only comparison of accepted model semantics, source interpretation, and observation compatibility. |
+| `backend/constraint_evaluation` | Read-only evidence-gated evaluation of explicit variable constraints. |
+| `backend/behavior_evaluation` | Read-only evaluation of the bounded explicit BH-001 behavior declaration. |
+| `backend/state_classification` | Read-only evidence-gated classification of an explicit state declaration. |
 
-Committed knowledge lives beside the code: `models/` (model-kernel
-ledgers), `bindings/` (identity-binding ledgers), `showcases/` (frozen
-synthetic demonstration sources — test artifacts, never engineering
-truth).
+Dependencies point from upper composition layers toward accepted lower
+contracts. `system_identity` has no backend dependency; `model_kernel` depends
+on it but does not read source, temporal, binding, or upper evaluation stores.
+The read-only composition modules own no authoritative ledger. Committed
+knowledge lives beside the code in `models/` and `bindings/`; frozen synthetic
+sources and disclosures are test artifacts, never engineering truth.
 
 ## Milestones
 
-Accepted: DS-001 (CSV/BOM), DS-002 (STEP), DS-003 (PDF), DS-004
-(operational API), TS-001 (temporal projection), IB-001 (identity
-binding), MK-001 (model kernel), VM-001 (variable membership +
-`model_state`), VS-001 (value specification + `observation_compatibility`)
-— each with owner-mandated validation and repair slices. Current: SN-001
-(structural evidence normalization and cross-source model binding), in
-three gated slices. Designs in `docs/superpowers/specs/`; decisions in
-`docs/adr/`.
+| Order | Milestone | Accepted capability | ADR |
+| ---: | --- | --- | --- |
+| 1 | DS-001 | CSV/BOM source boundary | [ADR-0001](docs/adr/0001-ds001-python-pydantic-stack.md) |
+| 2 | DS-002 | STEP ingestion and OCP boundary | [ADR-0002](docs/adr/0002-step-toolchain-ocp.md) |
+| 3 | DS-003 | PDF ingestion toolchain | [ADR-0003](docs/adr/0003-pdf-toolchain-pdfplumber-pypdf-pypdfium2.md) |
+| 4 | DS-004 | Bounded read-only operational API | [ADR-0004](docs/adr/0004-operational-api-moonraker-stdlib-http.md) |
+| 5 | TS-001 | Temporal evidence projection | [ADR-0005](docs/adr/0005-temporal-state-sqlite-projection.md) |
+| 6 | IB-001 | Opaque identity and explicit binding | [ADR-0006](docs/adr/0006-identity-binding-ledger.md) |
+| 7 | MK-001 | Typed graph model ledger | [ADR-0007](docs/adr/0007-model-kernel-typed-graph-ledger.md) |
+| 8 | VM-001 | Variable membership and bound model-state facade | [ADR-0008](docs/adr/0008-model-state-composition-facade.md) |
+| 9 | VS-001 | Value specification and observation compatibility | [ADR-0009](docs/adr/0009-variable-value-specification-and-observation-compatibility.md) |
+| 10 | SN-001 | Structural evidence normalization and reconciliation | [ADR-0010](docs/adr/0010-structural-evidence-normalization-and-cross-source-binding.md) |
+| 11 | ES-001 | Engineering semantics and source interpretation | [ADR-0011](docs/adr/0011-engineering-semantics-and-source-property-interpretation.md) |
+| 12 | CN-001 | Explicit constraints and evidence-gated evaluation | [ADR-0012](docs/adr/0012-explicit-variable-constraints-and-evidence-gated-evaluation.md) |
+| 13 | PT-001 | Explicit ports and typed connectivity | [ADR-0013](docs/adr/0013-explicit-ports-and-typed-interface-connectivity.md) |
+| 14 | VP-001 | Explicit variable-port association | [ADR-0014](docs/adr/0014-explicit-variable-port-association.md) |
+| 15 | BH-001 | Explicit behavior declarations and bounded evaluation | [ADR-0015](docs/adr/0015-explicit-behavior-declarations-and-evidence-gated-evaluation.md) |
+| 16 | ST-001 | Explicit state identity and evidence-gated classification | [ADR-0016](docs/adr/0016-explicit-state-identity-and-evidence-gated-classification.md) |
+| 17 | ST-002 | Explicit transition identity and declaration-only disclosure | [ADR-0017](docs/adr/0017-explicit-state-transition-identity-and-declaration.md) |
+| 18 | FL-001 | Explicit flow identity and declaration-only disclosure | [ADR-0018](docs/adr/0018-explicit-flow-identity-and-declaration.md) |
+
+Accepted specifications live in `docs/superpowers/specs/`; accepted decisions
+live in `docs/adr/`; owner gates and verification evidence live in
+`docs/superpowers/reports/`.
+
+## Truth boundaries
+
+The repository keeps source evidence and observations, model declarations,
+evaluation/classification, transition or flow declarations, and accountable
+physical occurrence as separate concepts. A connection, compatible
+interface, changed observation, classification at two cutoffs, transition
+declaration, or flow declaration does not establish a physical transition,
+transfer, influence, cause, or occurrence.
+
+## Architectural frontier — not approved work
+
+The current frontier includes content-bound evidence authentication and
+immutable assessment selection; transition evidence assessment; flow
+measurement association and assessment; and, eventually, configuration
+identity, causality, diagnosis, impact analysis, goals, actions, and planning.
+These are possible future concerns only. This reconciliation assigns them no
+permanent milestone contract or module name and authorizes no implementation.
 
 ## Verification
 
 ```
-.venv/bin/python -m pytest        # base-only: cad/pdf-marked tests skip
+.venv/bin/python -m pytest        # base-only: CAD/PDF-marked tests skip
 # all-extras: install requirements-cad.txt + requirements-pdf.txt first
 ```

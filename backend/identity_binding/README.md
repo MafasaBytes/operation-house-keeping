@@ -6,7 +6,8 @@ source-native field refers to — plus a deterministic resolver and a
 read-only bound temporal facade. The bridge:
 
 ```text
-data_sources → temporal_state → identity_binding → future model kernel
+data_sources → temporal_state → identity_binding → model-state composition
+system_identity ────────────────────────────────→ model_kernel
 ```
 
 Spec: `docs/superpowers/specs/2026-08-07-ib001-identity-binding-design.md`;
@@ -82,6 +83,6 @@ Anchors are immutable (no label correction until a future alias record);
 no interpretation convenience for unknown applicability; explicit aware
 `at` required everywhere; revision replay requires the caller to retain
 membership; a mistaken closure is repaired by superseding its assertion;
-configuration-aware rebinding beyond declared intervals is future work.
-Next milestone question: the MK-001 typed entity/relationship kernel over
-these anchors.
+configuration-aware rebinding beyond declared intervals is future work. The
+accepted MK-001 model kernel consumes these anchors without reading this
+ledger; VM-001 performs the read-only join through public contracts.

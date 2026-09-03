@@ -79,7 +79,6 @@ identity, so it scopes by `(source_id, adapter_id, item_key)` only.
 ## Known limitations / next open question
 
 Wall-clock source-time resets are not detected (initial segment only);
-as-of cutoffs are ingestion-receipt-axis only; file-based (CSV/STEP/PDF)
-evidence has no timeline until identity binding exists. Next milestone
-decision: the identity-binding layer mapping `SourceSubjectRef` to
-system-model entities.
+as-of cutoffs are ingestion-receipt-axis only. File-based (CSV/STEP/PDF)
+evidence has no intrinsic observation timeline; accepted identity binding can
+map source locators to model anchors but does not manufacture one.

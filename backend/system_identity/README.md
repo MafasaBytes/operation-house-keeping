@@ -18,7 +18,8 @@ its display name and source address are unchanged. `namespace`,
 matching. `referent_kind` (physical_instance | logical_instance |
 type_definition | unknown) classifies only what kind of referent an ID
 names — a CAD definition and its installed instance are always distinct
-anchors, and the relation between them belongs to the future kernel.
+anchors, and any relation between them requires an explicit evidence-bearing
+model-kernel declaration.
 `ConstraintAnchor` names one stable constraint identity and contains no target,
 predicate, unit, severity, or lifecycle. `mint_constraint_anchor()` creates the
 opaque value; its first persistence is an evidence-bearing model-kernel
