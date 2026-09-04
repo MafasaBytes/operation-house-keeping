@@ -68,6 +68,12 @@ configuration identity, causality, diagnosis, impact analysis, goals, actions,
 and planning. This status assigns none of those concerns a permanent milestone
 contract or module name and authorizes no implementation.
 
+EA-001 has an owner-accepted corrected contract. Its Slice A lower read seams
+and integrity repair are owner accepted at
+`ceee1446f18ae9b7134005089046a5a4d69e10ae`. This is not acceptance of the
+complete EA-001 milestone: Slice B and Slice C remain unauthorized and require
+separate owner authorization.
+
 ## Current Phase
 
 Start with the backend. Do not build the 3D interface, conversational interface,
