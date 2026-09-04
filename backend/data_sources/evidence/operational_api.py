@@ -481,9 +481,30 @@ class FilesystemDs004OperationalEvidenceReader:
                 values[logical_id] = row
             return values.values()
 
-        artifacts = merged(
-            (left.artifacts, right.artifacts),
-            lambda row: (row.kind, row.logical_id), "artifact")
+        artifact_values = {}
+        metadata_total = 0
+        for row in (*left.artifacts, *right.artifacts):
+            key = (row.kind, row.logical_id)
+            existing = artifact_values.get(key)
+            if existing is not None:
+                if existing != row:
+                    raise _fail(
+                        "OPERATIONAL_EVIDENCE_PROVENANCE_MISMATCH",
+                        "captured artifact bytes disagree")
+                continue
+            if len(artifact_values) >= MAX_RETAINED_ARTIFACTS:
+                raise _fail(
+                    "OPERATIONAL_EVIDENCE_LIMIT_EXCEEDED",
+                    "retained artifact count exceeds 16384")
+            if row.kind != "raw_payload":
+                if metadata_total + row.byte_count > MAX_RETAINED_METADATA_BYTES:
+                    raise _fail(
+                        "OPERATIONAL_EVIDENCE_LIMIT_EXCEEDED",
+                        "retained metadata exceeds 64 MiB")
+                metadata_total += row.byte_count
+            artifact_values[key] = row
+
+        artifacts = artifact_values.values()
         runs = merged((left.runs, right.runs), lambda row: row.run_id, "run")
         attempts = merged(
             (left.attempts, right.attempts), lambda row: row.attempt_id,
