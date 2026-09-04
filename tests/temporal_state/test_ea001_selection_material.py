@@ -19,6 +19,7 @@ from backend.temporal_state.contracts import (
     TemporalQueryError,
     TemporalSelectionInventoryToken,
     TemporalSelectionMaterial,
+    temporal_selection_digest,
 )
 from backend.temporal_state.projector import TemporalProjector
 from backend.temporal_state.queries import TemporalQueries
@@ -169,7 +170,37 @@ def test_naive_and_reversed_horizons_reject_before_reader(tmp_path, monkeypatch)
         queries.selection_material(
             _scope(), horizon_started_at=datetime(2026, 1, 2, tzinfo=UTC),
             as_of=datetime(2026, 1, 1, tzinfo=UTC))
+    with pytest.raises(TemporalQueryError):
+        queries.selection_material(
+            _scope(), horizon_started_at="not-a-datetime",
+            as_of=datetime(2026, 1, 2, tzinfo=UTC))
     assert touched is False
+
+
+def test_prehorizon_seed_cannot_overflow_occurrence_bound(
+    tmp_path, monkeypatch,
+):
+    import backend.temporal_state.queries as implementation
+
+    runner, _, transport, _, projector, queries = _world(tmp_path)
+    runner.run("printer-1")
+    transport.script["/printer/objects/query"] = fixture_response(
+        "moonraker_printer_objects_changed.json")
+    runner.run("printer-1")
+    projector.project("printer-1")
+    history = queries.history(
+        SourceSubjectRef(source_id="printer-1", adapter_id="moonraker",
+                         subject_identifier="extruder"),
+        SourcePropertyRef(extraction_route="api:moonraker:v1",
+                          item_key="printer_objects",
+                          json_pointer="/result/status/extruder/temperature"))
+    monkeypatch.setattr(implementation, "MAX_SELECTION_OCCURRENCES", 0)
+    with pytest.raises(TemporalQueryError) as exc:
+        queries.selection_material(
+            _scope(),
+            horizon_started_at=history[-1].received_at + timedelta(seconds=1),
+            as_of=history[-1].received_at + timedelta(seconds=2))
+    assert exc.value.error_code == "TEMPORAL_SELECTION_LIMIT_EXCEEDED"
 
 
 def test_scope_is_exact_and_view_does_not_merge_endpoints(tmp_path):
@@ -295,3 +326,51 @@ def test_equal_receipt_time_uses_complete_attempt_order_key(tmp_path):
         _scope(), horizon_started_at=received - timedelta(days=1), as_of=received)
     assert material.occurrence_membership[
         material.selected_occurrence_index].value_json == "2"
+
+
+def test_occurrence_membership_cannot_claim_no_selection(tmp_path):
+    runner, _, _, _, projector, queries = _world(tmp_path)
+    runner.run("printer-1")
+    projector.project("printer-1")
+    material = queries.selection_material(
+        _scope(), horizon_started_at=datetime(2026, 8, 7, 19, 0, tzinfo=UTC),
+        as_of=datetime(2026, 8, 7, 21, 0, tzinfo=UTC))
+    payload = material.model_dump(
+        mode="python", exclude={"transaction_membership_sha256"})
+    payload["selected_occurrence_index"] = None
+    payload["selected_occurrence_is_pre_horizon_seed"] = False
+    payload["transaction_membership_sha256"] = temporal_selection_digest(payload)
+    with pytest.raises(ValidationError):
+        TemporalSelectionMaterial.model_validate(payload)
+
+
+def test_hostile_nested_attempt_instance_is_rebuilt(tmp_path):
+    runner, _, _, _, projector, queries = _world(tmp_path)
+    runner.run("printer-1")
+    projector.project("printer-1")
+    material = queries.selection_material(
+        _scope(), horizon_started_at=datetime(2026, 8, 7, 19, 0, tzinfo=UTC),
+        as_of=datetime(2026, 8, 7, 21, 0, tzinfo=UTC))
+    bad = material.attempt_coverage_membership[0].model_copy(
+        update={"observation_count": -1})
+    payload = material.model_dump(
+        mode="python", exclude={"transaction_membership_sha256"})
+    payload["attempt_coverage_membership"] = (bad,)
+    payload["transaction_membership_sha256"] = temporal_selection_digest(payload)
+    with pytest.raises(ValidationError):
+        TemporalSelectionMaterial.model_validate(payload)
+
+
+def test_in_horizon_occurrence_attempt_substitution_is_rejected(tmp_path):
+    runner, _, _, _, projector, queries = _world(tmp_path)
+    runner.run("printer-1")
+    projector.project("printer-1")
+    material = queries.selection_material(
+        _scope(), horizon_started_at=datetime(2026, 8, 7, 19, 0, tzinfo=UTC),
+        as_of=datetime(2026, 8, 7, 21, 0, tzinfo=UTC))
+    payload = material.model_dump(
+        mode="python", exclude={"transaction_membership_sha256"})
+    payload["occurrence_membership"][0]["raw_record_id"] = "0" * 32
+    payload["transaction_membership_sha256"] = temporal_selection_digest(payload)
+    with pytest.raises(ValidationError):
+        TemporalSelectionMaterial.model_validate(payload)

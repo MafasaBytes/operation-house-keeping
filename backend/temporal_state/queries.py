@@ -11,7 +11,7 @@ never actual system state.
 import json
 import sqlite3
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import UTC, datetime
 
 from pydantic import BaseModel, ConfigDict
 
@@ -79,6 +79,8 @@ _ORDER_ASC = ("attempt_started_at, ingestion_run_id, sweep_position, "
               "attempt_id")
 _ORDER_DESC = ("attempt_started_at DESC, ingestion_run_id DESC, "
                "sweep_position DESC, attempt_id DESC")
+MAX_SELECTION_OCCURRENCES = 16_384
+MAX_SELECTION_ATTEMPTS = 4_096
 
 
 def _key_params(subject: SourceSubjectRef, prop: SourcePropertyRef) -> tuple:
@@ -120,7 +122,8 @@ def _attempt_from_row(row) -> TemporalAttemptEvent:
 def _require_aware(as_of: datetime) -> datetime:
     """Validate a caller-supplied cutoff at the public boundary, before any
     SQLite work; aware cutoffs are normalized to UTC for comparisons."""
-    if as_of.tzinfo is None or as_of.tzinfo.utcoffset(as_of) is None:
+    if (not isinstance(as_of, datetime) or as_of.tzinfo is None
+            or as_of.tzinfo.utcoffset(as_of) is None):
         raise TemporalQueryError(
             "TEMPORAL_NAIVE_CUTOFF", "as_of must be timezone-aware")
     return as_of
@@ -135,9 +138,8 @@ def _require_selection_request(scope, horizon_started_at, as_of):
         raise TemporalQueryError(
             "TEMPORAL_SELECTION_SCOPE_INVALID",
             "selection scope is invalid") from error
-    start = _require_aware(horizon_started_at).astimezone(
-        __import__("datetime").UTC)
-    end = _require_aware(as_of).astimezone(__import__("datetime").UTC)
+    start = _require_aware(horizon_started_at).astimezone(UTC)
+    end = _require_aware(as_of).astimezone(UTC)
     if start > end:
         raise TemporalQueryError(
             "TEMPORAL_SELECTION_HORIZON_REVERSED",
@@ -398,19 +400,20 @@ class TemporalQueries:
                     f"SELECT * FROM temporal_occurrences WHERE {_KEY_WHERE} "
                     f"AND {endpoint_parent} AND received_at >= ? AND "
                     "received_at <= ? ORDER BY "
-                    f"received_at, {_ORDER_ASC}, occurrence_id LIMIT 16385",
+                    f"received_at, {_ORDER_ASC}, occurrence_id "
+                    f"LIMIT {MAX_SELECTION_OCCURRENCES + 1}",
                     (*key, scope.endpoint_id, _iso(start), _iso(end))).fetchall()
                 attempt_rows = conn.execute(
                     "SELECT * FROM temporal_attempts WHERE source_id=? AND "
                     "adapter_id=? AND endpoint_id=? AND item_key=? AND "
                     "effective_wall_time >= ? AND effective_wall_time <= ? "
-                    f"ORDER BY {_ORDER_ASC} LIMIT 4097",
+                    f"ORDER BY {_ORDER_ASC} LIMIT {MAX_SELECTION_ATTEMPTS + 1}",
                     (*coverage_key, _iso(start), _iso(end))).fetchall()
-                if len(occurrence_rows) > 16_384:
+                if len(occurrence_rows) > MAX_SELECTION_OCCURRENCES:
                     raise TemporalQueryError(
                         "TEMPORAL_SELECTION_LIMIT_EXCEEDED",
                         "in-horizon occurrence count exceeds 16384")
-                if len(attempt_rows) > 4_096:
+                if len(attempt_rows) > MAX_SELECTION_ATTEMPTS:
                     raise TemporalQueryError(
                         "TEMPORAL_SELECTION_LIMIT_EXCEEDED",
                         "in-horizon attempt count exceeds 4096")
@@ -420,6 +423,11 @@ class TemporalQueries:
                 is_seed = bool(selected is not None
                                and selected.received_at < start)
                 if is_seed:
+                    if len(occurrences) >= MAX_SELECTION_OCCURRENCES:
+                        raise TemporalQueryError(
+                            "TEMPORAL_SELECTION_LIMIT_EXCEEDED",
+                            "occurrence membership plus pre-horizon seed "
+                            "exceeds 16384")
                     occurrences.append(selected)
                 occurrences.sort(key=lambda row: (
                     row.received_at, row.attempt_started_at,
@@ -452,9 +460,15 @@ class TemporalQueries:
             key=lambda row: (
                 row.source_id, row.adapter_id, row.clock_id,
                 row.opened_at_effective_wall_time, row.segment_id)))
+        schema_version = meta.get("schema_version")
+        projector_version = meta.get("projector_version")
+        if not schema_version or not projector_version:
+            raise TemporalStoreError(
+                "TEMPORAL_STORE_UNAVAILABLE",
+                "temporal selection metadata is unavailable or incomplete")
         base = {
-            "schema_version": meta.get("schema_version", ""),
-            "projector_version": meta.get("projector_version", ""),
+            "schema_version": schema_version,
+            "projector_version": projector_version,
             "scope": scope,
             "horizon_started_at": start,
             "as_of": end,

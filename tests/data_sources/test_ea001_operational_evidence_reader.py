@@ -207,3 +207,161 @@ def test_hostile_nested_material_is_revalidated():
     with pytest.raises(ValidationError):
         Ds004OperationalEvidenceMaterial.model_validate(
             forged.model_dump(mode="python", warnings=False))
+
+
+def test_inventory_token_rejects_stale_membership_digest(tmp_path):
+    _, reader = _reader_world(tmp_path)
+    token = reader.inventory_token(
+        _scope(), horizon_started_at=HORIZON, as_of=AS_OF)
+    forged = token.model_copy(update={
+        "canonical_membership_sha256": "sha256:" + "0" * 64})
+    with pytest.raises(ValidationError):
+        OperationalApiInventoryToken.model_validate(
+            forged.model_dump(mode="python"))
+
+
+def test_inventory_token_binds_same_length_metadata_content(tmp_path):
+    store, reader = _reader_world(tmp_path)
+    before = reader.inventory_token(
+        _scope(), horizon_started_at=HORIZON, as_of=AS_OF)
+    attempt = next(row for row in store.iter_attempts("printer-1")
+                   if row.item_key == "printer_objects")
+    attempt_path = store.base_dir / "attempts" / f"{attempt.attempt_id}.json"
+    original = attempt_path.read_bytes()
+    assert b"20:00:05 GMT" in original
+    attempt_path.chmod(0o644)
+    attempt_path.write_bytes(original.replace(b"20:00:05 GMT", b"20:00:04 GMT"))
+    after = reader.inventory_token(
+        _scope(), horizon_started_at=HORIZON, as_of=AS_OF)
+    assert before.ordered_member_keys != after.ordered_member_keys
+    assert before.canonical_membership_sha256 != after.canonical_membership_sha256
+
+
+def test_raw_payload_descriptor_requires_file_digest_checksum_equality():
+    with pytest.raises(ValidationError):
+        OperationalApiArtifactDescriptor(
+            kind="raw_payload", logical_id="sha256:" + "1" * 64,
+            byte_count=3, captured_file_sha256="sha256:" + "1" * 64,
+            payload_checksum="sha256:" + "2" * 64)
+
+
+def test_hostile_nested_attempt_instance_is_rebuilt(tmp_path):
+    _, reader = _reader_world(tmp_path)
+    material = reader.read_material(
+        _scope(), horizon_started_at=HORIZON, as_of=AS_OF,
+        selected_seed_attempt_id=None)
+    bad_attempt = material.attempts[0].model_copy(
+        update={"outcome": "succeeded", "raw_record_id": None})
+    payload = material.model_dump(mode="python")
+    payload["attempts"] = (bad_attempt,)
+    with pytest.raises(ValidationError):
+        Ds004OperationalEvidenceMaterial.model_validate(payload)
+
+
+def test_material_revalidation_rejects_cross_row_and_stale_identity_forgery(
+    tmp_path,
+):
+    _, reader = _reader_world(tmp_path)
+    material = reader.read_material(
+        _scope(), horizon_started_at=HORIZON, as_of=AS_OF,
+        selected_seed_attempt_id=None)
+
+    payload = material.model_dump(mode="python")
+    payload["attempts"][0]["ingestion_run_id"] = "substituted-run"
+    with pytest.raises(ValidationError):
+        Ds004OperationalEvidenceMaterial.model_validate(payload)
+
+    payload = material.model_dump(mode="python")
+    manifest = payload["extractions"][0]["result"]["manifest"]
+    manifest["observations"][0]["observation_id"] = "0" * 32
+    with pytest.raises(ValidationError):
+        Ds004OperationalEvidenceMaterial.model_validate(payload)
+
+
+def test_duplicate_json_keys_and_malformed_pointer_refuse(tmp_path):
+    import backend.data_sources.evidence.operational_api as implementation
+
+    store, reader = _reader_world(tmp_path)
+    attempt_path = next((store.base_dir / "attempts").glob("*.json"))
+    original = attempt_path.read_bytes()
+    attempt_path.chmod(0o644)
+    attempt_path.write_bytes(original.replace(
+        b'{\n  "attempt_id":', b'{\n  "source_id": "printer-1",\n  "attempt_id":', 1))
+    with pytest.raises(OperationalEvidenceReadError) as exc:
+        reader.read_material(
+            _scope(), horizon_started_at=HORIZON, as_of=AS_OF,
+            selected_seed_attempt_id=None)
+    assert exc.value.error_code == "OPERATIONAL_EVIDENCE_METADATA_INVALID"
+
+    with pytest.raises(OperationalEvidenceReadError):
+        implementation._resolve_pointer({"a/b": {"~key": 3}}, "/a~1b/~2key")
+    assert implementation._resolve_pointer(
+        {"a/b": {"~key": 3}}, "/a~1b/~0key") == 3
+
+
+def test_shared_payload_does_not_collapse_distinct_attempts(tmp_path):
+    runner, store, _ = make_runner(tmp_path, happy_script())
+    runner.run("printer-1")
+    runner.run("printer-1")
+    material = FilesystemDs004OperationalEvidenceReader(store).read_material(
+        _scope(), horizon_started_at=HORIZON, as_of=AS_OF,
+        selected_seed_attempt_id=None)
+    assert len(material.attempts) == 2
+    assert len(material.envelopes) == 1
+    assert len([a for a in material.artifacts if a.kind == "raw_payload"]) == 1
+
+
+def test_reused_payload_closes_original_run_outside_requested_horizon(tmp_path):
+    runner, store, _ = make_runner(tmp_path, happy_script())
+    runner.run("printer-1")
+    runner.run("printer-1")
+    attempts = [row for row in store.iter_attempts("printer-1")
+                if row.item_key == "printer_objects"]
+    assert len(attempts) == 2
+    material = FilesystemDs004OperationalEvidenceReader(store).read_material(
+        _scope(), horizon_started_at=attempts[1].received_at,
+        as_of=attempts[1].received_at, selected_seed_attempt_id=None)
+    assert tuple(row.attempt_id for row in material.attempts) == (
+        attempts[1].attempt_id,)
+    assert {row.run_id for row in material.runs} == {
+        attempts[0].ingestion_run_id, attempts[1].ingestion_run_id}
+
+
+def test_each_named_artifact_is_opened_once_per_material_read(tmp_path, monkeypatch):
+    import backend.data_sources.evidence.operational_api as implementation
+
+    store, reader = _reader_world(tmp_path)
+    real_open = implementation.os.open
+    opened = []
+
+    def counted(path, flags):
+        opened.append(str(path))
+        return real_open(path, flags)
+
+    monkeypatch.setattr(implementation.os, "open", counted)
+    reader.read_material(
+        _scope(), horizon_started_at=HORIZON, as_of=AS_OF,
+        selected_seed_attempt_id=None)
+    assert len(opened) == len(set(opened))
+
+
+def test_filesystem_enumeration_order_does_not_change_material(
+    tmp_path, monkeypatch,
+):
+    runner, store, _ = make_runner(tmp_path, happy_script())
+    runner.run("printer-1")
+    runner.run("printer-1")
+    reader = FilesystemDs004OperationalEvidenceReader(store)
+    expected = reader.read_material(
+        _scope(), horizon_started_at=HORIZON, as_of=AS_OF,
+        selected_seed_attempt_id=None)
+    original = Path.iterdir
+
+    def reversed_entries(path):
+        return iter(reversed(list(original(path))))
+
+    monkeypatch.setattr(Path, "iterdir", reversed_entries)
+    actual = reader.read_material(
+        _scope(), horizon_started_at=HORIZON, as_of=AS_OF,
+        selected_seed_attempt_id=None)
+    assert actual.model_dump_json() == expected.model_dump_json()

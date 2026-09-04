@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-import hashlib
 import os
 import re
 import stat
-from collections.abc import Iterable
+import hashlib
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Protocol
@@ -27,18 +26,24 @@ from backend.data_sources.contracts import (
     QuarantineRecord,
     RawRecord,
 )
+from backend.data_sources.contracts.operational_evidence import (
+    operational_inventory_digest,
+)
 from backend.data_sources.extractors.operational import (
     JsonLimits,
     canonical_json,
     json_type_of,
     parse_bounded_json,
 )
-from backend.data_sources.provenance import derive_keyed_record_id, payload_checksum
+from backend.data_sources.provenance import (
+    derive_entity_id,
+    derive_keyed_record_id,
+    payload_checksum,
+)
 from backend.data_sources.raw_store import FilesystemRawStore
 
 
 MAX_IN_HORIZON_ATTEMPTS = 4_096
-MAX_RETAINED_OBSERVATIONS = 16_384
 MAX_RETAINED_ARTIFACTS = 16_384
 MAX_RETAINED_METADATA_BYTES = 64 * 1024 * 1024
 SUPPORTED_EXTRACTION_ROUTES = ("api:moonraker:v1",)
@@ -73,7 +78,8 @@ def _fail(code: str, detail: str) -> OperationalEvidenceReadError:
 
 def _aware_interval(start: datetime, end: datetime) -> tuple[datetime, datetime]:
     for value, name in ((start, "horizon_started_at"), (end, "as_of")):
-        if value.tzinfo is None or value.tzinfo.utcoffset(value) is None:
+        if (not isinstance(value, datetime) or value.tzinfo is None
+                or value.tzinfo.utcoffset(value) is None):
             raise _fail("OPERATIONAL_EVIDENCE_INVALID_HORIZON",
                         f"{name} must be timezone-aware")
     start, end = start.astimezone(UTC), end.astimezone(UTC)
@@ -84,18 +90,13 @@ def _aware_interval(start: datetime, end: datetime) -> tuple[datetime, datetime]
 
 
 def _sha(data: bytes) -> str:
-    return "sha256:" + hashlib.sha256(data).hexdigest()
-
-
-def _canonical_membership(keys: tuple[str, ...]) -> str:
-    encoded = ("[" + ",".join(
-        __import__("json").dumps(k, ensure_ascii=False) for k in keys) + "]").encode()
-    return _sha(encoded)
+    return payload_checksum(data)
 
 
 def _safe_component(value: str, description: str, *, hex_only: bool = False) -> str:
     pattern = _HEX_ID if hex_only else _SAFE_LOGICAL_ID
-    if not pattern.fullmatch(value) or value in {".", ".."}:
+    if (not isinstance(value, str) or not pattern.fullmatch(value)
+            or value in {".", ".."}):
         raise _fail("OPERATIONAL_EVIDENCE_UNSAFE_REFERENCE",
                     f"{description} is not a safe logical identifier")
     return value
@@ -147,6 +148,25 @@ def _resolve_pointer(document, pointer: str):
     return value
 
 
+def _attempt_disclosure_is_sanitized(attempt: AcquisitionAttempt) -> bool:
+    origin = attempt.target_origin
+    if not origin.startswith(("http://", "https://")):
+        return False
+    authority = origin.split("://", 1)[1]
+    if (not authority or any(character.isspace() for character in authority)
+            or any(token in authority for token in ("@", "/", "?", "#", "\\"))):
+        return False
+    if (not attempt.request_canonical.startswith("GET /")
+            or len(attempt.request_canonical) > 4_096
+            or any(token in attempt.request_canonical for token in ("\r", "\n"))):
+        return False
+    allowed_headers = {"Content-Type", "Date", "Retry-After", "X-Request-Id"}
+    return set(attempt.allowlisted_headers) <= allowed_headers and all(
+        isinstance(value, str) and len(value) <= 1_024
+        and "\r" not in value and "\n" not in value
+        for value in attempt.allowlisted_headers.values())
+
+
 class FilesystemDs004OperationalEvidenceReader:
     """Read a bounded DS-004 view without invoking acquisition or extraction."""
 
@@ -163,12 +183,14 @@ class FilesystemDs004OperationalEvidenceReader:
             scope, horizon_started_at=start, as_of=end,
             selected_seed_attempt_id=None)
         keys = tuple(sorted(
-            f"{item.kind}:{item.logical_id}:{item.byte_count}"
+            f"{item.kind}:{item.logical_id}:{item.byte_count}:"
+            f"{item.captured_file_sha256}:"
+            f"{item.payload_checksum or '-'}"
             for item in material.artifacts))
         return OperationalApiInventoryToken(
             schema_version="1", scope=scope, horizon_started_at=start, as_of=end,
             ordered_member_keys=keys,
-            canonical_membership_sha256=_canonical_membership(keys),
+            canonical_membership_sha256=operational_inventory_digest(keys),
         )
 
     def read_material(
@@ -182,7 +204,9 @@ class FilesystemDs004OperationalEvidenceReader:
         descriptors: dict[tuple[str, str], OperationalApiArtifactDescriptor] = {}
         selected_attempts: list[AcquisitionAttempt] = []
         selected_attempt_bytes: dict[str, bytes] = {}
-        for path in self._ordered_entries("attempts", hex_names=True):
+        in_horizon_count = 0
+        selected_metadata_bytes = 0
+        for path in self._iter_entries("attempts", hex_names=True):
             attempt, data = self._read_model(
                 path, AcquisitionAttempt, "acquisition attempt")
             if path.stem != attempt.attempt_id:
@@ -190,6 +214,9 @@ class FilesystemDs004OperationalEvidenceReader:
                             "attempt filename and logical identifier differ")
             if not self._attempt_scope_matches(attempt, scope):
                 continue
+            if not _attempt_disclosure_is_sanitized(attempt):
+                raise _fail("OPERATIONAL_EVIDENCE_PROVENANCE_MISMATCH",
+                            "attempt disclosure is not sanitized")
             effective = (attempt.received_at or attempt.finished_at).astimezone(UTC)
             in_horizon = start <= effective <= end
             is_seed = attempt.attempt_id == selected_seed_attempt_id
@@ -198,13 +225,17 @@ class FilesystemDs004OperationalEvidenceReader:
                             "selected seed must predate the declared horizon")
             if not in_horizon and not is_seed:
                 continue
+            if in_horizon:
+                if in_horizon_count >= MAX_IN_HORIZON_ATTEMPTS:
+                    raise _fail("OPERATIONAL_EVIDENCE_LIMIT_EXCEEDED",
+                                "in-horizon attempt count exceeds 4096")
+                in_horizon_count += 1
+            if selected_metadata_bytes + len(data) > MAX_RETAINED_METADATA_BYTES:
+                raise _fail("OPERATIONAL_EVIDENCE_LIMIT_EXCEEDED",
+                            "retained metadata exceeds 64 MiB")
             selected_attempts.append(attempt)
             selected_attempt_bytes[attempt.attempt_id] = data
-            if len([a for a in selected_attempts
-                    if (a.received_at or a.finished_at).astimezone(UTC) >= start]
-                   ) > MAX_IN_HORIZON_ATTEMPTS:
-                raise _fail("OPERATIONAL_EVIDENCE_LIMIT_EXCEEDED",
-                            "in-horizon attempt count exceeds 4096")
+            selected_metadata_bytes += len(data)
 
         if selected_seed_attempt_id is not None and not any(
                 a.attempt_id == selected_seed_attempt_id for a in selected_attempts):
@@ -218,15 +249,16 @@ class FilesystemDs004OperationalEvidenceReader:
         quarantines: dict[str, QuarantineRecord] = {}
         observations: dict[str, OperationalObservation] = {}
         payload_documents: dict[str, object] = {}
-        metadata_total = 0
+        metadata_total = selected_metadata_bytes
 
         for attempt in selected_attempts:
-            metadata_total += self._descriptor(
+            self._descriptor(
                 descriptors, "acquisition_attempt", attempt.attempt_id,
-                selected_attempt_bytes[attempt.attempt_id]).byte_count
+                selected_attempt_bytes[attempt.attempt_id])
             if attempt.ingestion_run_id not in runs:
                 run, data = self._read_named_model(
-                    "runs", attempt.ingestion_run_id, IngestionRun, "ingestion run")
+                    "runs", attempt.ingestion_run_id, IngestionRun, "ingestion run",
+                    max_bytes=MAX_RETAINED_METADATA_BYTES - metadata_total)
                 if run.run_id != attempt.ingestion_run_id or run.source_id != scope.source_id:
                     raise _fail("OPERATIONAL_EVIDENCE_PROVENANCE_MISMATCH",
                                 "attempt and ingestion run do not close")
@@ -239,11 +271,26 @@ class FilesystemDs004OperationalEvidenceReader:
             record_id = attempt.raw_record_id
             if record_id not in envelopes:
                 envelope, data = self._read_named_model(
-                    "envelopes", record_id, RawRecord, "raw envelope", hex_only=True)
+                    "envelopes", record_id, RawRecord, "raw envelope", hex_only=True,
+                    max_bytes=MAX_RETAINED_METADATA_BYTES - metadata_total)
                 self._validate_envelope(attempt, envelope, scope)
                 envelopes[record_id] = envelope
                 metadata_total += self._descriptor(
                     descriptors, "raw_envelope", record_id, data).byte_count
+                if envelope.ingestion_run_id not in runs:
+                    origin_run, run_data = self._read_named_model(
+                        "runs", envelope.ingestion_run_id, IngestionRun,
+                        "ingestion run",
+                        max_bytes=MAX_RETAINED_METADATA_BYTES - metadata_total)
+                    if (origin_run.run_id != envelope.ingestion_run_id
+                            or origin_run.source_id != scope.source_id):
+                        raise _fail(
+                            "OPERATIONAL_EVIDENCE_PROVENANCE_MISMATCH",
+                            "raw envelope and originating run do not close")
+                    runs[origin_run.run_id] = origin_run
+                    metadata_total += self._descriptor(
+                        descriptors, "ingestion_run", origin_run.run_id,
+                        run_data).byte_count
 
                 payload_data = self._read_payload(envelope.immutable_payload_reference)
                 observed_checksum = payload_checksum(payload_data)
@@ -272,7 +319,8 @@ class FilesystemDs004OperationalEvidenceReader:
                                 "successful attempt requires exactly one extraction or quarantine")
                 if quarantine_exists:
                     quarantine, q_data = self._read_model(
-                        quarantine_path, QuarantineRecord, "quarantine record")
+                        quarantine_path, QuarantineRecord, "quarantine record",
+                        max_bytes=MAX_RETAINED_METADATA_BYTES - metadata_total)
                     if quarantine.record_id != record_id:
                         raise _fail("OPERATIONAL_EVIDENCE_PROVENANCE_MISMATCH",
                                     "quarantine record does not match raw record")
@@ -281,7 +329,8 @@ class FilesystemDs004OperationalEvidenceReader:
                         descriptors, "quarantine_record", record_id, q_data).byte_count
                 else:
                     extraction, e_data = self._read_model(
-                        extraction_path, ExtractionResult, "extraction result")
+                        extraction_path, ExtractionResult, "extraction result",
+                        max_bytes=MAX_RETAINED_METADATA_BYTES - metadata_total)
                     self._validate_extraction(
                         extraction, envelope, scope, payload_documents[record_id],
                         observations)
@@ -289,16 +338,22 @@ class FilesystemDs004OperationalEvidenceReader:
                     metadata_total += self._descriptor(
                         descriptors, "extraction_result", record_id, e_data).byte_count
 
+        if selected_seed_attempt_id is not None:
+            seed = next(row for row in selected_attempts
+                        if row.attempt_id == selected_seed_attempt_id)
+            if (seed.outcome != "succeeded" or not any(
+                    row.raw_record_id == seed.raw_record_id
+                    for row in observations.values())):
+                raise _fail(
+                    "OPERATIONAL_EVIDENCE_SEED_INVALID",
+                    "selected seed does not carry the exact source observation")
+
         if metadata_total > MAX_RETAINED_METADATA_BYTES:
             raise _fail("OPERATIONAL_EVIDENCE_LIMIT_EXCEEDED",
                         "retained metadata exceeds 64 MiB")
         if len(descriptors) > MAX_RETAINED_ARTIFACTS:
             raise _fail("OPERATIONAL_EVIDENCE_LIMIT_EXCEEDED",
                         "retained artifact count exceeds 16384")
-        if len(observations) > MAX_RETAINED_OBSERVATIONS:
-            raise _fail("OPERATIONAL_EVIDENCE_LIMIT_EXCEEDED",
-                        "retained observation count exceeds 16384")
-
         return Ds004OperationalEvidenceMaterial(
             schema_version="1", scope=scope,
             artifacts=tuple(sorted(
@@ -331,37 +386,49 @@ class FilesystemDs004OperationalEvidenceReader:
                         "extraction route is not supported by the DS-004 reader")
         return scope
 
-    def _ordered_entries(self, directory: str, *, hex_names: bool) -> list[Path]:
-        root = self._root / directory
+    def _iter_entries(self, directory: str, *, hex_names: bool):
+        root = self._safe_directory(directory)
         try:
-            entries = list(root.iterdir())
+            entries = root.iterdir()
         except OSError as error:
             raise _fail("OPERATIONAL_EVIDENCE_UNAVAILABLE",
                         "required evidence namespace is unavailable") from error
-        accepted = []
-        for path in entries:
-            if not path.name.endswith(_METADATA_SUFFIX):
-                raise _fail("OPERATIONAL_EVIDENCE_UNEXPECTED_ENTRY",
-                            "evidence namespace contains an unexpected entry")
-            stem = path.name.removesuffix(_METADATA_SUFFIX)
-            _safe_component(stem, "stored logical identifier", hex_only=hex_names)
-            if path.is_symlink():
-                raise _fail("OPERATIONAL_EVIDENCE_UNSAFE_ENTRY",
-                            "evidence namespace contains an unsafe entry")
-            try:
+        try:
+            for path in entries:
+                if not path.name.endswith(_METADATA_SUFFIX):
+                    raise _fail("OPERATIONAL_EVIDENCE_UNEXPECTED_ENTRY",
+                                "evidence namespace contains an unexpected entry")
+                stem = path.name.removesuffix(_METADATA_SUFFIX)
+                _safe_component(stem, "stored logical identifier", hex_only=hex_names)
+                if path.is_symlink():
+                    raise _fail("OPERATIONAL_EVIDENCE_UNSAFE_ENTRY",
+                                "evidence namespace contains an unsafe entry")
                 mode = path.stat(follow_symlinks=False).st_mode
-            except OSError as error:
-                raise _fail("OPERATIONAL_EVIDENCE_UNAVAILABLE",
-                            "required evidence entry is unavailable") from error
-            if not stat.S_ISREG(mode):
-                raise _fail("OPERATIONAL_EVIDENCE_UNSAFE_ENTRY",
-                            "evidence namespace contains a non-regular entry")
-            accepted.append(path)
-        return sorted(accepted, key=lambda p: p.name)
+                if not stat.S_ISREG(mode):
+                    raise _fail("OPERATIONAL_EVIDENCE_UNSAFE_ENTRY",
+                                "evidence namespace contains a non-regular entry")
+                yield path
+        except OperationalEvidenceReadError:
+            raise
+        except OSError as error:
+            raise _fail("OPERATIONAL_EVIDENCE_UNAVAILABLE",
+                        "required evidence entry is unavailable") from error
 
     def _named_path(self, directory: str, logical_id: str, *, hex_only=False) -> Path:
         _safe_component(logical_id, "stored logical identifier", hex_only=hex_only)
-        return self._root / directory / f"{logical_id}.json"
+        return self._safe_directory(directory) / f"{logical_id}.json"
+
+    def _safe_directory(self, directory: str) -> Path:
+        path = self._root / directory
+        try:
+            mode = path.stat(follow_symlinks=False).st_mode
+        except OSError as error:
+            raise _fail("OPERATIONAL_EVIDENCE_UNAVAILABLE",
+                        "required evidence namespace is unavailable") from error
+        if path.is_symlink() or not stat.S_ISDIR(mode):
+            raise _fail("OPERATIONAL_EVIDENCE_UNSAFE_ENTRY",
+                        "evidence namespace is not a regular directory")
+        return path
 
     @staticmethod
     def _safe_is_file(path: Path) -> bool:
@@ -378,9 +445,9 @@ class FilesystemDs004OperationalEvidenceReader:
         return True
 
     def _read_named_model(self, directory, logical_id, model, description,
-                          *, hex_only=False):
+                          *, hex_only=False, max_bytes=None):
         path = self._named_path(directory, logical_id, hex_only=hex_only)
-        return self._read_model(path, model, description)
+        return self._read_model(path, model, description, max_bytes=max_bytes)
 
     @staticmethod
     def _read_bytes_once(path: Path, *, max_bytes: int | None = None) -> bytes:
@@ -413,8 +480,9 @@ class FilesystemDs004OperationalEvidenceReader:
         finally:
             os.close(descriptor)
 
-    def _read_model(self, path: Path, model, description):
-        data = self._read_bytes_once(path, max_bytes=MAX_RETAINED_METADATA_BYTES)
+    def _read_model(self, path: Path, model, description, *, max_bytes=None):
+        limit = (MAX_RETAINED_METADATA_BYTES if max_bytes is None else max_bytes)
+        data = self._read_bytes_once(path, max_bytes=limit)
         try:
             parsed = parse_bounded_json(data, JsonLimits())
             rebuilt = model.model_validate(parsed)
@@ -448,6 +516,9 @@ class FilesystemDs004OperationalEvidenceReader:
     @staticmethod
     def _descriptor(target, kind, logical_id, data, *, payload_checksum_value=None):
         key = (kind, logical_id)
+        if key not in target and len(target) >= MAX_RETAINED_ARTIFACTS:
+            raise _fail("OPERATIONAL_EVIDENCE_LIMIT_EXCEEDED",
+                        "retained artifact count exceeds 16384")
         descriptor = OperationalApiArtifactDescriptor(
             kind=kind, logical_id=logical_id, byte_count=len(data),
             captured_file_sha256=_sha(data),
@@ -468,7 +539,6 @@ class FilesystemDs004OperationalEvidenceReader:
         if (
             envelope.record_id != attempt.raw_record_id
             or envelope.source_id != attempt.source_id
-            or envelope.ingestion_run_id != attempt.ingestion_run_id
             or envelope.payload_checksum != attempt.payload_checksum
             or envelope.immutable_payload_reference != attempt.payload_checksum
             or envelope.record_id != derive_keyed_record_id(
@@ -479,6 +549,9 @@ class FilesystemDs004OperationalEvidenceReader:
             or locator.extraction_route != scope.extraction_route
             or locator.request_fingerprint != attempt.request_fingerprint
             or locator.request_canonical != attempt.request_canonical
+            or attempt.request_fingerprint != "sha256:" + hashlib.sha256(
+                f"{attempt.target_origin} {attempt.request_canonical}".encode(
+                    "utf-8")).hexdigest()
         ):
             raise _fail("OPERATIONAL_EVIDENCE_PROVENANCE_MISMATCH",
                         "attempt, raw record, and API locator do not close")
@@ -511,6 +584,11 @@ class FilesystemDs004OperationalEvidenceReader:
                 raise _fail("OPERATIONAL_EVIDENCE_PROVENANCE_MISMATCH",
                             "operational observations are duplicated")
             seen_pointer_subject.add(key)
+            if observation.observation_id != derive_entity_id(
+                    envelope.record_id, extraction.extractor.version,
+                    f"obs:{observation.json_pointer}"):
+                raise _fail("OPERATIONAL_EVIDENCE_PROVENANCE_MISMATCH",
+                            "operational observation identity is stale")
             value = _resolve_pointer(document, observation.json_pointer)
             if (canonical_json(value) != observation.value_json
                     or json_type_of(value) != observation.json_type):
@@ -524,9 +602,4 @@ class FilesystemDs004OperationalEvidenceReader:
 __all__ = [
     "Ds004OperationalEvidenceReader",
     "FilesystemDs004OperationalEvidenceReader",
-    "MAX_IN_HORIZON_ATTEMPTS",
-    "MAX_RETAINED_ARTIFACTS",
-    "MAX_RETAINED_METADATA_BYTES",
-    "MAX_RETAINED_OBSERVATIONS",
-    "SUPPORTED_EXTRACTION_ROUTES",
 ]

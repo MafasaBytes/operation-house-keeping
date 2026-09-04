@@ -273,8 +273,8 @@ def _attempt_order(event: TemporalAttemptEvent):
 
 
 class TemporalSelectionInventoryToken(_SelectionFrozen):
-    schema_version: str
-    projector_version: str
+    schema_version: str = Field(min_length=1)
+    projector_version: str = Field(min_length=1)
     scope: Ds004OperationalEvidenceScope
     horizon_started_at: AwareDatetime
     as_of: AwareDatetime
@@ -295,8 +295,8 @@ class TemporalSelectionInventoryToken(_SelectionFrozen):
 
 
 class TemporalSelectionMaterial(_SelectionFrozen):
-    schema_version: str
-    projector_version: str
+    schema_version: str = Field(min_length=1)
+    projector_version: str = Field(min_length=1)
     scope: Ds004OperationalEvidenceScope
     horizon_started_at: AwareDatetime
     as_of: AwareDatetime
@@ -306,6 +306,27 @@ class TemporalSelectionMaterial(_SelectionFrozen):
     attempt_coverage_membership: tuple[TemporalAttemptEvent, ...]
     clock_segment_openings: tuple[ClockSegmentOpening, ...]
     transaction_membership_sha256: TaggedSha256
+
+    @field_validator("occurrence_membership", mode="before")
+    @classmethod
+    def _rebuild_occurrences(cls, value):
+        return tuple(TemporalOccurrence.model_validate(
+            item.model_dump(mode="python", warnings=False)
+            if isinstance(item, BaseModel) else item) for item in value)
+
+    @field_validator("attempt_coverage_membership", mode="before")
+    @classmethod
+    def _rebuild_attempts(cls, value):
+        return tuple(TemporalAttemptEvent.model_validate(
+            item.model_dump(mode="python", warnings=False)
+            if isinstance(item, BaseModel) else item) for item in value)
+
+    @field_validator("clock_segment_openings", mode="before")
+    @classmethod
+    def _rebuild_openings(cls, value):
+        return tuple(ClockSegmentOpening.model_validate(
+            item.model_dump(mode="python", warnings=False)
+            if isinstance(item, BaseModel) else item) for item in value)
 
     @field_validator("horizon_started_at", "as_of")
     @classmethod
@@ -317,6 +338,10 @@ class TemporalSelectionMaterial(_SelectionFrozen):
         start, end = self.horizon_started_at, self.as_of
         if start > end:
             raise ValueError("horizon_started_at must be at or before as_of")
+        if len(self.occurrence_membership) > 16_384:
+            raise ValueError("occurrence membership exceeds 16384")
+        if len(self.attempt_coverage_membership) > 4_096:
+            raise ValueError("attempt coverage membership exceeds 4096")
         if tuple(sorted(self.occurrence_membership, key=_occurrence_order)) != (
                 self.occurrence_membership):
             raise ValueError("occurrence membership is not canonically ordered")
@@ -361,10 +386,32 @@ class TemporalSelectionMaterial(_SelectionFrozen):
                     or event.effective_time_basis != expected_basis):
                 raise ValueError("attempt effective-time contract is inconsistent")
 
+        attempt_by_id = {
+            row.attempt_id: row for row in self.attempt_coverage_membership}
+        for occurrence in self.occurrence_membership:
+            if occurrence.received_at.astimezone(UTC) < start:
+                continue
+            event = attempt_by_id.get(occurrence.attempt_id)
+            if event is None or (
+                event.outcome != "observations_projected"
+                or event.observation_count < 1
+                or event.raw_record_id != occurrence.raw_record_id
+                or event.payload_checksum != occurrence.payload_checksum
+                or event.attempt_started_at != occurrence.attempt_started_at
+                or event.ingestion_run_id != occurrence.ingestion_run_id
+                or event.sweep_position != occurrence.sweep_position
+                or event.received_at != occurrence.received_at
+                or event.finished_at != occurrence.finished_at
+            ):
+                raise ValueError(
+                    "in-horizon occurrence and attempt coverage do not close")
+
         selected = self.selected_occurrence_index
         if selected is None:
             if self.selected_occurrence_is_pre_horizon_seed:
                 raise ValueError("absent selection cannot be a pre-horizon seed")
+            if self.occurrence_membership:
+                raise ValueError("nonempty occurrence membership requires selection")
         else:
             if selected < 0 or selected >= len(self.occurrence_membership):
                 raise ValueError("selected occurrence index is out of range")
@@ -392,6 +439,10 @@ class TemporalSelectionMaterial(_SelectionFrozen):
                              if row.clock_segment_id is not None}
         if set(opening_ids) != required_openings:
             raise ValueError("clock opening membership does not close occurrences")
+        if any(row.source_id != scope.source_id
+               or row.adapter_id != scope.adapter_id
+               for row in self.clock_segment_openings):
+            raise ValueError("clock opening lies outside exact source scope")
 
         payload = self.model_dump(
             mode="python", exclude={"transaction_membership_sha256"})
