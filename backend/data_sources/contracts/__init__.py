@@ -81,6 +81,14 @@ from backend.data_sources.contracts.models import (
     SourceHealth,
     StatusCheck,
 )
+from backend.data_sources.contracts.operational_evidence import (
+    Ds004OperationalEvidenceMaterial,
+    Ds004OperationalEvidenceScope,
+    OperationalApiArtifactDescriptor,
+    OperationalApiArtifactKind,
+    OperationalApiInventoryToken,
+    OperationalEvidenceReadError,
+)
 
 __all__ = [
     "AcquisitionAttempt",
@@ -150,6 +158,12 @@ __all__ = [
     "SourceHealth",
     "StatusCheck",
     "StoreIntegrityError",
+    "Ds004OperationalEvidenceMaterial",
+    "Ds004OperationalEvidenceScope",
+    "OperationalApiArtifactDescriptor",
+    "OperationalApiArtifactKind",
+    "OperationalApiInventoryToken",
+    "OperationalEvidenceReadError",
 ]
 
 
