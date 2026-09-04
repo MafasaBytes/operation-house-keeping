@@ -2,16 +2,18 @@
 
 Date: 2026-09-04
 
-Status: corrected final design synthesis; implementation is not authorized by
-this document.
+Status: owner-resolved contract-correction candidate; implementation remains
+paused pending separate owner acceptance and authorization.
 
 Authority order:
 
-1. the fixed owner decisions in the final-synthesis instruction;
-2. this corrected final synthesis;
-3. the challenger audit, where consistent with the owner decisions;
-4. the Codex lead proposal, where consistent with all higher authorities;
-5. accepted repository contracts and ADRs cited by those documents.
+1. the fixed owner resolutions issued after the accepted Slice B discrepancy
+   stop at `b3e27cb41d9d69bf1545b50fb5aaa693ca7586f6`;
+2. the fixed owner decisions in the original final-synthesis instruction;
+3. this corrected final synthesis;
+4. the challenger audit, where consistent with the owner decisions;
+5. the Codex lead proposal, where consistent with all higher authorities;
+6. accepted repository contracts and ADRs cited by those documents.
 
 Frozen inputs were read completely and verified before synthesis:
 
@@ -23,6 +25,12 @@ Frozen inputs were read completely and verified before synthesis:
   `docs/superpowers/reports/2026-09-04-ea001-codex-lead-proposal-challenger-audit.md`,
   SHA-256
   `14ac3fab976aa007785b2876a035a636306b1ad55ef0a236f12e675977353b81`.
+
+The owner accepted the Slice B preimplementation discrepancy stop at
+`b3e27cb41d9d69bf1545b50fb5aaa693ca7586f6` and its report at SHA-256
+`cc5999e2d1f4d7191b4c4dba047f4420793f86a03f7b7cbe1801116dde486574`.
+The owner then authorized this bounded design-contract correction only. No
+Slice A repair or Slice B implementation is authorized by this document.
 
 Verified design baseline:
 
@@ -71,6 +79,19 @@ reconciled individually here:
 | NB6 | Inventory scope, filesystem races, bounded allocation, and path-free diagnostics require explicit treatment. | Adopted in Sections 9, 13, 16, and 17 A24–A31. Tokens bind exact observed fields; symlink/metadata races outside the fences remain limitations. |
 
 No non-blocking observation creates new semantic or assessment scope.
+
+### 1.1 Owner-resolved Slice B discrepancy change log
+
+| Resolution | Corrected contract |
+| --- | --- |
+| Seed-aware source fence | The unchanged `inventory_token(scope, *, horizon_started_at, as_of)` signature now requires independent source-side discovery of the latest eligible observation. When that candidate is pre-horizon, every artifact needed for its mechanical closure is included in the token. |
+| Exact named-material reread | `Ds004OperationalEvidenceReader` gains only `reread_named_material(expected_material)`. It reconstructs before I/O and rereads exactly the carried logical artifact set without accepting paths or claiming current membership. |
+| Exact public result contracts | Sections 11 and 12 now pin all support/result fields, types, invariants, carry-once rules, literal order, exception fields, and exact package exports. |
+| Cross-clock vocabulary | `EA_TIME_COMPARISON_UNSUPPORTED` and the requested-cross-clock A21 behavior are removed. V1 has no such input or method; altered `source_time_use` is `EA_SELECTION_POLICY_INVALID`. |
+
+These are bounded contract corrections. They add no architecture layer,
+semantic or assessment responsibility, persistence, durable identity,
+authority, trusted time, or truth claim.
 
 ## 2. Challenger finding reconciliation
 
@@ -262,6 +283,14 @@ The selected pre-horizon seed supports only the latest-at-or-before result. It
 does not assert coverage, continuity, absence, or completeness before the
 horizon. It appears once even if referenced by multiple closure rows.
 
+The source reader discovers its own latest eligible exact-property
+observation at or before `as_of` using `received_at` and the complete
+`AttemptOrderKey`. If that observation predates `horizon_started_at`, its one
+attempt and complete source closure are added to both source inventory tokens.
+This discovery is independent of the later temporal selection. The seed ID
+supplied to `read_material(...)` after the temporal transaction must equal the
+source-side candidate; disagreement is source/temporal parity failure.
+
 If no observation exists at or before `as_of`, the store-bound result says
 exactly `no_observation_at_or_before_as_of`. It must not be rewritten as “no
 observation inside the horizon,” because those claims have different bounds.
@@ -365,21 +394,28 @@ EA uses this exact store-bound protocol:
 
 1. Rebuild and strictly validate the request before I/O.
 2. Capture an initial source inventory token for the exact permitted DS-004
-   namespace, request scope, horizon membership, and possible selected
-   pre-horizon seed dependencies.
+   namespace, request scope, horizon membership, and the complete closure of
+   the independently rediscovered source-side latest eligible pre-horizon
+   seed, when one exists.
 3. Capture an initial temporal logical inventory/watermark token for the exact
    request axes.
 4. Read `TemporalSelectionMaterial` in one SQLite read transaction.
-5. Read every named source artifact once for material capture. Hash metadata
-   and parse its model from the same byte string; hash each raw payload and
-   parse/check that same bounded payload byte string.
+5. Derive the temporal-selected seed attempt ID from the temporal material,
+   then read every named source artifact once for material capture. The source
+   reader independently requires that supplied seed ID to equal its own
+   source-side candidate. Hash metadata and parse its model from the same byte
+   string; hash each raw payload and parse/check that same bounded payload byte
+   string.
 6. Verify checksums, stored artifact linkage, raw/extraction/observation
    closure, RFC 6901 content, and source/temporal parity.
 7. Capture final source and temporal inventory/watermark tokens over the same
-   defined fields.
+   defined fields; the source token independently rediscovers and binds its
+   possible seed again.
 8. Refuse with the exact changed-store issue if either final token differs
-   from its initial token or if the transaction's carried logical membership
-   does not equal the fenced membership.
+   from its initial token, if the transaction's carried logical membership
+   does not equal the fenced membership, or if the source-side and temporal-
+   selected seed IDs disagree. Seed disagreement maps to
+   `source_temporal_parity_failure`, not a query exception.
 9. Derive the snapshot only from already captured source bytes and temporal
    rows. No ambient reread participates in derivation.
 
@@ -395,10 +431,24 @@ The source token canonically binds, for the exact request scope and interval:
 - the fixed inventory-schema version.
 
 It contains no absolute path, credential, secret, raw payload byte, mtime-only
-claim, captured metadata-content digest, or unbounded directory listing. The
-content SHA-256 belongs to the one named material read in step 5, not to a
-second token read. Changing an unselected artifact outside the exact token
-scope is not detected and is not claimed to be detected.
+claim, or unbounded directory listing. Each token invocation binds the
+captured same-read file digest, payload checksum where applicable, kind,
+logical ID, and byte count through the accepted member-key construction. The
+material read in step 5 independently captures its own descriptors; token
+bytes are not reused as material bytes. Changing an unselected artifact
+outside the exact token scope is not detected and is not claimed to be
+detected.
+
+Source-side seed discovery scans older exact-scope history without retaining
+all lifetime rows and without charging them to the 4,096 in-horizon retained-
+attempt limit. Each candidate artifact is opened and parsed under the same
+per-artifact byte/parser bounds used by ordinary capture. Candidate ordering
+is deterministic and independent of filesystem enumeration. Only the greatest
+eligible exact-property observation is retained, and only when it predates the
+horizon. If the greatest eligible observation is already in-horizon, no
+additional seed closure is added. Initial and final token calls repeat this
+discovery independently, so mutation of any retained seed dependency changes
+the member keys/digest or produces a typed lower refusal.
 
 The temporal token canonically binds:
 
@@ -583,14 +633,61 @@ class Ds004OperationalEvidenceReader(Protocol):
         as_of: UtcDatetime,
         selected_seed_attempt_id: str | None,
     ) -> Ds004OperationalEvidenceMaterial: ...
+
+    def reread_named_material(
+        self,
+        expected_material: Ds004OperationalEvidenceMaterial,
+    ) -> Ds004OperationalEvidenceMaterial: ...
 ```
 
 `captured_file_sha256` is the digest of bytes seen during the capture. For a
 raw payload descriptor, `payload_checksum` is the separately stored DS-004
 checksum and must match those bytes. `selected_seed_attempt_id` is a plain
 logical ID supplied after the temporal read; the reader independently checks
-that it is the exact source-side pre-horizon candidate or rejects parity. The
+that it is the exact source-side pre-horizon candidate. Disagreement raises
+`OperationalEvidenceReadError` with
+`error_code="OPERATIONAL_EVIDENCE_SEED_PARITY_MISMATCH"`; EA maps it to
+`source_temporal_parity_failure`. The
 source seam never imports `temporal_state` or EA. No path is public material.
+
+`inventory_token(...)` automatically and independently discovers the exact
+source-side latest eligible observation at or before `as_of`. It uses receipt
+time and the complete `AttemptOrderKey`. When that candidate predates the
+horizon, the token retains exactly its attempt, attempt run, raw envelope,
+originating run when reused content requires it, raw payload, extraction
+result, exact observation-bearing extraction content, and all other required
+mechanical closure. Those artifacts use the same member-key, byte-count,
+captured-digest, and payload-checksum rules as in-horizon material. Historical
+discovery is streaming/bounded per artifact; older candidates do not consume
+the retained in-horizon attempt count.
+
+Eligibility is evaluated per successful acquisition attempt whose closed
+extraction contains the exact subject/pointer observation. Distinct attempts
+that reuse one raw payload remain distinct candidates and use their own
+receipt/order keys; representation-level reuse of the shared envelope,
+payload, extraction, and observation never collapses attempt occurrences.
+
+`reread_named_material(...)` first converts `expected_material` to plain
+serialized content and fully reconstructs every nested model before any
+filesystem access. It then derives all names internally from the exact
+artifact kinds/logical IDs, rereads exactly that set, hashes and parses each
+metadata file from the same bounded byte string, rereads raw payload bytes,
+checks their stored checksums, reconstructs the complete material, and
+requires the returned material to equal the expected scope, artifacts, runs,
+attempts, envelopes, extractions, quarantines, and observations. It accepts no
+path and ignores unrelated artifacts, including newly added in-horizon rows.
+The expected snapshot's limits of 16,384 artifacts and 64 MiB retained
+metadata apply; current horizon growth and the 4,096 capture-attempt bound do
+not prevent an exact named reread. Missing/unsafe/invalid bytes raise the
+existing `OperationalEvidenceReadError` with the exact existing fields
+`error_code` and `message` and a bounded path-free code distinguishing
+`OPERATIONAL_EVIDENCE_NAMED_MATERIAL_UNAVAILABLE` from
+`OPERATIONAL_EVIDENCE_NAMED_MATERIAL_MISMATCH`. No new lower exception class
+or exported name is added.
+
+The method makes only a named frozen-material statement. Current membership
+is separately observed through `inventory_token(...)`; named equality never
+means current or latest.
 
 ### 11.3 Lower temporal contracts owned by `temporal_state`
 
@@ -632,6 +729,11 @@ accepted TS-001 ordering and separate memberships.
 ### 11.4 EA captured material
 
 ```python
+CanonicalNonnegativeDecimal = Annotated[
+    StrictStr,
+    StringConstraints(pattern=r"^(?:0|[1-9][0-9]*)(?:\.[0-9]*[1-9])?$"),
+]
+
 CoverageDisposition = Literal[
     "property_observed",
     "snapshot_without_property",
@@ -640,6 +742,22 @@ CoverageDisposition = Literal[
     "quarantined",
     "extraction_incomplete",
 ]
+
+class OperationalEvidenceMaterialLimits:
+    schema_version: Literal["1"]
+    maximum_in_horizon_attempts: Literal[4096]
+    maximum_occurrence_members: Literal[16384]
+    maximum_retained_artifacts: Literal[16384]
+    maximum_retained_metadata_bytes: Literal[67108864]
+
+class OperationalEvidenceIssue:
+    code: OperationalEvidenceIssueCode
+    detail_code: Annotated[
+        StrictStr,
+        StringConstraints(pattern=r"^[a-z][a-z0-9_]{0,63}$"),
+    ]
+    route_index: Annotated[StrictInt, Field(ge=0)] | None
+    detail: Annotated[StrictStr, StringConstraints(min_length=1, max_length=300)]
 
 class OperationalProvenanceRoute:
     attempt_index: StrictInt
@@ -718,9 +836,65 @@ Complete source and temporal records are carried once. Nested rows contain
 strict indices and derived scalars only. An index is nonnegative, in range,
 non-boolean, unique where required, and points to the exact union arm.
 
+`CanonicalNonnegativeDecimal` is a finite plain decimal string with no sign,
+exponent, whitespace, leading zero, negative zero, or trailing fractional
+zero. Age zero is exactly `"0"`. Issue detail is path-free, secret-free, and
+must not contain an absolute path, URI user information, credential, or raw
+exception. Snapshot issues may contain only codes 15 and 16. Any code 1–14
+prevents snapshot construction.
+
+Every model in Sections 11.1–11.5 is frozen with `extra="forbid"` and
+`revalidate_instances="always"`. Before validation, every nested Pydantic
+value is converted to plain Python content with explicit cycle detection and
+rebuilt through its declared public type. Tuple order, complete source and
+temporal closure, route indices, selected values, coverage partitions,
+assurance values, issue order, canonical bytes, and the fingerprint are
+recomputed. A caller cannot make a forged instance valid through
+`model_construct`, `model_copy`, a subclass, a wrong union arm, or substituted
+derived fields.
+
 ### 11.5 Public facade and validation results
 
 ```python
+class OperationalNamedArtifactRevalidation:
+    artifact_descriptor_index: Annotated[StrictInt, Field(ge=0)]
+    relation: Literal["matched"]
+    observed_byte_count: Annotated[StrictInt, Field(ge=0)]
+    observed_captured_file_sha256: TaggedSha256
+
+class OperationalEvidenceSelectionResult:
+    status: OperationalEvidenceSelectionStatus
+    request: OperationalEvidenceSelectionRequest
+    snapshot: CapturedOperationalEvidenceSnapshot | None
+    issues: tuple[OperationalEvidenceIssue, ...]
+
+class OperationalEvidenceStoreRevalidationResult:
+    status: StoreBoundRevalidationStatus
+    membership_mode: StoreBoundMembershipMode
+    snapshot_content_fingerprint: TaggedSha256 | None
+    snapshot_validation_status: StoreIndependentValidationStatus
+    expected_artifact_count: Annotated[StrictInt, Field(ge=0)]
+    expected_provenance_route_count: Annotated[StrictInt, Field(ge=0)]
+    named_source_material_relation: NamedCapturedMaterialRelation
+    captured_temporal_material_relation: CapturedTemporalMaterialRelation
+    source_membership_relation: ObservedMembershipRelation
+    temporal_membership_relation: ObservedMembershipRelation
+    named_artifact_results: tuple[OperationalNamedArtifactRevalidation, ...]
+    issues: tuple[OperationalEvidenceIssue, ...]
+
+class OperationalEvidenceSnapshotValidationResult:
+    status: StoreIndependentValidationStatus
+    computed_fingerprint: TaggedSha256 | None
+    embedded_fingerprint_relation: EmbeddedFingerprintRelation
+    expected_fingerprint_relation: ExpectedFingerprintRelation
+    source_bytes: Literal["not_rechecked"]
+    temporal_store_membership: Literal["not_rechecked"]
+    detail_code: Annotated[
+        StrictStr,
+        StringConstraints(pattern=r"^[a-z][a-z0-9_]{0,63}$"),
+    ]
+    detail: Annotated[StrictStr, StringConstraints(min_length=1, max_length=300)]
+
 class EvidenceAssuranceQueries:
     def __init__(
         self,
@@ -738,10 +912,7 @@ class EvidenceAssuranceQueries:
         self,
         snapshot: CapturedOperationalEvidenceSnapshot,
         *,
-        membership_mode: Literal[
-            "require_equal_final_observed_membership",
-            "named_captured_artifacts",
-        ],
+        membership_mode: StoreBoundMembershipMode,
     ) -> OperationalEvidenceStoreRevalidationResult: ...
 
 def validate_operational_evidence_snapshot(
@@ -751,9 +922,97 @@ def validate_operational_evidence_snapshot(
 ) -> OperationalEvidenceSnapshotValidationResult: ...
 ```
 
+The selection result carries issues exactly once. A complete or incomplete
+result has `issues=()` and carries one snapshot; its snapshot carries all and
+only applicable incomplete issues. A refused result has `snapshot=None` and
+carries all and only applicable refusal issues in `issues`. Its request is the
+strict reconstructed request. Because a refused result carries no route table,
+all of its issue `route_index` values are `None`. Query misuse raises before a
+result exists.
+
+The named-artifact rows are ordered by `artifact_descriptor_index`. On a
+complete named match they contain every integer from zero through
+`expected_artifact_count - 1` exactly once and every row is `matched` with
+both observed fields present and equal to the corresponding expected
+descriptor. When the aggregate named relation is `changed`, `unavailable`, or
+`not_evaluated`, the row tuple is exactly empty; the aggregate relation and
+ordered issue express the failure without parsing a lower exception message.
+No row repeats an expected logical ID or source object.
+
+Store-bound revalidation does not carry the snapshot or complete source or
+temporal material. Its fingerprint/counts and strict indices are sufficient
+to validate its own shape without store access; issue route indices are less
+than `expected_provenance_route_count`. Semantic comparison to the caller-
+retained snapshot occurs only while deriving the result. Store-
+independent validation likewise carries no snapshot. Its two `not_rechecked`
+fields are unconditional and cannot be upgraded.
+
+Every result reconstructs its nested content and validates without dependency
+access. `EvidenceAssuranceQueries` alone performs store I/O after its input is
+strictly reconstructed. Result construction and later result validation
+perform no store access.
+
 There are no aliases named `authenticate_evidence`, `verify_state`,
 `assessment_evidence`, `current_evidence`, `fresh_evidence`, `history`,
 `occurrence`, `transition`, or `flow`.
+
+### 11.6 Exact exports
+
+`backend.data_sources.evidence.__all__` remains exactly:
+
+```python
+[
+    "Ds004OperationalEvidenceReader",
+    "FilesystemDs004OperationalEvidenceReader",
+]
+```
+
+The correction adds `reread_named_material(...)` to both exported reader
+types; it adds no lower exported name. The operational source-contract
+module's accepted `__all__` is unchanged.
+
+`backend.evidence_assurance.__all__` is exactly this ordered list:
+
+```python
+[
+    "EvidenceAssuranceError",
+    "EvidenceAssuranceConfigurationError",
+    "EvidenceAssuranceQueryError",
+    "EvidenceAssuranceConfigurationErrorCode",
+    "EvidenceAssuranceQueryErrorCode",
+    "CanonicalNonnegativeDecimal",
+    "CoverageDisposition",
+    "OperationalEvidenceIssueCode",
+    "OperationalEvidenceSelectionStatus",
+    "StoreIndependentValidationStatus",
+    "ExpectedFingerprintRelation",
+    "EmbeddedFingerprintRelation",
+    "StoreBoundMembershipMode",
+    "StoreBoundRevalidationStatus",
+    "NamedCapturedMaterialRelation",
+    "CapturedTemporalMaterialRelation",
+    "ObservedMembershipRelation",
+    "OperationalEvidenceSelectionPolicy",
+    "OperationalEvidenceSelectionRequest",
+    "OperationalEvidenceMaterialLimits",
+    "OperationalEvidenceIssue",
+    "OperationalProvenanceRoute",
+    "OperationalCoverageSummary",
+    "SelectedSourceObservation",
+    "CapturedViewFence",
+    "OperationalEvidenceAssurance",
+    "CapturedOperationalEvidenceSnapshot",
+    "OperationalNamedArtifactRevalidation",
+    "OperationalEvidenceSelectionResult",
+    "OperationalEvidenceStoreRevalidationResult",
+    "OperationalEvidenceSnapshotValidationResult",
+    "EvidenceAssuranceQueries",
+    "validate_operational_evidence_snapshot",
+]
+```
+
+Lower source/temporal contracts are imported from their owners for type use;
+EA does not re-export them or define aliases for them.
 
 ## 12. Query, status, issue, and error vocabulary
 
@@ -778,11 +1037,43 @@ ExpectedFingerprintRelation = Literal[
     "not_supplied",
 ]
 
+EmbeddedFingerprintRelation = Literal[
+    "matched",
+    "mismatched",
+    "not_computed",
+]
+
+StoreBoundMembershipMode = Literal[
+    "require_equal_final_observed_membership",
+    "named_captured_artifacts",
+]
+
 StoreBoundRevalidationStatus = Literal[
     "matches_final_observed_membership",
     "valid_for_named_captured_artifacts",
     "observed_membership_changed",
     "refused",
+]
+
+NamedCapturedMaterialRelation = Literal[
+    "matched",
+    "changed",
+    "unavailable",
+    "not_evaluated",
+]
+
+CapturedTemporalMaterialRelation = Literal[
+    "matched",
+    "changed",
+    "not_fully_observed",
+    "not_evaluated",
+]
+
+ObservedMembershipRelation = Literal[
+    "equal_to_snapshot_final",
+    "different_from_snapshot_final",
+    "not_fully_observed",
+    "not_evaluated",
 ]
 ```
 
@@ -794,26 +1085,100 @@ inside the horizon are incomplete. `refused` means no snapshot is returned
 because integrity, parity, support-family, mutation, or material-bound checks
 could not safely produce one.
 
+Selection carry-once state is exact:
+
+| Applicable issue state | Status | `snapshot` | Result `issues` | Snapshot `issues` |
+| --- | --- | --- | --- | --- |
+| no issue | `complete_within_declared_horizon` | one snapshot | `()` | `()` |
+| one or both codes 15–16, no code 1–14 | `incomplete_within_declared_horizon` | one snapshot | `()` | all applicable codes 15–16 in order |
+| any code 1–14 | `refused` | `None` | all applicable refusal issues in order | not applicable |
+
+`complete_within_declared_horizon` additionally requires at least one in-
+horizon attempt route, every in-horizon route to be `property_observed`, and a
+selected source observation. A pre-horizon seed with no in-horizon attempts is
+therefore incomplete, never complete.
+
+Store-independent validation state is exact:
+
+| Condition | Status | Computed fingerprint | Embedded relation |
+| --- | --- | --- | --- |
+| fully reconstructed and all derived/canonical fields match | `structurally_self_consistent` | present | `matched` |
+| structurally derivable but embedded or supplied expected fingerprint differs | `fingerprint_mismatch` | present | `matched` or `mismatched` as observed |
+| reconstruction, cycle, union, index, ordering, closure, or derived-field failure | `invalid` | `None` | `not_computed` |
+
+`expected_fingerprint_relation` is `not_supplied` exactly when the argument is
+`None`; otherwise it is the strict equality result against the embedded
+fingerprint, even when structural reconstruction later fails. Both store-
+independent check fields are always `not_rechecked`.
+
+Store-bound revalidation state is exact:
+
+| Mode and condition | Status | Named material | Source/temporal membership |
+| --- | --- | --- | --- |
+| either mode; snapshot invalid | `refused` | `not_evaluated` | both `not_evaluated` |
+| either mode; named source material changed or unavailable | `refused` | exact `changed`/`unavailable` | both `not_evaluated` |
+| equality mode; named/temporal material matched and both observed memberships equal snapshot final tokens | `matches_final_observed_membership` | `matched` | both `equal_to_snapshot_final` |
+| equality mode; either fully observed membership differs | `observed_membership_changed` | `matched` | each exact equal/different relation |
+| equality mode; either current membership cannot be fully produced | `refused` | `matched` | at least one `not_fully_observed` |
+| named mode; named source material matched, regardless of equal/different/not-fully-observed current membership | `valid_for_named_captured_artifacts` | `matched` | each exact observed relation |
+
+In named mode, `valid_for_named_captured_artifacts` asserts only the named
+source-byte/material match. `captured_temporal_material_relation` separately
+reports `matched`, `changed`, or `not_fully_observed`; it is never hidden by
+the outer status. The result cannot use “current” or “latest” for the older
+selection when either membership relation is not equal.
+
+For a structurally invalid or fingerprint-mismatched snapshot, store-bound
+revalidation performs no I/O, sets `snapshot_content_fingerprint=None`,
+both expected counts to zero, all store relations to `not_evaluated`, rows to
+`()`, and returns one ordered `invalid_bounded_material` issue with no route
+index. For a valid snapshot those fields equal its fingerprint, artifact
+count, and provenance-route count.
+
+`captured_temporal_material_relation="matched"` means every carried temporal
+occurrence, attempt event, and clock opening is present with equal logical
+content in the separately read bounded temporal material; additional current
+rows affect only `temporal_membership_relation`. Missing or substituted
+carried rows are `changed`. A lower unavailability or bound refusal is
+`not_fully_observed`.
+
+A stable difference from the snapshot's final membership is expressed by the
+membership relation/status and is not itself a capture-mutation issue. A
+token pair that changes during this revalidation uses the applicable source-
+or temporal-store-changed issue and `not_fully_observed`. Lower unavailability
+uses the corresponding source/temporal unavailable issue. In named mode these
+issues are retained even when the outer status remains
+`valid_for_named_captured_artifacts`; that status is deliberately limited to
+the successful named source-material check. All result issues retain Section
+12.2 ordering and are carried only in the revalidation result.
+Issues already carried by the input snapshot are never copied into the store-
+revalidation result; only conditions encountered by that revalidation appear
+there.
+
 ### 12.2 Exact issue codes and order
 
 `OperationalEvidenceIssueCode` is this literal union in normative order:
 
-1. `unsupported_operational_evidence`
-2. `invalid_bounded_material`
-3. `excessive_bounded_material`
-4. `source_evidence_unavailable`
-5. `temporal_evidence_unavailable`
-6. `source_store_changed_during_capture`
-7. `temporal_store_changed_during_capture`
-8. `checksum_mismatch`
-9. `provenance_closure_failure`
-10. `observation_content_mismatch`
-11. `extraction_incomplete`
-12. `temporal_occurrence_absent`
-13. `temporal_occurrence_inconsistent`
-14. `source_temporal_parity_failure`
-15. `no_observation_at_or_before_as_of`
-16. `incomplete_coverage_within_declared_horizon`
+```python
+OperationalEvidenceIssueCode = Literal[
+    "unsupported_operational_evidence",              # 1
+    "invalid_bounded_material",                      # 2
+    "excessive_bounded_material",                    # 3
+    "source_evidence_unavailable",                   # 4
+    "temporal_evidence_unavailable",                 # 5
+    "source_store_changed_during_capture",           # 6
+    "temporal_store_changed_during_capture",         # 7
+    "checksum_mismatch",                             # 8
+    "provenance_closure_failure",                    # 9
+    "observation_content_mismatch",                  # 10
+    "extraction_incomplete",                         # 11
+    "temporal_occurrence_absent",                    # 12
+    "temporal_occurrence_inconsistent",              # 13
+    "source_temporal_parity_failure",                # 14
+    "no_observation_at_or_before_as_of",             # 15
+    "incomplete_coverage_within_declared_horizon",   # 16
+]
+```
 
 Codes 1–14 are refusals. Codes 15–16 are incomplete conditions that may be
 included in a snapshot. `temporal_evidence_unavailable` is the temporal twin
@@ -834,18 +1199,31 @@ EvidenceAssuranceError
 └── EvidenceAssuranceQueryError
 ```
 
-`EvidenceAssuranceQueryError.error_code` is exactly:
+The public error-code aliases are exactly:
 
-```text
-EA_REQUEST_INVALID
-EA_SELECTION_POLICY_INVALID
-EA_TIME_COMPARISON_UNSUPPORTED
+```python
+EvidenceAssuranceConfigurationErrorCode = Literal[
+    "EA_DEPENDENCY_INVALID",
+]
+
+EvidenceAssuranceQueryErrorCode = Literal[
+    "EA_REQUEST_INVALID",
+    "EA_SELECTION_POLICY_INVALID",
+]
 ```
+
+Every exception instance has exactly the public instance fields `error_code`
+and `message`. Both are strings; `message` is nonempty, path-free, secret-free,
+contains no raw exception text, and is capped at 300 characters. `str(error)`
+is exactly `"{error_code}: {message}"`. Configuration errors accept only the
+configuration code and query errors accept only the two query codes above.
 
 Wrong dependency types/configuration are configuration misuse. Invalid
 request shape, reversed bounds, non-strict fields, unsupported selection
-policy, or requested cross-clock comparison are query misuse and fail before
-I/O. Valid but unsupported evidence, absent evidence, too much in-horizon
+policy, or any alteration of fixed `source_time_use="disclosure_only"` are
+query misuse and fail before I/O. V1 has no cross-clock comparison input,
+method, result, or exception path. Valid but unsupported evidence, absent
+evidence, too much in-horizon
 material, store changes, checksum failures, and incomplete coverage are
 structured results.
 
@@ -857,7 +1235,17 @@ correctness, or occurrence.
 
 ### 13.1 Canonical bytes
 
-The snapshot is canonical UTF-8 JSON with:
+The fingerprint input is the canonical UTF-8 JSON encoding of exactly:
+
+```python
+{
+    "algorithm": "sha256",
+    "snapshot": <all CapturedOperationalEvidenceSnapshot fields except
+                 content_fingerprint>,
+}
+```
+
+It uses:
 
 - object keys sorted by Unicode code point;
 - compact separators `,` and `:`;
@@ -868,6 +1256,10 @@ The snapshot is canonical UTF-8 JSON with:
   reparsed into the outer document;
 - tuples encoded as arrays in their normative order; and
 - `content_fingerprint` omitted from its own input.
+
+The term “canonical snapshot bytes” in this contract means these complete
+wrapper bytes. The nested `snapshot` value has exactly the normative snapshot
+field set minus `content_fingerprint`; no other envelope or metadata is added.
 
 The canonicalizer consumes a fully revalidated model and rejects unknown
 types. It must not use a generic JSON-mode dump when that changes the accepted
@@ -888,7 +1280,7 @@ The fingerprint binds:
 8. selected outcome, selected seed flag, time, calculated age, and age basis;
 9. complete horizon-coverage categories;
 10. assurance disclosures and ordered issues; and
-11. the algorithm token `sha256`.
+11. the exact wrapper key/value `"algorithm":"sha256"`.
 
 The value is lowercase `sha256:` plus SHA-256 of the canonical bytes. Any
 change in a bound input changes the fingerprint except under the ordinary
@@ -923,12 +1315,12 @@ fingerprint or source store is supplied.
 | --- | ---: | ---: | ---: |
 | strict nested reconstruction | yes | yes | yes |
 | canonical bytes/fingerprint | yes | yes | yes |
-| separately supplied expected fingerprint | optional | optional | optional |
+| separately supplied expected fingerprint | via pure validator | via pure validator before call | optional |
 | raw payload bytes vs stored checksum | yes, bytes read | yes, named bytes reread | no: `not_rechecked` |
 | metadata bytes vs captured file digest | yes | yes | no: digest field only |
 | RFC 6901 pointer vs raw JSON | yes | yes | no: raw bytes absent |
 | source operational closure | yes | yes | structural carried closure only |
-| temporal rows in SQLite | yes | yes | no |
+| temporal rows in SQLite | yes | yes when bounded current material can be observed; exact relation disclosed | no |
 | source/temporal parity | yes | yes | carried parity only |
 | before/after membership fences | yes | yes | no |
 | deterministic selection from carried material | yes | yes | yes |
@@ -947,11 +1339,36 @@ retained value. With no expected fingerprint, success says only
 `structurally_self_consistent`.
 
 Store-bound revalidation additionally rereads named evidence and captures new
-source/temporal fences. `require_equal_final_observed_membership` requires
-equality with the snapshot's final observed memberships.
-`named_captured_artifacts` checks exact frozen names/bytes and separately
-discloses the observed membership relation; it may not call a historical
-selection current or latest when membership differs.
+source/temporal fences. It proceeds in this order:
+
+1. run the pure structural/fingerprint validator without store access;
+2. when valid, call `reread_named_material(snapshot.source_material)` exactly
+   once and compare its returned material to the snapshot material;
+3. separately attempt initial source and temporal inventory tokens for the
+   snapshot request;
+4. when bounded temporal material is available, check every carried temporal
+   row and required opening against it without substituting newly selected
+   rows for the snapshot rows;
+5. capture final source and temporal tokens when their corresponding initial
+   token was available; and
+6. derive only relation/status/issue rows, never another snapshot.
+
+A missing, changed, unsafe, checksum-invalid, or structurally invalid named
+artifact makes the named relation `changed` or `unavailable` and refuses both
+modes. Newly added unrelated artifacts do not participate in the named reread.
+
+`require_equal_final_observed_membership` requires both stable current token
+pairs and equality with the snapshot's final observed memberships. A stable
+difference returns `observed_membership_changed`; an unavailable or bounded-
+inventory refusal returns `refused` with `not_fully_observed`. The result does
+not claim a global current state.
+
+`named_captured_artifacts` succeeds as
+`valid_for_named_captured_artifacts` after an exact named reread even when a
+stable current membership differs or either current bounded inventory cannot
+be fully produced. The source/temporal membership and carried-temporal-
+material relations remain separate mandatory disclosures. This status never
+calls the historical selection current or latest.
 
 Raw payload bytes are not embedded in the snapshot. A self-contained evidence
 archive would be a different security, privacy, export, and retention
@@ -1022,8 +1439,8 @@ acceptance coverage.
 | --- | --- |
 | A01 | A valid DS-004 selection closes attempt, run, envelope, payload, extraction, observation, temporal event, and occurrence links and returns the exact selected source observation. |
 | A02 | Mutating payload bytes without changing the stored checksum returns `checksum_mismatch`. |
-| A03 | Replacing payload and carried checksum cannot pass store-bound validation against the named source material. |
-| A04 | Metadata bytes changed between captured views produce a changed source token or digest refusal. |
+| A03 | Replacing payload and carried checksum cannot pass `reread_named_material`; unrelated additions and current membership beyond the capture bound do not prevent an otherwise exact named reread. |
+| A04 | Metadata bytes changed between captured views—including any independently discovered pre-horizon seed dependency—produce a changed source token or typed digest refusal. |
 | A05 | A forged raw record ID, immutable payload reference, API locator, request fingerprint, attempt link, or run link returns `provenance_closure_failure`. |
 | A06 | Extraction envelope, `ApiObservationsResult`, manifest, raw ID, adapter, item, or extractor disagreement fails closed. |
 | A07 | Missing extraction and missing quarantine after a committed success returns `extraction_incomplete`. |
@@ -1040,34 +1457,34 @@ acceptance coverage.
 | A18 | Occurrence membership uses receipt time while attempt coverage uses effective time; one filter or combined count cannot pass parity tests. |
 | A19 | A no-response failure is included by `finished_at` with `effective_time_basis="finished_at_no_response"`. |
 | A20 | Source-time values and clock segments are disclosure only and never change selection or coverage membership. |
-| A21 | Equal-looking values in unrelated clock domains are never compared; a requested comparison raises `EA_TIME_COMPARISON_UNSUPPORTED` before I/O. |
+| A21 | Final disposition of the former cross-clock request row: V1 exposes no comparison input/method/error; `source_time_use` is exactly `disclosure_only`, any altered policy raises `EA_SELECTION_POLICY_INVALID` before I/O, and source-time/clock values do not affect selection or coverage. |
 | A22 | Byte-identical payload reuse under distinct attempts yields distinct temporal occurrences; carried shared payload material is indexed once. |
 | A23 | A selected occurrence before `horizon_started_at` is carried once with `pre_horizon_seed=true`. |
 | A24 | The pre-horizon seed does not enter attempt coverage and cannot produce a completeness claim before the horizon. |
 | A25 | With no occurrence at or before `as_of`, the result is exactly `no_observation_at_or_before_as_of`, even when in-horizon failed attempts exist. |
 | A26 | More than 4,096 lifetime attempts with at most 4,096 attempts inside the requested horizon succeeds without silent history loss. |
 | A27 | More than 4,096 attempts inside the requested horizon returns `excessive_bounded_material`; no row is truncated or sampled. |
-| A28 | Each metadata/occurrence/byte bound is checked before retained materialization; boolean sizes/counts and integer coercion reject. |
+| A28 | Each metadata/occurrence/byte bound is checked before retained materialization; the exact fixed-limits model rejects altered, boolean, and coercible values. Seed discovery is bounded per artifact and does not charge lifetime rows to the in-horizon count. |
 | A29 | Caller paths, `..`, separators, unexpected names, symlinks, devices, and sockets reject, and diagnostics expose no path or secret. |
 | A30 | A source mutation before initial capture may be consistently captured; it is not falsely labelled a concurrent change. |
-| A31 | Source mutation after initial source token and before source reads refuses. |
-| A32 | Source mutation during named metadata/payload reads refuses or fails same-read identity/content checks. |
-| A33 | Source mutation after reads and before final source token refuses. |
+| A31 | Source mutation after initial source token and before source reads refuses, including mutation of the selected seed attempt, either run, envelope, payload, extraction, or observation content. |
+| A32 | Source mutation during named metadata/payload reads refuses or fails same-read identity/content checks; both ordinary capture and exact named reread are injected. |
+| A33 | Source mutation after reads and before final source token refuses, including source-side seed-candidate replacement. |
 | A34 | Temporal mutation after initial temporal token and before/during the one-transaction read either appears coherently in both compared memberships or refuses. |
 | A35 | Temporal mutation after the transaction and before the final temporal token refuses. |
-| A36 | Crossed source/temporal mutations between their respective capture phases cannot yield equal false parity; one changed token or parity check refuses. |
+| A36 | Crossed source/temporal mutations between their respective capture phases cannot yield equal false parity; changed token, material/fence disagreement, or independently discovered seed-ID disagreement refuses. |
 | A37 | A mutation immediately after both final fences is not detected; the result remains limited to final observed memberships and never claims global atomic currentness. |
 | A38 | CSV, Excel, PDF, STEP, CAD, and generic file-source evidence return `unsupported_operational_evidence`. |
 | A39 | Import tests prove EA imports no binding, interpretation, model, observation/semantic compatibility, evaluator, state, transition, or flow package. |
-| A40 | Exact public result equality proves no model revision, anchor, variable, binding, interpretation, semantic, freshness, suitability, or physical-occurrence field is present. |
+| A40 | Exact public fields and `backend.evidence_assurance.__all__` equal the Section 11 pins and contain no model revision, anchor, variable, binding, interpretation, semantic, freshness, suitability, or physical-occurrence field. |
 | A41 | Calculation of `observation_age_seconds` uses `as_of - received_at` exactly and changes no selection or status based on its magnitude. |
 | A42 | Empty, omitted, failed, and quarantined in-horizon attempts produce the exact incomplete-coverage disclosure without becoming a source-quality verdict. |
-| A43 | Missing/unavailable source evidence and unavailable temporal evidence are distinct from no observation and from incomplete coverage. |
+| A43 | Missing/unavailable source evidence, changed/unavailable named material, unavailable temporal evidence, not-fully-observed current membership, no observation, and incomplete coverage remain distinct. |
 | A44 | Mixed source, adapter, endpoint, item, subject, property, route, pointer, horizon, cutoff, or policy material rejects rather than merges. |
-| A45 | `model_construct`, `model_copy`, hidden extras, cycles, wrong union arms, stale derived IDs, duplicate/missing/reordered indices, boolean indices, and result substitution reject at every public boundary. |
+| A45 | `model_construct`, `model_copy`, hidden extras, cycles, wrong union arms, stale derived IDs, duplicate/missing/reordered indices, boolean indices, result substitution, and carry-once violations reject at every public request/snapshot/result/lower-reread boundary. |
 | A46 | Replacing a snapshot and its embedded fingerprint together can remain `structurally_self_consistent`; the result does not claim mutation detection. |
 | A47 | Supplying the exact independently retained expected fingerprint yields `matched`; any different expected fingerprint yields `mismatched`. |
-| A48 | Store-independent revalidation marks source bytes and temporal-store presence `not_rechecked` and performs no I/O. |
+| A48 | Store-independent revalidation marks `source_bytes` and `temporal_store_membership` exactly `not_rechecked`, carries no snapshot, and performs no I/O. |
 | A49 | Reversed filesystem/row enumeration and hash seeds 1, 7, and 12345 produce identical canonical bytes and content fingerprints. |
 | A50 | Store-bound selection performs no network access, connector execution, extraction rerun, store write, model mutation, environment discovery, or execution-clock read. |
 
@@ -1095,9 +1512,31 @@ Only:
 
 No `backend.evidence_assurance` facade exists in Slice A.
 
+### Slice A integrity repair — owner gated
+
+Only after separate owner acceptance of this corrected contract, a bounded
+repair may implement:
+
+- automatic source-side latest-eligible observation discovery and complete
+  pre-horizon seed dependency binding in both source inventory tokens;
+- exact source-side/temporal-supplied seed-ID agreement in
+  `read_material(...)`;
+- `reread_named_material(expected_material)` on the existing reader protocol
+  and filesystem implementation;
+- focused seed-fence, named-reread, hostile reconstruction, bounds,
+  determinism, no-side-effect, and preservation tests; and
+- an updated deterministic lower-token/material reproduction digest if and
+  only if the corrected seed-aware token changes the accepted serialization.
+
+The repair may not add a temporal import to `data_sources`, a caller path or
+seed parameter to `inventory_token`, another lower export, an EA package, a
+store/schema/projector change, or any upper-layer integration. It receives its
+own completion report and owner gate before Slice B may resume.
+
 ### Slice B — evidence assurance component
 
-Only after Slice A acceptance:
+Paused. Only after separate owner acceptance of this corrected synthesis and
+separate implementation and owner acceptance of the Slice A integrity repair:
 
 - request, captured material, provenance routes, coverage, assurance, issue,
   result, validation, and revalidation contracts;
@@ -1109,6 +1548,22 @@ Only after Slice A acceptance:
 - preservation and clean-checkout verification.
 
 No evaluator or upper semantic layer consumes EA in Slice B.
+
+### Preservation and compatibility consequences
+
+The correction changes no production byte today. A later authorized Slice A
+repair keeps the existing source token type/signature and all existing source
+material fields. Existing in-horizon requests without a pre-horizon candidate
+retain their member-key meaning. A request with a selected pre-horizon source
+candidate intentionally gains that candidate's complete closure in its token;
+that corrected token digest is not byte-compatible with the previously empty
+seed fence and must receive a new recorded deterministic reproduction value.
+
+`reread_named_material(...)` is additive on the existing two exported reader
+types. It adds no export, persistence, identifier, store entry, temporal row,
+or current-selection claim. Pre-EA callers need not call it. No accepted
+source artifact, temporal projection, model record, ledger membership,
+canonical model byte, historical result, or disclosure is rewritten.
 
 ### Slice C — optional future integration proposal
 
@@ -1182,17 +1637,23 @@ All design questions are resolved for EA-001 v1:
 | Semantic boundary | No model, binding, interpretation, compatibility, evaluator, state, transition, or flow composition. |
 | Time boundary | Required aware-UTC inclusive bounded horizon and cutoff. |
 | Selection | Accepted TS-001 latest occurrence at/before `as_of`; one labelled pre-horizon seed is permitted. |
+| Source seed fence | Both unchanged-signature source token calls independently discover and bind the complete source-side pre-horizon candidate closure; the later temporal seed ID must agree. |
 | Membership | Receipt-time occurrence and effective-time attempt coverage are separate. |
 | Cross-store claim | Captured-view consistency at observed fences, never global atomicity. |
+| Named reread | One exact, path-free `reread_named_material(expected_material)` operation; named equality is separate from current membership. |
+| Cross-clock API | None. Source time is disclosure-only; altered policy is `EA_SELECTION_POLICY_INVALID`. |
 | Freshness | Disclose time and calculated age only; no admission threshold or label. |
 | Snapshot | Computed, deterministic, no raw payload bytes, with `sha256:` content fingerprint. |
-| Lower seams | One DS-004 source reader and one bounded temporal material/fence seam, owned by their existing layers. |
+| Results and exports | Exact fields, carry-once invariants, literal order, exception fields, and `__all__` are pinned in Sections 11–12. |
+| Lower seams | One DS-004 source reader with the bounded integrity repair and one temporal material/fence seam, owned by their existing layers. |
+| Sequencing | Corrected contract acceptance, then separately authorized/accepted Slice A repair, then separately resumed Slice B. |
 | Integration | Optional future proposal only; not part of EA Slices A or B. |
 | Demonstration | Disposable by default; any committed artifact is separately owner gated; no ledger append is expected. |
 
-There are zero unresolved owner decisions and zero implementation-blocking
-questions. Acceptance of this document would approve the architecture only;
-it would not authorize Slice A, Slice B, integration, demonstration, fixture,
-ledger, or history work.
+The four reported discrepancies are resolved by this candidate. The sole
+remaining owner decision is whether to accept this exact corrected synthesis
+and its correction report. Acceptance would approve the corrected contract
+only; it would not authorize the Slice A integrity repair, resume Slice B, or
+authorize integration, demonstration, fixture, ledger, or history work.
 
 END OF EA-001 FINAL SYNTHESIS

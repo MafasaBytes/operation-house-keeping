@@ -2,133 +2,209 @@
 
 Date: 2026-09-04
 
-Status: owner authorized; implementation blocked at the lower-contract gate
+Status: corrected contract candidate prepared; Slice A integrity repair and
+Slice B implementation both remain paused for separate owner gates
 
 Accepted Slice A HEAD: `873df5bfc4fef2b6c8136612c7a9655048dd6b1b`
 
-Slice A acceptance commit: `66dd6677cb34c98aad800a06f2f9e01ac60d7a42`
+Accepted discrepancy-stop HEAD:
+`b3e27cb41d9d69bf1545b50fb5aaa693ca7586f6`
 
-Normative design:
+Accepted discrepancy-report SHA-256:
+`cc5999e2d1f4d7191b4c4dba047f4420793f86a03f7b7cbe1801116dde486574`
+
+Corrected normative synthesis:
 `docs/superpowers/specs/2026-09-04-ea001-content-bound-operational-evidence-selection-and-assurance-design.md`
 
-Normative design SHA-256:
-`a33e8bbea1869889c082ec49f8e9f9966d98f72fc70286f8381f1d7f32db52a0`
+Corrected synthesis candidate SHA-256:
+`557b2df9aec5ee784006bfdba771936ae90844ea7cf8913c1e61455fa4a7e08e`
 
-## 1. Scope and mandatory stop conditions
+## 1. Current authorization boundary
 
-Slice B is limited to a read-only `backend.evidence_assurance` composition
-package. It may consume only the accepted public DS-004 operational-evidence
-reader/contracts, the accepted public temporal query/contracts, Pydantic, and
-the standard library. It owns no store, cache, database, ledger, revision,
-anchor, minter, persistent receipt, signature, connector, clock, environment
-discovery, or write path.
+The owner accepted the Slice B discrepancy stop and authorized only a bounded
+design-contract correction. This plan records the corrected implementation
+sequence but authorizes no production or test change.
 
-No existing package may import Slice B. Slice B must not import identity,
-interpretation, model, observation/semantic compatibility, constraint,
-behavior, state, transition, flow, connector/vendor, UI, planning, control,
-private filesystem-store, or private SQLite modules.
+The next possible implementation is a separately authorized Slice A integrity
+repair. Slice B remains paused until both the corrected synthesis and that
+repair are separately owner accepted. Slice C remains unauthorized.
 
-Work must stop before implementation if the accepted lower seams cannot
-support every captured-view fence required by Section 9. Work must also stop
-if exact public field order or `__all__` would require an implementer-chosen
-contract that the normative design does not pin.
+## 2. Dependency and scope boundary
 
-Both stop conditions are active. See:
+The eventual Slice B remains a read-only `backend.evidence_assurance`
+composition package. It may consume only public DS-004 operational-evidence
+contracts/reader methods, public temporal contracts/query methods, Pydantic,
+and the standard library.
 
-`docs/superpowers/reports/2026-09-04-ea001-slice-b-preimplementation-discrepancy-report.md`
+It owns no store, cache, database, ledger, revision, anchor, minter,
+persistent receipt, signature, connector, ambient clock, environment
+discovery, or write path. It imports no identity, interpretation, model,
+observation/semantic compatibility, constraint, behavior, state, transition,
+flow, connector/vendor, UI, planning, control, private filesystem-store, or
+private SQLite module. No existing package imports EA during Slice B.
 
-## 2. Intended public surface after owner resolution
+## 3. Owner-gated Slice A integrity repair
 
-The package would implement the exact request, route, selection, coverage,
-fence, assurance, snapshot, result, validation, and revalidation contracts
-named in Sections 11–14, the exact literal vocabularies in Section 12, the
-typed exception tree, `EvidenceAssuranceQueries`, and
-`validate_operational_evidence_snapshot(...)`.
+The repair is limited to the existing public DS-004 reader seam:
 
-The facade would expose exactly:
+1. Keep the exact `inventory_token(scope, *, horizon_started_at, as_of)`
+   signature.
+2. Independently discover the source-side latest eligible exact-property
+   observation at/before `as_of` by receipt time and the complete
+   `AttemptOrderKey`.
+3. If it is pre-horizon, bind exactly its complete mechanical closure in each
+   token under the accepted member-key/content rules.
+4. Keep lifetime discovery streaming and bounded per artifact; charge only
+   retained in-horizon attempts to the 4,096 limit.
+5. Require the seed ID later supplied to `read_material(...)` to equal the
+   independently discovered source candidate.
+6. Add exactly
+   `reread_named_material(expected_material) ->
+   Ds004OperationalEvidenceMaterial` to the existing protocol and filesystem
+   reader.
+7. Reconstruct expected material before I/O; derive all paths internally;
+   reread exactly its named set with same-read hashing/parsing and checksum,
+   closure, equality, byte, artifact-count, safety, and redaction checks.
+8. Ignore unrelated additions and do not apply current horizon growth to the
+   original frozen named-material attempt set.
 
-```python
-select_operational_evidence(request)
-revalidate_operational_evidence(snapshot, *, membership_mode)
-```
+The repair adds no source export, temporal import, caller path, caller seed
+parameter, schema, projector change, EA package, or upper integration.
 
-No convenience or assessment alias would be added. Package exports and every
-model field would be tested by exact ordered equality after the missing
-contract pins are supplied.
+Repair tests must cover every seed dependency, source candidate/temporal seed
+disagreement, reused raw content/originating run, more than 4,096 lifetime
+attempts, enumeration/hash-seed determinism, exact named matches, every named
+artifact mutation/absence/substitution, unrelated additions, current horizon
+overflow, hostile expected material, no I/O before reconstruction, and no
+network/connector/extraction/clock/environment/write behavior.
 
-## 3. Intended captured-view sequence
+If token bytes change, the repair report must record the new exact lower-
+token/material reproduction size and digest while preserving the accepted
+Slice A material contract and historical digest as historical evidence.
 
-The implementation sequence is fixed:
+## 4. Exact eventual Slice B public surface
 
-1. deep-reconstruct and validate the request before dependency access;
-2. capture the initial exact-scope source token;
-3. capture the initial exact-scope temporal token;
-4. obtain temporal material in its one read transaction;
-5. derive the optional selected seed attempt ID and read source material once;
-6. verify source closure and both parity axes from captured material;
-7. capture final source and temporal tokens;
-8. refuse on changed token or material/fence disagreement; and
-9. derive routes, selection, coverage, issues, assurance, canonical bytes, and
-   fingerprint only from the captured material.
+After repair acceptance, Slice B implements only the exact Section 11 models,
+vocabularies, errors, facade, and validator. The result/support pins now
+include:
 
-The resulting claim is limited to captured-view consistency at observed
-fences. It is never described as a distributed transaction, global atomic
-snapshot, globally current evidence, or detection after the final fences.
+- `OperationalEvidenceMaterialLimits`;
+- `OperationalEvidenceIssue`;
+- `OperationalNamedArtifactRevalidation`;
+- `OperationalEvidenceSelectionResult`;
+- `OperationalEvidenceStoreRevalidationResult`; and
+- `OperationalEvidenceSnapshotValidationResult`.
 
-## 4. Intended implementation checkpoints
+All fields, types, order, literal order, carry-once invariants, and the exact
+33-name `backend.evidence_assurance.__all__` are normative. Lower source and
+temporal types are not re-exported. There are no aliases or alternative public
+names.
 
-After owner resolution, development would proceed in reviewable commits:
+A successful/incomplete result carries one snapshot and no outer issues. A
+refused result carries no snapshot and its refusal issues once. Offline and
+store revalidation results repeat neither the snapshot nor complete source or
+temporal material.
 
-1. exact public contracts, literal vocabularies, typed errors, and exports;
-2. captured-view facade, parity, routes, selection, coverage, issues, and
-   canonical snapshot construction;
-3. store-independent reconstruction/canonical validation and independently
-   retained expected-fingerprint comparison;
-4. both store-bound revalidation modes; and
-5. adversarial mutation, hostile reconstruction, determinism, import
-   isolation, preservation, and no-side-effect hardening.
+The exception tree exposes only `error_code` and `message`. Configuration
+misuse is `EA_DEPENDENCY_INVALID`; query misuse is exactly
+`EA_REQUEST_INVALID` or `EA_SELECTION_POLICY_INVALID`.
+`EA_TIME_COMPARISON_UNSUPPORTED` is removed. V1 has no cross-clock input or
+method; fixed `source_time_use="disclosure_only"` is policy validation.
 
-Before the first production commit, focused import/field/signature/facade
-tests would be run red and their output retained. Every genuine post-green
-defect would likewise be reproduced by a failing test before repair.
+## 5. Captured-view selection protocol
 
-## 5. Intended canonical and result rules
+The eventual facade sequence is fixed:
 
-Canonicalization would use sorted Unicode object keys, compact UTF-8 JSON,
-`ensure_ascii=False`, finite strict values, aware UTC datetimes rendered with
-`+00:00`, and the exact carried `value_json` string. The embedded fingerprint
-would be omitted from its own canonical input and returned as lowercase
-`sha256:` plus SHA-256 of those bytes.
+1. deep-reconstruct/validate the request before I/O;
+2. capture the seed-aware initial source token;
+3. capture the initial temporal token;
+4. read temporal material in one transaction;
+5. supply its optional seed ID to one source-material read, which independently
+   checks the source candidate;
+6. verify source closure, separate parity axes, routes, and content;
+7. capture seed-aware final source and final temporal tokens;
+8. refuse changed stores, material/fence disagreement, or seed-ID parity
+   failure; and
+9. derive only from captured material.
 
-Issues 1–14 would make the outer result `refused` with no snapshot. Issues
-15–16 would remain ordered within an incomplete canonical snapshot. All
-applicable issues would be retained in code/routing/detail order even when an
-earlier issue controls outer status.
+The claim remains captured-view consistency at observed fences. It is not a
+distributed transaction, global snapshot/currentness claim, or detector for
+post-final-fence changes.
 
-Offline validation would perform no I/O and would disclose source bytes and
-temporal-store presence as `not_rechecked`. Store-bound revalidation would
-support only `require_equal_final_observed_membership` and
-`named_captured_artifacts` after the lower named-artifact capability is
-resolved.
+## 6. Selection, canonicalization, and validation
 
-## 6. Verification plan
+The implementation recomputes exact horizon/cutoff membership, full ordering,
+one optional seed, separate receipt/effective axes, coverage dispositions,
+routes/indices, selected observation, disclosure-only age, summaries, ordered
+issues, assurance, canonical bytes, and `sha256:` content fingerprint.
 
-The final gate would include:
+Issues 1–14 refuse without a snapshot. Issues 15–16 remain ordered in an
+incomplete snapshot. A complete result requires at least one in-horizon
+attempt, every route observed, a selected observation, and no issue.
 
-- focused Slice B and full EA tests;
-- complete data-source and temporal suites;
-- architecture/import-isolation and affected downstream suites;
+Offline validation performs no I/O, deep-reconstructs all content, recomputes
+every derived field and fingerprint, carries no snapshot, and always reports
+`source_bytes="not_rechecked"` and
+`temporal_store_membership="not_rechecked"`. Expected fingerprint state is
+exactly matched, mismatched, or not supplied.
+
+## 7. Store-bound revalidation
+
+Both modes first validate the snapshot without I/O and then call the exact
+named-material reread. Current source and temporal memberships are observed
+separately.
+
+`require_equal_final_observed_membership` succeeds only when named/carried
+material matches and stable current source/temporal memberships equal the
+snapshot's final tokens. A stable difference is
+`observed_membership_changed`; an unobservable bounded membership refuses.
+
+`named_captured_artifacts` may return
+`valid_for_named_captured_artifacts` when the exact named source material
+matches even if current membership differs or cannot be fully observed. Its
+source/temporal membership and carried-temporal-material relations remain
+explicit. It never calls the historical selection current or latest.
+
+## 8. Red-first and commit sequence after authorization
+
+No red test is written under the current correction-only authorization. After
+separate repair authorization:
+
+1. add failing seed-fence/named-reread lower tests;
+2. implement the bounded Slice A repair;
+3. adversarially review, reproduce every defect red-first, repair, verify, and
+   stop for repair acceptance.
+
+Only after separate Slice B resumption:
+
+1. add failing exact contracts/exports/errors tests;
+2. implement contracts and canonical derivation;
+3. add failing captured-view selection tests and implement the facade;
+4. add failing pure/store-bound revalidation tests and implement both modes;
+5. run an adversarial review and encode every genuine defect before repair;
+6. commit in small reviewable checkpoints and leave the completion report
+   uncommitted.
+
+## 9. Acceptance and verification mapping
+
+The corrected synthesis retains A01–A50. Old A21 is explicitly reconciled as
+the absence of a cross-clock API plus fixed disclosure-only policy behavior.
+A03/A04/A28/A31–A33/A36/A40/A43/A45/A48 now cover named reread, seed-aware
+fences, fixed limits, exact public pins, relation distinctions, carry-once
+validation, and offline no-I/O fields.
+
+Final verification remains:
+
+- focused repair/EA and complete data-source/temporal suites;
+- architecture/import isolation and affected downstream suites;
 - complete model-kernel and repository suites;
 - fresh base-only and all-extras clean checkouts;
-- isolated permitted loopback reconciliation when sandboxing prevents the
-  existing localhost test;
-- backend compilation and dependency checks;
-- working-tree and full-milestone `git diff --check`;
-- exact 36-record model count, accepted model revision, FRG/FLD/FLW `1/1/0`,
-  ledger aggregate, FL disclosure size/digest, accepted historical artifacts,
-  and Slice A deterministic lower-material serialization.
+- permitted loopback reconciliation where required;
+- backend compilation/dependency checks;
+- working/full-milestone `git diff --check`;
+- exact model count/revision, FRG/FLD/FLW, ledger aggregate, FL disclosure,
+  accepted historical artifacts, and deterministic lower-material evidence.
 
-The Slice B completion report would remain uncommitted for owner validation.
-No Slice C work would begin.
+No Slice C or authoritative demonstration work is included.
 
 END OF EA-001 SLICE B IMPLEMENTATION PLAN
