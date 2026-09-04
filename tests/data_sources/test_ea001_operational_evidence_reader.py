@@ -206,5 +206,4 @@ def test_hostile_nested_material_is_revalidated():
         quarantines=(), observations=())
     with pytest.raises(ValidationError):
         Ds004OperationalEvidenceMaterial.model_validate(
-            forged.model_dump(mode="python"))
-
+            forged.model_dump(mode="python", warnings=False))

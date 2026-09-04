@@ -8,11 +8,26 @@ system entities without rewriting this history.
 """
 
 from datetime import UTC, datetime
-from typing import Literal
+import hashlib
+import json
+from typing import Annotated, Literal
 
-from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
+from pydantic import (
+    AwareDatetime,
+    BaseModel,
+    ConfigDict,
+    Field,
+    StrictBool,
+    StrictInt,
+    StringConstraints,
+    field_validator,
+    model_validator,
+)
 
-from backend.data_sources.contracts import SourceTimeMarker
+from backend.data_sources.contracts import (
+    Ds004OperationalEvidenceScope,
+    SourceTimeMarker,
+)
 
 
 class _Frozen(BaseModel):
@@ -203,3 +218,183 @@ class ProjectionReport(BaseModel):
     attempts_by_outcome: dict[str, int] = Field(default_factory=dict)
     deferred_incomplete: list[str] = Field(default_factory=list)
     halted: HaltInfo | None = None
+
+
+# EA-001 Slice A: bounded read material only. These contracts add no row,
+# checkpoint, persistence, or assessment meaning to the temporal projection.
+TaggedSha256 = Annotated[
+    str, StringConstraints(pattern=r"^sha256:[0-9a-f]{64}$")
+]
+
+
+class _SelectionFrozen(BaseModel):
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", revalidate_instances="always")
+
+
+def _canonical_value(value):
+    if isinstance(value, BaseModel):
+        return {name: _canonical_value(getattr(value, name))
+                for name in value.__class__.model_fields}
+    if isinstance(value, datetime):
+        return value.astimezone(UTC).isoformat()
+    if isinstance(value, tuple | list):
+        return [_canonical_value(item) for item in value]
+    if isinstance(value, dict):
+        return {key: _canonical_value(item) for key, item in value.items()}
+    return value
+
+
+def temporal_selection_digest(value) -> str:
+    payload = json.dumps(
+        _canonical_value(value), sort_keys=True, separators=(",", ":"),
+        ensure_ascii=False, allow_nan=False).encode("utf-8")
+    return "sha256:" + hashlib.sha256(payload).hexdigest()
+
+
+def _occurrence_order(occurrence: TemporalOccurrence):
+    return (
+        occurrence.received_at.astimezone(UTC),
+        occurrence.attempt_started_at.astimezone(UTC),
+        occurrence.ingestion_run_id,
+        occurrence.sweep_position,
+        occurrence.attempt_id,
+        occurrence.occurrence_id,
+    )
+
+
+def _attempt_order(event: TemporalAttemptEvent):
+    return (
+        event.attempt_started_at.astimezone(UTC),
+        event.ingestion_run_id,
+        event.sweep_position,
+        event.attempt_id,
+    )
+
+
+class TemporalSelectionInventoryToken(_SelectionFrozen):
+    schema_version: str
+    projector_version: str
+    scope: Ds004OperationalEvidenceScope
+    horizon_started_at: AwareDatetime
+    as_of: AwareDatetime
+    occurrence_membership_sha256: TaggedSha256
+    attempt_coverage_membership_sha256: TaggedSha256
+    clock_opening_membership_sha256: TaggedSha256
+
+    @field_validator("horizon_started_at", "as_of")
+    @classmethod
+    def _utc(cls, value: datetime) -> datetime:
+        return value.astimezone(UTC)
+
+    @model_validator(mode="after")
+    def _interval(self):
+        if self.horizon_started_at > self.as_of:
+            raise ValueError("horizon_started_at must be at or before as_of")
+        return self
+
+
+class TemporalSelectionMaterial(_SelectionFrozen):
+    schema_version: str
+    projector_version: str
+    scope: Ds004OperationalEvidenceScope
+    horizon_started_at: AwareDatetime
+    as_of: AwareDatetime
+    selected_occurrence_index: StrictInt | None
+    selected_occurrence_is_pre_horizon_seed: StrictBool
+    occurrence_membership: tuple[TemporalOccurrence, ...]
+    attempt_coverage_membership: tuple[TemporalAttemptEvent, ...]
+    clock_segment_openings: tuple[ClockSegmentOpening, ...]
+    transaction_membership_sha256: TaggedSha256
+
+    @field_validator("horizon_started_at", "as_of")
+    @classmethod
+    def _utc(cls, value: datetime) -> datetime:
+        return value.astimezone(UTC)
+
+    @model_validator(mode="after")
+    def _complete_revalidation(self):
+        start, end = self.horizon_started_at, self.as_of
+        if start > end:
+            raise ValueError("horizon_started_at must be at or before as_of")
+        if tuple(sorted(self.occurrence_membership, key=_occurrence_order)) != (
+                self.occurrence_membership):
+            raise ValueError("occurrence membership is not canonically ordered")
+        occurrence_ids = [row.occurrence_id for row in self.occurrence_membership]
+        if len(occurrence_ids) != len(set(occurrence_ids)):
+            raise ValueError("occurrence membership contains duplicates")
+        if tuple(sorted(self.attempt_coverage_membership, key=_attempt_order)) != (
+                self.attempt_coverage_membership):
+            raise ValueError("attempt coverage membership is not canonically ordered")
+        attempt_ids = [row.attempt_id for row in self.attempt_coverage_membership]
+        if len(attempt_ids) != len(set(attempt_ids)):
+            raise ValueError("attempt coverage membership contains duplicates")
+
+        scope = self.scope
+        for occurrence in self.occurrence_membership:
+            if (
+                occurrence.subject.source_id != scope.source_id
+                or occurrence.subject.adapter_id != scope.adapter_id
+                or occurrence.subject.subject_identifier != scope.subject_identifier
+                or occurrence.property.extraction_route != scope.extraction_route
+                or occurrence.property.item_key != scope.item_key
+                or occurrence.property.json_pointer != scope.json_pointer
+                or occurrence.received_at.astimezone(UTC) > end
+            ):
+                raise ValueError("occurrence lies outside the exact selection scope")
+        for event in self.attempt_coverage_membership:
+            effective = event.effective_wall_time.astimezone(UTC)
+            if (
+                event.source_id != scope.source_id
+                or event.adapter_id != scope.adapter_id
+                or event.endpoint_id != scope.endpoint_id
+                or event.item_key != scope.item_key
+                or not start <= effective <= end
+                or event.projector_version != self.projector_version
+            ):
+                raise ValueError("attempt lies outside exact coverage membership")
+            expected_effective = event.received_at or event.finished_at
+            expected_basis = (
+                "received_at" if event.received_at is not None
+                else "finished_at_no_response")
+            if (event.effective_wall_time != expected_effective
+                    or event.effective_time_basis != expected_basis):
+                raise ValueError("attempt effective-time contract is inconsistent")
+
+        selected = self.selected_occurrence_index
+        if selected is None:
+            if self.selected_occurrence_is_pre_horizon_seed:
+                raise ValueError("absent selection cannot be a pre-horizon seed")
+        else:
+            if selected < 0 or selected >= len(self.occurrence_membership):
+                raise ValueError("selected occurrence index is out of range")
+            selected_row = self.occurrence_membership[selected]
+            if selected_row != max(self.occurrence_membership, key=_occurrence_order):
+                raise ValueError("selected occurrence is not latest at the cutoff")
+            is_seed = selected_row.received_at.astimezone(UTC) < start
+            if is_seed != self.selected_occurrence_is_pre_horizon_seed:
+                raise ValueError("pre-horizon seed label is inconsistent")
+        before_horizon = [row for row in self.occurrence_membership
+                          if row.received_at.astimezone(UTC) < start]
+        if len(before_horizon) > 1 or (
+                before_horizon and not self.selected_occurrence_is_pre_horizon_seed):
+            raise ValueError("only the selected pre-horizon seed may precede horizon")
+
+        opening_ids = [row.segment_id for row in self.clock_segment_openings]
+        opening_order = [(
+            row.source_id, row.adapter_id, row.clock_id,
+            row.opened_at_effective_wall_time.astimezone(UTC), row.segment_id)
+            for row in self.clock_segment_openings]
+        if (len(opening_ids) != len(set(opening_ids))
+                or opening_order != sorted(opening_order)):
+            raise ValueError("clock openings must be unique and ordered")
+        required_openings = {row.clock_segment_id for row in self.occurrence_membership
+                             if row.clock_segment_id is not None}
+        if set(opening_ids) != required_openings:
+            raise ValueError("clock opening membership does not close occurrences")
+
+        payload = self.model_dump(
+            mode="python", exclude={"transaction_membership_sha256"})
+        if temporal_selection_digest(payload) != self.transaction_membership_sha256:
+            raise ValueError("transaction membership digest is stale")
+        return self

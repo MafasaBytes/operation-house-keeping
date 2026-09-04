@@ -516,7 +516,9 @@ class FilesystemDs004OperationalEvidenceReader:
                     or json_type_of(value) != observation.json_type):
                 raise _fail("OPERATIONAL_EVIDENCE_OBSERVATION_MISMATCH",
                             "operational observation differs from raw JSON")
-            observations[observation.observation_id] = observation
+            if (observation.subject_identifier == scope.subject_identifier
+                    and observation.json_pointer == scope.json_pointer):
+                observations[observation.observation_id] = observation
 
 
 __all__ = [

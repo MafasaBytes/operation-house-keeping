@@ -22,8 +22,12 @@ from backend.temporal_state.contracts import (
     TemporalAttemptEvent,
     TemporalOccurrence,
     TemporalQueryError,
+    TemporalSelectionInventoryToken,
+    TemporalSelectionMaterial,
     TemporalStoreError,
+    temporal_selection_digest,
 )
+from backend.data_sources.contracts import Ds004OperationalEvidenceScope
 from backend.temporal_state.store import TemporalStore, _dt, _iso, marker_from_json
 
 
@@ -120,6 +124,25 @@ def _require_aware(as_of: datetime) -> datetime:
         raise TemporalQueryError(
             "TEMPORAL_NAIVE_CUTOFF", "as_of must be timezone-aware")
     return as_of
+
+
+def _require_selection_request(scope, horizon_started_at, as_of):
+    try:
+        payload = scope.model_dump(mode="python") if isinstance(
+            scope, BaseModel) else scope
+        rebuilt = Ds004OperationalEvidenceScope.model_validate(payload)
+    except Exception as error:
+        raise TemporalQueryError(
+            "TEMPORAL_SELECTION_SCOPE_INVALID",
+            "selection scope is invalid") from error
+    start = _require_aware(horizon_started_at).astimezone(
+        __import__("datetime").UTC)
+    end = _require_aware(as_of).astimezone(__import__("datetime").UTC)
+    if start > end:
+        raise TemporalQueryError(
+            "TEMPORAL_SELECTION_HORIZON_REVERSED",
+            "horizon_started_at must be at or before as_of")
+    return rebuilt, start, end
 
 
 class TemporalQueries:
@@ -323,3 +346,125 @@ class TemporalQueries:
             )
             for r in rows
         ]
+
+    # -- EA-001 bounded operational read material
+
+    def selection_inventory_token(
+        self, scope, *, horizon_started_at: datetime, as_of: datetime
+    ) -> TemporalSelectionInventoryToken:
+        scope, start, end = _require_selection_request(
+            scope, horizon_started_at, as_of)
+        material = self._selection_material(scope, start, end)
+        return TemporalSelectionInventoryToken(
+            schema_version=material.schema_version,
+            projector_version=material.projector_version,
+            scope=scope, horizon_started_at=start, as_of=end,
+            occurrence_membership_sha256=temporal_selection_digest(
+                material.occurrence_membership),
+            attempt_coverage_membership_sha256=temporal_selection_digest(
+                material.attempt_coverage_membership),
+            clock_opening_membership_sha256=temporal_selection_digest(
+                material.clock_segment_openings),
+        )
+
+    def selection_material(
+        self, scope, *, horizon_started_at: datetime, as_of: datetime
+    ) -> TemporalSelectionMaterial:
+        scope, start, end = _require_selection_request(
+            scope, horizon_started_at, as_of)
+        return self._selection_material(scope, start, end)
+
+    def _selection_material(self, scope, start, end):
+        key = (
+            scope.source_id, scope.adapter_id, scope.subject_identifier,
+            scope.extraction_route, scope.item_key, scope.json_pointer)
+        endpoint_parent = (
+            "EXISTS (SELECT 1 FROM temporal_attempts parent "
+            "WHERE parent.attempt_id=temporal_occurrences.attempt_id "
+            "AND parent.endpoint_id=?)")
+        coverage_key = (
+            scope.source_id, scope.adapter_id, scope.endpoint_id, scope.item_key)
+        with self._reader() as conn:
+            conn.execute("BEGIN")
+            try:
+                meta = dict(conn.execute(
+                    "SELECT key, value FROM meta ORDER BY key").fetchall())
+                selected_row = conn.execute(
+                    f"SELECT * FROM temporal_occurrences WHERE {_KEY_WHERE} "
+                    f"AND {endpoint_parent} AND received_at <= ? ORDER BY "
+                    f"received_at DESC, {_ORDER_DESC} LIMIT 1",
+                    (*key, scope.endpoint_id, _iso(end))).fetchone()
+                occurrence_rows = conn.execute(
+                    f"SELECT * FROM temporal_occurrences WHERE {_KEY_WHERE} "
+                    f"AND {endpoint_parent} AND received_at >= ? AND "
+                    "received_at <= ? ORDER BY "
+                    f"received_at, {_ORDER_ASC}, occurrence_id LIMIT 16385",
+                    (*key, scope.endpoint_id, _iso(start), _iso(end))).fetchall()
+                attempt_rows = conn.execute(
+                    "SELECT * FROM temporal_attempts WHERE source_id=? AND "
+                    "adapter_id=? AND endpoint_id=? AND item_key=? AND "
+                    "effective_wall_time >= ? AND effective_wall_time <= ? "
+                    f"ORDER BY {_ORDER_ASC} LIMIT 4097",
+                    (*coverage_key, _iso(start), _iso(end))).fetchall()
+                if len(occurrence_rows) > 16_384:
+                    raise TemporalQueryError(
+                        "TEMPORAL_SELECTION_LIMIT_EXCEEDED",
+                        "in-horizon occurrence count exceeds 16384")
+                if len(attempt_rows) > 4_096:
+                    raise TemporalQueryError(
+                        "TEMPORAL_SELECTION_LIMIT_EXCEEDED",
+                        "in-horizon attempt count exceeds 4096")
+                occurrences = [_occurrence_from_row(row) for row in occurrence_rows]
+                selected = (_occurrence_from_row(selected_row)
+                            if selected_row is not None else None)
+                is_seed = bool(selected is not None
+                               and selected.received_at < start)
+                if is_seed:
+                    occurrences.append(selected)
+                occurrences.sort(key=lambda row: (
+                    row.received_at, row.attempt_started_at,
+                    row.ingestion_run_id, row.sweep_position, row.attempt_id,
+                    row.occurrence_id))
+                selected_index = (occurrences.index(selected)
+                                  if selected is not None else None)
+                attempts = tuple(_attempt_from_row(row) for row in attempt_rows)
+                required_segments = sorted({
+                    row.clock_segment_id for row in occurrences
+                    if row.clock_segment_id is not None})
+                openings = []
+                for offset in range(0, len(required_segments), 500):
+                    group = required_segments[offset:offset + 500]
+                    placeholders = ",".join("?" for _ in group)
+                    openings.extend(conn.execute(
+                        "SELECT * FROM clock_segment_openings WHERE segment_id IN "
+                        f"({placeholders}) ORDER BY segment_id", group).fetchall())
+                conn.execute("COMMIT")
+            except BaseException:
+                if conn.in_transaction:
+                    conn.execute("ROLLBACK")
+                raise
+
+        clock_openings = tuple(sorted((ClockSegmentOpening(
+            segment_id=row[0], source_id=row[1], adapter_id=row[2],
+            clock_id=row[3], boundary_reason=row[4],
+            opened_by_attempt_id=row[5],
+            opened_at_effective_wall_time=_dt(row[6])) for row in openings),
+            key=lambda row: (
+                row.source_id, row.adapter_id, row.clock_id,
+                row.opened_at_effective_wall_time, row.segment_id)))
+        base = {
+            "schema_version": meta.get("schema_version", ""),
+            "projector_version": meta.get("projector_version", ""),
+            "scope": scope,
+            "horizon_started_at": start,
+            "as_of": end,
+            "selected_occurrence_index": selected_index,
+            "selected_occurrence_is_pre_horizon_seed": is_seed,
+            "occurrence_membership": tuple(occurrences),
+            "attempt_coverage_membership": attempts,
+            "clock_segment_openings": clock_openings,
+        }
+        return TemporalSelectionMaterial(
+            **base,
+            transaction_membership_sha256=temporal_selection_digest(base),
+        )
