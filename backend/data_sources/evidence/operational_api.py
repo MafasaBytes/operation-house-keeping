@@ -71,6 +71,11 @@ class Ds004OperationalEvidenceReader(Protocol):
         selected_seed_attempt_id: str | None,
     ) -> Ds004OperationalEvidenceMaterial: ...
 
+    def reread_named_material(
+        self,
+        expected_material: Ds004OperationalEvidenceMaterial,
+    ) -> Ds004OperationalEvidenceMaterial: ...
+
 
 def _fail(code: str, detail: str) -> OperationalEvidenceReadError:
     return OperationalEvidenceReadError(code, detail[:300])
@@ -179,9 +184,7 @@ class FilesystemDs004OperationalEvidenceReader:
     def inventory_token(self, scope, *, horizon_started_at, as_of):
         start, end = _aware_interval(horizon_started_at, as_of)
         scope = self._scope(scope)
-        material = self.read_material(
-            scope, horizon_started_at=start, as_of=end,
-            selected_seed_attempt_id=None)
+        material, _ = self._capture_material(scope, start, end)
         keys = tuple(sorted(
             f"{item.kind}:{item.logical_id}:{item.byte_count}:"
             f"{item.captured_file_sha256}:"
@@ -201,48 +204,138 @@ class FilesystemDs004OperationalEvidenceReader:
         if selected_seed_attempt_id is not None:
             _safe_component(selected_seed_attempt_id, "seed attempt", hex_only=True)
 
-        descriptors: dict[tuple[str, str], OperationalApiArtifactDescriptor] = {}
+        material, source_seed_attempt_id = self._capture_material(
+            scope, start, end)
+        if selected_seed_attempt_id != source_seed_attempt_id:
+            raise _fail(
+                "OPERATIONAL_EVIDENCE_SEED_PARITY_MISMATCH",
+                "source-selected and supplied pre-horizon seed IDs differ")
+        return material
+
+    def reread_named_material(self, expected_material):
+        try:
+            plain = (
+                expected_material.model_dump(mode="python", warnings=False)
+                if isinstance(expected_material, BaseModel)
+                else expected_material
+            )
+            expected = Ds004OperationalEvidenceMaterial.model_validate(plain)
+        except Exception as error:
+            raise _fail(
+                "OPERATIONAL_EVIDENCE_NAMED_MATERIAL_MISMATCH",
+                "expected named material is invalid") from error
+
+        if len(expected.artifacts) > MAX_RETAINED_ARTIFACTS:
+            raise _fail(
+                "OPERATIONAL_EVIDENCE_NAMED_MATERIAL_MISMATCH",
+                "expected named material exceeds the artifact bound")
+        metadata_bytes = sum(
+            descriptor.byte_count for descriptor in expected.artifacts
+            if descriptor.kind != "raw_payload")
+        if metadata_bytes > MAX_RETAINED_METADATA_BYTES or any(
+                descriptor.byte_count > MAX_RETAINED_METADATA_BYTES
+                for descriptor in expected.artifacts):
+            raise _fail(
+                "OPERATIONAL_EVIDENCE_NAMED_MATERIAL_MISMATCH",
+                "expected named material exceeds the byte bound")
+
+        try:
+            observed = self._reread_expected_material(expected)
+        except OperationalEvidenceReadError as error:
+            unavailable_codes = {
+                "OPERATIONAL_EVIDENCE_UNAVAILABLE",
+                "OPERATIONAL_EVIDENCE_UNSAFE_ENTRY",
+                "OPERATIONAL_EVIDENCE_UNSAFE_REFERENCE",
+            }
+            code = (
+                "OPERATIONAL_EVIDENCE_NAMED_MATERIAL_UNAVAILABLE"
+                if error.error_code in unavailable_codes
+                else "OPERATIONAL_EVIDENCE_NAMED_MATERIAL_MISMATCH"
+            )
+            raise _fail(code, "named captured material could not be matched") from error
+        except Exception as error:
+            raise _fail(
+                "OPERATIONAL_EVIDENCE_NAMED_MATERIAL_MISMATCH",
+                "named captured material could not be matched") from error
+        if observed != expected:
+            raise _fail(
+                "OPERATIONAL_EVIDENCE_NAMED_MATERIAL_MISMATCH",
+                "named captured material differs from expected material")
+        return observed
+
+    def _capture_material(self, scope, start, end):
+        selected_attempts, selected_attempt_bytes = self._horizon_attempts(
+            scope, start, end)
+        horizon_material = self._build_material(
+            scope, selected_attempts, selected_attempt_bytes)
+        if horizon_material.observations:
+            return horizon_material, None
+
+        seed_attempt_id, seed_material = self._discover_pre_horizon_seed(
+            scope, start, end)
+        if seed_material is None:
+            return horizon_material, None
+        return self._merge_materials(horizon_material, seed_material), seed_attempt_id
+
+    def _horizon_attempts(self, scope, start, end):
         selected_attempts: list[AcquisitionAttempt] = []
         selected_attempt_bytes: dict[str, bytes] = {}
-        in_horizon_count = 0
         selected_metadata_bytes = 0
         for path in self._iter_entries("attempts", hex_names=True):
             attempt, data = self._read_model(
                 path, AcquisitionAttempt, "acquisition attempt")
-            if path.stem != attempt.attempt_id:
-                raise _fail("OPERATIONAL_EVIDENCE_PROVENANCE_MISMATCH",
-                            "attempt filename and logical identifier differ")
-            if not self._attempt_scope_matches(attempt, scope):
+            if not self._validate_attempt_entry(path, attempt, scope):
                 continue
-            if not _attempt_disclosure_is_sanitized(attempt):
-                raise _fail("OPERATIONAL_EVIDENCE_PROVENANCE_MISMATCH",
-                            "attempt disclosure is not sanitized")
             effective = (attempt.received_at or attempt.finished_at).astimezone(UTC)
-            in_horizon = start <= effective <= end
-            is_seed = attempt.attempt_id == selected_seed_attempt_id
-            if is_seed and effective >= start:
-                raise _fail("OPERATIONAL_EVIDENCE_SEED_INVALID",
-                            "selected seed must predate the declared horizon")
-            if not in_horizon and not is_seed:
+            if not start <= effective <= end:
                 continue
-            if in_horizon:
-                if in_horizon_count >= MAX_IN_HORIZON_ATTEMPTS:
-                    raise _fail("OPERATIONAL_EVIDENCE_LIMIT_EXCEEDED",
-                                "in-horizon attempt count exceeds 4096")
-                in_horizon_count += 1
+            if len(selected_attempts) >= MAX_IN_HORIZON_ATTEMPTS:
+                raise _fail("OPERATIONAL_EVIDENCE_LIMIT_EXCEEDED",
+                            "in-horizon attempt count exceeds 4096")
             if selected_metadata_bytes + len(data) > MAX_RETAINED_METADATA_BYTES:
                 raise _fail("OPERATIONAL_EVIDENCE_LIMIT_EXCEEDED",
                             "retained metadata exceeds 64 MiB")
             selected_attempts.append(attempt)
             selected_attempt_bytes[attempt.attempt_id] = data
             selected_metadata_bytes += len(data)
+        return selected_attempts, selected_attempt_bytes
 
-        if selected_seed_attempt_id is not None and not any(
-                a.attempt_id == selected_seed_attempt_id for a in selected_attempts):
-            raise _fail("OPERATIONAL_EVIDENCE_SEED_INVALID",
-                        "selected seed attempt is absent from the exact source scope")
+    def _discover_pre_horizon_seed(self, scope, start, end):
+        selected_key = None
+        selected_material = None
+        selected_attempt_id = None
+        for path in self._iter_entries("attempts", hex_names=True):
+            attempt, data = self._read_model(
+                path, AcquisitionAttempt, "acquisition attempt")
+            if not self._validate_attempt_entry(path, attempt, scope):
+                continue
+            if (
+                attempt.outcome != "succeeded"
+                or attempt.received_at.astimezone(UTC) >= start
+                or attempt.received_at.astimezone(UTC) > end
+            ):
+                continue
+            candidate = self._build_material(
+                scope, [attempt], {attempt.attempt_id: data})
+            if not candidate.observations:
+                continue
+            candidate_key = (
+                attempt.received_at.astimezone(UTC).isoformat(),
+                *self._attempt_order(attempt),
+            )
+            if selected_key is None or candidate_key > selected_key:
+                selected_key = candidate_key
+                selected_material = candidate
+                selected_attempt_id = attempt.attempt_id
+        return selected_attempt_id, selected_material
 
-        selected_attempts.sort(key=self._attempt_order)
+    def _build_material(self, scope, selected_attempts, selected_attempt_bytes):
+        descriptors: dict[tuple[str, str], OperationalApiArtifactDescriptor] = {}
+        selected_attempts = sorted(selected_attempts, key=self._attempt_order)
+        selected_metadata_bytes = sum(
+            len(selected_attempt_bytes[row.attempt_id])
+            for row in selected_attempts)
+
         runs: dict[str, IngestionRun] = {}
         envelopes: dict[str, RawRecord] = {}
         extractions: dict[str, ExtractionResult] = {}
@@ -338,16 +431,6 @@ class FilesystemDs004OperationalEvidenceReader:
                     metadata_total += self._descriptor(
                         descriptors, "extraction_result", record_id, e_data).byte_count
 
-        if selected_seed_attempt_id is not None:
-            seed = next(row for row in selected_attempts
-                        if row.attempt_id == selected_seed_attempt_id)
-            if (seed.outcome != "succeeded" or not any(
-                    row.raw_record_id == seed.raw_record_id
-                    for row in observations.values())):
-                raise _fail(
-                    "OPERATIONAL_EVIDENCE_SEED_INVALID",
-                    "selected seed does not carry the exact source observation")
-
         if metadata_total > MAX_RETAINED_METADATA_BYTES:
             raise _fail("OPERATIONAL_EVIDENCE_LIMIT_EXCEEDED",
                         "retained metadata exceeds 64 MiB")
@@ -371,6 +454,210 @@ class FilesystemDs004OperationalEvidenceReader:
                     o.raw_record_id, o.json_pointer, o.subject_identifier,
                     o.observation_id))),
         )
+
+    @staticmethod
+    def _validate_attempt_entry(path, attempt, scope):
+        if path.stem != attempt.attempt_id:
+            raise _fail("OPERATIONAL_EVIDENCE_PROVENANCE_MISMATCH",
+                        "attempt filename and logical identifier differ")
+        if not FilesystemDs004OperationalEvidenceReader._attempt_scope_matches(
+                attempt, scope):
+            return False
+        if not _attempt_disclosure_is_sanitized(attempt):
+            raise _fail("OPERATIONAL_EVIDENCE_PROVENANCE_MISMATCH",
+                        "attempt disclosure is not sanitized")
+        return True
+
+    @classmethod
+    def _merge_materials(cls, left, right):
+        def merged(rows, key, description):
+            values = {}
+            for row in (*rows[0], *rows[1]):
+                logical_id = key(row)
+                if logical_id in values and values[logical_id] != row:
+                    raise _fail(
+                        "OPERATIONAL_EVIDENCE_PROVENANCE_MISMATCH",
+                        f"captured {description} bytes disagree")
+                values[logical_id] = row
+            return values.values()
+
+        artifacts = merged(
+            (left.artifacts, right.artifacts),
+            lambda row: (row.kind, row.logical_id), "artifact")
+        runs = merged((left.runs, right.runs), lambda row: row.run_id, "run")
+        attempts = merged(
+            (left.attempts, right.attempts), lambda row: row.attempt_id,
+            "attempt")
+        envelopes = merged(
+            (left.envelopes, right.envelopes), lambda row: row.record_id,
+            "envelope")
+        extractions = merged(
+            (left.extractions, right.extractions), lambda row: row.raw_record_id,
+            "extraction")
+        quarantines = merged(
+            (left.quarantines, right.quarantines), lambda row: row.record_id,
+            "quarantine")
+        observations = merged(
+            (left.observations, right.observations),
+            lambda row: row.observation_id, "observation")
+        return Ds004OperationalEvidenceMaterial(
+            schema_version="1", scope=left.scope,
+            artifacts=tuple(sorted(artifacts, key=lambda row: (
+                ("ingestion_run", "acquisition_attempt", "raw_envelope",
+                 "raw_payload", "extraction_result", "quarantine_record").index(
+                     row.kind), row.logical_id))),
+            runs=tuple(sorted(runs, key=lambda row: row.run_id)),
+            attempts=tuple(sorted(attempts, key=cls._attempt_order)),
+            envelopes=tuple(sorted(envelopes, key=lambda row: row.record_id)),
+            extractions=tuple(sorted(
+                extractions, key=lambda row: row.raw_record_id)),
+            quarantines=tuple(sorted(
+                quarantines, key=lambda row: row.record_id)),
+            observations=tuple(sorted(observations, key=lambda row: (
+                row.raw_record_id, row.json_pointer, row.subject_identifier,
+                row.observation_id))),
+        )
+
+    def _reread_expected_material(self, expected):
+        descriptors = {(row.kind, row.logical_id): row
+                       for row in expected.artifacts}
+        observed_descriptors = {}
+        runs = {}
+        attempts = {}
+        envelopes = {}
+        extractions = {}
+        quarantines = {}
+        payloads = {}
+
+        metadata_kinds = {
+            "ingestion_run": ("runs", IngestionRun, "ingestion run", False),
+            "acquisition_attempt": (
+                "attempts", AcquisitionAttempt, "acquisition attempt", True),
+            "raw_envelope": ("envelopes", RawRecord, "raw envelope", True),
+            "extraction_result": (
+                "extracted", ExtractionResult, "extraction result", True),
+            "quarantine_record": (
+                "quarantine", QuarantineRecord, "quarantine record", True),
+        }
+        row_targets = {
+            "ingestion_run": (runs, lambda row: row.run_id),
+            "acquisition_attempt": (attempts, lambda row: row.attempt_id),
+            "raw_envelope": (envelopes, lambda row: row.record_id),
+            "extraction_result": (extractions, lambda row: row.raw_record_id),
+            "quarantine_record": (quarantines, lambda row: row.record_id),
+        }
+
+        for descriptor in expected.artifacts:
+            if descriptor.kind == "raw_payload":
+                data = self._read_payload(
+                    descriptor.logical_id, max_bytes=descriptor.byte_count)
+                if payload_checksum(data) != descriptor.logical_id:
+                    raise _fail(
+                        "OPERATIONAL_EVIDENCE_CHECKSUM_MISMATCH",
+                        "named raw payload does not match its checksum")
+                observed = self._descriptor(
+                    observed_descriptors, "raw_payload", descriptor.logical_id,
+                    data, payload_checksum_value=descriptor.logical_id)
+                payloads[descriptor.logical_id] = data
+            else:
+                directory, model, description, hex_only = metadata_kinds[
+                    descriptor.kind]
+                row, data = self._read_named_model(
+                    directory, descriptor.logical_id, model, description,
+                    hex_only=hex_only, max_bytes=descriptor.byte_count)
+                target, logical_id_of = row_targets[descriptor.kind]
+                if logical_id_of(row) != descriptor.logical_id:
+                    raise _fail(
+                        "OPERATIONAL_EVIDENCE_PROVENANCE_MISMATCH",
+                        "named metadata identity differs from its logical name")
+                target[descriptor.logical_id] = row
+                observed = self._descriptor(
+                    observed_descriptors, descriptor.kind,
+                    descriptor.logical_id, data)
+            if observed != descriptor:
+                raise _fail(
+                    "OPERATIONAL_EVIDENCE_PROVENANCE_MISMATCH",
+                    "named artifact bytes differ from their captured descriptor")
+
+        observations = {}
+        payload_documents = {}
+        for attempt in attempts.values():
+            if not self._attempt_scope_matches(attempt, expected.scope):
+                raise _fail(
+                    "OPERATIONAL_EVIDENCE_PROVENANCE_MISMATCH",
+                    "named attempt lies outside the expected scope")
+            if not _attempt_disclosure_is_sanitized(attempt):
+                raise _fail(
+                    "OPERATIONAL_EVIDENCE_PROVENANCE_MISMATCH",
+                    "named attempt disclosure is not sanitized")
+            run = runs.get(attempt.ingestion_run_id)
+            if run is None or run.source_id != expected.scope.source_id:
+                raise _fail(
+                    "OPERATIONAL_EVIDENCE_PROVENANCE_MISMATCH",
+                    "named attempt and ingestion run do not close")
+            if attempt.outcome == "failed":
+                continue
+            envelope = envelopes.get(attempt.raw_record_id)
+            if envelope is None:
+                raise _fail(
+                    "OPERATIONAL_EVIDENCE_PROVENANCE_MISMATCH",
+                    "named successful attempt envelope is absent")
+            self._validate_envelope(attempt, envelope, expected.scope)
+
+        for envelope in envelopes.values():
+            origin_run = runs.get(envelope.ingestion_run_id)
+            if (origin_run is None
+                    or origin_run.source_id != expected.scope.source_id):
+                raise _fail(
+                    "OPERATIONAL_EVIDENCE_PROVENANCE_MISMATCH",
+                    "named envelope and originating run do not close")
+            payload_data = payloads.get(envelope.payload_checksum)
+            if payload_data is None:
+                raise _fail(
+                    "OPERATIONAL_EVIDENCE_PROVENANCE_MISMATCH",
+                    "named envelope payload is absent")
+            try:
+                payload_documents[envelope.record_id] = parse_bounded_json(
+                    payload_data, JsonLimits())
+            except Exception as error:
+                raise _fail(
+                    "OPERATIONAL_EVIDENCE_PAYLOAD_INVALID",
+                    "named operational payload is not acceptable JSON") from error
+
+        for record_id, extraction in extractions.items():
+            envelope = envelopes.get(record_id)
+            if envelope is None or record_id not in payload_documents:
+                raise _fail(
+                    "OPERATIONAL_EVIDENCE_PROVENANCE_MISMATCH",
+                    "named extraction source material is absent")
+            self._validate_extraction(
+                extraction, envelope, expected.scope,
+                payload_documents[record_id], observations)
+
+        observed = Ds004OperationalEvidenceMaterial(
+            schema_version="1", scope=expected.scope,
+            artifacts=tuple(sorted(
+                observed_descriptors.values(), key=lambda row: (
+                    ("ingestion_run", "acquisition_attempt", "raw_envelope",
+                     "raw_payload", "extraction_result",
+                     "quarantine_record").index(row.kind), row.logical_id))),
+            runs=tuple(sorted(runs.values(), key=lambda row: row.run_id)),
+            attempts=tuple(sorted(attempts.values(), key=self._attempt_order)),
+            envelopes=tuple(sorted(
+                envelopes.values(), key=lambda row: row.record_id)),
+            extractions=tuple(sorted(
+                extractions.values(), key=lambda row: row.raw_record_id)),
+            quarantines=tuple(sorted(
+                quarantines.values(), key=lambda row: row.record_id)),
+            observations=tuple(sorted(observations.values(), key=lambda row: (
+                row.raw_record_id, row.json_pointer, row.subject_identifier,
+                row.observation_id))),
+        )
+        if set(descriptors) != set(observed_descriptors):
+            raise _fail(
+                "OPERATIONAL_EVIDENCE_PROVENANCE_MISMATCH",
+                "named artifact set differs from expected material")
+        return observed
 
     @staticmethod
     def _scope(value) -> Ds004OperationalEvidenceScope:
@@ -491,12 +778,13 @@ class FilesystemDs004OperationalEvidenceReader:
                         f"stored {description} is malformed") from error
         return rebuilt, data
 
-    def _read_payload(self, reference: str) -> bytes:
+    def _read_payload(self, reference: str, *, max_bytes=None) -> bytes:
         if not re.fullmatch(r"sha256:[0-9a-f]{64}", reference):
             raise _fail("OPERATIONAL_EVIDENCE_UNSAFE_REFERENCE",
                         "payload reference is malformed")
         path = self._root / "payloads" / reference.removeprefix("sha256:")
-        return self._read_bytes_once(path, max_bytes=MAX_RETAINED_METADATA_BYTES)
+        limit = MAX_RETAINED_METADATA_BYTES if max_bytes is None else max_bytes
+        return self._read_bytes_once(path, max_bytes=limit)
 
     @staticmethod
     def _attempt_scope_matches(attempt, scope) -> bool:
