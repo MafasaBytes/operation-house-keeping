@@ -27,6 +27,7 @@ from backend.evidence_assurance.contracts import (
     OperationalEvidenceSelectionPolicy,
     OperationalEvidenceSelectionRequest,
     OperationalEvidenceSelectionResult,
+    OperationalEvidenceSnapshotValidationResult,
     OperationalProvenanceRoute,
     SelectedSourceObservation,
     _deep_plain,
@@ -708,4 +709,86 @@ class EvidenceAssuranceQueries:
 
 
 def validate_operational_evidence_snapshot(snapshot, *, expected_fingerprint=None):
-    raise NotImplementedError
+    embedded = None
+    if isinstance(snapshot, BaseModel):
+        candidate = getattr(snapshot, "content_fingerprint", None)
+        if isinstance(candidate, str):
+            embedded = candidate
+    elif isinstance(snapshot, dict):
+        candidate = snapshot.get("content_fingerprint")
+        if isinstance(candidate, str):
+            embedded = candidate
+    expected_relation = (
+        "not_supplied" if expected_fingerprint is None
+        else "matched" if expected_fingerprint == embedded
+        else "mismatched"
+    )
+
+    def invalid(detail_code, detail):
+        return OperationalEvidenceSnapshotValidationResult(
+            status="invalid", computed_fingerprint=None,
+            embedded_fingerprint_relation="not_computed",
+            expected_fingerprint_relation=expected_relation,
+            source_bytes="not_rechecked",
+            temporal_store_membership="not_rechecked",
+            detail_code=detail_code, detail=detail)
+
+    try:
+        plain = _deep_plain(snapshot)
+        rebuilt = CapturedOperationalEvidenceSnapshot.model_validate(plain)
+        if rebuilt.fixed_limits != FIXED_LIMITS:
+            return invalid(
+                "fixed_limits_mismatch",
+                "snapshot fixed bounded-material limits are stale")
+        source_token = _source_token_from_material(
+            rebuilt.request, rebuilt.source_material)
+        temporal_token = _temporal_token_from_material(rebuilt.temporal_material)
+        fence = rebuilt.capture_fence
+        if source_token != fence.final_source_token:
+            return invalid(
+                "source_fence_material_mismatch",
+                "snapshot source material disagrees with its captured fence")
+        if temporal_token != fence.final_temporal_token:
+            return invalid(
+                "temporal_fence_material_mismatch",
+                "snapshot temporal material disagrees with its captured fence")
+        expected = _build_snapshot(
+            rebuilt.request, rebuilt.source_material, rebuilt.temporal_material,
+            fence.initial_source_token, fence.initial_temporal_token,
+            fence.final_source_token, fence.final_temporal_token)
+        derived_fields = (
+            "schema_version", "fixed_limits", "provenance_routes", "selected",
+            "coverage", "assurance", "issues",
+        )
+        if any(getattr(rebuilt, name) != getattr(expected, name)
+               for name in derived_fields):
+            return invalid(
+                "derived_snapshot_content_mismatch",
+                "snapshot derived content is stale or substituted")
+    except Exception:
+        return invalid(
+            "snapshot_reconstruction_failed",
+            "snapshot content cannot be strictly reconstructed and derived")
+
+    computed = expected.content_fingerprint
+    embedded_relation = "matched" if embedded == computed else "mismatched"
+    status = (
+        "structurally_self_consistent"
+        if embedded_relation == "matched"
+        and expected_relation in {"matched", "not_supplied"}
+        else "fingerprint_mismatch")
+    return OperationalEvidenceSnapshotValidationResult(
+        status=status, computed_fingerprint=computed,
+        embedded_fingerprint_relation=embedded_relation,
+        expected_fingerprint_relation=expected_relation,
+        source_bytes="not_rechecked",
+        temporal_store_membership="not_rechecked",
+        detail_code=(
+            "snapshot_self_consistent"
+            if status == "structurally_self_consistent"
+            else "snapshot_fingerprint_mismatch"),
+        detail=(
+            "snapshot structure and fingerprint are self-consistent"
+            if status == "structurally_self_consistent"
+            else "snapshot fingerprint comparison did not match"),
+    )
