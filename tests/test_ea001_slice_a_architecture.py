@@ -50,8 +50,10 @@ def test_data_sources_does_not_import_temporal_state():
                        for name in _imports(path))
 
 
-def test_slice_a_does_not_create_evidence_assurance_package():
-    assert not Path("backend/evidence_assurance").exists()
+def test_authorized_slice_b_package_is_a_sibling_of_lower_seams():
+    assert (Path("backend/evidence_assurance") / "__init__.py").is_file()
+    for path in SOURCE_FILES + TEMPORAL_FILES:
+        assert "backend.evidence_assurance" not in _imports(path)
 
 
 def test_source_reader_has_no_network_or_write_dependencies():
