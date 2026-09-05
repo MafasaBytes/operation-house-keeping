@@ -177,6 +177,16 @@ def _temporal_token_from_material(material):
     )
 
 
+def _read_source_inventory(source, call):
+    return OperationalApiInventoryToken.model_validate(
+        _deep_plain(source.inventory_token(**call)))
+
+
+def _read_temporal_inventory(temporal, call):
+    return TemporalSelectionInventoryToken.model_validate(
+        _deep_plain(temporal.selection_inventory_token(**call)))
+
+
 def _attempt_order(row):
     started = getattr(row, "started_at", None) or row.attempt_started_at
     return (
@@ -712,11 +722,11 @@ class EvidenceAssuranceQueries:
         final_source = final_temporal = None
 
         try:
-            initial_source = self._source.inventory_token(**call)
+            initial_source = _read_source_inventory(self._source, call)
         except Exception as error:
             _append_issue(issues, _source_error_issue(error))
         try:
-            initial_temporal = self._temporal.selection_inventory_token(**call)
+            initial_temporal = _read_temporal_inventory(self._temporal, call)
         except Exception as error:
             _append_issue(issues, _temporal_error_issue(error))
         try:
@@ -738,11 +748,11 @@ class EvidenceAssuranceQueries:
             except Exception as error:
                 _append_issue(issues, _source_error_issue(error))
         try:
-            final_source = self._source.inventory_token(**call)
+            final_source = _read_source_inventory(self._source, call)
         except Exception as error:
             _append_issue(issues, _source_error_issue(error))
         try:
-            final_temporal = self._temporal.selection_inventory_token(**call)
+            final_temporal = _read_temporal_inventory(self._temporal, call)
         except Exception as error:
             _append_issue(issues, _temporal_error_issue(error))
 
@@ -878,11 +888,11 @@ class EvidenceAssuranceQueries:
         temporal_initial = temporal_final = temporal_current = None
 
         try:
-            source_initial = self._source.inventory_token(**call)
+            source_initial = _read_source_inventory(self._source, call)
         except Exception as error:
             _append_issue(issues, _source_error_issue(error))
         try:
-            temporal_initial = self._temporal.selection_inventory_token(**call)
+            temporal_initial = _read_temporal_inventory(self._temporal, call)
         except Exception as error:
             _append_issue(issues, _temporal_error_issue(error))
         try:
@@ -893,12 +903,12 @@ class EvidenceAssuranceQueries:
             _append_issue(issues, _temporal_error_issue(error))
         if source_initial is not None:
             try:
-                source_final = self._source.inventory_token(**call)
+                source_final = _read_source_inventory(self._source, call)
             except Exception as error:
                 _append_issue(issues, _source_error_issue(error))
         if temporal_initial is not None:
             try:
-                temporal_final = self._temporal.selection_inventory_token(**call)
+                temporal_final = _read_temporal_inventory(self._temporal, call)
             except Exception as error:
                 _append_issue(issues, _temporal_error_issue(error))
 

@@ -529,6 +529,43 @@ class OperationalEvidenceStoreRevalidationResult(_StrictFrozen):
                 or self.named_artifact_results
             ):
                 raise ValueError("invalid snapshot revalidation shape is inconsistent")
+        elif self.status == "valid_for_named_captured_artifacts":
+            if (
+                self.membership_mode != "named_captured_artifacts"
+                or self.named_source_material_relation != "matched"
+            ):
+                raise ValueError("named-artifact success relation is inconsistent")
+        elif self.status == "matches_final_observed_membership":
+            if (
+                self.membership_mode != "require_equal_final_observed_membership"
+                or self.named_source_material_relation != "matched"
+                or self.captured_temporal_material_relation != "matched"
+                or self.source_membership_relation != "equal_to_snapshot_final"
+                or self.temporal_membership_relation != "equal_to_snapshot_final"
+                or self.issues
+            ):
+                raise ValueError("equal-membership success relation is inconsistent")
+        elif self.status == "observed_membership_changed":
+            observed = (
+                self.source_membership_relation,
+                self.temporal_membership_relation,
+            )
+            if (
+                self.membership_mode != "require_equal_final_observed_membership"
+                or self.named_source_material_relation != "matched"
+                or self.captured_temporal_material_relation != "matched"
+                or any(value not in {
+                    "equal_to_snapshot_final", "different_from_snapshot_final"
+                } for value in observed)
+                or "different_from_snapshot_final" not in observed
+                or self.issues
+            ):
+                raise ValueError("changed-membership relation is inconsistent")
+        elif (
+            self.membership_mode == "named_captured_artifacts"
+            and self.named_source_material_relation == "matched"
+        ):
+            raise ValueError("matched named material uses its bounded success status")
         return self
 
 
@@ -556,6 +593,17 @@ class OperationalEvidenceSnapshotValidationResult(_StrictFrozen):
                 raise ValueError("invalid validation result cannot claim computation")
         elif self.computed_fingerprint is None:
             raise ValueError("derivable snapshot requires computed fingerprint")
+        elif self.status == "structurally_self_consistent":
+            if (
+                self.embedded_fingerprint_relation != "matched"
+                or self.expected_fingerprint_relation == "mismatched"
+            ):
+                raise ValueError("self-consistent fingerprint relations disagree")
+        elif (
+            self.embedded_fingerprint_relation != "mismatched"
+            and self.expected_fingerprint_relation != "mismatched"
+        ):
+            raise ValueError("fingerprint mismatch status lacks a mismatch")
         return self
 
 

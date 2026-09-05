@@ -11,6 +11,7 @@ import pytest
 from backend.data_sources.contracts import (
     OperationalApiInventoryToken,
     OperationalEvidenceReadError,
+    QuarantineRecord,
 )
 from backend.data_sources.evidence import FilesystemDs004OperationalEvidenceReader
 from backend.evidence_assurance import (
@@ -24,7 +25,10 @@ from backend.temporal_state.queries import TemporalQueries
 from backend.temporal_state.store import TemporalStore
 
 from tests.data_sources.test_http_api_connector import ok_json
-from tests.data_sources.test_ingestion_runner_api import happy_script, make_runner
+from tests.data_sources.test_ingestion_runner_api import (
+    happy_script,
+    make_runner,
+)
 from tests.data_sources.test_ea001_operational_evidence_reader import _scope
 
 
@@ -299,3 +303,143 @@ def test_request_and_policy_misuse_fail_before_any_io():
     with pytest.raises(EvidenceAssuranceQueryError) as error:
         queries.select_operational_evidence(payload)
     assert error.value.error_code == "EA_SELECTION_POLICY_INVALID"
+
+
+def test_failed_and_quarantined_attempt_dispositions_are_distinct(tmp_path):
+    from backend.data_sources.connectors.http_api import TransportError
+
+    failed_script = happy_script()
+    failed_script["/printer/objects/query"] = TransportError("timeout", "x")
+    _, _, source, temporal = _captured_world(tmp_path / "failed", failed_script)
+    failed = EvidenceAssuranceQueries(
+        source=source, temporal=temporal,
+    ).select_operational_evidence(_request())
+    assert failed.snapshot.provenance_routes[0].coverage_disposition == (
+        "acquisition_failed")
+    event = failed.snapshot.temporal_material.attempt_coverage_membership[0]
+    assert event.received_at is None
+    assert event.effective_time_basis == "finished_at_no_response"
+    assert event.effective_wall_time == event.finished_at
+
+    runner, raw, _, projector, source, temporal = _world(
+        tmp_path / "quarantined")
+    runner.run("printer-1")
+    attempt = next(row for row in raw.iter_attempts("printer-1")
+                   if row.item_key == "printer_objects")
+    (raw.base_dir / "extracted" / f"{attempt.raw_record_id}.json").unlink()
+    raw.put_quarantine(QuarantineRecord(
+        record_id=attempt.raw_record_id, stage="extraction",
+        error_code="EXTRACT_API_SCHEMA_INVALID",
+        redacted_message="schema did not match",
+        quarantined_at=attempt.finished_at))
+    projector.project("printer-1")
+    quarantined = EvidenceAssuranceQueries(
+        source=source, temporal=temporal,
+    ).select_operational_evidence(_request())
+    assert quarantined.snapshot is not None, quarantined
+    assert quarantined.snapshot.provenance_routes[0].coverage_disposition == (
+        "quarantined")
+
+
+def test_repeated_identical_payloads_keep_distinct_attempt_occurrences(tmp_path):
+    runner, _, _, projector, source, temporal = _world(tmp_path)
+    runner.run("printer-1")
+    runner.run("printer-1")
+    projector.project("printer-1")
+    result = EvidenceAssuranceQueries(
+        source=source, temporal=temporal,
+    ).select_operational_evidence(_request())
+    snapshot = result.snapshot
+    assert len(snapshot.provenance_routes) == 2
+    assert len(snapshot.temporal_material.occurrence_membership) == 2
+    assert len(snapshot.source_material.envelopes) == 1
+    assert len(snapshot.source_material.observations) == 1
+    assert tuple(route.observation_index for route in snapshot.provenance_routes) == (
+        0, 0)
+    assert tuple(route.temporal_occurrence_index
+                 for route in snapshot.provenance_routes) == (0, 1)
+    assert snapshot.selected.temporal_occurrence_index == 1
+
+
+def test_cutoff_is_inclusive_and_age_is_exact_decimal_disclosure(tmp_path):
+    _, _, source, temporal = _captured_world(tmp_path)
+    temporal_material = temporal.selection_material(
+        _scope(), horizon_started_at=HORIZON, as_of=AS_OF)
+    occurrence = temporal_material.occurrence_membership[
+        temporal_material.selected_occurrence_index]
+
+    inclusive = EvidenceAssuranceQueries(
+        source=source, temporal=temporal,
+    ).select_operational_evidence(_request(
+        start=occurrence.received_at, end=occurrence.received_at))
+    assert inclusive.snapshot.selected.selected_received_at == occurrence.received_at
+    assert inclusive.snapshot.selected.observation_age_seconds == "0"
+
+    cutoff = occurrence.received_at + timedelta(seconds=1, microseconds=234500)
+    disclosed = EvidenceAssuranceQueries(
+        source=source, temporal=temporal,
+    ).select_operational_evidence(_request(
+        start=occurrence.received_at, end=cutoff))
+    assert disclosed.snapshot.selected.observation_age_seconds == "1.2345"
+    assert disclosed.snapshot.selected.age_basis == "received_at"
+
+
+@pytest.mark.parametrize(
+    ("lower_code", "issue_code"),
+    [
+        ("OPERATIONAL_EVIDENCE_CHECKSUM_MISMATCH", "checksum_mismatch"),
+        ("OPERATIONAL_EVIDENCE_PROVENANCE_MISMATCH", "provenance_closure_failure"),
+        ("OPERATIONAL_EVIDENCE_OBSERVATION_MISMATCH",
+         "observation_content_mismatch"),
+        ("OPERATIONAL_EVIDENCE_EXTRACTION_INCOMPLETE", "extraction_incomplete"),
+    ],
+)
+def test_source_integrity_failures_remain_distinct_structured_results(
+    tmp_path, lower_code, issue_code,
+):
+    _, _, source, temporal = _captured_world(tmp_path)
+    result = EvidenceAssuranceQueries(
+        source=_SourceProbe(
+            source, [], read_error=OperationalEvidenceReadError(
+                lower_code, "redacted lower refusal")),
+        temporal=temporal,
+    ).select_operational_evidence(_request())
+    assert result.status == "refused"
+    assert tuple(issue.code for issue in result.issues) == (issue_code,)
+    assert all("/" not in issue.detail for issue in result.issues)
+
+
+def test_source_and_temporal_unavailability_are_distinct(tmp_path):
+    from backend.temporal_state.contracts import TemporalStoreError
+
+    _, _, source, temporal = _captured_world(tmp_path)
+
+    class UnavailableSource:
+        def inventory_token(self, *args, **kwargs):
+            raise OperationalEvidenceReadError(
+                "OPERATIONAL_EVIDENCE_UNAVAILABLE", "source unavailable")
+        def read_material(self, *args, **kwargs):
+            raise OperationalEvidenceReadError(
+                "OPERATIONAL_EVIDENCE_UNAVAILABLE", "source unavailable")
+        def reread_named_material(self, *args, **kwargs):
+            raise AssertionError
+
+    source_result = EvidenceAssuranceQueries(
+        source=UnavailableSource(), temporal=temporal,
+    ).select_operational_evidence(_request())
+    assert tuple(issue.code for issue in source_result.issues) == (
+        "source_evidence_unavailable",)
+
+    class UnavailableTemporal:
+        def selection_inventory_token(self, *args, **kwargs):
+            raise TemporalStoreError(
+                "TEMPORAL_STORE_UNAVAILABLE", "temporal unavailable")
+        def selection_material(self, *args, **kwargs):
+            raise TemporalStoreError(
+                "TEMPORAL_STORE_UNAVAILABLE", "temporal unavailable")
+
+    temporal_result = EvidenceAssuranceQueries(
+        source=source, temporal=UnavailableTemporal(),
+    ).select_operational_evidence(_request())
+    assert tuple(issue.code for issue in temporal_result.issues) == (
+        "temporal_evidence_unavailable",)
