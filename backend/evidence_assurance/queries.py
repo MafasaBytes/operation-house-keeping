@@ -28,8 +28,11 @@ from backend.evidence_assurance.contracts import (
     OperationalEvidenceSelectionRequest,
     OperationalEvidenceSelectionResult,
     OperationalEvidenceSnapshotValidationResult,
+    OperationalEvidenceStoreRevalidationResult,
+    OperationalNamedArtifactRevalidation,
     OperationalProvenanceRoute,
     SelectedSourceObservation,
+    StoreBoundMembershipMode,
     _deep_plain,
     _ordered_issues,
 )
@@ -580,6 +583,47 @@ def _build_snapshot(request, source, temporal, initial_source, initial_temporal,
         **base, content_fingerprint=_fingerprint(base))
 
 
+def _carried_temporal_relation(expected, observed):
+    if (
+        expected.schema_version != observed.schema_version
+        or expected.projector_version != observed.projector_version
+        or expected.scope != observed.scope
+        or expected.horizon_started_at != observed.horizon_started_at
+        or expected.as_of != observed.as_of
+    ):
+        return "changed"
+    collections = (
+        (expected.occurrence_membership, observed.occurrence_membership,
+         lambda row: row.occurrence_id),
+        (expected.attempt_coverage_membership,
+         observed.attempt_coverage_membership, lambda row: row.attempt_id),
+        (expected.clock_segment_openings, observed.clock_segment_openings,
+         lambda row: row.segment_id),
+    )
+    for carried, current, identity in collections:
+        current_by_id = {identity(row): row for row in current}
+        if any(current_by_id.get(identity(row)) != row for row in carried):
+            return "changed"
+    return "matched"
+
+
+def _invalid_store_result(validation, membership_mode):
+    return OperationalEvidenceStoreRevalidationResult(
+        status="refused", membership_mode=membership_mode,
+        snapshot_content_fingerprint=None,
+        snapshot_validation_status=validation.status,
+        expected_artifact_count=0, expected_provenance_route_count=0,
+        named_source_material_relation="not_evaluated",
+        captured_temporal_material_relation="not_evaluated",
+        source_membership_relation="not_evaluated",
+        temporal_membership_relation="not_evaluated",
+        named_artifact_results=(),
+        issues=(_issue(
+            "invalid_bounded_material", "snapshot_validation_failed",
+            "snapshot is not structurally self-consistent"),),
+    )
+
+
 class EvidenceAssuranceQueries:
     def __init__(self, *, source, temporal) -> None:
         source_methods = ("inventory_token", "read_material", "reread_named_material")
@@ -705,7 +749,164 @@ class EvidenceAssuranceQueries:
             request=request, snapshot=snapshot, issues=())
 
     def revalidate_operational_evidence(self, snapshot, *, membership_mode):
-        raise NotImplementedError
+        if membership_mode not in get_args(StoreBoundMembershipMode):
+            raise EvidenceAssuranceQueryError(
+                "EA_REQUEST_INVALID", "store-bound membership mode is invalid")
+        validation = validate_operational_evidence_snapshot(snapshot)
+        if validation.status != "structurally_self_consistent":
+            return _invalid_store_result(validation, membership_mode)
+        try:
+            rebuilt = CapturedOperationalEvidenceSnapshot.model_validate(
+                _deep_plain(snapshot))
+        except Exception:
+            return _invalid_store_result(validation, membership_mode)
+
+        fingerprint = rebuilt.content_fingerprint
+        artifact_count = len(rebuilt.source_material.artifacts)
+        route_count = len(rebuilt.provenance_routes)
+        try:
+            named = self._source.reread_named_material(rebuilt.source_material)
+            named = Ds004OperationalEvidenceMaterial.model_validate(
+                _deep_plain(named))
+            if named != rebuilt.source_material:
+                raise ValueError("named material differs")
+        except Exception as error:
+            unavailable = getattr(error, "error_code", "") == (
+                "OPERATIONAL_EVIDENCE_NAMED_MATERIAL_UNAVAILABLE")
+            relation = "unavailable" if unavailable else "changed"
+            issue = (
+                _issue(
+                    "source_evidence_unavailable", "named_material_unavailable",
+                    "named captured source material is unavailable")
+                if unavailable else _issue(
+                    "invalid_bounded_material", "named_material_changed",
+                    "named captured source material changed or is invalid"))
+            return OperationalEvidenceStoreRevalidationResult(
+                status="refused", membership_mode=membership_mode,
+                snapshot_content_fingerprint=fingerprint,
+                snapshot_validation_status=validation.status,
+                expected_artifact_count=artifact_count,
+                expected_provenance_route_count=route_count,
+                named_source_material_relation=relation,
+                captured_temporal_material_relation="not_evaluated",
+                source_membership_relation="not_evaluated",
+                temporal_membership_relation="not_evaluated",
+                named_artifact_results=(), issues=(issue,))
+
+        named_rows = tuple(
+            OperationalNamedArtifactRevalidation(
+                artifact_descriptor_index=index, relation="matched",
+                observed_byte_count=descriptor.byte_count,
+                observed_captured_file_sha256=descriptor.captured_file_sha256)
+            for index, descriptor in enumerate(rebuilt.source_material.artifacts)
+        )
+        request = rebuilt.request
+        call = {
+            "scope": request.scope,
+            "horizon_started_at": request.horizon_started_at,
+            "as_of": request.as_of,
+        }
+        issues = []
+        source_initial = source_final = None
+        temporal_initial = temporal_final = temporal_current = None
+
+        try:
+            source_initial = self._source.inventory_token(**call)
+        except Exception as error:
+            _append_issue(issues, _source_error_issue(error))
+        try:
+            temporal_initial = self._temporal.selection_inventory_token(**call)
+        except Exception as error:
+            _append_issue(issues, _temporal_error_issue(error))
+        try:
+            temporal_current = self._temporal.selection_material(**call)
+            temporal_current = TemporalSelectionMaterial.model_validate(
+                _deep_plain(temporal_current))
+        except Exception as error:
+            _append_issue(issues, _temporal_error_issue(error))
+        if source_initial is not None:
+            try:
+                source_final = self._source.inventory_token(**call)
+            except Exception as error:
+                _append_issue(issues, _source_error_issue(error))
+        if temporal_initial is not None:
+            try:
+                temporal_final = self._temporal.selection_inventory_token(**call)
+            except Exception as error:
+                _append_issue(issues, _temporal_error_issue(error))
+
+        if source_initial is None or source_final is None:
+            source_relation = "not_fully_observed"
+        elif source_initial != source_final:
+            source_relation = "not_fully_observed"
+            _append_issue(issues, _issue(
+                "source_store_changed_during_capture",
+                "source_revalidation_fence_changed",
+                "source membership changed between revalidation fences"))
+        else:
+            source_relation = (
+                "equal_to_snapshot_final"
+                if source_final == rebuilt.capture_fence.final_source_token
+                else "different_from_snapshot_final")
+
+        temporal_relation = "not_fully_observed"
+        carried_relation = "not_fully_observed"
+        if temporal_current is not None:
+            carried_relation = _carried_temporal_relation(
+                rebuilt.temporal_material, temporal_current)
+        if temporal_initial is not None and temporal_final is not None:
+            if temporal_initial != temporal_final:
+                _append_issue(issues, _issue(
+                    "temporal_store_changed_during_capture",
+                    "temporal_revalidation_fence_changed",
+                    "temporal membership changed between revalidation fences"))
+            elif temporal_current is not None and (
+                _temporal_token_from_material(temporal_current) == temporal_final
+            ):
+                temporal_relation = (
+                    "equal_to_snapshot_final"
+                    if temporal_final == rebuilt.capture_fence.final_temporal_token
+                    else "different_from_snapshot_final")
+            elif temporal_current is not None:
+                _append_issue(issues, _issue(
+                    "temporal_store_changed_during_capture",
+                    "temporal_revalidation_material_fence_disagreement",
+                    "temporal material disagrees with revalidation fences"))
+
+        if carried_relation == "changed":
+            _append_issue(issues, _issue(
+                "temporal_occurrence_inconsistent",
+                "captured_temporal_material_changed",
+                "captured temporal rows are missing or changed in the observed material"))
+
+        if membership_mode == "named_captured_artifacts":
+            status = "valid_for_named_captured_artifacts"
+        elif (
+            source_relation == "not_fully_observed"
+            or temporal_relation == "not_fully_observed"
+            or carried_relation != "matched"
+        ):
+            status = "refused"
+        elif (
+            source_relation == "equal_to_snapshot_final"
+            and temporal_relation == "equal_to_snapshot_final"
+        ):
+            status = "matches_final_observed_membership"
+        else:
+            status = "observed_membership_changed"
+
+        return OperationalEvidenceStoreRevalidationResult(
+            status=status, membership_mode=membership_mode,
+            snapshot_content_fingerprint=fingerprint,
+            snapshot_validation_status=validation.status,
+            expected_artifact_count=artifact_count,
+            expected_provenance_route_count=route_count,
+            named_source_material_relation="matched",
+            captured_temporal_material_relation=carried_relation,
+            source_membership_relation=source_relation,
+            temporal_membership_relation=temporal_relation,
+            named_artifact_results=named_rows,
+            issues=_ordered_issues(tuple(issues)))
 
 
 def validate_operational_evidence_snapshot(snapshot, *, expected_fingerprint=None):

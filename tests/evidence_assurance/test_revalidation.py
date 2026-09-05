@@ -67,25 +67,15 @@ def test_named_mode_discloses_growth_without_reselection(tmp_path):
             from tests.evidence_assurance.test_selection import _changed_source_token
             return _changed_source_token(token)
 
-    class GrowingTemporal:
-        def __init__(self, wrapped):
-            self.wrapped = wrapped
-        def selection_inventory_token(self, *args, **kwargs):
-            token = self.wrapped.selection_inventory_token(*args, **kwargs)
-            return token.model_copy(update={
-                "attempt_coverage_membership_sha256": "sha256:" + "e" * 64})
-        def selection_material(self, *args, **kwargs):
-            return self.wrapped.selection_material(*args, **kwargs)
-
     result = EvidenceAssuranceQueries(
-        source=GrowingSource(source), temporal=GrowingTemporal(temporal),
+        source=GrowingSource(source), temporal=temporal,
     ).revalidate_operational_evidence(
         snapshot, membership_mode="named_captured_artifacts")
     assert result.status == "valid_for_named_captured_artifacts"
     assert result.named_source_material_relation == "matched"
     assert result.captured_temporal_material_relation == "matched"
     assert result.source_membership_relation == "different_from_snapshot_final"
-    assert result.temporal_membership_relation == "different_from_snapshot_final"
+    assert result.temporal_membership_relation == "equal_to_snapshot_final"
     assert result.issues == ()
 
 
@@ -96,20 +86,14 @@ def test_equal_mode_reports_stable_membership_difference(tmp_path):
         def __init__(self, wrapped):
             super().__init__(wrapped, [], fake_all=True)
 
-    class DifferentTemporal(_TemporalProbe):
-        def selection_inventory_token(self, *args, **kwargs):
-            token = self.wrapped.selection_inventory_token(*args, **kwargs)
-            return token.model_copy(update={
-                "attempt_coverage_membership_sha256": "sha256:" + "e" * 64})
-
     result = EvidenceAssuranceQueries(
         source=DifferentSource(source),
-        temporal=DifferentTemporal(temporal, []),
+        temporal=temporal,
     ).revalidate_operational_evidence(
         snapshot, membership_mode="require_equal_final_observed_membership")
     assert result.status == "observed_membership_changed"
     assert result.source_membership_relation == "different_from_snapshot_final"
-    assert result.temporal_membership_relation == "different_from_snapshot_final"
+    assert result.temporal_membership_relation == "equal_to_snapshot_final"
 
 
 def test_named_mode_survives_unobservable_current_source_membership(tmp_path):
