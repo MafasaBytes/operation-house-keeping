@@ -101,4 +101,5 @@ def test_source_attempt_missing_from_temporal_coverage_fails_parity(tmp_path):
         ("temporal_occurrence_absent", "expected_temporal_event_absent"),
         ("source_temporal_parity_failure", "attempt_membership_parity_failure"),
         ("source_temporal_parity_failure", "observation_membership_parity_failure"),
+        ("source_temporal_parity_failure", "retained_attempt_parity_failure"),
     )

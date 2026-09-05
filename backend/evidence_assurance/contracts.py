@@ -517,6 +517,11 @@ class OperationalEvidenceStoreRevalidationResult(_StrictFrozen):
         elif self.named_artifact_results:
             raise ValueError("unmatched named material carries no artifact rows")
         if self.snapshot_validation_status != "structurally_self_consistent":
+            invalid_issues = tuple(
+                issue for issue in self.issues
+                if issue.code == "invalid_bounded_material"
+                and issue.route_index is None
+            )
             if (
                 self.status != "refused"
                 or self.snapshot_content_fingerprint is not None
@@ -527,45 +532,72 @@ class OperationalEvidenceStoreRevalidationResult(_StrictFrozen):
                 or self.source_membership_relation != "not_evaluated"
                 or self.temporal_membership_relation != "not_evaluated"
                 or self.named_artifact_results
+                or len(self.issues) != 1
+                or len(invalid_issues) != 1
             ):
                 raise ValueError("invalid snapshot revalidation shape is inconsistent")
-        elif self.status == "valid_for_named_captured_artifacts":
-            if (
-                self.membership_mode != "named_captured_artifacts"
-                or self.named_source_material_relation != "matched"
-            ):
-                raise ValueError("named-artifact success relation is inconsistent")
-        elif self.status == "matches_final_observed_membership":
-            if (
-                self.membership_mode != "require_equal_final_observed_membership"
-                or self.named_source_material_relation != "matched"
-                or self.captured_temporal_material_relation != "matched"
-                or self.source_membership_relation != "equal_to_snapshot_final"
-                or self.temporal_membership_relation != "equal_to_snapshot_final"
-                or self.issues
-            ):
-                raise ValueError("equal-membership success relation is inconsistent")
-        elif self.status == "observed_membership_changed":
-            observed = (
-                self.source_membership_relation,
-                self.temporal_membership_relation,
+            return self
+
+        if self.snapshot_content_fingerprint is None:
+            raise ValueError("valid snapshot revalidation requires its fingerprint")
+
+        if self.named_source_material_relation in {"changed", "unavailable"}:
+            required_issue = (
+                "source_evidence_unavailable"
+                if self.named_source_material_relation == "unavailable"
+                else "invalid_bounded_material"
             )
             if (
-                self.membership_mode != "require_equal_final_observed_membership"
-                or self.named_source_material_relation != "matched"
-                or self.captured_temporal_material_relation != "matched"
-                or any(value not in {
-                    "equal_to_snapshot_final", "different_from_snapshot_final"
-                } for value in observed)
-                or "different_from_snapshot_final" not in observed
-                or self.issues
+                self.status != "refused"
+                or self.captured_temporal_material_relation != "not_evaluated"
+                or self.source_membership_relation != "not_evaluated"
+                or self.temporal_membership_relation != "not_evaluated"
+                or not any(issue.code == required_issue for issue in self.issues)
             ):
-                raise ValueError("changed-membership relation is inconsistent")
-        elif (
-            self.membership_mode == "named_captured_artifacts"
-            and self.named_source_material_relation == "matched"
-        ):
-            raise ValueError("matched named material uses its bounded success status")
+                raise ValueError("failed named material result is inconsistent")
+            return self
+
+        if self.named_source_material_relation != "matched":
+            raise ValueError("valid snapshot must evaluate named source material")
+
+        observed = (
+            self.source_membership_relation,
+            self.temporal_membership_relation,
+        )
+        fully_observed = all(value in {
+            "equal_to_snapshot_final", "different_from_snapshot_final"
+        } for value in observed)
+        degraded = (
+            self.captured_temporal_material_relation != "matched"
+            or not fully_observed
+        )
+
+        if self.membership_mode == "named_captured_artifacts":
+            if (
+                self.status != "valid_for_named_captured_artifacts"
+                or self.captured_temporal_material_relation == "not_evaluated"
+                or "not_evaluated" in observed
+                or (degraded and not self.issues)
+                or (not degraded and self.issues)
+            ):
+                raise ValueError("named-artifact success relation is inconsistent")
+            return self
+
+        if degraded:
+            if self.status != "refused" or not self.issues:
+                raise ValueError("equal-membership refusal relation is inconsistent")
+            return self
+
+        if self.captured_temporal_material_relation != "matched" or self.issues:
+            raise ValueError("fully observed equality result is inconsistent")
+        expected_status = (
+            "matches_final_observed_membership"
+            if observed == (
+                "equal_to_snapshot_final", "equal_to_snapshot_final")
+            else "observed_membership_changed"
+        )
+        if self.status != expected_status:
+            raise ValueError("equal-membership status is not justified by relations")
         return self
 
 

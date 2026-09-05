@@ -8,7 +8,7 @@ import math
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, get_args
 
-from pydantic import BaseModel
+from pydantic import BaseModel, TypeAdapter
 
 from backend.data_sources.contracts.operational_evidence import (
     Ds004OperationalEvidenceMaterial,
@@ -37,6 +37,7 @@ from backend.evidence_assurance.contracts import (
     _ordered_issues,
 )
 from backend.temporal_state.contracts import (
+    TaggedSha256,
     TemporalSelectionInventoryToken,
     TemporalSelectionMaterial,
     temporal_selection_digest,
@@ -52,6 +53,15 @@ class _DerivationError(Exception):
         self.code = code
         self.detail_code = detail_code
         self.detail = detail
+
+
+class _DerivationErrors(Exception):
+    def __init__(self, errors: tuple[_DerivationError, ...]) -> None:
+        self.errors = errors
+
+
+_EXPECTED_FINGERPRINT_ADAPTER = TypeAdapter(TaggedSha256)
+_MEMBERSHIP_MODE_ADAPTER = TypeAdapter(StoreBoundMembershipMode)
 
 
 def _issue(code: str, detail_code: str, detail: str) -> OperationalEvidenceIssue:
@@ -143,6 +153,28 @@ def _strict_request(value) -> OperationalEvidenceSelectionRequest:
     except Exception as error:
         raise EvidenceAssuranceQueryError(
             "EA_REQUEST_INVALID", "selection request is invalid") from error
+
+
+def _strict_membership_mode(value) -> str:
+    try:
+        return _MEMBERSHIP_MODE_ADAPTER.validate_python(value, strict=True)
+    except Exception as error:
+        raise EvidenceAssuranceQueryError(
+            "EA_REQUEST_INVALID",
+            "store-bound membership mode is invalid",
+        ) from error
+
+
+def _strict_expected_fingerprint(value) -> str | None:
+    if value is None:
+        return None
+    try:
+        return _EXPECTED_FINGERPRINT_ADAPTER.validate_python(value, strict=True)
+    except Exception as error:
+        raise EvidenceAssuranceQueryError(
+            "EA_REQUEST_INVALID",
+            "expected content fingerprint is invalid",
+        ) from error
 
 
 def _source_token_from_material(request, material):
@@ -296,9 +328,9 @@ def _validate_occurrence(source_attempt, source_observation, occurrence):
         and set(source_observation.quality_flags) <= set(occurrence.quality_flags)
     ):
         raise _DerivationError(
-            "source_temporal_parity_failure",
-            "observation_content_parity_failure",
-            "source and temporal observation content differ")
+            "temporal_occurrence_inconsistent",
+            "temporal_occurrence_content_inconsistent",
+            "temporal occurrence content differs from captured source evidence")
 
 
 def _derive_routes_and_selection(request, source, temporal):
@@ -322,10 +354,19 @@ def _derive_routes_and_selection(request, source, temporal):
         row.attempt_id for row in source.attempts
         if start <= (row.received_at or row.finished_at).astimezone(UTC) <= end
     }
+    derivation_errors = []
+
+    def retain(error):
+        identity = (error.code, error.detail_code)
+        if all((row.code, row.detail_code) != identity
+               for row in derivation_errors):
+            derivation_errors.append(error)
+
+    missing_temporal_event = bool(source_in_horizon - set(temporal_attempts))
     if source_in_horizon != set(temporal_attempts):
-        raise _DerivationError(
+        retain(_DerivationError(
             "source_temporal_parity_failure", "attempt_membership_parity_failure",
-            "source and temporal attempt memberships differ")
+            "source and temporal attempt memberships differ"))
 
     selected_occurrence = (
         temporal.occurrence_membership[temporal.selected_occurrence_index]
@@ -337,9 +378,9 @@ def _derive_routes_and_selection(request, source, temporal):
     if seed_id is not None:
         allowed_source_ids.add(seed_id)
     if set(source_attempts) != allowed_source_ids:
-        raise _DerivationError(
+        retain(_DerivationError(
             "source_temporal_parity_failure", "retained_attempt_parity_failure",
-            "source retained attempts do not match temporal membership and seed")
+            "source retained attempts do not match temporal membership and seed"))
 
     source_observations = {
         (row.raw_record_id, row.observation_id): row
@@ -348,19 +389,36 @@ def _derive_routes_and_selection(request, source, temporal):
     occurrence_by_attempt = {}
     for index, occurrence in enumerate(temporal.occurrence_membership):
         if occurrence.attempt_id in occurrence_by_attempt:
-            raise _DerivationError(
+            retain(_DerivationError(
                 "temporal_occurrence_inconsistent",
                 "duplicate_property_occurrence_for_attempt",
-                "one attempt carries duplicate exact-property occurrences")
+                "one attempt carries duplicate exact-property occurrences"))
+            continue
         occurrence_by_attempt[occurrence.attempt_id] = (index, occurrence)
         source_attempt = source_attempts.get(occurrence.attempt_id)
+        expected_observation = (
+            next((row for row in source.observations
+                  if row.raw_record_id == source_attempt.raw_record_id), None)
+            if source_attempt is not None else None
+        )
+        if source_attempt is None or expected_observation is None:
+            retain(_DerivationError(
+                "temporal_occurrence_inconsistent",
+                "temporal_occurrence_source_link_inconsistent",
+                "temporal occurrence does not match captured source evidence"))
+            continue
         observation = source_observations.get(
             (occurrence.raw_record_id, occurrence.observation_id))
-        if source_attempt is None or observation is None:
-            raise _DerivationError(
-                "temporal_occurrence_absent", "source_occurrence_not_closed",
-                "temporal occurrence has no matching captured source observation")
-        _validate_occurrence(source_attempt, observation, occurrence)
+        if observation != expected_observation:
+            retain(_DerivationError(
+                "temporal_occurrence_inconsistent",
+                "temporal_occurrence_observation_inconsistent",
+                "temporal occurrence identifies a substituted source observation"))
+            continue
+        try:
+            _validate_occurrence(source_attempt, observation, occurrence)
+        except _DerivationError as error:
+            retain(error)
 
     expected_occurrence_attempts = {
         row.attempt_id for row in source.attempts
@@ -369,11 +427,19 @@ def _derive_routes_and_selection(request, source, temporal):
                 for obs in source.observations)
         and row.received_at <= end
     }
+    missing_temporal_event = missing_temporal_event or bool(
+        expected_occurrence_attempts - set(occurrence_by_attempt))
     if set(occurrence_by_attempt) != expected_occurrence_attempts:
-        raise _DerivationError(
+        retain(_DerivationError(
             "source_temporal_parity_failure",
             "observation_membership_parity_failure",
-            "source and temporal observation memberships differ")
+            "source and temporal observation memberships differ"))
+    if missing_temporal_event:
+        retain(_DerivationError(
+            "temporal_occurrence_absent", "expected_temporal_event_absent",
+            "a captured source attempt has no expected temporal event"))
+    if derivation_errors:
+        raise _DerivationErrors(tuple(derivation_errors))
 
     run_indices = {row.run_id: index for index, row in enumerate(source.runs)}
     envelope_indices = {
@@ -730,23 +796,27 @@ class EvidenceAssuranceQueries:
         except Exception as error:
             _append_issue(issues, _temporal_error_issue(error))
         try:
-            temporal_material = self._temporal.selection_material(**call)
-            temporal_material = TemporalSelectionMaterial.model_validate(
-                _deep_plain(temporal_material))
+            candidate = self._temporal.selection_material(**call)
+            validated = TemporalSelectionMaterial.model_validate(
+                _deep_plain(candidate))
         except Exception as error:
             _append_issue(issues, _temporal_error_issue(error))
+        else:
+            temporal_material = validated
         if temporal_material is not None:
             seed_id = None
             if temporal_material.selected_occurrence_is_pre_horizon_seed:
                 seed_id = temporal_material.occurrence_membership[
                     temporal_material.selected_occurrence_index].attempt_id
             try:
-                source_material = self._source.read_material(
+                candidate = self._source.read_material(
                     **call, selected_seed_attempt_id=seed_id)
-                source_material = Ds004OperationalEvidenceMaterial.model_validate(
-                    _deep_plain(source_material))
+                validated = Ds004OperationalEvidenceMaterial.model_validate(
+                    _deep_plain(candidate))
             except Exception as error:
                 _append_issue(issues, _source_error_issue(error))
+            else:
+                source_material = validated
         try:
             final_source = _read_source_inventory(self._source, call)
         except Exception as error:
@@ -784,6 +854,10 @@ class EvidenceAssuranceQueries:
         if source_material is not None and temporal_material is not None:
             try:
                 _derive_routes_and_selection(request, source_material, temporal_material)
+            except _DerivationErrors as errors:
+                for error in errors.errors:
+                    _append_issue(issues, _issue(
+                        error.code, error.detail_code, error.detail))
             except _DerivationError as error:
                 _append_issue(issues, _issue(
                     error.code, error.detail_code, error.detail))
@@ -812,6 +886,13 @@ class EvidenceAssuranceQueries:
             snapshot = _build_snapshot(
                 request, source_material, temporal_material,
                 initial_source, initial_temporal, final_source, final_temporal)
+        except _DerivationErrors as errors:
+            derived_issues = tuple(_issue(
+                error.code, error.detail_code, error.detail)
+                for error in errors.errors)
+            return OperationalEvidenceSelectionResult(
+                status="refused", request=request, snapshot=None,
+                issues=_ordered_issues(derived_issues))
         except _DerivationError as error:
             return OperationalEvidenceSelectionResult(
                 status="refused", request=request, snapshot=None,
@@ -826,9 +907,7 @@ class EvidenceAssuranceQueries:
         *,
         membership_mode: StoreBoundMembershipMode,
     ) -> OperationalEvidenceStoreRevalidationResult:
-        if membership_mode not in get_args(StoreBoundMembershipMode):
-            raise EvidenceAssuranceQueryError(
-                "EA_REQUEST_INVALID", "store-bound membership mode is invalid")
+        membership_mode = _strict_membership_mode(membership_mode)
         validation = validate_operational_evidence_snapshot(snapshot)
         if validation.status != "structurally_self_consistent":
             return _invalid_store_result(validation, membership_mode)
@@ -896,11 +975,13 @@ class EvidenceAssuranceQueries:
         except Exception as error:
             _append_issue(issues, _temporal_error_issue(error))
         try:
-            temporal_current = self._temporal.selection_material(**call)
-            temporal_current = TemporalSelectionMaterial.model_validate(
-                _deep_plain(temporal_current))
+            candidate = self._temporal.selection_material(**call)
+            validated = TemporalSelectionMaterial.model_validate(
+                _deep_plain(candidate))
         except Exception as error:
             _append_issue(issues, _temporal_error_issue(error))
+        else:
+            temporal_current = validated
         if source_initial is not None:
             try:
                 source_final = _read_source_inventory(self._source, call)
@@ -989,17 +1070,26 @@ class EvidenceAssuranceQueries:
 def validate_operational_evidence_snapshot(
     snapshot: CapturedOperationalEvidenceSnapshot,
     *,
-    expected_fingerprint: str | None = None,
+    expected_fingerprint: TaggedSha256 | None = None,
 ) -> OperationalEvidenceSnapshotValidationResult:
+    expected_fingerprint = _strict_expected_fingerprint(expected_fingerprint)
     embedded = None
     if isinstance(snapshot, BaseModel):
         candidate = getattr(snapshot, "content_fingerprint", None)
         if isinstance(candidate, str):
-            embedded = candidate
+            try:
+                embedded = _EXPECTED_FINGERPRINT_ADAPTER.validate_python(
+                    candidate, strict=True)
+            except Exception:
+                embedded = None
     elif isinstance(snapshot, dict):
         candidate = snapshot.get("content_fingerprint")
         if isinstance(candidate, str):
-            embedded = candidate
+            try:
+                embedded = _EXPECTED_FINGERPRINT_ADAPTER.validate_python(
+                    candidate, strict=True)
+            except Exception:
+                embedded = None
     expected_relation = (
         "not_supplied" if expected_fingerprint is None
         else "matched" if expected_fingerprint == embedded
