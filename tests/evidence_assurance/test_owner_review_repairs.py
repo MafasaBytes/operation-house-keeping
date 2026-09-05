@@ -37,6 +37,14 @@ class _EqualMode:
         return True
 
 
+class _ForgedMode(str):
+    def __eq__(self, other):
+        return True
+
+    def __hash__(self):
+        return hash("named_captured_artifacts")
+
+
 def _snapshot(tmp_path):
     _, _, source, temporal = _captured_world(tmp_path)
     queries = EvidenceAssuranceQueries(source=source, temporal=temporal)
@@ -202,6 +210,22 @@ def test_r2_membership_mode_is_admitted_before_any_dependency_access(tmp_path):
         snapshot, membership_mode="named_captured_artifacts")
     assert valid.status == "valid_for_named_captured_artifacts"
     assert calls[0] == "source_named_reread"
+
+
+def test_r2_hostile_string_subclass_cannot_bypass_mode_admission(tmp_path):
+    source, temporal, snapshot = _snapshot(tmp_path)
+    calls = []
+    queries = EvidenceAssuranceQueries(
+        source=_SourceProbe(source, calls),
+        temporal=_TemporalProbe(temporal, calls),
+    )
+
+    hostile = _ForgedMode("not_a_membership_mode")
+    with pytest.raises(EvidenceAssuranceQueryError) as error:
+        queries.revalidate_operational_evidence(
+            snapshot, membership_mode=hostile)
+    assert error.value.error_code == "EA_REQUEST_INVALID"
+    assert calls == []
 
 
 def test_r4_compact_store_result_valid_twins_reconstruct(tmp_path):
