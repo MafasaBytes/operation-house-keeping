@@ -157,7 +157,10 @@ def _strict_request(value) -> OperationalEvidenceSelectionRequest:
 
 def _strict_membership_mode(value) -> str:
     try:
-        return _MEMBERSHIP_MODE_ADAPTER.validate_python(value, strict=True)
+        if not isinstance(value, str):
+            raise TypeError("membership mode must be a string")
+        plain = str.__str__(value)
+        return _MEMBERSHIP_MODE_ADAPTER.validate_python(plain, strict=True)
     except Exception as error:
         raise EvidenceAssuranceQueryError(
             "EA_REQUEST_INVALID",
@@ -169,7 +172,10 @@ def _strict_expected_fingerprint(value) -> str | None:
     if value is None:
         return None
     try:
-        return _EXPECTED_FINGERPRINT_ADAPTER.validate_python(value, strict=True)
+        if not isinstance(value, str):
+            raise TypeError("expected fingerprint must be a string")
+        plain = str.__str__(value)
+        return _EXPECTED_FINGERPRINT_ADAPTER.validate_python(plain, strict=True)
     except Exception as error:
         raise EvidenceAssuranceQueryError(
             "EA_REQUEST_INVALID",
@@ -1079,7 +1085,7 @@ def validate_operational_evidence_snapshot(
         if isinstance(candidate, str):
             try:
                 embedded = _EXPECTED_FINGERPRINT_ADAPTER.validate_python(
-                    candidate, strict=True)
+                    str.__str__(candidate), strict=True)
             except Exception:
                 embedded = None
     elif isinstance(snapshot, dict):
@@ -1087,7 +1093,7 @@ def validate_operational_evidence_snapshot(
         if isinstance(candidate, str):
             try:
                 embedded = _EXPECTED_FINGERPRINT_ADAPTER.validate_python(
-                    candidate, strict=True)
+                    str.__str__(candidate), strict=True)
             except Exception:
                 embedded = None
     expected_relation = (
