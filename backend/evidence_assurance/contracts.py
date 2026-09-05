@@ -367,20 +367,23 @@ class SelectedSourceObservation(_StrictFrozen):
 
     @model_validator(mode="after")
     def _coherent_selection(self):
-        fields = (
+        selected_fields = (
             self.temporal_occurrence_index,
-            self.provenance_route_index,
             self.selected_received_at,
             self.observation_age_seconds,
         )
         if self.outcome == "no_observation_at_or_before_as_of":
-            if any(value is not None for value in fields):
+            if any(value is not None for value in (
+                *selected_fields, self.provenance_route_index,
+            )):
                 raise ValueError("absent selection cannot carry selected values")
             if self.pre_horizon_seed or self.age_basis != "not_applicable":
                 raise ValueError("absent selection has non-applicable age")
         else:
-            if any(value is None for value in fields):
+            if any(value is None for value in selected_fields):
                 raise ValueError("selected observation requires every selected value")
+            if self.provenance_route_index is None and not self.pre_horizon_seed:
+                raise ValueError("in-horizon selection requires a provenance route")
             if self.age_basis != "received_at":
                 raise ValueError("selected observation age uses received_at")
         return self
