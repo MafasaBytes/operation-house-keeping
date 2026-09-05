@@ -70,9 +70,11 @@ contract or module name and authorizes no implementation.
 
 EA-001 has an owner-accepted corrected contract. Its Slice A lower read seams
 and integrity repair are owner accepted at
-`ceee1446f18ae9b7134005089046a5a4d69e10ae`. This is not acceptance of the
-complete EA-001 milestone: Slice B and Slice C remain unauthorized and require
-separate owner authorization.
+`ceee1446f18ae9b7134005089046a5a4d69e10ae`. Slice B implementation is
+separately authorized from administrative checkpoint
+`b0ffc1b59fec4c4fcc93e90362f9ffe71862e8fa`. This is not acceptance of the
+complete EA-001 milestone: Slice C remains unauthorized, and completed Slice B
+will require separate owner acceptance.
 
 ## Current Phase
 

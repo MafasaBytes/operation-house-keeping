@@ -1,9 +1,10 @@
 # EA-001 Slice B Implementation Plan
 
-Date: 2026-09-04
+Date: 2026-09-04 (authorization status reconciled 2026-09-05)
 
-Status: corrected contract candidate prepared; Slice A integrity repair and
-Slice B implementation both remain paused for separate owner gates
+Status: corrected contract and Slice A integrity repair owner accepted; Slice B
+implementation authorized from administrative checkpoint
+`b0ffc1b59fec4c4fcc93e90362f9ffe71862e8fa`; Slice C remains unauthorized
 
 Accepted Slice A HEAD: `873df5bfc4fef2b6c8136612c7a9655048dd6b1b`
 
@@ -16,18 +17,18 @@ Accepted discrepancy-report SHA-256:
 Corrected normative synthesis:
 `docs/superpowers/specs/2026-09-04-ea001-content-bound-operational-evidence-selection-and-assurance-design.md`
 
-Corrected synthesis candidate SHA-256:
+Accepted corrected synthesis SHA-256:
 `557b2df9aec5ee784006bfdba771936ae90844ea7cf8913c1e61455fa4a7e08e`
+
+Accepted Slice A integrity-repair HEAD:
+`ceee1446f18ae9b7134005089046a5a4d69e10ae`
 
 ## 1. Current authorization boundary
 
-The owner accepted the Slice B discrepancy stop and authorized only a bounded
-design-contract correction. This plan records the corrected implementation
-sequence but authorizes no production or test change.
-
-The next possible implementation is a separately authorized Slice A integrity
-repair. Slice B remains paused until both the corrected synthesis and that
-repair are separately owner accepted. Slice C remains unauthorized.
+The owner accepted the corrected synthesis and the completed Slice A integrity
+repair. The owner then separately authorized Slice B implementation only from
+administrative checkpoint
+`b0ffc1b59fec4c4fcc93e90362f9ffe71862e8fa`. Slice C remains unauthorized.
 
 ## 2. Dependency and scope boundary
 
@@ -43,9 +44,10 @@ observation/semantic compatibility, constraint, behavior, state, transition,
 flow, connector/vendor, UI, planning, control, private filesystem-store, or
 private SQLite module. No existing package imports EA during Slice B.
 
-## 3. Owner-gated Slice A integrity repair
+## 3. Owner-accepted Slice A integrity repair
 
-The repair is limited to the existing public DS-004 reader seam:
+The completed and separately accepted repair is limited to the existing public
+DS-004 reader seam:
 
 1. Keep the exact `inventory_token(scope, *, horizon_started_at, as_of)`
    signature.
@@ -165,17 +167,16 @@ matches even if current membership differs or cannot be fully observed. Its
 source/temporal membership and carried-temporal-material relations remain
 explicit. It never calls the historical selection current or latest.
 
-## 8. Red-first and commit sequence after authorization
+## 8. Red-first and commit sequence under Slice B authorization
 
-No red test is written under the current correction-only authorization. After
-separate repair authorization:
+The completed Slice A repair followed this sequence:
 
 1. add failing seed-fence/named-reread lower tests;
 2. implement the bounded Slice A repair;
 3. adversarially review, reproduce every defect red-first, repair, verify, and
    stop for repair acceptance.
 
-Only after separate Slice B resumption:
+The separately authorized Slice B follows this sequence:
 
 1. add failing exact contracts/exports/errors tests;
 2. implement contracts and canonical derivation;
