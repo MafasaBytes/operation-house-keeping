@@ -20,11 +20,12 @@ from pydantic import (
     StrictInt,
     StrictStr,
     StringConstraints,
+    ValidationInfo,
     field_validator,
     model_validator,
 )
 
-from backend.data_sources.contracts import (
+from backend.data_sources.contracts.operational_evidence import (
     Ds004OperationalEvidenceMaterial,
     Ds004OperationalEvidenceScope,
     OperationalApiInventoryToken,
@@ -434,11 +435,16 @@ class CapturedOperationalEvidenceSnapshot(_StrictFrozen):
     content_fingerprint: TaggedSha256
 
     @model_validator(mode="after")
-    def _basic_snapshot_invariants(self):
+    def _basic_snapshot_invariants(self, info: ValidationInfo):
         if any(issue.code not in _INCOMPLETE_CODES for issue in self.issues):
             raise ValueError("snapshot may carry only incomplete issues")
         if _ordered_issues(self.issues) != self.issues:
             raise ValueError("snapshot issues are not canonically ordered")
+        if not (info.context or {}).get("skip_snapshot_integrity", False):
+            from backend.evidence_assurance.queries import (
+                _assert_snapshot_integrity,
+            )
+            _assert_snapshot_integrity(self, check_fingerprint=True)
         return self
 
 

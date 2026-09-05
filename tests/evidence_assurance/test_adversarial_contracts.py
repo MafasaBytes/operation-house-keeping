@@ -31,7 +31,9 @@ def _snapshot(tmp_path):
 def test_dependency_imports_are_only_exact_approved_public_modules():
     allowed = {
         "backend.data_sources.contracts.operational_evidence",
+        "backend.data_sources.evidence",
         "backend.temporal_state.contracts",
+        "backend.temporal_state.queries",
         "backend.evidence_assurance.contracts",
         "backend.evidence_assurance.queries",
     }

@@ -6,11 +6,11 @@ import hashlib
 import json
 import math
 from datetime import UTC, datetime
-from typing import get_args
+from typing import TYPE_CHECKING, get_args
 
 from pydantic import BaseModel
 
-from backend.data_sources.contracts import (
+from backend.data_sources.contracts.operational_evidence import (
     Ds004OperationalEvidenceMaterial,
     OperationalApiInventoryToken,
 )
@@ -41,6 +41,10 @@ from backend.temporal_state.contracts import (
     TemporalSelectionMaterial,
     temporal_selection_digest,
 )
+
+if TYPE_CHECKING:
+    from backend.data_sources.evidence import Ds004OperationalEvidenceReader
+    from backend.temporal_state.queries import TemporalQueries
 
 
 class _DerivationError(Exception):
@@ -583,6 +587,56 @@ def _build_snapshot(request, source, temporal, initial_source, initial_temporal,
         **base, content_fingerprint=_fingerprint(base))
 
 
+def _assert_snapshot_integrity(snapshot, *, check_fingerprint):
+    if snapshot.fixed_limits != FIXED_LIMITS:
+        raise ValueError("snapshot fixed limits are stale")
+    fence = snapshot.capture_fence
+    if _source_token_from_material(
+        snapshot.request, snapshot.source_material
+    ) != fence.final_source_token:
+        raise ValueError("source material and fence differ")
+    if _temporal_token_from_material(
+        snapshot.temporal_material
+    ) != fence.final_temporal_token:
+        raise ValueError("temporal material and fence differ")
+    routes, selected, coverage, issues = _derive_routes_and_selection(
+        snapshot.request, snapshot.source_material, snapshot.temporal_material)
+    expected_assurance = OperationalEvidenceAssurance(
+        payload_byte_check=(
+            "matched" if any(
+                row.kind == "raw_payload"
+                for row in snapshot.source_material.artifacts)
+            else "not_applicable"),
+        metadata_same_read_check="matched", provenance_closure="closed",
+        observation_content_relation=(
+            "exact_value_and_type"
+            if selected.outcome == "selected_source_observation"
+            else "not_applicable"),
+        occurrence_membership_relation="reconciled",
+        attempt_coverage_membership_relation="reconciled",
+        captured_view_relation="equal_at_observed_fences",
+        semantic_compatibility="not_assessed",
+        accountable_occurrence="not_assessed")
+    if (
+        snapshot.schema_version != "1"
+        or snapshot.provenance_routes != routes
+        or snapshot.selected != selected
+        or snapshot.coverage != coverage
+        or snapshot.assurance != expected_assurance
+        or snapshot.issues != issues
+    ):
+        raise ValueError("snapshot derived values are stale")
+    base = {
+        name: getattr(snapshot, name)
+        for name in snapshot.__class__.model_fields
+        if name != "content_fingerprint"
+    }
+    computed = _fingerprint(base)
+    if check_fingerprint and snapshot.content_fingerprint != computed:
+        raise ValueError("snapshot fingerprint is stale")
+    return computed
+
+
 def _carried_temporal_relation(expected, observed):
     if (
         expected.schema_version != observed.schema_version
@@ -625,7 +679,12 @@ def _invalid_store_result(validation, membership_mode):
 
 
 class EvidenceAssuranceQueries:
-    def __init__(self, *, source, temporal) -> None:
+    def __init__(
+        self,
+        *,
+        source: Ds004OperationalEvidenceReader,
+        temporal: TemporalQueries,
+    ) -> None:
         source_methods = ("inventory_token", "read_material", "reread_named_material")
         temporal_methods = ("selection_inventory_token", "selection_material")
         if not all(callable(getattr(source, name, None)) for name in source_methods):
@@ -637,7 +696,10 @@ class EvidenceAssuranceQueries:
         self._source = source
         self._temporal = temporal
 
-    def select_operational_evidence(self, request):
+    def select_operational_evidence(
+        self,
+        request: OperationalEvidenceSelectionRequest,
+    ) -> OperationalEvidenceSelectionResult:
         request = _strict_request(request)
         call = {
             "scope": request.scope,
@@ -748,7 +810,12 @@ class EvidenceAssuranceQueries:
             status=snapshot.coverage.completeness,
             request=request, snapshot=snapshot, issues=())
 
-    def revalidate_operational_evidence(self, snapshot, *, membership_mode):
+    def revalidate_operational_evidence(
+        self,
+        snapshot: CapturedOperationalEvidenceSnapshot,
+        *,
+        membership_mode: StoreBoundMembershipMode,
+    ) -> OperationalEvidenceStoreRevalidationResult:
         if membership_mode not in get_args(StoreBoundMembershipMode):
             raise EvidenceAssuranceQueryError(
                 "EA_REQUEST_INVALID", "store-bound membership mode is invalid")
@@ -909,7 +976,11 @@ class EvidenceAssuranceQueries:
             issues=_ordered_issues(tuple(issues)))
 
 
-def validate_operational_evidence_snapshot(snapshot, *, expected_fingerprint=None):
+def validate_operational_evidence_snapshot(
+    snapshot: CapturedOperationalEvidenceSnapshot,
+    *,
+    expected_fingerprint: str | None = None,
+) -> OperationalEvidenceSnapshotValidationResult:
     embedded = None
     if isinstance(snapshot, BaseModel):
         candidate = getattr(snapshot, "content_fingerprint", None)
@@ -936,42 +1007,15 @@ def validate_operational_evidence_snapshot(snapshot, *, expected_fingerprint=Non
 
     try:
         plain = _deep_plain(snapshot)
-        rebuilt = CapturedOperationalEvidenceSnapshot.model_validate(plain)
-        if rebuilt.fixed_limits != FIXED_LIMITS:
-            return invalid(
-                "fixed_limits_mismatch",
-                "snapshot fixed bounded-material limits are stale")
-        source_token = _source_token_from_material(
-            rebuilt.request, rebuilt.source_material)
-        temporal_token = _temporal_token_from_material(rebuilt.temporal_material)
-        fence = rebuilt.capture_fence
-        if source_token != fence.final_source_token:
-            return invalid(
-                "source_fence_material_mismatch",
-                "snapshot source material disagrees with its captured fence")
-        if temporal_token != fence.final_temporal_token:
-            return invalid(
-                "temporal_fence_material_mismatch",
-                "snapshot temporal material disagrees with its captured fence")
-        expected = _build_snapshot(
-            rebuilt.request, rebuilt.source_material, rebuilt.temporal_material,
-            fence.initial_source_token, fence.initial_temporal_token,
-            fence.final_source_token, fence.final_temporal_token)
-        derived_fields = (
-            "schema_version", "fixed_limits", "provenance_routes", "selected",
-            "coverage", "assurance", "issues",
-        )
-        if any(getattr(rebuilt, name) != getattr(expected, name)
-               for name in derived_fields):
-            return invalid(
-                "derived_snapshot_content_mismatch",
-                "snapshot derived content is stale or substituted")
+        rebuilt = CapturedOperationalEvidenceSnapshot.model_validate(
+            plain, context={"skip_snapshot_integrity": True})
+        computed = _assert_snapshot_integrity(
+            rebuilt, check_fingerprint=False)
     except Exception:
         return invalid(
             "snapshot_reconstruction_failed",
             "snapshot content cannot be strictly reconstructed and derived")
 
-    computed = expected.content_fingerprint
     embedded_relation = "matched" if embedded == computed else "mismatched"
     status = (
         "structurally_self_consistent"
