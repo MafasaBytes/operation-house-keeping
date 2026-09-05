@@ -14,6 +14,9 @@ from backend.evidence_assurance import (
     EvidenceAssuranceQueries,
     OperationalEvidenceSelectionResult,
 )
+from backend.data_sources.contracts.operational_evidence import (
+    OperationalApiInventoryToken,
+)
 
 from tests.evidence_assurance.test_selection import _captured_world, _request
 
@@ -110,3 +113,28 @@ def test_direct_result_reconstruction_rejects_substituted_nested_snapshot(tmp_pa
     hostile["snapshot"]["selected"]["observation_age_seconds"] = "0"
     with pytest.raises(ValidationError):
         OperationalEvidenceSelectionResult.model_validate(hostile)
+
+
+def test_forged_lower_inventory_tokens_are_reconstructed_before_use(tmp_path):
+    _, _, source, temporal = _captured_world(tmp_path)
+
+    class ForgedSourceToken:
+        def inventory_token(self, *args, **kwargs):
+            token = source.inventory_token(*args, **kwargs)
+            return OperationalApiInventoryToken.model_construct(
+                **token.model_dump(
+                    mode="python",
+                    exclude={"ordered_member_keys"},
+                    warnings=False),
+                ordered_member_keys=tuple(reversed(token.ordered_member_keys)))
+        def read_material(self, *args, **kwargs):
+            return source.read_material(*args, **kwargs)
+        def reread_named_material(self, expected_material):
+            return source.reread_named_material(expected_material)
+
+    result = EvidenceAssuranceQueries(
+        source=ForgedSourceToken(), temporal=temporal,
+    ).select_operational_evidence(_request())
+    assert result.status == "refused"
+    assert tuple(issue.code for issue in result.issues) == (
+        "invalid_bounded_material",)
