@@ -46,12 +46,12 @@ class _FixedTemporalView:
         (
             lambda plain: plain["occurrence_membership"][0].__setitem__(
                 "observation_id", "0" * 32),
-            "temporal_occurrence_absent",
+            "temporal_occurrence_inconsistent",
         ),
         (
             lambda plain: plain["occurrence_membership"][0].__setitem__(
                 "value_json", "999"),
-            "source_temporal_parity_failure",
+            "temporal_occurrence_inconsistent",
         ),
         (
             lambda plain: plain.__setitem__(
@@ -95,5 +95,10 @@ def test_source_attempt_missing_from_temporal_coverage_fails_parity(tmp_path):
         source=source, temporal=_FixedTemporalView(changed),
     ).select_operational_evidence(_request())
     assert result.status == "refused"
-    assert tuple(issue.code for issue in result.issues) == (
-        "source_temporal_parity_failure",)
+    assert tuple(
+        (issue.code, issue.detail_code) for issue in result.issues
+    ) == (
+        ("temporal_occurrence_absent", "expected_temporal_event_absent"),
+        ("source_temporal_parity_failure", "attempt_membership_parity_failure"),
+        ("source_temporal_parity_failure", "observation_membership_parity_failure"),
+    )
