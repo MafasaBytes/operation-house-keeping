@@ -73,8 +73,10 @@ and integrity repair are owner accepted at
 `ceee1446f18ae9b7134005089046a5a4d69e10ae`. Repaired Slice B, including the
 R1-R4 integrity repairs, is owner accepted at implementation HEAD
 `932514a456bcafe690a94d2d774b61913c352fbf`. This documentation-only acceptance
-does not accept the complete EA-001 milestone: Slice C and all consumer or
-upper-layer integration remain unauthorized.
+does not accept the complete EA-001 milestone. The bounded Slice C design is
+owner approved; Slice C1 contracts, pure derivation, and red-first adversarial
+tests are authorized. Slice C2 package-level exports, final full verification,
+and every later demonstration remain unauthorized.
 
 ## Current Phase
 
