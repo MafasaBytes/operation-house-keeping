@@ -44,7 +44,7 @@ def test_c34_c36_derivation_performs_no_io_or_reselection(world, monkeypatch):
     assert result.status == "aligned_with_complete_evidence"
 
 
-def test_c35_import_direction_and_c2_export_remains_absent():
+def test_c35_import_direction_and_authorized_c2_exports():
     package_root = Path("backend/evidence_alignment")
     existing_roots = [
         path for path in Path("backend").glob("*/**/*.py")
@@ -70,12 +70,17 @@ def test_c35_import_direction_and_c2_export_remains_absent():
         assert not imports & forbidden
 
     import backend.evidence_alignment as package
-    assert not hasattr(package, "__all__")
-    for public_name in (
+    assert package.__all__ == [
+        "EvidenceAlignmentError",
+        "EvidenceAlignmentQueryError",
+        "EvidenceAlignmentQueryErrorCode",
+        "OperationalEvidenceAlignmentStatus",
+        "OperationalEvidenceAlignmentReason",
+        "OperationalEvidenceAlignmentExpectedFingerprintRelation",
         "OperationalEvidenceAlignmentRequest",
+        "OperationalEvidenceAlignmentResult",
         "align_operational_evidence_with_value_compatibility",
-    ):
-        assert not hasattr(package, public_name)
+    ]
 
 
 def test_c37_serialized_construction_order_is_deterministic(world):

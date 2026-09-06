@@ -83,7 +83,7 @@ def test_expected_fingerprint_relation_is_exact_and_reconstructable(
         api["OperationalEvidenceAlignmentResult"].model_validate(forged)
 
 
-def test_relation_literal_and_planned_c2_surface_are_exact_but_not_exported():
+def test_relation_literal_and_authorized_c2_surface_are_exact():
     import backend.evidence_alignment as package
     import backend.evidence_alignment.contracts as contracts
 
@@ -109,8 +109,8 @@ def test_relation_literal_and_planned_c2_surface_are_exact_but_not_exported():
         "OperationalEvidenceAlignmentResult",
         "align_operational_evidence_with_value_compatibility",
     ]
-    assert not hasattr(package, "__all__")
-    assert all(not hasattr(package, name) for name in PLANNED_C2_EXPORTS)
+    assert package.__all__ == PLANNED_C2_EXPORTS
+    assert all(hasattr(package, name) for name in PLANNED_C2_EXPORTS)
 
 
 def test_snapshot_validator_call_count_remains_zero_or_one(world, monkeypatch):

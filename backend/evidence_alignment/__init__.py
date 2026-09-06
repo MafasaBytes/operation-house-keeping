@@ -1,6 +1,28 @@
-"""EA-001 Slice C1 package marker.
+"""Public EA-001 carried-result evidence-alignment surface."""
 
-The package-level public export surface is deliberately reserved for Slice C2.
-Slice C1 callers import contracts and the pure function from their defining
-submodules.
-"""
+from backend.evidence_alignment.contracts import (
+    EvidenceAlignmentError,
+    EvidenceAlignmentQueryError,
+    EvidenceAlignmentQueryErrorCode,
+    OperationalEvidenceAlignmentExpectedFingerprintRelation,
+    OperationalEvidenceAlignmentReason,
+    OperationalEvidenceAlignmentRequest,
+    OperationalEvidenceAlignmentResult,
+    OperationalEvidenceAlignmentStatus,
+)
+from backend.evidence_alignment.derivation import (
+    align_operational_evidence_with_value_compatibility,
+)
+
+
+__all__ = [
+    "EvidenceAlignmentError",
+    "EvidenceAlignmentQueryError",
+    "EvidenceAlignmentQueryErrorCode",
+    "OperationalEvidenceAlignmentStatus",
+    "OperationalEvidenceAlignmentReason",
+    "OperationalEvidenceAlignmentExpectedFingerprintRelation",
+    "OperationalEvidenceAlignmentRequest",
+    "OperationalEvidenceAlignmentResult",
+    "align_operational_evidence_with_value_compatibility",
+]
