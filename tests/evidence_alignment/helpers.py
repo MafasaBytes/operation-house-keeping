@@ -17,7 +17,12 @@ from tests.evidence_assurance.test_selection import (
     _request as ea_request,
 )
 from tests.model_state.helpers import PROP_TEMP, SUBJECT, V1
-from tests.observation_compatibility.helpers import compatibility, model_with
+from tests.observation_compatibility.helpers import (
+    compatibility,
+    entity_declaration,
+    model_with,
+    var_declaration,
+)
 
 
 @dataclass(frozen=True)
@@ -78,8 +83,8 @@ def align(world: AlignmentWorld, *, selection=None, consumer=None, expected=None
     api = alignment_api()
     request = api["OperationalEvidenceAlignmentRequest"](
         schema_version="1",
-        selection=selection or world.selection,
-        compatibility=consumer or world.compatibility,
+        selection=world.selection if selection is None else selection,
+        compatibility=world.compatibility if consumer is None else consumer,
         expected_snapshot_fingerprint=expected,
     )
     return api["align"](request)
@@ -199,5 +204,14 @@ def alternate_model_consumer(world: AlignmentWorld, *, conflicted=False,
         world.root / ("conflicted-consumer" if conflicted else
                       "unregistered-consumer"),
         temporal=world.temporal, model_store=store,
+    )
+    return queries.variable_value_compatibility(V1, as_of=AS_OF)
+
+
+def no_candidates_consumer(world: AlignmentWorld):
+    queries, _, _ = compatibility(
+        world.root / "no-candidates-consumer",
+        temporal=world.temporal,
+        binding_records=(entity_declaration(), var_declaration()),
     )
     return queries.variable_value_compatibility(V1, as_of=AS_OF)

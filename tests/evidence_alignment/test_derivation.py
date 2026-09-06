@@ -22,6 +22,7 @@ from tests.evidence_alignment.helpers import (
     duplicate_consumer,
     explicit_consumer,
     mutate_consumer_occurrence,
+    no_candidates_consumer,
     no_observation_selection,
     pre_horizon_pair,
     selected_occurrence,
@@ -196,7 +197,7 @@ def test_c17_cutoff_difference_and_equal_instant_normalization(world):
 
 
 def test_c23_c24_no_candidates_and_no_observation_are_distinct(world):
-    no_candidates = alternate_model_consumer(world, registered=False)
+    no_candidates = no_candidates_consumer(world)
     no_candidates_result = align(world, consumer=no_candidates)
     assert no_candidates_result.reason == "scope_differs"
     assert no_candidates_result.candidate_attachment == "not_applicable"
