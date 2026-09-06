@@ -24,7 +24,6 @@ from pydantic import (
 )
 
 from backend.evidence_assurance import (
-    ExpectedFingerprintRelation,
     OperationalEvidenceSelectionResult,
     OperationalEvidenceSelectionStatus,
     OperationalEvidenceSnapshotValidationResult,
@@ -50,6 +49,12 @@ OperationalEvidenceAlignmentReason = Literal[
     "occurrence_content_mismatch",
     "occurrence_absent_from_consumer_result",
     "multiple_matching_candidates",
+]
+OperationalEvidenceAlignmentExpectedFingerprintRelation = Literal[
+    "matched",
+    "mismatched",
+    "not_supplied",
+    "not_evaluated",
 ]
 
 
@@ -193,7 +198,9 @@ class OperationalEvidenceAlignmentResult(_StrictFrozen):
         "incomplete_within_declared_horizon",
         "not_applicable",
     ]
-    expected_fingerprint_relation: ExpectedFingerprintRelation
+    expected_fingerprint_relation: (
+        OperationalEvidenceAlignmentExpectedFingerprintRelation
+    )
     cutoff_relation: Literal["equal", "different", "not_evaluated"]
     scope_relation: Literal[
         "six_field_locator_equal",

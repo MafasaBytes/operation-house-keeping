@@ -59,6 +59,7 @@ def alignment_api():
         EvidenceAlignmentError,
         EvidenceAlignmentQueryError,
         EvidenceAlignmentQueryErrorCode,
+        OperationalEvidenceAlignmentExpectedFingerprintRelation,
         OperationalEvidenceAlignmentReason,
         OperationalEvidenceAlignmentRequest,
         OperationalEvidenceAlignmentResult,
@@ -71,6 +72,9 @@ def alignment_api():
         "EvidenceAlignmentError": EvidenceAlignmentError,
         "EvidenceAlignmentQueryError": EvidenceAlignmentQueryError,
         "EvidenceAlignmentQueryErrorCode": EvidenceAlignmentQueryErrorCode,
+        "OperationalEvidenceAlignmentExpectedFingerprintRelation": (
+            OperationalEvidenceAlignmentExpectedFingerprintRelation
+        ),
         "OperationalEvidenceAlignmentReason": OperationalEvidenceAlignmentReason,
         "OperationalEvidenceAlignmentRequest": OperationalEvidenceAlignmentRequest,
         "OperationalEvidenceAlignmentResult": OperationalEvidenceAlignmentResult,

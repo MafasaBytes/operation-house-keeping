@@ -2,12 +2,19 @@
 
 Date: 2026-09-06
 
-Status: owner-resolved design candidate; bounded correction for owner review;
+Status: owner-approved design; Slice C1 integrity amendment applied; Slice C2
 implementation unauthorized
 
 This document proposes exactly one bounded EA-001 Slice C integration and is
 not authorization to implement it. It changes no runtime code, test, fixture,
 evidence, ledger, model record, accepted synthesis, or history.
+
+Integrity amendment, 2026-09-07: the owner-authorized C1 repair adds a local
+four-state expected-fingerprint relation so a refused selection with a supplied
+fingerprint reports `not_evaluated` rather than falsely claiming `mismatched`.
+The proposal immediately before this amendment was 38,851 bytes at SHA-256
+`dd7200df0ab500a6d1366ae77b629ac13e9c7a710c2b0c63a78b733aeed804a4`.
+No accepted lower EA vocabulary or contract changes.
 
 ## 1. Authority and verified checkpoint
 
@@ -345,7 +352,9 @@ class OperationalEvidenceAlignmentResult:
         "incomplete_within_declared_horizon",
         "not_applicable",
     ]
-    expected_fingerprint_relation: ExpectedFingerprintRelation
+    expected_fingerprint_relation: (
+        OperationalEvidenceAlignmentExpectedFingerprintRelation
+    )
     cutoff_relation: Literal["equal", "different", "not_evaluated"]
     scope_relation: Literal[
         "six_field_locator_equal", "six_field_locator_different", "not_evaluated"
@@ -408,6 +417,13 @@ OperationalEvidenceAlignmentReason = Literal[
     "occurrence_absent_from_consumer_result", # 8
     "multiple_matching_candidates",           # 9
 ]
+
+OperationalEvidenceAlignmentExpectedFingerprintRelation = Literal[
+    "matched",
+    "mismatched",
+    "not_supplied",
+    "not_evaluated",
+]
 ```
 
 Precedence is the numeric order above; the first applicable reason is the
@@ -422,7 +438,9 @@ statuses: `aligned_with_complete_evidence` when
 selected occurrence and exact alignment; it proves occurrence identity only.
 
 Derivation order: (1) strict-reconstruct the request; (2) `selection_refused`
-when the selection status is `refused`; (3) for a carried snapshot, compute
+when the selection status is `refused`, with an absent expected fingerprint
+reported as `not_supplied` and a supplied but uncompared fingerprint reported
+as `not_evaluated`; (3) for a carried snapshot, compute
 the public pure snapshot validation exactly once for output, passing the
 request's expected fingerprint; embedded structural/fingerprint invalidity in
 an allegedly valid reconstructed selection is typed
@@ -496,6 +514,7 @@ secret-free under the same `_bounded_safe_text` rule as EA.
     "EvidenceAlignmentQueryErrorCode",
     "OperationalEvidenceAlignmentStatus",
     "OperationalEvidenceAlignmentReason",
+    "OperationalEvidenceAlignmentExpectedFingerprintRelation",
     "OperationalEvidenceAlignmentRequest",
     "OperationalEvidenceAlignmentResult",
     "align_operational_evidence_with_value_compatibility",
@@ -534,6 +553,8 @@ request, independent of hash seed and input construction order.
 | Same occurrence and content, different cutoff or scope | `cutoff_differs` or `scope_differs`; no alignment |
 | Complete versus incomplete EA coverage | both may align; the statuses `aligned_with_complete_evidence` / `aligned_with_incomplete_evidence` keep them permanently distinct |
 | Valid captured snapshot versus current-store revalidation mismatch | outside the v1 alignment contract; callers display the separately obtained EA revalidation disclosure without changing or recomputing historical alignment |
+| Refused EA selection with no expected fingerprint | `not_evaluated / selection_refused`; `snapshot_validation=None`; expected-fingerprint relation `not_supplied` |
+| Refused EA selection with a supplied expected fingerprint | `not_evaluated / selection_refused`; `snapshot_validation=None`; expected-fingerprint relation `not_evaluated` because no comparison occurred |
 
 ## 11. Adversarial acceptance matrix
 
@@ -561,10 +582,10 @@ pin exact names and field sets.
 | C16 | The derivation never reads `endpoint_id` from consumer material; a snapshot whose selected-occurrence attempt closure disagrees with its scope cannot reconstruct as a valid EA selection and raises typed `ALIGNMENT_REQUEST_INVALID`. The valid endpoint-closed twin aligns. |
 | C17 | Differing `as_of` → `cutoff_differs`, including equal instants with non-UTC awareness normalized before comparison. |
 | C18 | Consumer result with a different model revision, binding revision, variable anchor, specification status, ruleset, or candidate order is simply a different input: derived result scalars equal the carried values exactly; forged internally inconsistent consumer results fail at request reconstruction via the accepted VS validators. |
-| C19 | Refused EA selection → `not_evaluated / selection_refused`; the absent snapshot is never touched. |
+| C19 | Refused EA selection → `not_evaluated / selection_refused`; the absent snapshot is never touched; an absent expected fingerprint yields `not_supplied`, while a supplied but uncompared fingerprint yields `not_evaluated`. |
 | C20 | Structurally invalid snapshot content, hidden extras, or an internally inconsistent alleged selection raises typed `ALIGNMENT_REQUEST_INVALID`; no alignment result is constructed. Its valid reconstructed twin reaches pure validation. |
 | C21 | Replacing a snapshot and embedded fingerprint together can remain structurally self-consistent when no independent expected fingerprint is supplied; supplying the retained original expected fingerprint yields `not_evaluated / snapshot_fingerprint_mismatched`. Substituting only the embedded fingerprint is typed invalid input. |
-| C22 | Expected fingerprint twins: exact independently retained fingerprint → `expected_fingerprint_relation="matched"`; any other → `mismatched` with `not_evaluated / snapshot_fingerprint_mismatched`; absent → `not_supplied` and alignment unaffected. The computed validation result appears exactly once in the output. |
+| C22 | Non-refused expected-fingerprint twins: exact independently retained fingerprint → `expected_fingerprint_relation="matched"`; any other → `mismatched` with `not_evaluated / snapshot_fingerprint_mismatched`; absent → `not_supplied` and alignment unaffected. Every relation survives reconstruction, forged relations reject, and the computed validation result appears exactly once in the output. |
 | C23 | Consumer variable unregistered / no candidates → `scope_differs` with `candidate_attachment="not_applicable"` and no index. |
 | C24 | Locator-equal candidate with `bound=None` (consumer `none_before_cutoff`) → `consumer_observation_absent`. |
 | C25 | Content-equal candidate with `attachment != "attached"` → still aligned; attachment disclosed verbatim; no verdict upgrade. |
@@ -593,7 +614,8 @@ Two minimal gates; no Slice D demo is proposed.
   failing tests before implementation; no fixtures, no store builders, no
   demo; verify focused tests, the 137-test EA/lower gate, architecture and
   import-isolation tests, and preservation gates.
-- **Slice C2 — public exports and full verification:** pin `__all__`, run the
+- **Slice C2 — public exports and full verification:** pin the exact nine-name
+  `__all__` from Section 9.6, run the
   complete repository suite, fresh base-only and all-extras clean checkouts,
   whitespace gates, and preservation evidence; produce a completion report
   and stop for owner acceptance.
@@ -632,8 +654,10 @@ The owner resolved all proposal questions on 2026-09-06:
    function computes validation internally and carries its result exactly once
    in the alignment result.
 
-Unresolved owner decisions: **0**. This resolved proposal remains a design
-candidate only. Slice C implementation requires a separate owner gate.
+Unresolved owner decisions: **0**. This design is owner approved. Slice C1 was
+separately authorized and its bounded implementation, including the
+2026-09-07 integrity repair, awaits owner acceptance. Slice C2 still requires a
+separate owner gate.
 
 ## 15. Verification of this proposal
 

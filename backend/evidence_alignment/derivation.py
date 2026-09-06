@@ -97,7 +97,7 @@ def _base_disclosures(request):
         "expected_fingerprint_relation": (
             "not_supplied"
             if request.expected_snapshot_fingerprint is None
-            else "mismatched"
+            else "not_evaluated"
         ),
         "cutoff_relation": "not_evaluated",
         "scope_relation": "not_evaluated",
