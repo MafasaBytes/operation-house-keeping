@@ -5,7 +5,10 @@ from __future__ import annotations
 import ast
 import builtins
 import json
+import os
 import socket
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -97,6 +100,30 @@ def test_c37_serialized_construction_order_is_deterministic(world):
     assert first == second
     assert json.loads(first.model_dump_json()) == json.loads(
         second.model_dump_json())
+
+
+def test_c37_hash_seed_processes_are_deterministic():
+    script = """
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from tests.evidence_alignment.helpers import align, build_world
+with TemporaryDirectory(prefix='ea001-c1-seed-') as temporary:
+    result = align(build_world(Path(temporary)))
+print(result.model_dump_json())
+"""
+    outputs = []
+    for seed in ("1", "7", "12345"):
+        environment = dict(os.environ)
+        environment.update({
+            "PYTHONHASHSEED": seed,
+            "PYTHONDONTWRITEBYTECODE": "1",
+        })
+        completed = subprocess.run(
+            [sys.executable, "-c", script], cwd=Path.cwd(), env=environment,
+            check=True, capture_output=True, text=True,
+        )
+        outputs.append(completed.stdout)
+    assert outputs[0] == outputs[1] == outputs[2]
 
 
 def test_c22_validator_is_called_once_for_non_refused_selection(
