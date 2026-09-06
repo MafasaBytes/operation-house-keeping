@@ -119,6 +119,24 @@ def test_c32_hostile_expected_fingerprint_cannot_manufacture_match(world):
     assert error.value.error_code == "ALIGNMENT_REQUEST_INVALID"
 
 
+def test_adversarial_boolean_nested_sweep_position_rejects(world):
+    api = alignment_api()
+    payload = {
+        "schema_version": "1",
+        "selection": world.selection.model_dump(mode="python", warnings=False),
+        "compatibility": world.compatibility.model_dump(
+            mode="python", warnings=False),
+        "expected_snapshot_fingerprint": None,
+    }
+    payload["compatibility"]["state"]["candidates"][0]["bound"][
+        "observed"]["occurrence"]["sweep_position"] = True
+    payload["compatibility"]["candidates"][0]["state_candidate"]["bound"][
+        "observed"]["occurrence"]["sweep_position"] = True
+    with pytest.raises(api["EvidenceAlignmentQueryError"]) as error:
+        api["align"](payload)
+    assert error.value.error_code == "ALIGNMENT_REQUEST_INVALID"
+
+
 @pytest.mark.parametrize(
     ("field", "value"),
     [

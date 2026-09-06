@@ -98,6 +98,24 @@ def test_c21_c22_independent_expected_fingerprint_twins(world):
     assert mismatched.cutoff_relation == "not_evaluated"
 
 
+def test_c21_coherent_snapshot_and_fingerprint_replacement_needs_expectation(
+    world,
+):
+    original_fingerprint = world.selection.snapshot.content_fingerprint
+    replacement_selection, replacement_consumer = pre_horizon_pair(world)
+    assert replacement_selection.snapshot.content_fingerprint != original_fingerprint
+
+    self_consistent = align(
+        world, selection=replacement_selection, consumer=replacement_consumer)
+    independently_checked = align(
+        world, selection=replacement_selection, consumer=replacement_consumer,
+        expected=original_fingerprint)
+    assert self_consistent.status == "aligned_with_incomplete_evidence"
+    assert self_consistent.expected_fingerprint_relation == "not_supplied"
+    assert independently_checked.status == "not_evaluated"
+    assert independently_checked.reason == "snapshot_fingerprint_mismatched"
+
+
 @pytest.mark.parametrize(
     ("updates", "candidate_updates", "expected_fields"),
     [

@@ -100,6 +100,14 @@ def _deep_plain(value: object, active: set[int] | None = None):
             for key, item in value.items():
                 if type(key) is not str:
                     raise ValueError("nested mapping keys must be ordinary strings")
+                if (
+                    (key == "sweep_position" or key.endswith("_index"))
+                    and type(item) is bool
+                ):
+                    raise ValueError("boolean indices are invalid")
+                if key.endswith("_indices") and type(item) in (tuple, list):
+                    if any(type(index) is bool for index in item):
+                        raise ValueError("boolean indices are invalid")
                 plain[key] = _deep_plain(item, active)
             return plain
         if type(value) in (tuple, list):
