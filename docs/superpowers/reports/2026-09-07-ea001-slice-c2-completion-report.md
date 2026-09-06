@@ -393,7 +393,7 @@ reported in the terminal receipt.
 
 `.claude/settings.local.json` remained ignored, byte-unchanged, and
 uncommitted. Its observed SHA-256 stayed
-`abbdd3f42bfa440242a82127569215e11743b2a06cb8df6d320d4a8ddef54fd2`.
+`abbdd3f4e359b1e88fb93a4801b6e314bf701726df76a13e344c8b7e89f18357`.
 
 ## 21. Limitations and explicit non-claims
 
