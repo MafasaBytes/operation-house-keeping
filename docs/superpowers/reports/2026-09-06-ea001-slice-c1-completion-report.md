@@ -2,8 +2,10 @@
 
 Date: 2026-09-07
 
-Status: Slice C1 implemented and bounded-verification complete; owner
-acceptance pending; Slice C2 unauthorized
+Status: original C1 completion evidence, supplemented by the bounded
+expected-fingerprint integrity repair at
+`867cfb9c4c374f0603ad7db1827ba09d6a511308`; repaired C1 owner acceptance
+pending; Slice C2 unauthorized
 
 ## 1. Authority and exact checkpoints
 
@@ -257,8 +259,10 @@ reported in the terminal receipt. `.claude/settings.local.json` remains
 ignored, untouched, and byte-identical at SHA-256
 `abbdd3f4e359b1e88fb93a4801b6e314bf701726df76a13e344c8b7e89f18357`.
 
-This report requests owner acceptance or rejection of Slice C1 at the exact
-tested implementation checkpoint. It does not authorize or accept Slice C2.
+This original report is supplemented by
+`docs/superpowers/reports/2026-09-07-ea001-slice-c1-integrity-repair-report.md`;
+the repaired C1, rather than this report's earlier implementation checkpoint
+alone, is the pending owner gate. It does not authorize or accept Slice C2.
 Nothing was pushed, merged, rebased, reset, amended, cherry-picked, forced, or
 history-rewritten.
 
