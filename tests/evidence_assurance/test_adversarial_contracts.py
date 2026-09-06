@@ -23,6 +23,7 @@ from tests.evidence_assurance.test_selection import _captured_world, _request
 
 
 EA_ROOT = Path("backend/evidence_assurance")
+ALIGNMENT_ROOT = Path("backend/evidence_alignment")
 
 
 def _snapshot(tmp_path):
@@ -55,10 +56,10 @@ def test_dependency_imports_are_only_exact_approved_public_modules():
     assert "backend.data_sources.contracts" not in observed
 
 
-def test_no_existing_backend_consumer_imports_evidence_assurance():
+def test_no_unauthorized_backend_consumer_imports_evidence_assurance():
     offenders = []
     for path in Path("backend").rglob("*.py"):
-        if EA_ROOT in path.parents:
+        if EA_ROOT in path.parents or ALIGNMENT_ROOT in path.parents:
             continue
         text = path.read_text(encoding="utf-8")
         if "backend.evidence_assurance" in text:
