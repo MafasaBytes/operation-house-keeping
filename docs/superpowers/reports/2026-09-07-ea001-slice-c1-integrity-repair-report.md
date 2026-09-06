@@ -88,7 +88,7 @@ repair does not implement Slice C2.
 ## 4. Red-first repair evidence and valid twins
 
 The test-only red checkpoint is
-`78e0de49278fc59cf115c3d684d19a71c94bc56e` (`test: reproduce C1 fingerprint
+`78e0de4b15cf585ec02fb0c43ea4297039d8aa01` (`test: reproduce C1 fingerprint
 relation defect`). The repair checkpoint is
 `867cfb9c4c374f0603ad7db1827ba09d6a511308` (`fix: distinguish unevaluated
 alignment fingerprints`).
