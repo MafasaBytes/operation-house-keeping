@@ -75,10 +75,10 @@ R1-R4 integrity repairs, is owner accepted at implementation HEAD
 `932514a456bcafe690a94d2d774b61913c352fbf`. This documentation-only acceptance
 does not accept the complete EA-001 milestone. The bounded Slice C design is
 owner approved. Slice C1 contracts, pure derivation, and red-first adversarial
-tests are implemented; the bounded expected-fingerprint integrity repair is
-verified at `867cfb9c4c374f0603ad7db1827ba09d6a511308`, pending separate owner
-acceptance. Slice C2 package-level exports, final full verification, and every
-later demonstration remain unauthorized.
+tests, including the bounded expected-fingerprint integrity repair, are owner
+accepted at `64c0a8ba7678c7567c2b596947167535cf8fbab3`. Slice C2 package-level
+exports and final verification are separately authorized; final EA-001
+acceptance remains pending. Every later demonstration remains unauthorized.
 
 ## Current Phase
 
