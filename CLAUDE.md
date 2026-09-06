@@ -77,8 +77,9 @@ does not accept the complete EA-001 milestone. The bounded Slice C design is
 owner approved. Slice C1 contracts, pure derivation, and red-first adversarial
 tests, including the bounded expected-fingerprint integrity repair, are owner
 accepted at `64c0a8ba7678c7567c2b596947167535cf8fbab3`. Slice C2 package-level
-exports and final verification are separately authorized; final EA-001
-acceptance remains pending. Every later demonstration remains unauthorized.
+exports and final verification are implemented and verified at
+`96d0dfec1a73c6250159dae0df498880ac5e26b0`; final EA-001 acceptance remains
+pending. Every later demonstration remains unauthorized.
 
 ## Current Phase
 
