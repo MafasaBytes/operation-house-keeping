@@ -75,7 +75,9 @@ class AssessmentWorld:
     temporal: object
 
 
-def _model(root, *, upper="80", declare_transition=True):
+def _model(
+    root, *, upper="80", declare_transition=True, subject=E1,
+):
     constraint_registration_record = constraint_registration(
         CON_A, variable_anchor_id=VAR_A,
     )
@@ -85,12 +87,12 @@ def _model(root, *, upper="80", declare_transition=True):
     declarations = {CON_A: constraint_declaration_record}
     from_registration = state_registration(
         state_anchor_id=STATE_A,
-        subject=E1,
+        subject=subject,
         constraints=(CON_A,),
     )
     to_registration = state_registration(
         state_anchor_id=STATE_B,
-        subject=E1,
+        subject=subject,
         constraints=(CON_A,),
     )
     from_declaration = state_declaration(
@@ -107,7 +109,7 @@ def _model(root, *, upper="80", declare_transition=True):
     )
     registration = transition_registration(
         transition_anchor_id=TRANSITION_A,
-        subject=E1,
+        subject=subject,
         from_registration=from_registration,
         to_registration=to_registration,
         from_state=STATE_A,
@@ -136,6 +138,7 @@ def _model(root, *, upper="80", declare_transition=True):
             to_declaration,
             *transition_records,
         ),
+        owners=(subject, subject),
     )
 
 
@@ -255,6 +258,7 @@ def build_world(
     from_upper: str | None = None,
     to_upper: str | None = None,
     model_mutator=None,
+    subject=E1,
 ) -> AssessmentWorld:
     split = from_upper is not None or to_upper is not None
     if split:
@@ -268,6 +272,7 @@ def build_world(
             tmp_path / "model-world",
             upper=upper,
             declare_transition=declare_transition,
+            subject=subject,
         )
     if model_mutator is not None:
         model_mutator(model)
@@ -313,6 +318,7 @@ def build_world(
         for classification in (from_classification, to_classification)
     )
     alignments = []
+    retained_compatibilities = []
     for cutoff, compatibility in zip(
         (from_as_of, to_as_of), compatibilities,
     ):
@@ -320,6 +326,8 @@ def build_world(
             not compatibility.candidates
             or compatibility.candidates[0].state_candidate.bound is None
         ):
+            continue
+        if compatibility in retained_compatibilities:
             continue
         selection = (
             EvidenceAssuranceQueries(source=source, temporal=temporal)
@@ -339,6 +347,7 @@ def build_world(
                 alignment_request,
             )
         )
+        retained_compatibilities.append(compatibility)
     transition = ModelQueries(model.load()).transition_declaration(
         TRANSITION_A, context=AS_OPERATED,
     )

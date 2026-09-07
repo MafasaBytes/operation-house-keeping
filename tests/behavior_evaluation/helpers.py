@@ -76,9 +76,10 @@ def _semantic_record(variable_anchor_id, declaration):
 
 def model_store(tmp_path, *, include_behavior=True, declaration_context=AS_DESIGNED,
                 declaration_records=None, specification_overrides=None,
-                omit_specifications=(), omit_semantics=(), extra_records=()):
+                omit_specifications=(), omit_semantics=(), extra_records=(),
+                owners=(E1, E1)):
     store = ModelStore(tmp_path / "model" / "demo-printer")
-    for record in variable_records(owners=(E1, E1)):
+    for record in variable_records(owners=owners):
         store.append(record)
     spec_overrides = specification_overrides or {}
     for variable_id in (VAR_A, VAR_B):

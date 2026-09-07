@@ -52,7 +52,7 @@ def test_hash_seeds_produce_identical_private_bytes(tmp_path):
         "print(len(data),hashlib.sha256(data).hexdigest())"
     )
     outputs = []
-    for seed in ("1", "7", "12345"):
+    for seed in ("1", "7", "19", "101", "12345"):
         environment = dict(os.environ, PYTHONHASHSEED=seed,
                            PYTHONDONTWRITEBYTECODE="1")
         completed = subprocess.run(
@@ -64,6 +64,28 @@ def test_hash_seeds_produce_identical_private_bytes(tmp_path):
         )
         outputs.append(completed.stdout.strip())
     assert outputs[0] == outputs[1] == outputs[2]
+    assert len(set(outputs)) == 1
+
+
+def test_t74_all_admitted_float_representatives_are_seed_stable():
+    script = (
+        "from backend.transition_assessment.preflight import _canonical_json_bytes; "
+        "print(_canonical_json_bytes([0.0,-0.0,1794.0,1.25,1e-20,1e20]).decode())"
+    )
+    outputs = []
+    for seed in ("1", "7", "19", "101", "12345"):
+        completed = subprocess.run(
+            [sys.executable, "-c", script],
+            check=True,
+            capture_output=True,
+            text=True,
+            env=dict(os.environ, PYTHONHASHSEED=seed,
+                     PYTHONDONTWRITEBYTECODE="1"),
+        )
+        outputs.append(completed.stdout.strip())
+    assert outputs == [
+        "[0.0,-0.0,1794.0,1.25,1e-20,1e+20]",
+    ] * 5
 
 
 def test_private_bytes_are_not_public_identity_and_have_no_newline(tmp_path):

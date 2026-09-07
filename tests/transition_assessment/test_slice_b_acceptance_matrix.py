@@ -19,6 +19,7 @@ from backend.evidence_assurance import (
 from backend.model_kernel import ModelQueries
 from backend.transition_assessment import (
     DeclaredTransitionAssessmentRequest,
+    TransitionAssessmentInputError,
     assess_declared_transition_endpoints,
 )
 
@@ -332,6 +333,25 @@ def test_t24_complete_model_revision_difference_is_structured(tmp_path):
     assert result.execution == "not_executed"
 
 
+def test_t15_subject_difference_uses_complete_foreign_classification(tmp_path):
+    world = build_world(tmp_path / "declared")
+    foreign = build_world(tmp_path / "foreign", subject=ENT_C)
+    result = assess_declared_transition_endpoints(_request(
+        world.request,
+        from_classification=foreign.request.from_classification,
+        evidence_alignments=(
+            foreign.request.evidence_alignments[0],
+            world.request.evidence_alignments[1],
+        ),
+    ))
+    assert result.from_endpoint.subject_relation == "different"
+    assert any(
+        issue.code == "endpoint_subject_mismatch"
+        and issue.endpoint_role == "from"
+        for issue in result.issues
+    )
+
+
 def test_t25_t28_incomplete_classification_maps_both_endpoint_roles(tmp_path):
     from tests.model_state.helpers import BEFORE_RECEIPT
 
@@ -367,6 +387,63 @@ def _replace_first_alignment(world, alignment):
         world.request,
         evidence_alignments=(alignment, *world.request.evidence_alignments[1:]),
     )
+
+
+def _without_expected_fingerprint(alignment):
+    return _alignment_with(
+        alignment.request.selection,
+        alignment.request.compatibility,
+        None,
+    )
+
+
+def test_t29_t34_alignment_collection_is_exact_and_carry_once(tmp_path):
+    world = build_world(tmp_path / "ordinary")
+    foreign = build_world(
+        tmp_path / "foreign", from_upper="50", to_upper="80",
+    )
+    attacks = (
+        world.request.evidence_alignments[:1],
+        (
+            world.request.evidence_alignments[0],
+            world.request.evidence_alignments[0],
+            world.request.evidence_alignments[1],
+        ),
+        (
+            *world.request.evidence_alignments,
+            foreign.request.evidence_alignments[0],
+        ),
+        tuple(reversed(world.request.evidence_alignments)),
+        (
+            foreign.request.evidence_alignments[0],
+            world.request.evidence_alignments[1],
+        ),
+    )
+    for alignments in attacks:
+        with pytest.raises(TransitionAssessmentInputError) as captured:
+            assess_declared_transition_endpoints(_request(
+                world.request, evidence_alignments=alignments,
+            ))
+        assert captured.value.error_code == "TRANSITION_ASSESSMENT_INPUT_INVALID"
+
+    shared = build_world(
+        tmp_path / "shared", to_as_of=world.request.from_as_of,
+    )
+    assert len(shared.request.evidence_alignments) == 1
+    result = assess_declared_transition_endpoints(shared.request)
+    assert tuple(
+        trace.evidence_alignment_index for trace in result.condition_traces
+    ) == (0, 0)
+    assert result.cutoff_relation == "equal"
+
+    duplicate = (
+        shared.request.evidence_alignments[0],
+        shared.request.evidence_alignments[0],
+    )
+    with pytest.raises(TransitionAssessmentInputError):
+        assess_declared_transition_endpoints(_request(
+            shared.request, evidence_alignments=duplicate,
+        ))
 
 
 def test_t35_t37_refusal_and_fingerprint_issues_are_both_retained(tmp_path):
@@ -514,3 +591,198 @@ def test_t61_t62_public_results_use_only_bounded_pattern_language(tmp_path):
         "probability score",
     ):
         assert forbidden not in text
+
+
+def test_t73_all_twenty_two_issue_codes_are_reachable_and_ordered(tmp_path):
+    worlds = []
+
+    base = build_world(tmp_path / "base")
+    worlds.append(assess_declared_transition_endpoints(_request(
+        base.request, transition_anchor_id=TRANSITION_B,
+    )))
+    foreign_transition = ModelQueries(base.model.load()).transition_declaration(
+        TRANSITION_B, context=AS_OPERATED,
+    )
+    worlds.append(assess_declared_transition_endpoints(_request(
+        base.request,
+        transition_anchor_id=TRANSITION_B,
+        transition=foreign_transition,
+    )))
+
+    for name, declare, mutator in (
+        ("not-declared", False, None),
+        ("conflicted", True, _same_root_fork),
+        ("inactive", True, _inactive_transition),
+        ("pin", True, _superseded_from_pin),
+    ):
+        item = build_world(
+            tmp_path / name,
+            declare_transition=declare,
+            model_mutator=mutator,
+        )
+        worlds.append(assess_declared_transition_endpoints(item.request))
+
+    worlds.append(assess_declared_transition_endpoints(_request(
+        base.request, context=AS_DESIGNED,
+    )))
+
+    revised = build_world(tmp_path / "revision")
+    revised.model.append(entity_registration(ENT_C))
+    worlds.append(assess_declared_transition_endpoints(_request(
+        revised.request,
+        transition=ModelQueries(revised.model.load()).transition_declaration(
+            TRANSITION_A, context=AS_OPERATED,
+        ),
+    )))
+
+    worlds.extend((
+        assess_declared_transition_endpoints(_request(
+            base.request,
+            from_classification=base.request.to_classification,
+            from_as_of=base.request.to_as_of,
+            to_as_of=base.request.to_as_of + timedelta(minutes=1),
+            evidence_alignments=(base.request.evidence_alignments[1],),
+        )),
+        assess_declared_transition_endpoints(_request(
+            base.request,
+            to_classification=base.request.from_classification,
+            to_as_of=base.request.from_as_of,
+            evidence_alignments=(base.request.evidence_alignments[0],),
+        )),
+    ))
+
+    other_subject = build_world(tmp_path / "subject", subject=ENT_C)
+    worlds.append(assess_declared_transition_endpoints(_request(
+        base.request,
+        from_classification=other_subject.request.from_classification,
+        evidence_alignments=(
+            other_subject.request.evidence_alignments[0],
+            base.request.evidence_alignments[1],
+        ),
+    )))
+
+    worlds.extend((
+        assess_declared_transition_endpoints(_request(
+            base.request,
+            from_as_of=base.request.from_as_of + timedelta(seconds=1),
+        )),
+        assess_declared_transition_endpoints(_request(
+            base.request, to_as_of=base.request.from_as_of,
+        )),
+        assess_declared_transition_endpoints(_request(
+            base.request,
+            to_as_of=base.request.from_as_of - timedelta(seconds=1),
+        )),
+    ))
+
+    from tests.model_state.helpers import BEFORE_RECEIPT
+
+    incomplete_classification = build_world(
+        tmp_path / "classification-incomplete",
+        from_as_of=BEFORE_RECEIPT,
+        to_as_of=BEFORE_RECEIPT + timedelta(minutes=1),
+    )
+    worlds.append(assess_declared_transition_endpoints(
+        incomplete_classification.request,
+    ))
+
+    original = base.request.evidence_alignments[0]
+    refused = OperationalEvidenceSelectionResult(
+        status="refused",
+        request=original.request.selection.request,
+        snapshot=None,
+        issues=(OperationalEvidenceIssue(
+            code="invalid_bounded_material",
+            detail_code="test_refusal",
+            route_index=None,
+            detail="test refusal is structured",
+        ),),
+    )
+    refused_alignment = _alignment_with(
+        refused,
+        original.request.compatibility,
+        original.request.selection.snapshot.content_fingerprint,
+    )
+    worlds.append(assess_declared_transition_endpoints(
+        _replace_first_alignment(base, refused_alignment),
+    ))
+
+    for alignment in (
+        _without_expected_fingerprint(original),
+        _alignment_with(
+            original.request.selection,
+            original.request.compatibility,
+            "sha256:" + "0" * 64,
+        ),
+    ):
+        worlds.append(assess_declared_transition_endpoints(
+            _replace_first_alignment(base, alignment),
+        ))
+
+    absent_selection = EvidenceAssuranceQueries(
+        source=base.source, temporal=base.temporal,
+    ).select_operational_evidence(evidence_request(
+        scope=_scope(json_pointer="/result/status/extruder/not_present"),
+        start=HORIZON,
+        end=original.request.compatibility.as_of,
+    ))
+    assert absent_selection.snapshot is not None
+    worlds.append(assess_declared_transition_endpoints(
+        _replace_first_alignment(base, _alignment_with(
+            absent_selection,
+            original.request.compatibility,
+            absent_selection.snapshot.content_fingerprint,
+        )),
+    ))
+
+    selected = original.request.selection.snapshot.temporal_material \
+        .occurrence_membership[
+            original.request.selection.snapshot.selected.temporal_occurrence_index
+        ]
+    seed_selection = EvidenceAssuranceQueries(
+        source=base.source, temporal=base.temporal,
+    ).select_operational_evidence(evidence_request(
+        start=selected.received_at + timedelta(minutes=1),
+        end=original.request.compatibility.as_of,
+    ))
+    assert seed_selection.snapshot is not None
+    worlds.append(assess_declared_transition_endpoints(
+        _replace_first_alignment(base, _alignment_with(
+            seed_selection,
+            original.request.compatibility,
+            seed_selection.snapshot.content_fingerprint,
+        )),
+    ))
+
+    expected_order = (
+        "transition_anchor_mismatch",
+        "transition_not_registered",
+        "transition_not_declared",
+        "transition_conflicted",
+        "transition_inactive",
+        "context_mismatch",
+        "model_revision_mismatch",
+        "from_state_anchor_mismatch",
+        "to_state_anchor_mismatch",
+        "endpoint_subject_mismatch",
+        "endpoint_pin_not_exact_current",
+        "endpoint_classification_cutoff_mismatch",
+        "cutoffs_equal",
+        "cutoffs_reversed",
+        "endpoint_classification_not_executed",
+        "endpoint_classification_incomplete",
+        "governing_selection_refused",
+        "governing_expected_fingerprint_not_supplied",
+        "governing_expected_fingerprint_not_evaluated",
+        "governing_expected_fingerprint_mismatched",
+        "governing_occurrence_not_aligned",
+        "governing_evidence_incomplete",
+    )
+    reached = {
+        issue.code for result in worlds for issue in result.issues
+    }
+    assert reached == set(expected_order)
+    order = {code: index for index, code in enumerate(expected_order)}
+    for result in worlds:
+        indices = tuple(order[issue.code] for issue in result.issues)
+        assert indices == tuple(sorted(indices))
