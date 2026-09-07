@@ -1,9 +1,10 @@
 # TA-001 — Evidence-Gated Declared Transition Assessment
 
-Status: corrected final synthesis for owner review. This document reconciles
-the frozen Codex lead proposal, its independent challenger audit, and the
-owner's final adjudication. It authorizes no implementation, fixture, ledger
-change, demonstration, ADR, commit, or history operation.
+Status: owner-corrected final synthesis; TA-001 Slice A separately authorized.
+This document reconciles the frozen Codex lead proposal, its independent
+challenger audit, the owner's final adjudication, and the bounded Slice A
+contract correction accepted on 2026-09-07. It does not authorize Slice B,
+fixtures, ledger changes, demonstrations, or lower-contract changes.
 
 ## 1. Change log and complete audit reconciliation
 
@@ -20,11 +21,16 @@ evidence; neither is amended by this design.
 | Observation 4: fingerprint rule was owner-selectable | Resolved to the strict gate for positive and negative execution: every governing observation requires a supplied expected fingerprint and relation `matched`. | Section 8 |
 | Observation 5: disposable positive worlds | Repeated as a mandatory condition in every implementation gate and in the permanent no-demonstration decision. Positive worlds may not become committed fixtures, records, memberships, or artifacts. | Sections 17 and 19 |
 | Observation 6: reachability needed executable exhaustion | Added a mandatory exhaustive public-literal and 22-issue-code reachability test, including fixed single-value disclosures and `not_applicable` arms. | Sections 15 and 18 |
+| Slice A correction R1: carried lower results contain finite floats | Admit only exact built-in finite floats during structural preflight. Nominal lower reconstruction remains authoritative for legal field positions. Private canonical bytes encode the unchanged value as the exact JSON number produced by built-in `float.__repr__`, with lowercase exponent marker and no other rewriting. Float subclasses, NaN, and infinities reject. | Sections 9, 12, 13, and 18 |
+| Slice A correction R2: T43 alternate candidate is lower-invalid | Corrected T43 to typed malformed-input rejection before TA derivation. Candidate zero is the valid twin; no multi-candidate state-classification support is invented. | Sections 15 and 18 |
 
-The audit found zero blocking contradictions. Both required corrections and all
-six observations are incorporated. The owner also fixed the strict fingerprint
-gate and the absence of a facade or demonstration. There are zero unresolved
-owner questions.
+The audit found zero blocking contradictions at design time. Both original
+required corrections and all six observations are incorporated. During Slice
+A preimplementation review, the accepted lower finite-float contract and T43
+reachability exposed two bounded discrepancies. The owner resolved both as the
+R1 and R2 corrections above without changing a lower contract or public TA
+surface. The strict fingerprint gate and absence of a facade or demonstration
+remain fixed. There are zero unresolved owner questions.
 
 ## 2. Verified baseline and accepted decision dependencies
 
@@ -297,11 +303,13 @@ Every public TA boundary must enforce this order:
    non-string mapping keys, and unexpected union arms. Enforce depth before
    descending.
 3. During that same traversal, enforce strict scalar kinds, reject hostile
-   subclasses and boolean indices/counts, apply known container cardinalities,
-   count the expanded serialization-tree occurrences, and stop at node
-   200,001. A mapping or sequence occurrence and each scalar value are nodes;
-   mapping keys are validated names and are not separately counted. Root depth
-   is zero and depth 129 rejects.
+   subclasses and boolean indices/counts, and admit an exact built-in Python
+   `float` only when `type(value) is float` and `math.isfinite(value)` is true.
+   Float subclasses, NaN, positive infinity, and negative infinity reject.
+   Apply known container cardinalities, count the expanded serialization-tree
+   occurrences, and stop at node 200,001. A mapping or sequence occurrence and
+   each scalar value are nodes; mapping keys are validated names and are not
+   separately counted. Root depth is zero and depth 129 rejects.
 4. Treat a shared acyclic subgraph as repeated serialized content: count it
    once per reference. Do not use global de-duplication to turn repeated
    content into a smaller canonical request. Track only the active path for
@@ -310,7 +318,8 @@ Every public TA boundary must enforce this order:
 5. Count scalar and structural UTF-8 JSON contributions incrementally with a
    bounded encoder/counter so one huge string, byte value, mapping, or sequence
    can refuse before a complete plain copy or canonical byte string is
-   allocated. Stop at byte 134,217,729.
+   allocated. For an admitted float, count the exact token defined in Section
+   13. Stop at byte 134,217,729.
 6. Only after node, depth, scalar, container, and preliminary byte admission,
    create the ordinary content graph. Canonically encode through a streaming
    sink, enforce the exact canonical byte count, and retain bytes only after
@@ -373,7 +382,9 @@ normative order.
 All public models are frozen Pydantic models with `extra="forbid"` and
 `revalidate_instances="always"`. All indices are `StrictInt`, non-boolean,
 nonnegative, and range-checked. All strings must be ordinary strings, not
-subclasses. Literal order is normative.
+subclasses. Structural preflight admits an exact built-in finite float, but
+only an accepted carried lower model may declare a legal float field; TA adds
+no float-valued field. Literal order is normative.
 
 ```python
 TransitionAssessmentInputErrorCode = Literal[
@@ -637,10 +648,15 @@ succeeds.
 The boundary does not trust `isinstance`, caller equality, `model_construct`,
 `model_copy`, hidden extras, unexpected Pydantic private state, cached
 properties, or caller serialization. It rejects cycles, unsupported
-containers, non-string mapping keys, scalar subclasses, wrong union arms,
-booleans in every index/count position, and missing/duplicate/extra/reordered
-content. Exact permitted lower private material bindings are checked by their
-nominal lower reconstruction and may not point to substituted material.
+containers, non-string mapping keys, scalar subclasses, non-finite floats,
+wrong union arms, booleans in every index/count position, and
+missing/duplicate/extra/reordered content. It admits only exact built-in finite
+floats during schema-independent structural preflight. Nominal lower
+reconstruction then decides whether a particular field position legally
+accepts a float; a float inserted into any non-float field rejects rather than
+being coerced or widening a TA contract. Exact permitted lower private
+material bindings are checked by their nominal lower reconstruction and may
+not point to substituted material.
 
 After full reconstruction, request validation derives the distinct required
 compatibility set and exact alignment order. Every trace index is checked
@@ -683,8 +699,19 @@ the reconstructed result's JSON-mode field graph encoded as UTF-8 JSON with
 mapping keys sorted by Unicode code point, no insignificant whitespace,
 `ensure_ascii=False`, `allow_nan=False`, arrays in normative order, base-ten
 integers, and aware datetimes normalized to UTC using `Z` and the shortest
-exact fractional-second form. Floats and non-finite numbers are forbidden. The
-bytes have no final newline.
+exact fractional-second form. An exact built-in finite float inherited through
+an accepted carried lower field is encoded unchanged as a JSON number using
+the exact locale-independent token returned by built-in
+`float.__repr__(value)`, after that token matches the JSON-number grammar.
+`-0.0` and the `.0` of integral-valued floats are preserved; an exponent marker
+is normalized to lowercase `e` if necessary, with no other rewrite of the
+shortest round-trip token. The streaming byte counter counts the same token.
+Float subclasses, NaN, positive infinity, and negative infinity are forbidden.
+The bytes have no final newline.
+
+TA performs no engineering comparison on these inherited finite floats. They
+are carried staleness disclosures already validated by lower contracts; this
+rule neither changes their values nor establishes a general TA numeric policy.
 
 Construction order, mapping insertion order, locale, system timezone, and
 `PYTHONHASHSEED` do not change canonical bytes. A permutation of the normative
@@ -782,9 +809,11 @@ subject—must be retained together in Section 11 order. Transition lifecycle
 codes are mutually exclusive because the accepted lower conclusion is a
 single literal; the test still reaches each in a separate valid lower world.
 
-Contradictory lower shapes, forged index-domain divergence, and invalid exact
-alignment collections are typed malformed input rather than invented result
-statuses.
+Contradictory lower shapes, forged index-domain divergence, alternate
+alignment candidate indices, and invalid exact alignment collections are typed
+malformed input rather than invented result statuses. Candidate zero is the
+only valid governing candidate in the accepted explicit state-classification
+world; its exact alignment is the T43 valid twin.
 
 ## 16. Threat and failure model
 
@@ -794,6 +823,8 @@ statuses.
 | huge scalar, mapping, or sequence | bounded incremental scalar/structure counting; no complete copy or byte string before admission |
 | hostile Pydantic object, hidden extra, private cache, wrong union arm | typed rejection before working state is published |
 | boolean, negative, or out-of-range index; scalar subclass with hostile equality | strict reconstruction before index access or comparison |
+| exact built-in finite float in an accepted lower field | admit structurally, retain unchanged, and encode with the Section 13 deterministic JSON-number token |
+| float subclass, NaN, positive infinity, or negative infinity | typed malformed input before lower validation or canonical result allocation |
 | rejected lower object | cannot support a trace, fingerprint relation, admission, or conclusion |
 | stale lower derived value | exact nominal lower reconstruction rejects |
 | transition/state/context/subject/cutoff/revision substitution | exact object and scalar joins disclose issues and prevent execution |
@@ -851,9 +882,12 @@ or demonstration.
 
 ## 18. Corrected adversarial executable acceptance matrix
 
-T01–T62 retain their frozen meanings and numbering. T63 is the audit-requested
-distinct-index attack. T64–T72 add the owner-required exact-limit and preflight
-proofs without renumbering ambiguity. Every attack has the stated valid twin.
+T01–T42 and T44–T62 retain their frozen meanings and numbering. T43 is
+corrected by the owner's Slice A contract resolution. T63 is the
+audit-requested distinct-index attack. T64–T72 add the owner-required
+exact-limit and preflight proofs without renumbering ambiguity, T73 retains
+exhaustive reachability, and T74 pins inherited-float admission. Every attack
+has the stated valid twin.
 
 | ID | Valid twin | Attack or case | Required result |
 |---|---|---|---|
@@ -899,7 +933,7 @@ proofs without renumbering ambiguity. Every attack has the stated valid twin.
 | T40 | T01 | snapshot, embedded fingerprint, and expectation replaced coherently | may remain coherent; no authentication claim |
 | T41 | complete aligned twin | alignment succeeds with incomplete EA horizon | incomplete; not executed |
 | T42 | T01 | governing compatibility has `not_aligned` result | exact lower reason trace; not executed |
-| T43 | T01 | alignment identifies another candidate | fail gate despite other aligned occurrence |
+| T43 | T01 candidate-zero alignment accepted | forge or substitute an evidence-alignment candidate index other than the exact governing candidate, including candidate index one | nominal lower reconstruction fails and TA raises `TransitionAssessmentInputError` with `TRANSITION_ASSESSMENT_INPUT_INVALID` before derivation; no structured assessment result is emitted |
 | T44 | T01 | same occurrence ID with altered content | lower content mismatch; not executed |
 | T45 | two-condition exact alignments | different receipt times | valid independent-latest result; not a cohort |
 | T46 | T45 | different comparable-looking source times | disclosure only; no result effect |
@@ -930,6 +964,7 @@ proofs without renumbering ambiguity. Every attack has the stated valid twin.
 | T71 | admitted ordinary request/result reconstructed once per TA boundary | instrument repeated nested reconstruction and distribute near-limit nodes across alignments | one aggregate budget, no per-alignment reset, no repeated TA subtree pass |
 | T72 | bounded scalar/container twin | huge scalar, mapping, and sequence variants | incremental preflight rejects before full copy/bytes, Pydantic, equality, or fingerprint work |
 | T73 | exhaustive literal/issue worlds | enumerate every public literal and all 22 issues | exact order, reachability, fixed arms, and multi-issue retention proven |
+| T74 | accepted exact lower float fields carrying `0.0`, `-0.0`, `1794.0`, fractional finite, and small/large exponent values | replace with a float subclass, NaN, positive infinity, or negative infinity; separate non-float-field substitution | finite twins retain exact deterministic JSON number tokens; every hostile or schema-invalid mutation raises the sole typed input error before derivation |
 
 The preflight exact-limit twins T64, T66, and T68 exercise the private bounded
 walker/canonical counter with structurally admissible ordinary content at the
@@ -967,7 +1002,7 @@ facade, store access, lower-layer change, or second consumer.
 
 ### 19.3 Slice B — adversarial hardening and final verification
 
-Implement T01–T73, including the strict fingerprint gate, distinct-index
+Implement T01–T74, including the strict fingerprint gate, distinct-index
 attack, exact limits, shared graphs, repeated reconstruction, deterministic
 bytes, reachability, wording, no-I/O, replay, import isolation, and preservation.
 Every genuine defect is first preserved as a failing test. Positive worlds
@@ -1057,12 +1092,15 @@ The following decisions are final for this corrected synthesis:
 | Fingerprint gate | supplied expected fingerprint and relation `matched` for every governing observation, for positive and negative execution |
 | Limits | 134,217,728 canonical-request bytes; 200,000 reconstructed nodes; depth 128 |
 | Preflight | iterative node/depth/scalar/container admission before canonical serialization, Pydantic reconstruction, lower validation, equality, or fingerprint work |
+| Inherited floats | admit exact built-in finite floats structurally; nominal lower schemas govern placement; deterministic `float.__repr__` JSON-number encoding; reject subclasses and non-finite values |
+| T43 | alternate alignment candidate indices are lower-invalid and produce the sole typed input error before TA derivation; candidate zero is the valid twin |
 | Orchestration | no facade and no store/evidence reselection |
 | Demonstration | none in TA-001 v1; all positive worlds disposable and uncommitted |
 | Public meaning | bounded support or bounded non-support for the declared endpoint pattern only |
 | ADR order | complete documentation-debt ADR-0019 before implementation; allocate TA ADR only after final design acceptance |
 
 There are zero unresolved owner questions and no hidden implementation gate.
-Implementation remains separately owner-gated.
+Slice A is separately owner authorized after the bounded R1/R2 correction;
+Slice B remains separately owner-gated.
 
 END OF TA-001 CORRECTED FINAL SYNTHESIS
