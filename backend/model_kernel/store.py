@@ -25,6 +25,7 @@ from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from backend.model_kernel.canonical import (
     _flow_effective_body_bytes,
+    _flow_measurement_effective_body_bytes,
     canonical_payload,
     compute_revision_id,
     verify_record_id,
@@ -251,6 +252,33 @@ class LoadedModel:
     flow_declaration_withdrawn_by: Mapping[str, tuple[str, ...]] = _EMPTY
     flow_declaration_withdrawals_by_target: Mapping[
         str, tuple[str, ...]] = _EMPTY
+    flow_measurement_associations: Mapping[
+        str, FlowMeasurementAssociation] = _EMPTY
+    flow_measurement_association_withdrawals: Mapping[
+        str, FlowMeasurementAssociationWithdrawal] = _EMPTY
+    flow_measurement_ids_by_subject: Mapping[tuple, tuple[str, ...]] = _EMPTY
+    flow_measurement_ids_by_flow_context: Mapping[tuple, tuple[str, ...]] = _EMPTY
+    flow_measurement_ids_by_variable_context: Mapping[tuple, tuple[str, ...]] = _EMPTY
+    flow_measurement_ids_by_port_context: Mapping[tuple, tuple[str, ...]] = _EMPTY
+    flow_measurement_parent_ids: Mapping[str, tuple[str, ...]] = _EMPTY
+    flow_measurement_successor_ids: Mapping[str, tuple[str, ...]] = _EMPTY
+    flow_measurement_root_by_id: Mapping[str, str] = _EMPTY
+    flow_measurement_ancestry_by_id: Mapping[str, tuple[str, ...]] = _EMPTY
+    current_flow_measurement_tips_by_root: Mapping[
+        str, tuple[FlowMeasurementAssociation, ...]] = _EMPTY
+    flow_measurement_withdrawn_by: Mapping[str, tuple[str, ...]] = _EMPTY
+    flow_measurement_withdrawals_by_target: Mapping[
+        str, tuple[str, ...]] = _EMPTY
+    flow_measurement_participant_role_by_id: Mapping[str, str] = _EMPTY
+    flow_measurement_effective_body_by_id: Mapping[str, bytes] = _EMPTY
+    flow_measurement_ids_by_effective_body: Mapping[
+        bytes, tuple[str, ...]] = _EMPTY
+    flow_measurement_root_ids_by_subject: Mapping[
+        tuple, tuple[str, ...]] = _EMPTY
+    flow_measurement_root_ids_by_effective_body: Mapping[
+        bytes, tuple[str, ...]] = _EMPTY
+    flow_measurement_disagreeing_root_ids_by_subject: Mapping[
+        tuple, tuple[str, ...]] = _EMPTY
 
 
 def _fail(code: str, message: str) -> None:
@@ -1939,6 +1967,225 @@ def validate_record_collection(
                 *current_flow_declaration_tips_by_root[root],
                 flow_declarations[record_id])
 
+    # -- explicit flow-to-measurement associations -----------------------
+    # FM composes exact historical model-record pins already admitted by
+    # their owning families. It derives only a source/sink participant role;
+    # no observation, occurrence, value, freshness, or physical locus enters
+    # this model-ledger validation boundary.
+    def flow_measurement_subject(record):
+        return (
+            record.flow_anchor_id,
+            record.variable_anchor_id,
+            record.participant_port_anchor_id,
+            record.context,
+            "direct_measurement_relevance",
+            record.orientation,
+        )
+
+    flow_measurement_ids_by_subject: dict[tuple, tuple[str, ...]] = {}
+    flow_measurement_ids_by_flow_context: dict[tuple, tuple[str, ...]] = {}
+    flow_measurement_ids_by_variable_context: dict[tuple, tuple[str, ...]] = {}
+    flow_measurement_ids_by_port_context: dict[tuple, tuple[str, ...]] = {}
+    flow_measurement_parent_ids: dict[str, tuple[str, ...]] = {}
+    flow_measurement_participant_role_by_id: dict[str, str] = {}
+    flow_measurement_effective_body_by_id: dict[str, bytes] = {}
+    flow_measurement_ids_by_effective_body: dict[bytes, tuple[str, ...]] = {}
+
+    for record_id in sorted(flow_measurement_associations):
+        association = flow_measurement_associations[record_id]
+
+        flow_registration = flow_registrations.get(
+            association.flow_registration_record_id)
+        variable_registration = variable_registrations.get(
+            association.variable_registration_record_id)
+        port_registration = port_registrations.get(
+            association.port_registration_record_id)
+        flow_declaration = flow_declarations.get(
+            association.flow_declaration_record_id)
+        variable_port = variable_port_associations.get(
+            association.variable_port_association_record_id)
+        variable_semantic = semantic_declarations.get(
+            association.variable_semantic_declaration_record_id)
+        if any(item is None for item in (
+                flow_registration, variable_registration, port_registration,
+                flow_declaration, variable_port, variable_semantic)):
+            _fail("MODEL_REFERENCE_INVALID",
+                  f"flow-measurement association {record_id} has a missing "
+                  "or wrong-kind support pin")
+
+        if flow_registration.anchor.anchor_id != association.flow_anchor_id:
+            _fail("MODEL_FLOW_MEASUREMENT_SUPPORT_INVALID",
+                  f"flow-measurement association {record_id} substitutes "
+                  "its registered flow")
+        if (variable_registration.anchor.anchor_id
+                != association.variable_anchor_id):
+            _fail("MODEL_FLOW_MEASUREMENT_SUPPORT_INVALID",
+                  f"flow-measurement association {record_id} substitutes "
+                  "its registered variable")
+        if port_registration.anchor.anchor_id != \
+                association.participant_port_anchor_id:
+            _fail("MODEL_FLOW_MEASUREMENT_SUPPORT_INVALID",
+                  f"flow-measurement association {record_id} substitutes "
+                  "its registered participant port")
+
+        source = association.participant_port_anchor_id in \
+            flow_registration.source_port_anchor_ids
+        sink = association.participant_port_anchor_id in \
+            flow_registration.sink_port_anchor_ids
+        if source == sink:
+            _fail("MODEL_FLOW_MEASUREMENT_PARTICIPANT_INVALID",
+                  f"flow-measurement association {record_id} does not name "
+                  "exactly one registered flow participant role")
+        role = "source" if source else "sink"
+        flow_measurement_participant_role_by_id[record_id] = role
+
+        if (flow_declaration.flow_anchor_id != association.flow_anchor_id
+                or flow_declaration.context != association.context):
+            _fail("MODEL_FLOW_MEASUREMENT_SUPPORT_INVALID",
+                  f"flow-measurement association {record_id} has unaligned "
+                  "flow-declaration support")
+        direction_pins = (
+            flow_declaration.source_direction_pins if source
+            else flow_declaration.sink_direction_pins)
+        if association.participant_port_anchor_id not in {
+                pin.port_anchor_id for pin in direction_pins}:
+            _fail("MODEL_FLOW_MEASUREMENT_PARTICIPANT_INVALID",
+                  f"flow-measurement association {record_id} has no matching "
+                  f"{role} flow-declaration pin")
+
+        if (variable_port.variable_anchor_id != association.variable_anchor_id
+                or variable_port.port_anchor_id
+                != association.participant_port_anchor_id
+                or variable_port.context != association.context):
+            _fail("MODEL_FLOW_MEASUREMENT_SUPPORT_INVALID",
+                  f"flow-measurement association {record_id} has unaligned "
+                  "variable-port support")
+
+        declaration = variable_semantic.declaration
+        if (variable_semantic.variable_anchor_id
+                != association.variable_anchor_id
+                or declaration.dimension != "observation_role"
+                or declaration.observation_role.system_id != "project_local"
+                or declaration.observation_role.system_edition
+                != "ohk-observation-roles-1"
+                or declaration.observation_role.code != "measured_actual"):
+            _fail("MODEL_FLOW_MEASUREMENT_SEMANTIC_INVALID",
+                  f"flow-measurement association {record_id} lacks exact "
+                  "context-independent measured-actual support")
+
+        _check_model_record_evidence(
+            records, association, "flow-measurement association")
+
+        subject = flow_measurement_subject(association)
+        flow_measurement_ids_by_subject[subject] = tuple(sorted((
+            *flow_measurement_ids_by_subject.get(subject, ()), record_id)))
+        for index, key in (
+                (flow_measurement_ids_by_flow_context,
+                 (association.flow_anchor_id, association.context)),
+                (flow_measurement_ids_by_variable_context,
+                 (association.variable_anchor_id, association.context)),
+                (flow_measurement_ids_by_port_context,
+                 (association.participant_port_anchor_id,
+                  association.context))):
+            index[key] = tuple(sorted((*index.get(key, ()), record_id)))
+        flow_measurement_parent_ids[record_id] = association.supersedes
+        body = _flow_measurement_effective_body_bytes(association)
+        flow_measurement_effective_body_by_id[record_id] = body
+        flow_measurement_ids_by_effective_body[body] = tuple(sorted((
+            *flow_measurement_ids_by_effective_body.get(body, ()), record_id)))
+
+    (flow_measurement_successor_ids,
+     flow_measurement_root_by_id) = _pt_dag_indexes(
+         flow_measurement_associations, flow_measurement_subject,
+         "MODEL_FLOW_MEASUREMENT_LINEAGE_INVALID",
+         "flow-measurement association")
+
+    flow_measurement_ancestry_by_id: dict[str, tuple[str, ...]] = {}
+    pending_flow_measurement_ancestry = set(flow_measurement_associations)
+    while pending_flow_measurement_ancestry:
+        progressed = False
+        for record_id in sorted(tuple(pending_flow_measurement_ancestry)):
+            parents = flow_measurement_associations[record_id].supersedes
+            if any(parent not in flow_measurement_ancestry_by_id
+                   for parent in parents):
+                continue
+            ancestors = {
+                ancestor
+                for parent in parents
+                for ancestor in (
+                    parent, *flow_measurement_ancestry_by_id[parent])
+            }
+            flow_measurement_ancestry_by_id[record_id] = tuple(
+                sorted(ancestors))
+            pending_flow_measurement_ancestry.remove(record_id)
+            progressed = True
+        if not progressed:
+            _fail("MODEL_FLOW_MEASUREMENT_LINEAGE_INVALID",
+                  "flow-measurement ancestry could not be derived")
+
+    flow_measurement_withdrawals_by_target: dict[
+        str, tuple[str, ...]] = {}
+    for withdrawal_id in sorted(flow_measurement_association_withdrawals):
+        withdrawal = flow_measurement_association_withdrawals[withdrawal_id]
+        target = withdrawal.withdraws
+        if target not in flow_measurement_associations:
+            _fail("MODEL_REFERENCE_INVALID",
+                  f"flow-measurement withdrawal {withdrawal_id} targets a "
+                  "missing association")
+        if flow_measurement_successor_ids[target]:
+            _fail("MODEL_FLOW_MEASUREMENT_WITHDRAWAL_INVALID",
+                  f"flow-measurement withdrawal {withdrawal_id} targets a "
+                  "superseded association")
+        if target in flow_measurement_withdrawals_by_target:
+            _fail("MODEL_FLOW_MEASUREMENT_WITHDRAWAL_INVALID",
+                  f"flow-measurement association {target} is withdrawn more "
+                  "than once")
+        flow_measurement_withdrawals_by_target[target] = (withdrawal_id,)
+
+    flow_measurement_withdrawn_by = {
+        record_id: flow_measurement_withdrawals_by_target.get(record_id, ())
+        for record_id in flow_measurement_associations}
+    current_flow_measurement_tips_by_root: dict[
+        str, tuple[FlowMeasurementAssociation, ...]] = {
+            root: () for root in sorted(set(
+                flow_measurement_root_by_id.values()))
+        }
+    for record_id in sorted(flow_measurement_associations):
+        if (not flow_measurement_successor_ids[record_id]
+                and not flow_measurement_withdrawn_by[record_id]):
+            root = flow_measurement_root_by_id[record_id]
+            current_flow_measurement_tips_by_root[root] = (
+                *current_flow_measurement_tips_by_root[root],
+                flow_measurement_associations[record_id])
+
+    flow_measurement_root_ids_by_subject: dict[
+        tuple, tuple[str, ...]] = {}
+    for root in sorted(set(flow_measurement_root_by_id.values())):
+        subject = flow_measurement_subject(flow_measurement_associations[root])
+        flow_measurement_root_ids_by_subject[subject] = tuple(sorted((
+            *flow_measurement_root_ids_by_subject.get(subject, ()), root)))
+
+    flow_measurement_root_ids_by_effective_body: dict[
+        bytes, tuple[str, ...]] = {}
+    for root in sorted(current_flow_measurement_tips_by_root):
+        for tip in current_flow_measurement_tips_by_root[root]:
+            body = flow_measurement_effective_body_by_id[tip.record_id]
+            roots = flow_measurement_root_ids_by_effective_body.get(body, ())
+            if root not in roots:
+                flow_measurement_root_ids_by_effective_body[body] = tuple(
+                    sorted((*roots, root)))
+
+    flow_measurement_disagreeing_root_ids_by_subject: dict[
+        tuple, tuple[str, ...]] = {}
+    for subject, roots in flow_measurement_root_ids_by_subject.items():
+        bodies = {
+            flow_measurement_effective_body_by_id[tip.record_id]
+            for root in roots
+            for tip in current_flow_measurement_tips_by_root[root]
+        }
+        if len(bodies) > 1:
+            flow_measurement_disagreeing_root_ids_by_subject[subject] = roots
+
     record_ids = tuple(sorted(records))
     revision = ModelRevision(
         revision_id=compute_revision_id(model_id, record_ids),
@@ -2173,6 +2420,47 @@ def validate_record_collection(
             for record_id in sorted(flow_declaration_withdrawn_by)}),
         flow_declaration_withdrawals_by_target=_frozen_mapping(
             flow_declaration_withdrawals_by_target),
+        flow_measurement_associations=_frozen_mapping({
+            record_id: flow_measurement_associations[record_id]
+            for record_id in sorted(flow_measurement_associations)}),
+        flow_measurement_association_withdrawals=_frozen_mapping({
+            record_id: flow_measurement_association_withdrawals[record_id]
+            for record_id in sorted(
+                flow_measurement_association_withdrawals)}),
+        flow_measurement_ids_by_subject=_frozen_mapping(
+            flow_measurement_ids_by_subject),
+        flow_measurement_ids_by_flow_context=_frozen_mapping(
+            flow_measurement_ids_by_flow_context),
+        flow_measurement_ids_by_variable_context=_frozen_mapping(
+            flow_measurement_ids_by_variable_context),
+        flow_measurement_ids_by_port_context=_frozen_mapping(
+            flow_measurement_ids_by_port_context),
+        flow_measurement_parent_ids=_frozen_mapping(
+            flow_measurement_parent_ids),
+        flow_measurement_successor_ids=_frozen_mapping(
+            flow_measurement_successor_ids),
+        flow_measurement_root_by_id=_frozen_mapping(
+            flow_measurement_root_by_id),
+        flow_measurement_ancestry_by_id=_frozen_mapping(
+            flow_measurement_ancestry_by_id),
+        current_flow_measurement_tips_by_root=_frozen_mapping(
+            current_flow_measurement_tips_by_root),
+        flow_measurement_withdrawn_by=_frozen_mapping(
+            flow_measurement_withdrawn_by),
+        flow_measurement_withdrawals_by_target=_frozen_mapping(
+            flow_measurement_withdrawals_by_target),
+        flow_measurement_participant_role_by_id=_frozen_mapping(
+            flow_measurement_participant_role_by_id),
+        flow_measurement_effective_body_by_id=_frozen_mapping(
+            flow_measurement_effective_body_by_id),
+        flow_measurement_ids_by_effective_body=_frozen_mapping(
+            flow_measurement_ids_by_effective_body),
+        flow_measurement_root_ids_by_subject=_frozen_mapping(
+            flow_measurement_root_ids_by_subject),
+        flow_measurement_root_ids_by_effective_body=_frozen_mapping(
+            flow_measurement_root_ids_by_effective_body),
+        flow_measurement_disagreeing_root_ids_by_subject=_frozen_mapping(
+            flow_measurement_disagreeing_root_ids_by_subject),
         superseded_by=_frozen_mapping(superseded_by),
         withdrawn_by=_frozen_mapping(withdrawn_by))
 

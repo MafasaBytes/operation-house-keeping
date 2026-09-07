@@ -1707,6 +1707,11 @@ class VariablePortAssociationWithdrawal(_Frozen):
 
 
 class FlowMeasurementAssociation(_Frozen):
+    """One exact, evidence-backed direct-measurement relevance claim."""
+
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", revalidate_instances="always")
+
     record_kind: Literal["flow_measurement_association"] = "flow_measurement_association"
     schema_version: Literal["1"] = "1"
     record_id: str = Field(pattern=r"^fma_[0-9a-f]{64}$")
@@ -1727,6 +1732,30 @@ class FlowMeasurementAssociation(_Frozen):
     authority: AuthorityRef
     note: str = ""
 
+    @field_validator("context", "authority", mode="before")
+    @classmethod
+    def _reconstruct_nested_model(cls, value):
+        if isinstance(value, BaseModel):
+            return _strict_transition_nested_dump(value)
+        return value
+
+    @field_validator("evidence", mode="before")
+    @classmethod
+    def _reconstruct_evidence(cls, value):
+        if isinstance(value, (tuple, list)):
+            return tuple(
+                _strict_transition_nested_dump(item)
+                if isinstance(item, BaseModel) else item
+                for item in value)
+        return value
+
+    @field_validator("orientation", mode="before")
+    @classmethod
+    def _strict_orientation(cls, value):
+        if type(value) is not str:
+            raise ValueError("orientation must be an exact string literal")
+        return value
+
     @model_validator(mode="after")
     def _parents(self):
         if any(not re.fullmatch(r"fma_[0-9a-f]{64}", p) for p in self.supersedes):
@@ -1737,6 +1766,11 @@ class FlowMeasurementAssociation(_Frozen):
 
 
 class FlowMeasurementAssociationWithdrawal(_Frozen):
+    """Uncitable membership-relative withdrawal of one eligible FMA tip."""
+
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", revalidate_instances="always")
+
     record_kind: Literal["flow_measurement_association_withdrawal"] = "flow_measurement_association_withdrawal"
     schema_version: Literal["1"] = "1"
     record_id: str = Field(pattern=r"^fmw_[0-9a-f]{64}$")
@@ -1744,6 +1778,13 @@ class FlowMeasurementAssociationWithdrawal(_Frozen):
     recorded_at: UtcDatetime
     authority: AuthorityRef
     note: str = ""
+
+    @field_validator("authority", mode="before")
+    @classmethod
+    def _reconstruct_authority(cls, value):
+        if isinstance(value, BaseModel):
+            return _strict_transition_nested_dump(value)
+        return value
 
 
 ModelRecord = Union[

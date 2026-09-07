@@ -80,6 +80,20 @@ _FLOW_EFFECTIVE_BODY_FIELDS = (
     "sink_direction_pins",
 )
 
+_FLOW_MEASUREMENT_EFFECTIVE_BODY_FIELDS = (
+    "flow_anchor_id",
+    "variable_anchor_id",
+    "participant_port_anchor_id",
+    "context",
+    "orientation",
+    "flow_registration_record_id",
+    "variable_registration_record_id",
+    "port_registration_record_id",
+    "flow_declaration_record_id",
+    "variable_port_association_record_id",
+    "variable_semantic_declaration_record_id",
+)
+
 
 def _canonical_value(value):
     if isinstance(value, datetime):
@@ -195,6 +209,24 @@ def _flow_effective_body_bytes(record) -> bytes:
         raise ModelIntegrityError(
             "MODEL_RECORD_INVALID",
             "flow body is not canonically serializable") from error
+
+
+def _flow_measurement_effective_body_bytes(record) -> bytes:
+    """Canonical, non-persisted FM-001 effective-body projection."""
+    try:
+        dumped = record.model_dump(
+            mode="python", include=set(_FLOW_MEASUREMENT_EFFECTIVE_BODY_FIELDS))
+        if tuple(sorted(dumped)) != tuple(sorted(
+                _FLOW_MEASUREMENT_EFFECTIVE_BODY_FIELDS)):
+            raise ValueError("record is not a flow-measurement association")
+        return json.dumps(
+            _canonical_value(dumped), sort_keys=True, separators=(",", ":"),
+            ensure_ascii=False,
+        ).encode("utf-8")
+    except (AttributeError, UnicodeError, TypeError, ValueError) as error:
+        raise ModelIntegrityError(
+            "MODEL_RECORD_INVALID",
+            "flow-measurement body is not canonically serializable") from error
 
 
 def compute_record_id(record) -> str:
