@@ -85,6 +85,22 @@ def test_wrong_lower_union_arm_rejects_before_lower_validation(
         assess_declared_transition_endpoints(request)
 
 
+def test_wrong_nested_record_union_arm_rejects_during_preflight(tmp_path):
+    import backend.transition_assessment.preflight as preflight
+
+    request = build_world(tmp_path).request.model_dump(
+        mode="python", warnings=False,
+    )
+    assert preflight._preflight_graph(request).nodes > 0
+    request["transition"]["material"]["records"][0]["record_kind"] = (
+        "unexpected_record"
+    )
+    with pytest.raises(ValueError, match="union arm"):
+        preflight._preflight_graph(request)
+    with pytest.raises(TransitionAssessmentInputError):
+        assess_declared_transition_endpoints(request)
+
+
 def test_floats_in_every_fixed_integer_field_reject_without_coercion(tmp_path):
     from backend.transition_assessment import TransitionAssessmentLimits
 
