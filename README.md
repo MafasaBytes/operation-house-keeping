@@ -8,10 +8,11 @@ contains the binding project guidance.
 
 ## Current status
 
-The accepted milestone sequence through EA-001 is complete. EA-001 is the
-latest owner-accepted milestone; no successor milestone is currently approved
-or in implementation. EA-001 is adversarially repaired, full-suite verified,
-and dual-clean-checkout verified.
+The accepted implemented milestone sequence through EA-001 is complete.
+EA-001 is adversarially repaired, full-suite verified, and
+dual-clean-checkout verified. The TA-001 design is owner accepted, but its
+implementation has not started and no transition-assessment runtime capability
+exists.
 
 The authoritative synthetic demo model contains exactly 36 records at
 `mrv_b8f03e1c03c23efc5c4454d00e43e6b89b8254ab87ce724d7418b8a94288c7ee`.
@@ -74,7 +75,8 @@ sources and disclosures are test artifacts, never engineering truth.
 | 16 | ST-001 | Explicit state identity and evidence-gated classification | [ADR-0016](docs/adr/0016-explicit-state-identity-and-evidence-gated-classification.md) |
 | 17 | ST-002 | Explicit transition identity and declaration-only disclosure | [ADR-0017](docs/adr/0017-explicit-state-transition-identity-and-declaration.md) |
 | 18 | FL-001 | Explicit flow identity and declaration-only disclosure | [ADR-0018](docs/adr/0018-explicit-flow-identity-and-declaration.md) |
-| 19 | EA-001 | Content-bound operational-evidence selection, assurance, and bounded value-compatibility alignment | [Accepted design](docs/superpowers/specs/2026-09-04-ea001-content-bound-operational-evidence-selection-and-assurance-design.md) — ADR-0019 reconciliation pending |
+| 19 | EA-001 | Content-bound operational-evidence selection, assurance, and bounded value-compatibility alignment | [ADR-0019](docs/adr/0019-content-bound-operational-evidence-selection-and-assurance.md) |
+| 20 | TA-001 | Owner-accepted design for pure evidence-gated declared-transition assessment; implementation not started | [ADR-0020](docs/adr/0020-evidence-gated-declared-transition-assessment.md) |
 
 Accepted specifications live in `docs/superpowers/specs/`; accepted decisions
 live in `docs/adr/`; owner gates and verification evidence live in
@@ -93,14 +95,20 @@ An EA snapshot fingerprint or successful evidence-alignment result establishes
 only the accepted bounded content and relation. It does not authenticate the
 source, sensor, signer, clock, engineering conclusion, or physical condition.
 
-## Architectural frontier — not approved work
+## Architectural frontier
 
-The current frontier includes transition evidence assessment; flow measurement
-association and assessment; and, eventually, configuration identity,
-causality, diagnosis, impact analysis, goals, actions, and planning. EA-001 did
-not create a generic immutable assessment identity or assessment framework.
-These are possible future concerns only. This status assigns them no permanent
-milestone contract or module name and authorizes no implementation.
+TA-001 has an [owner-accepted design](docs/superpowers/specs/2026-09-07-ta001-evidence-gated-declared-transition-assessment-design.md),
+recorded by [ADR-0020](docs/adr/0020-evidence-gated-declared-transition-assessment.md),
+for a pure, read-only assessment of whether two independently classified
+endpoint views support one declared transition pattern. Implementation has not
+started. It will not establish transition occurrence or non-occurrence, add an
+orchestration facade or demonstration, or create a generic immutable
+assessment identity.
+
+The unapproved frontier beyond that design includes flow measurement
+association and assessment and, eventually, configuration identity, causality,
+diagnosis, impact analysis, goals, actions, and planning. These remain possible
+future concerns only; this status authorizes none of them.
 
 ## Verification
 

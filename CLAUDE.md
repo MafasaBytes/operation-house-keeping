@@ -35,8 +35,8 @@ TS-001, IB-001, MK-001, VM-001, VS-001, SN-001, ES-001, CN-001, PT-001,
 VP-001, BH-001, ST-001, ST-002, FL-001, and EA-001. Both FL-001 and EA-001 are
 complete and owner accepted. FL-001 is adversarially reviewed; EA-001 is
 adversarially repaired. Both are full-suite and dual-clean-checkout verified.
-No successor milestone is currently approved or in implementation. Accepted
-designs and decisions are indexed in
+TA-001's final design is owner accepted, but its implementation has not
+started. Accepted designs and decisions are indexed in
 `README.md`, `docs/superpowers/specs/`, and `docs/adr/`.
 
 Also accepted: ES-001, adversarially reviewed, repaired, and
@@ -63,12 +63,19 @@ assessment or occurrence assertion. FL-001 declares one synthetic logical
 directed flow but performs no measurement assessment and asserts no physical
 flow occurrence.
 
-The unapproved architectural frontier includes content-bound evidence
-authentication and immutable assessment selection; transition evidence
-assessment; flow measurement association and assessment; and eventual
-configuration identity, causality, diagnosis, impact analysis, goals, actions,
-and planning. This status assigns none of those concerns a permanent milestone
-contract or module name and authorizes no implementation.
+TA-001's accepted design assigns `backend.transition_assessment` to a future
+pure, read-only leaf composition over carried public transition-declaration,
+state-classification, and evidence-alignment results. Its fixed admission
+limits are 134,217,728 canonical-request bytes, 200,000 reconstructed nodes,
+and nesting depth 128. Every governing observed condition requires a supplied,
+matched expected fingerprint. The design adds no facade, demonstration,
+occurrence or non-occurrence claim, store, ledger, identity, or persistence.
+No TA-001 implementation is present or authorized by this documentation gate.
+
+The unapproved architectural frontier includes flow measurement association
+and assessment and eventual configuration identity, causality, diagnosis,
+impact analysis, goals, actions, and planning. This status assigns none of
+those concerns an implemented capability and authorizes no work on them.
 
 EA-001 is complete and owner accepted. Its accepted lineage includes the Slice
 A lower read seams and integrity repair at
@@ -80,6 +87,13 @@ public surface at `96d0dfec1a73c6250159dae0df498880ac5e26b0`. EA-001 is
 adversarially repaired, full-suite verified, and dual-clean-checkout verified.
 It adds no demonstration or committed alignment-result artifact, and every
 later demonstration remains unauthorized.
+
+[ADR-0019](docs/adr/0019-content-bound-operational-evidence-selection-and-assurance.md)
+records the accepted EA-001 architecture.
+[ADR-0020](docs/adr/0020-evidence-gated-declared-transition-assessment.md)
+records the owner-accepted but unimplemented TA-001 design. TA-001's
+implementation requires its separate owner gate; no Slice A or Slice B is
+complete under this status.
 
 ## Current Phase
 

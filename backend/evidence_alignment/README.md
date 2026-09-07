@@ -14,6 +14,13 @@ The milestone is adversarially repaired, full-suite verified, and
 dual-clean-checkout verified. No demonstration, committed alignment-result
 artifact, or second consumer was added.
 
+The accepted EA-001 decisions are recorded in
+[ADR-0019](../../docs/adr/0019-content-bound-operational-evidence-selection-and-assurance.md).
+The owner-accepted, unimplemented TA-001 design may later consume complete
+alignment results as carried inputs. That design does not change this package,
+make `transition_assessment` a second evidence-alignment consumer, or authorize
+TA implementation. The sole v1 consumer described below remains unchanged.
+
 ## Public boundary
 
 The single public operation is:
