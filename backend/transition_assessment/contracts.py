@@ -16,8 +16,6 @@ from pydantic import (
     StrictInt,
     StrictStr,
     StringConstraints,
-    TypeAdapter,
-    field_validator,
     model_validator,
 )
 
@@ -206,7 +204,6 @@ _StrictNonnegativeInt = Annotated[StrictInt, Field(ge=0)]
 _TransitionAnchorId = Annotated[
     StrictStr, StringConstraints(pattern=r"^trn_[0-9a-f]{32}$"),
 ]
-_CONTEXT = TypeAdapter(AssertionContext)
 _REQUEST_ALREADY_PREFLIGHTED: ContextVar[bool] = ContextVar(
     "ta_request_already_preflighted", default=False,
 )
@@ -243,37 +240,6 @@ class DeclaredTransitionAssessmentRequest(_Frozen):
         if not _graphs_have_same_shape(plain, rebuilt):
             raise ValueError("nominal reconstruction changed serialized shape")
         return rebuilt
-
-    @field_validator("context", mode="before")
-    @classmethod
-    def _context(cls, value):
-        return _CONTEXT.validate_python(value)
-
-    @field_validator("policy", mode="before")
-    @classmethod
-    def _policy(cls, value):
-        return TransitionAssessmentPolicy.model_validate(value)
-
-    @field_validator("transition", mode="before")
-    @classmethod
-    def _transition(cls, value):
-        return TransitionDeclarationResult.model_validate(value)
-
-    @field_validator("from_classification", "to_classification", mode="before")
-    @classmethod
-    def _classification(cls, value):
-        return StateClassificationResult.model_validate(value)
-
-    @field_validator("evidence_alignments", mode="before")
-    @classmethod
-    def _alignments(cls, value):
-        if type(value) not in (tuple, list):
-            raise ValueError("evidence alignments must be a sequence")
-        return tuple(
-            OperationalEvidenceAlignmentResult.model_validate(item)
-            for item in value
-        )
-
 
 class TransitionAssessmentIssue(_Frozen):
     code: TransitionAssessmentIssueCode
@@ -361,12 +327,12 @@ class DeclaredTransitionAssessmentResult(_Frozen):
         fields = tuple(cls.model_fields)
         if set(outer) != set(fields):
             raise ValueError("assessment result fields are not exact")
-        request = DeclaredTransitionAssessmentRequest.model_validate(
-            outer["request"],
-        )
         compact = {name: outer[name] for name in fields if name != "request"}
         _preflight_graph(compact)
         plain = _plain_graph(compact)
+        request = DeclaredTransitionAssessmentRequest.model_validate(
+            outer["request"],
+        )
         plain = {"request": request, **plain}
         token = _REQUEST_ALREADY_PREFLIGHTED.set(True)
         try:

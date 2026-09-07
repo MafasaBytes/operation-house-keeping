@@ -6,7 +6,8 @@ import math
 import re
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Iterator, get_args
+from types import UnionType
+from typing import Annotated, Iterator, Literal, Union, get_args, get_origin
 
 from pydantic import BaseModel
 
@@ -19,6 +20,7 @@ _JSON_NUMBER = re.compile(
     r"-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:e[+-]?[0-9]+)?\Z"
 )
 _STRICT_INTEGER_NAMES = {"sweep_position"}
+_STRICT_INTEGER_COLLECTION_NAMES: set[str] = set()
 _TRUSTED_MODEL_TYPES: frozenset[type[BaseModel]] = frozenset()
 
 
@@ -98,6 +100,45 @@ def _register_trusted_model_types(roots: tuple[type[BaseModel], ...]) -> None:
                     annotations.extend(get_args(annotation))
     global _TRUSTED_MODEL_TYPES
     _TRUSTED_MODEL_TYPES = frozenset(trusted)
+    for candidate in trusted:
+        for name, field in candidate.model_fields.items():
+            if _annotation_is_integer(field.annotation):
+                _STRICT_INTEGER_NAMES.add(name)
+            if _annotation_is_integer_collection(field.annotation):
+                _STRICT_INTEGER_COLLECTION_NAMES.add(name)
+
+
+def _annotation_is_integer(annotation: object) -> bool:
+    origin = get_origin(annotation)
+    arguments = get_args(annotation)
+    if origin is Annotated:
+        return _annotation_is_integer(arguments[0])
+    if annotation is int:
+        return True
+    if origin is Literal:
+        return bool(arguments) and all(type(item) is int for item in arguments)
+    if origin in (Union, UnionType):
+        non_null = tuple(item for item in arguments if item is not type(None))
+        return bool(non_null) and all(
+            _annotation_is_integer(item) for item in non_null
+        )
+    return False
+
+
+def _annotation_is_integer_collection(annotation: object) -> bool:
+    origin = get_origin(annotation)
+    arguments = get_args(annotation)
+    if origin is Annotated:
+        return _annotation_is_integer_collection(arguments[0])
+    if origin in (Union, UnionType):
+        return any(
+            _annotation_is_integer_collection(item)
+            for item in arguments if item is not type(None)
+        )
+    if origin not in (tuple, list):
+        return False
+    members = tuple(item for item in arguments if item is not Ellipsis)
+    return bool(members) and all(_annotation_is_integer(item) for item in members)
 
 
 def _model_items(
@@ -227,7 +268,27 @@ def _boolean_index(name: str | int | None, parent_name: str | None) -> bool:
         or name in _STRICT_INTEGER_NAMES
     ):
         return True
-    return type(parent_name) is str and parent_name.endswith("_indices")
+    return type(parent_name) is str and (
+        parent_name.endswith("_indices")
+        or parent_name in _STRICT_INTEGER_COLLECTION_NAMES
+    )
+
+
+def _validate_context_union_arm(
+    name: str | int | None,
+    item: object,
+) -> None:
+    if name != "context" or type(item) is not dict:
+        return
+    kind = None
+    for key, value in item.items():
+        if type(key) is str and key == "kind":
+            kind = value
+            break
+    if type(kind) is not str or kind not in {
+        "lifecycle_view", "view_independent",
+    }:
+        raise ValueError("unexpected context union arm")
 
 
 def _preflight_graph(
@@ -269,6 +330,7 @@ def _preflight_graph(
 
         if type(item) is bool and _boolean_index(name, parent_name):
             raise ValueError("boolean index is invalid")
+        _validate_context_union_arm(name, item)
         container = _container(item, inherited_material)
         if container is None:
             byte_count += _scalar_size(item, maximum=max_bytes - byte_count)
