@@ -21,9 +21,9 @@ _JSON_NUMBER = re.compile(
 )
 _STRICT_INTEGER_NAMES = {"sweep_position"}
 _STRICT_INTEGER_COLLECTION_NAMES: set[str] = set()
-_UNION_DISCRIMINATORS: dict[
-    str, tuple[tuple[str, frozenset[str]], ...]
-] = {}
+_UNION_DISCRIMINATORS: dict[str, tuple[tuple[
+    str, tuple[tuple[frozenset[str], frozenset[str]], ...],
+], ...]] = {}
 _TRUSTED_MODEL_TYPES: frozenset[type[BaseModel]] = frozenset()
 
 
@@ -103,9 +103,9 @@ def _register_trusted_model_types(roots: tuple[type[BaseModel], ...]) -> None:
                     annotations.extend(get_args(annotation))
     global _TRUSTED_MODEL_TYPES
     _TRUSTED_MODEL_TYPES = frozenset(trusted)
-    union_discriminators: dict[
-        str, set[tuple[str, frozenset[str]]]
-    ] = {}
+    union_discriminators: dict[str, set[tuple[
+        str, tuple[tuple[frozenset[str], frozenset[str]], ...],
+    ]]] = {}
     for candidate in trusted:
         for name, field in candidate.model_fields.items():
             if _annotation_is_integer(field.annotation):
@@ -119,7 +119,7 @@ def _register_trusted_model_types(roots: tuple[type[BaseModel], ...]) -> None:
                 )
     global _UNION_DISCRIMINATORS
     _UNION_DISCRIMINATORS = {
-        name: tuple(sorted(options, key=lambda item: (item[0], tuple(item[1]))))
+        name: tuple(sorted(options, key=repr))
         for name, options in union_discriminators.items()
     }
 
@@ -171,11 +171,20 @@ def _literal_strings(annotation: object) -> frozenset[str] | None:
 
 def _union_discriminator(
     annotation: object,
-) -> tuple[str, frozenset[str]] | None:
+) -> tuple[
+    str, tuple[tuple[frozenset[str], frozenset[str]], ...],
+] | None:
     origin = get_origin(annotation)
     arguments = get_args(annotation)
     if origin is Annotated:
         return _union_discriminator(arguments[0])
+    if origin in (tuple, list):
+        candidates = tuple(
+            _union_discriminator(item)
+            for item in arguments if item is not Ellipsis
+        )
+        candidates = tuple(item for item in candidates if item is not None)
+        return candidates[0] if len(candidates) == 1 else None
     if origin not in (Union, UnionType):
         return None
     arms = tuple(
@@ -185,7 +194,7 @@ def _union_discriminator(
     if len(arms) < 2:
         return None
     for discriminator in ("kind", "dimension", "record_kind", "type"):
-        values = []
+        arms_by_shape = []
         for arm in arms:
             field = arm.model_fields.get(discriminator)
             literals = (
@@ -193,11 +202,15 @@ def _union_discriminator(
             )
             if literals is None:
                 break
-            values.append(literals)
+            arms_by_shape.append((
+                literals, frozenset(arm.model_fields),
+            ))
         else:
-            combined = frozenset().union(*values)
+            combined = frozenset().union(*(
+                literals for literals, _ in arms_by_shape
+            ))
             if len(combined) >= len(arms):
-                return discriminator, combined
+                return discriminator, tuple(arms_by_shape)
     return None
 
 
@@ -336,25 +349,43 @@ def _boolean_index(name: str | int | None, parent_name: str | None) -> bool:
 
 def _validate_union_arm(
     name: str | int | None,
+    parent_name: str | None,
     item: object,
 ) -> None:
+    field_name = name if type(name) is str else parent_name
     options = (
-        _UNION_DISCRIMINATORS.get(name, ())
-        if type(name) is str else ()
+        _UNION_DISCRIMINATORS.get(field_name, ())
+        if type(field_name) is str else ()
     )
     if not options or type(item) is not dict:
         return
     found_discriminator = False
-    for discriminator, admitted in options:
+    invalid_matching_shape = False
+    ordinary_fields = frozenset(
+        key for key in item if type(key) is str
+    )
+    for discriminator, arms in options:
         value = None
         for key, candidate in item.items():
             if type(key) is str and key == discriminator:
                 value = candidate
                 found_discriminator = True
                 break
-        if type(value) is str and value in admitted:
-            return
+        for admitted, fields in arms:
+            if ordinary_fields == fields:
+                if type(value) is str and value in admitted:
+                    return
+                invalid_matching_shape = True
+    if invalid_matching_shape:
+        raise ValueError("unexpected union arm")
     if found_discriminator:
+        admitted_anywhere = frozenset().union(*(
+            admitted
+            for _, arms in options
+            for admitted, _ in arms
+        ))
+        if type(value) is not str or value not in admitted_anywhere:
+            raise ValueError("unexpected union arm")
         raise ValueError("unexpected union arm")
 
 
@@ -400,7 +431,7 @@ def _preflight_graph(
             raise ValueError("boolean index is invalid")
         if type(item) is float and integer_position:
             raise ValueError("invalid scalar")
-        _validate_union_arm(name, item)
+        _validate_union_arm(name, parent_name, item)
         container = _container(item, inherited_material)
         if container is None:
             byte_count += _scalar_size(item, maximum=max_bytes - byte_count)
