@@ -202,7 +202,7 @@ def _container(
     Iterator[tuple[str | int, object]], int, int, object | None, bool, int,
 ] | None:
     """Return children and O(1) structural facts for a container."""
-    if isinstance(value, BaseModel):
+    if type(value) in _TRUSTED_MODEL_TYPES:
         items, local_material = _model_items(
             value, inherited_material, validate_binding=True,
         )
@@ -398,7 +398,7 @@ def _preflight_graph(
 
 def _plain_graph(value: object) -> object:
     """Create ordinary content only after a successful bounded preflight."""
-    if isinstance(value, BaseModel):
+    if type(value) in _TRUSTED_MODEL_TYPES:
         items, _ = _model_items(value)
         return {
             name: _plain_graph(item)
