@@ -1,0 +1,276 @@
+"""Private bounded structural admission and deterministic JSON encoding."""
+
+from __future__ import annotations
+
+import math
+import re
+from dataclasses import dataclass
+from datetime import UTC, datetime
+from typing import Iterator
+
+from pydantic import BaseModel
+
+
+MAXIMUM_CANONICAL_REQUEST_BYTES = 134_217_728
+MAXIMUM_RECONSTRUCTED_NODES = 200_000
+MAXIMUM_NESTING_DEPTH = 128
+
+_JSON_NUMBER = re.compile(
+    r"-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:e[+-]?[0-9]+)?\Z"
+)
+_STRICT_INTEGER_NAMES = {"sweep_position"}
+
+
+@dataclass(frozen=True)
+class _PreflightResult:
+    nodes: int
+    maximum_depth: int
+    canonical_bytes: int
+
+
+def _float_token(value: float) -> str:
+    if type(value) is not float or not math.isfinite(value):
+        raise ValueError("invalid scalar")
+    token = float.__repr__(value).replace("E", "e")
+    if _JSON_NUMBER.fullmatch(token) is None:
+        raise ValueError("invalid scalar")
+    return token
+
+
+def _datetime_token(value: datetime) -> str:
+    if type(value) is not datetime or value.tzinfo is None:
+        raise ValueError("invalid scalar")
+    normalized = value.astimezone(UTC)
+    if normalized.microsecond:
+        fraction = f"{normalized.microsecond:06d}".rstrip("0")
+        return normalized.strftime("%Y-%m-%dT%H:%M:%S") + f".{fraction}Z"
+    return normalized.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _string_content_size(value: str) -> int:
+    if type(value) is not str:
+        raise ValueError("invalid scalar")
+    size = 0
+    for character in value:
+        code = ord(character)
+        if character in ('"', "\\") or character in "\b\f\n\r\t":
+            size += 2
+        elif code < 0x20:
+            size += 6
+        else:
+            try:
+                size += len(character.encode("utf-8"))
+            except UnicodeError as error:
+                raise ValueError("invalid scalar") from error
+    return size
+
+
+def _string_size(value: str) -> int:
+    return _string_content_size(value) + 2
+
+
+def _model_items(value: BaseModel) -> tuple[tuple[str, object], ...]:
+    if not type(value).__module__.startswith("backend."):
+        raise ValueError("invalid model type")
+    fields = tuple(type(value).model_fields)
+    stored = vars(value)
+    private_names = set(getattr(type(value), "__private_attributes__", {}))
+    extras = getattr(value, "__pydantic_extra__", None) or {}
+    private = getattr(value, "__pydantic_private__", None) or {}
+    if set(stored) != set(fields) or extras:
+        raise ValueError("model contains hidden or missing content")
+    if set(private) - private_names:
+        raise ValueError("model contains unexpected private content")
+    return tuple((name, stored[name]) for name in fields)
+
+
+def _container(
+    value: object,
+) -> tuple[Iterator[tuple[str | int, object]], int, int] | None:
+    """Return children, punctuation bytes, and identity for a container."""
+    if isinstance(value, BaseModel):
+        items = _model_items(value)
+        key_bytes = sum(_string_size(name) + 1 for name, _ in items)
+        punctuation = 2 + max(len(items) - 1, 0) + key_bytes
+        return iter(items), punctuation, id(value)
+    if type(value) is dict:
+        for key in value:
+            if type(key) is not str:
+                raise ValueError("mapping key must be an ordinary string")
+        key_bytes = sum(_string_size(key) + 1 for key in value)
+        punctuation = 2 + max(len(value) - 1, 0) + key_bytes
+        return iter(value.items()), punctuation, id(value)
+    if type(value) in (tuple, list):
+        punctuation = 2 + max(len(value) - 1, 0)
+        return iter(enumerate(value)), punctuation, id(value)
+    return None
+
+
+def _scalar_size(value: object) -> int:
+    if value is None:
+        return 4
+    if type(value) is bool:
+        return 4 if value else 5
+    if type(value) is str:
+        return _string_size(value)
+    if type(value) is int:
+        try:
+            return len(str(value))
+        except (ValueError, OverflowError) as error:
+            raise ValueError("invalid scalar") from error
+    if type(value) is float:
+        return len(_float_token(value))
+    if type(value) is datetime:
+        return _string_size(_datetime_token(value))
+    raise ValueError("invalid scalar")
+
+
+def _boolean_index(name: str | int | None, parent_name: str | None) -> bool:
+    if type(name) is str and (
+        name.endswith("_index")
+        or name.endswith("_count")
+        or name in _STRICT_INTEGER_NAMES
+    ):
+        return True
+    return type(parent_name) is str and parent_name.endswith("_indices")
+
+
+def _preflight_graph(
+    value: object,
+    *,
+    max_nodes: int = MAXIMUM_RECONSTRUCTED_NODES,
+    max_depth: int = MAXIMUM_NESTING_DEPTH,
+    max_bytes: int = MAXIMUM_CANONICAL_REQUEST_BYTES,
+) -> _PreflightResult:
+    """Inspect without serialization, recursive descent, or caller equality."""
+    if any(type(limit) is not int or limit < 1 for limit in (
+        max_nodes, max_depth, max_bytes,
+    )):
+        raise ValueError("invalid preflight configuration")
+
+    nodes = 0
+    maximum_depth = 0
+    byte_count = 0
+    active: set[int] = set()
+    current = (None, None, value, 0)
+    frames: list[tuple[Iterator[tuple[str | int, object]], int, int, str | None]] = []
+
+    while True:
+        name, parent_name, item, depth = current
+        if depth > max_depth:
+            raise ValueError("nesting depth limit exceeded")
+        nodes += 1
+        if nodes > max_nodes:
+            raise ValueError("reconstructed node limit exceeded")
+        maximum_depth = max(maximum_depth, depth)
+
+        if type(item) is bool and _boolean_index(name, parent_name):
+            raise ValueError("boolean index is invalid")
+        container = _container(item)
+        if container is None:
+            byte_count += _scalar_size(item)
+        else:
+            children, structural_bytes, identity = container
+            if identity in active:
+                raise ValueError("cyclic content is invalid")
+            active.add(identity)
+            byte_count += structural_bytes
+            frames.append((children, depth, identity,
+                           name if type(name) is str else parent_name))
+
+        if byte_count > max_bytes:
+            raise ValueError("canonical byte limit exceeded")
+
+        while frames:
+            children, container_depth, identity, container_name = frames[-1]
+            try:
+                child_name, child = next(children)
+            except StopIteration:
+                frames.pop()
+                active.remove(identity)
+                continue
+            current = (
+                child_name,
+                container_name,
+                child,
+                container_depth + 1,
+            )
+            break
+        else:
+            return _PreflightResult(nodes, maximum_depth, byte_count)
+
+
+def _plain_graph(value: object) -> object:
+    """Create ordinary content only after a successful bounded preflight."""
+    if isinstance(value, BaseModel):
+        return {
+            name: _plain_graph(item)
+            for name, item in _model_items(value)
+        }
+    if type(value) is dict:
+        return {key: _plain_graph(item) for key, item in value.items()}
+    if type(value) is tuple:
+        return tuple(_plain_graph(item) for item in value)
+    if type(value) is list:
+        return [_plain_graph(item) for item in value]
+    return value
+
+
+def _quoted(value: str) -> bytes:
+    chunks = [b'"']
+    escapes = {
+        '"': b'\\"', "\\": b"\\\\", "\b": b"\\b", "\f": b"\\f",
+        "\n": b"\\n", "\r": b"\\r", "\t": b"\\t",
+    }
+    for character in value:
+        if character in escapes:
+            chunks.append(escapes[character])
+        elif ord(character) < 0x20:
+            chunks.append(f"\\u{ord(character):04x}".encode("ascii"))
+        else:
+            chunks.append(character.encode("utf-8"))
+    chunks.append(b'"')
+    return b"".join(chunks)
+
+
+def _encode(value: object, sink: bytearray) -> None:
+    if value is None:
+        sink.extend(b"null")
+    elif type(value) is bool:
+        sink.extend(b"true" if value else b"false")
+    elif type(value) is str:
+        sink.extend(_quoted(value))
+    elif type(value) is int:
+        sink.extend(str(value).encode("ascii"))
+    elif type(value) is float:
+        sink.extend(_float_token(value).encode("ascii"))
+    elif type(value) is datetime:
+        sink.extend(_quoted(_datetime_token(value)))
+    elif type(value) is dict:
+        sink.extend(b"{")
+        for index, key in enumerate(sorted(value)):
+            if index:
+                sink.extend(b",")
+            sink.extend(_quoted(key))
+            sink.extend(b":")
+            _encode(value[key], sink)
+        sink.extend(b"}")
+    elif type(value) in (tuple, list):
+        sink.extend(b"[")
+        for index, item in enumerate(value):
+            if index:
+                sink.extend(b",")
+            _encode(item, sink)
+        sink.extend(b"]")
+    else:
+        raise ValueError("invalid scalar")
+
+
+def _canonical_json_bytes(value: object) -> bytes:
+    admission = _preflight_graph(value)
+    plain = _plain_graph(value)
+    sink = bytearray()
+    _encode(plain, sink)
+    if len(sink) != admission.canonical_bytes:
+        raise ValueError("canonical byte counter disagrees with encoder")
+    return bytes(sink)
