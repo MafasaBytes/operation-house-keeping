@@ -111,17 +111,31 @@ def _model_items(
     field_map = type(value).model_fields
     fields = tuple(field_map)
     stored = object.__getattribute__(value, "__dict__")
+    if type(stored) is not dict or any(type(name) is not str for name in stored):
+        raise ValueError("model storage contains invalid field names")
     private_names = set(getattr(type(value), "__private_attributes__", {}))
-    extras = object.__getattribute__(value, "__pydantic_extra__") or {}
-    private = object.__getattribute__(value, "__pydantic_private__") or {}
+    extras_value = object.__getattribute__(value, "__pydantic_extra__")
+    private_value = object.__getattribute__(value, "__pydantic_private__")
+    if extras_value is None:
+        extras = {}
+    elif type(extras_value) is dict and all(
+        type(name) is str for name in extras_value
+    ):
+        extras = extras_value
+    else:
+        raise ValueError("model extra storage is invalid")
+    if private_value is None:
+        private = {}
+    elif type(private_value) is dict and all(
+        type(name) is str for name in private_value
+    ):
+        private = private_value
+    else:
+        raise ValueError("model private storage is invalid")
     hidden = set(stored) - set(fields) - private_names
     missing = set(fields) - set(stored)
     if hidden or missing or extras:
-        raise ValueError(
-            "model contains hidden or missing content: "
-            f"{type(value).__name__} hidden={sorted(hidden)} "
-            f"missing={sorted(missing)} extras={sorted(extras)}"
-        )
+        raise ValueError("model contains hidden, missing, or extra content")
     if set(private) - private_names:
         raise ValueError("model contains unexpected private content")
     local_material = stored["material"] if "material" in field_map else (
@@ -179,7 +193,15 @@ def _scalar_size(value: object, *, maximum: int) -> int:
     if type(value) is str:
         return _string_size(value, maximum=maximum)
     if type(value) is int:
-        if value and value.bit_length() > maximum * 4 + 4:
+        digit_budget = maximum - (1 if value < 0 else 0)
+        if digit_budget < 1:
+            raise ValueError("canonical byte limit exceeded")
+        # 3.32193 is a strict upper bound for log2(10).  Beyond this
+        # threshold the decimal representation cannot fit, so refuse before
+        # allocating it.  The narrow ambiguous boundary can allocate at most
+        # the admitted digit budget plus one character.
+        maximum_bits = (digit_budget * 332_193 + 99_999) // 100_000
+        if value and value.bit_length() > maximum_bits:
             raise ValueError("canonical byte limit exceeded")
         try:
             size = len(str(value))
@@ -265,6 +287,10 @@ def _preflight_graph(
                 name == "conditions"
                 and parent_name in {"from_classification", "to_classification"}
                 and child_count > 64
+            ) or (
+                name == "condition_traces" and child_count > 128
+            ) or (
+                name == "condition_trace_indices" and child_count > 64
             ):
                 raise ValueError("fixed container cardinality exceeded")
             active.add(identity)

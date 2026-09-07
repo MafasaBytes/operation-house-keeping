@@ -132,5 +132,5 @@ def test_definitely_oversized_integer_rejects_before_decimal_conversion(
 
     monkeypatch.setattr(module, "str", forbidden, raising=False)
     with pytest.raises(ValueError, match="canonical byte limit exceeded"):
-        module._preflight_graph(10**10, max_bytes=10)
+        module._preflight_graph(2**34, max_bytes=10)
     assert calls == []
