@@ -60,7 +60,8 @@ def test_slice_b_preserves_foundation_and_adds_exact_flow_query_surface():
     assert {name for name in kernel.__all__ if name.startswith("Flow")} == {
         "FlowKindToken", "FlowDirectionDeclarationPin",
         "FlowRegistration", "FlowDeclaration",
-        "FlowDeclarationWithdrawal", "FlowLookupStatus",
+        "FlowDeclarationWithdrawal", "FlowMeasurementAssociation",
+        "FlowMeasurementAssociationWithdrawal", "FlowLookupStatus",
         "FlowDeclarationConclusion", "FlowDeclarationLineageSummary",
         "FlowAgreementFinding", "FlowPortRole",
         "FlowAssertionLookupStatus", "FlowLookupResult",
