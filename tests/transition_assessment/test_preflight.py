@@ -48,6 +48,7 @@ def test_float_subclass_rejects():
 
 def test_exact_node_depth_and_shared_occurrence_boundaries():
     module = _preflight()
+    assert module._preflight_graph(None, max_depth=0).maximum_depth == 0
     assert module._preflight_graph([None, None], max_nodes=3).nodes == 3
     with pytest.raises(ValueError, match="node limit"):
         module._preflight_graph([None, None], max_nodes=2)
