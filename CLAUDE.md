@@ -32,10 +32,12 @@ boundaries remain binding.
 
 The owner-accepted milestone sequence is DS-001, DS-002, DS-003, DS-004,
 TS-001, IB-001, MK-001, VM-001, VS-001, SN-001, ES-001, CN-001, PT-001,
-VP-001, BH-001, ST-001, ST-002, FL-001, EA-001, and TA-001. FL-001, EA-001,
-and TA-001 are complete and owner accepted. FL-001 is adversarially reviewed;
-EA-001 is adversarially repaired; TA-001 is adversarially hardened. All three
-are full-suite and dual-clean-checkout verified.
+VP-001, BH-001, ST-001, ST-002, FL-001, EA-001, TA-001, and FM-001. FL-001,
+EA-001, and TA-001 are complete and owner accepted. FM-001's corrected design
+is owner accepted and Slice A is authorized; Slice B remains owner-gated.
+FL-001 is adversarially reviewed; EA-001 is adversarially repaired; TA-001 is
+adversarially hardened. All completed milestones are full-suite and
+dual-clean-checkout verified.
 TA-001 Slice A is owner accepted at exact tested implementation
 `76738ac0d098eb59b0fec4f6970aa862528647d9`. Slice B adversarial hardening is
 implemented and verified at exact tested implementation
@@ -88,9 +90,10 @@ recorded in the owner-acceptance report. TA-001 remains a pure, read-only leaf
 with no occurrence claim, durable identity, ledger, store, facade,
 demonstration, or second consumer.
 
-The unapproved architectural frontier begins with the recommended FM-001
-explicit flow-to-measurement association design investigation, followed by
-possible FA-001 evidence-gated bounded flow assessment and, only after explicit
+The current FM-001 design is owner accepted and Slice A is authorized only for
+the corrected direct-measurement, participant-port declaration contract.
+Slice B is not authorized. The unapproved frontier continues with possible
+FA-001 evidence-gated bounded flow assessment and, only after explicit
 time-window, continuity, and authenticity contracts, optional accountable flow
 occurrence/history. Configuration identity remains an alternative priority if
 the owner changes product focus. Causality, diagnosis, impact analysis, goals,

@@ -80,6 +80,7 @@ sources and disclosures are test artifacts, never engineering truth.
 | 18 | FL-001 | Explicit flow identity and declaration-only disclosure | [ADR-0018](docs/adr/0018-explicit-flow-identity-and-declaration.md) |
 | 19 | EA-001 | Content-bound operational-evidence selection, assurance, and bounded value-compatibility alignment | [ADR-0019](docs/adr/0019-content-bound-operational-evidence-selection-and-assurance.md) |
 | 20 | TA-001 | Complete, owner accepted, adversarially hardened, and dual-clean-checkout verified | [ADR-0020](docs/adr/0020-evidence-gated-declared-transition-assessment.md) |
+| 21 | FM-001 | Corrected design owner accepted; Slice A authorized; Slice B unauthorized | [ADR-0021](docs/adr/0021-explicit-flow-to-measurement-association.md) |
 
 Accepted specifications live in `docs/superpowers/specs/`; accepted decisions
 live in `docs/adr/`; owner gates and verification evidence live in
@@ -121,9 +122,10 @@ flow occurrence/history only after explicit time-window, continuity, and
 authenticity contracts. Configuration identity remains an alternative priority
 if the owner changes product focus. Causal, diagnostic, impact, goal, action,
 planning, and control layers remain deferred until their explicit model and
-evidence prerequisites exist. An association would establish declared
-measurement relevance only—not observed flow, occurrence, continuity,
-conservation, balance, causality, correctness, or safety.
+evidence prerequisites exist. The corrected FM-001 design is owner accepted
+and Slice A is authorized; Slice B remains owner-gated. An association would
+establish declared measurement relevance only—not observed flow, occurrence,
+continuity, conservation, balance, causality, correctness, or safety.
 
 ## Verification
 
