@@ -136,6 +136,17 @@ def _superseded_from_pin(store):
     ))
 
 
+def _superseded_to_pin(store):
+    _, _, _, to_reg, _, to_dec = _transition_parts(store)
+    store.append(state_declaration(
+        to_reg,
+        state_anchor_id=to_reg.anchor.anchor_id,
+        supersedes=(to_dec.record_id,),
+        recorded_at=T1,
+        note="supersede pinned to declaration",
+    ))
+
+
 def _withdrawn_from_pin_with_peer(store):
     _, _, from_reg, _, from_dec, _ = _transition_parts(store)
     store.append(state_declaration(
@@ -154,6 +165,18 @@ def _withdrawn_from_pin_with_peer(store):
 def _inactive_from_state(store):
     _, _, _, _, from_dec, _ = _transition_parts(store)
     store.append(state_withdrawal(from_dec, recorded_at=T1))
+
+
+def _conflicted_from_state(store):
+    _, _, from_reg, _, from_dec, _ = _transition_parts(store)
+    for offset, note in ((0, "state left"), (1, "state right")):
+        store.append(state_declaration(
+            from_reg,
+            state_anchor_id=from_reg.anchor.anchor_id,
+            supersedes=(from_dec.record_id,),
+            recorded_at=T1 + timedelta(seconds=offset),
+            note=note,
+        ))
 
 
 @pytest.mark.parametrize(
@@ -209,8 +232,10 @@ def test_t04_unregistered_transition_maps_to_structured_issue(tmp_path):
         (True, _cross_root_disagreement, "transition_conflicted"),
         (True, _inactive_transition, "transition_inactive"),
         (True, _superseded_from_pin, "endpoint_pin_not_exact_current"),
+        (True, _superseded_to_pin, "endpoint_pin_not_exact_current"),
         (True, _withdrawn_from_pin_with_peer, "endpoint_pin_not_exact_current"),
         (True, _inactive_from_state, "endpoint_pin_not_exact_current"),
+        (True, _conflicted_from_state, "endpoint_pin_not_exact_current"),
     ],
 )
 def test_t05_t11_lifecycle_and_pin_cells_map_directly(
@@ -231,6 +256,10 @@ def test_t05_t11_lifecycle_and_pin_cells_map_directly(
             "endpoint_classification_not_executed",
             "endpoint_classification_incomplete",
         } <= {issue.code for issue in result.issues}
+    if mutator is _superseded_to_pin:
+        assert result.to_endpoint.pin_alignment != "exact_current"
+    if mutator is _conflicted_from_state:
+        assert result.from_endpoint.state_declaration_conclusion == "conflicted"
 
 
 def test_t12_t18_anchor_context_and_valid_substitution_are_structured(tmp_path):
@@ -257,6 +286,53 @@ def test_t12_t18_anchor_context_and_valid_substitution_are_structured(tmp_path):
     assert tuple(issue.code for issue in substituted.issues)[:2] == (
         "transition_anchor_mismatch", "transition_not_registered",
     )
+
+    two_declared = build_world(tmp_path / "two-declared", second_transition=True)
+    alternate = ModelQueries(
+        two_declared.model.load(),
+    ).transition_declaration(TRANSITION_B, context=AS_OPERATED)
+    exact_substitution = assess_declared_transition_endpoints(_request(
+        two_declared.request, transition=alternate,
+    ))
+    codes = tuple(issue.code for issue in exact_substitution.issues)
+    assert codes[:3] == (
+        "transition_anchor_mismatch",
+        "from_state_anchor_mismatch",
+        "to_state_anchor_mismatch",
+    )
+    assert "transition_not_registered" not in codes
+    assert alternate.conclusion == "declared"
+
+
+def test_t17_each_endpoint_context_difference_is_disclosed(tmp_path):
+    base = build_world(tmp_path / "base")
+    foreign = build_world(tmp_path / "foreign", context=AS_DESIGNED)
+    for role, classification, alignment in (
+        (
+            "from", foreign.request.from_classification,
+            foreign.request.evidence_alignments[0],
+        ),
+        (
+            "to", foreign.request.to_classification,
+            foreign.request.evidence_alignments[1],
+        ),
+    ):
+        updates = {
+            f"{role}_classification": classification,
+            "evidence_alignments": (
+                (alignment, base.request.evidence_alignments[1])
+                if role == "from"
+                else (base.request.evidence_alignments[0], alignment)
+            ),
+        }
+        result = assess_declared_transition_endpoints(_request(
+            base.request, **updates,
+        ))
+        endpoint = (
+            result.from_endpoint if role == "from" else result.to_endpoint
+        )
+        assert endpoint.classification_context_relation == "different"
+        assert "context_mismatch" in tuple(issue.code for issue in result.issues)
 
 
 def test_t13_t14_wrong_endpoint_states_are_role_specific(tmp_path):
@@ -499,6 +575,50 @@ def test_t38_mismatched_fingerprint_preserves_complete_evidence(tmp_path):
     assert result.execution == "not_executed"
 
 
+def test_t39_t40_coherent_replacement_needs_independent_expectation(tmp_path):
+    world = build_world(tmp_path)
+    original = world.request.evidence_alignments[0]
+    snapshot = original.request.selection.snapshot
+    selected = snapshot.temporal_material.occurrence_membership[
+        snapshot.selected.temporal_occurrence_index
+    ]
+    replacement = EvidenceAssuranceQueries(
+        source=world.source, temporal=world.temporal,
+    ).select_operational_evidence(evidence_request(
+        start=selected.received_at + timedelta(minutes=1),
+        end=original.request.compatibility.as_of,
+    ))
+    assert replacement.snapshot is not None
+    assert replacement.snapshot.content_fingerprint != snapshot.content_fingerprint
+
+    independently_checked = _alignment_with(
+        replacement,
+        original.request.compatibility,
+        snapshot.content_fingerprint,
+    )
+    checked_result = assess_declared_transition_endpoints(
+        _replace_first_alignment(world, independently_checked),
+    )
+    assert independently_checked.expected_fingerprint_relation == "mismatched"
+    assert "governing_expected_fingerprint_mismatched" in tuple(
+        issue.code for issue in checked_result.issues
+    )
+
+    self_consistent = _alignment_with(
+        replacement,
+        original.request.compatibility,
+        replacement.snapshot.content_fingerprint,
+    )
+    self_consistent_result = assess_declared_transition_endpoints(
+        _replace_first_alignment(world, self_consistent),
+    )
+    assert self_consistent.expected_fingerprint_relation == "matched"
+    assert self_consistent_result.evidence_completeness == (
+        "incomplete_within_one_or_more_declared_horizons"
+    )
+    assert self_consistent_result.execution == "not_executed"
+
+
 def test_t41_incomplete_seed_alignment_remains_incomplete(tmp_path):
     world = build_world(tmp_path)
     original = world.request.evidence_alignments[0]
@@ -552,6 +672,7 @@ def test_t42_valid_not_aligned_lower_result_maps_without_reselection(tmp_path):
         selection.snapshot.content_fingerprint,
     )
     assert not_aligned.status == "not_aligned"
+    assert not_aligned.reason == "no_selected_observation"
     result = assess_declared_transition_endpoints(
         _replace_first_alignment(world, not_aligned),
     )
@@ -591,6 +712,25 @@ def test_t61_t62_public_results_use_only_bounded_pattern_language(tmp_path):
         "probability score",
     ):
         assert forbidden not in text
+
+
+def test_t49_t59_post_fence_changes_do_not_rewrite_carried_result(tmp_path):
+    from backend.transition_assessment import DeclaredTransitionAssessmentResult
+    from backend.transition_assessment.preflight import _canonical_json_bytes
+
+    world = build_world(tmp_path)
+    result = assess_declared_transition_endpoints(world.request)
+    before = _canonical_json_bytes(result)
+
+    source_marker = world.source._root / "post-final-fence-unrelated"
+    source_marker.write_text("later source membership", encoding="utf-8")
+    world.model.append(entity_registration(ENT_C))
+
+    rebuilt = DeclaredTransitionAssessmentResult.model_validate(
+        result.model_dump(mode="python", warnings=False),
+    )
+    assert _canonical_json_bytes(rebuilt) == before
+    assert assess_declared_transition_endpoints(result.request) == result
 
 
 def test_t73_all_twenty_two_issue_codes_are_reachable_and_ordered(tmp_path):

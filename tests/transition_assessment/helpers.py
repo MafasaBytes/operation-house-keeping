@@ -50,6 +50,7 @@ from tests.model_kernel.st001_slice_a_helpers import (
 )
 from tests.model_kernel.st002_slice_a_helpers import (
     TRANSITION_A,
+    TRANSITION_B,
     transition_declaration,
     transition_registration,
 )
@@ -77,6 +78,7 @@ class AssessmentWorld:
 
 def _model(
     root, *, upper="80", declare_transition=True, subject=E1,
+    context=AS_OPERATED, second_transition=False,
 ):
     constraint_registration_record = constraint_registration(
         CON_A, variable_anchor_id=VAR_A,
@@ -98,13 +100,13 @@ def _model(
     from_declaration = state_declaration(
         from_registration,
         state_anchor_id=STATE_A,
-        context=AS_OPERATED,
+        context=context,
         condition_pins=pins(constraints=(CON_A,), declarations=declarations),
     )
     to_declaration = state_declaration(
         to_registration,
         state_anchor_id=STATE_B,
-        context=AS_OPERATED,
+        context=context,
         condition_pins=pins(constraints=(CON_A,), declarations=declarations),
     )
     registration = transition_registration(
@@ -121,11 +123,31 @@ def _model(
         to_registration=to_registration,
         from_declaration=from_declaration,
         to_declaration=to_declaration,
-        context=AS_OPERATED,
+        context=context,
     )
-    transition_records = (
-        (registration, declaration) if declare_transition else (registration,)
-    )
+    transition_records = [registration]
+    if declare_transition:
+        transition_records.append(declaration)
+    if second_transition:
+        second_registration = transition_registration(
+            transition_anchor_id=TRANSITION_B,
+            subject=subject,
+            from_registration=to_registration,
+            to_registration=from_registration,
+            from_state=STATE_B,
+            to_state=STATE_A,
+        )
+        transition_records.extend((
+            second_registration,
+            transition_declaration(
+                second_registration,
+                from_registration=to_registration,
+                to_registration=from_registration,
+                from_declaration=to_declaration,
+                to_declaration=from_declaration,
+                context=context,
+            ),
+        ))
     return model_store(
         root,
         include_behavior=False,
@@ -136,7 +158,7 @@ def _model(
             to_registration,
             from_declaration,
             to_declaration,
-            *transition_records,
+            *tuple(transition_records),
         ),
         owners=(subject, subject),
     )
@@ -259,6 +281,8 @@ def build_world(
     to_upper: str | None = None,
     model_mutator=None,
     subject=E1,
+    context=AS_OPERATED,
+    second_transition=False,
 ) -> AssessmentWorld:
     split = from_upper is not None or to_upper is not None
     if split:
@@ -273,6 +297,8 @@ def build_world(
             upper=upper,
             declare_transition=declare_transition,
             subject=subject,
+            context=context,
+            second_transition=second_transition,
         )
     if model_mutator is not None:
         model_mutator(model)
@@ -302,13 +328,13 @@ def build_world(
     )
     from_classification = classifications.state_classification(
         STATE_A,
-        context=AS_OPERATED,
+        context=context,
         as_of=from_as_of,
         condition_sources=from_condition_sources,
     )
     to_classification = classifications.state_classification(
         STATE_B,
-        context=AS_OPERATED,
+        context=context,
         as_of=to_as_of,
         condition_sources=to_condition_sources,
     )
@@ -349,12 +375,12 @@ def build_world(
         )
         retained_compatibilities.append(compatibility)
     transition = ModelQueries(model.load()).transition_declaration(
-        TRANSITION_A, context=AS_OPERATED,
+        TRANSITION_A, context=context,
     )
     request = DeclaredTransitionAssessmentRequest(
         schema_version="1",
         transition_anchor_id=TRANSITION_A,
-        context=AS_OPERATED,
+        context=context,
         from_as_of=from_as_of,
         to_as_of=to_as_of,
         policy=POLICY,

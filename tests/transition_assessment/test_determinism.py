@@ -88,6 +88,32 @@ def test_t74_all_admitted_float_representatives_are_seed_stable():
     ] * 5
 
 
+def test_t57_invalid_alignment_permutation_refuses_across_hash_seeds():
+    script = (
+        "import tempfile; from pathlib import Path; "
+        "from tests.transition_assessment.helpers import build_world; "
+        "from backend.transition_assessment import ("
+        "DeclaredTransitionAssessmentRequest,TransitionAssessmentInputError,"
+        "assess_declared_transition_endpoints); "
+        "w=build_world(Path(tempfile.mkdtemp(prefix='ta-invalid-seed-'))); "
+        "raw=w.request.model_dump(mode='python',warnings=False); "
+        "raw['evidence_alignments']=tuple(reversed(raw['evidence_alignments'])); "
+        "q=DeclaredTransitionAssessmentRequest.model_validate(raw); "
+        "\ntry: assess_declared_transition_endpoints(q)"
+        "\nexcept TransitionAssessmentInputError as e: print(e.error_code)"
+    )
+    outputs = []
+    for seed in ("1", "7", "19", "101", "12345"):
+        completed = subprocess.run(
+            [sys.executable, "-c", script], check=True,
+            capture_output=True, text=True,
+            env=dict(os.environ, PYTHONHASHSEED=seed,
+                     PYTHONDONTWRITEBYTECODE="1"),
+        )
+        outputs.append(completed.stdout.strip())
+    assert outputs == ["TRANSITION_ASSESSMENT_INPUT_INVALID"] * 5
+
+
 def test_private_bytes_are_not_public_identity_and_have_no_newline(tmp_path):
     import backend.transition_assessment as package
 

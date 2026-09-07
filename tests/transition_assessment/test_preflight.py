@@ -181,6 +181,17 @@ def test_t70_t72_iterative_active_path_and_container_admission():
         module._preflight_graph(b"not admitted")
 
 
+def test_t71_one_aggregate_budget_does_not_reset_between_siblings():
+    module = _preflight()
+    distributed = {"from": "a" * 8, "to": "b" * 8}
+    exact = len(module._canonical_json_bytes(distributed))
+    assert module._preflight_graph(
+        distributed, max_bytes=exact,
+    ).canonical_bytes == exact
+    with pytest.raises(ValueError, match="byte limit"):
+        module._preflight_graph(distributed, max_bytes=exact - 1)
+
+
 def test_compact_result_cardinalities_reject_during_preflight():
     module = _preflight()
     module._preflight_graph({"condition_traces": [None] * 128})
