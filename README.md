@@ -8,7 +8,7 @@ contains the binding project guidance.
 
 ## Current status
 
-The accepted implemented milestone sequence through EA-001 is complete.
+The accepted implemented milestone sequence through TA-001 is complete.
 EA-001 is adversarially repaired, full-suite verified, and
 dual-clean-checkout verified. TA-001 Slice A is owner accepted at exact tested
 implementation `76738ac0d098eb59b0fec4f6970aa862528647d9`. Slice B adversarial
@@ -100,21 +100,30 @@ source, sensor, signer, clock, engineering conclusion, or physical condition.
 
 ## Architectural frontier
 
-TA-001 has an [owner-accepted design](docs/superpowers/specs/2026-09-07-ta001-evidence-gated-declared-transition-assessment-design.md),
-recorded by [ADR-0020](docs/adr/0020-evidence-gated-declared-transition-assessment.md),
-for a pure, read-only assessment of whether two independently classified
-endpoint views support one declared transition pattern. Slice A is owner
-accepted at exact tested implementation
-`76738ac0d098eb59b0fec4f6970aa862528647d9`; Slice B is implemented and
-verified and owner accepted at `2ec18f7234273dba98098d268df4568d5cc84d85`. It
-does not establish transition occurrence or non-occurrence,
-add an orchestration facade or demonstration, or create a generic immutable
-assessment identity.
+TA-001 is the current completed boundary: its [owner-accepted design](docs/superpowers/specs/2026-09-07-ta001-evidence-gated-declared-transition-assessment-design.md)
+is recorded by [ADR-0020](docs/adr/0020-evidence-gated-declared-transition-assessment.md),
+and its pure, read-only assessment supports or does not support one declared
+transition endpoint pattern from bounded carried evidence. It does not
+establish transition occurrence or non-occurrence, add an orchestration facade
+or demonstration, or create a generic immutable assessment identity.
 
-The unapproved frontier beyond that design includes flow measurement
-association and assessment and, eventually, configuration identity, causality,
-diagnosis, impact analysis, goals, actions, and planning. These remain possible
-future concerns only; this status authorizes none of them.
+The next unapproved design candidate is **FM-001 — Explicit Flow-to-Measurement
+Association**. It should investigate an explicit, evidence-bearing,
+replayable relation between an existing `FlowAnchor` and existing
+`VariableAnchor` records, including measurement/boundary role, orientation or
+sign semantics, quantity/unit expectations, exact context and lifecycle, and
+support pins where justified. This is a design recommendation only; no
+proposal or implementation is authorized by this status.
+
+The unapproved roadmap is FM-001 explicit flow-to-measurement association,
+then FA-001 evidence-gated bounded flow assessment, then optional accountable
+flow occurrence/history only after explicit time-window, continuity, and
+authenticity contracts. Configuration identity remains an alternative priority
+if the owner changes product focus. Causal, diagnostic, impact, goal, action,
+planning, and control layers remain deferred until their explicit model and
+evidence prerequisites exist. An association would establish declared
+measurement relevance only—not observed flow, occurrence, continuity,
+conservation, balance, causality, correctness, or safety.
 
 ## Verification
 
