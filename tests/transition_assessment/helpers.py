@@ -31,13 +31,17 @@ from tests.evidence_assurance.test_selection import (
 )
 from tests.model_kernel.builders import (
     CON_A,
+    CON_B,
     VAR_A,
     constraint_declaration,
     constraint_registration,
+    registration as entity_registration,
     upper_bound,
 )
 from tests.model_kernel.st001_slice_a_helpers import (
     AS_OPERATED,
+    REGISTRATION_DECLARATION,
+    STATE_DECLARATION,
     STATE_A,
     STATE_B,
     pins,
@@ -135,6 +139,112 @@ def _model(root, *, upper="80", declare_transition=True):
     )
 
 
+def _split_endpoint_model(root, *, from_upper: str, to_upper: str):
+    registrations = (
+        constraint_registration(CON_A, variable_anchor_id=VAR_A),
+        constraint_registration(CON_B, variable_anchor_id=VAR_A),
+    )
+    declarations = (
+        constraint_declaration(CON_A, predicate=upper_bound(from_upper)),
+        constraint_declaration(CON_B, predicate=upper_bound(to_upper)),
+    )
+    by_anchor = dict(zip((CON_A, CON_B), declarations, strict=True))
+    kernel = __import__("backend.model_kernel", fromlist=["ModelRecordEvidence"])
+    entity = entity_registration(E1)
+
+    def state_evidence(constraint_record):
+        return (
+            kernel.ModelRecordEvidence(
+                kind="model_record", record_id=entity.record_id,
+            ),
+            kernel.ModelRecordEvidence(
+                kind="model_record", record_id=constraint_record.record_id,
+            ),
+            REGISTRATION_DECLARATION,
+        )
+
+    def declaration_evidence(
+        state_registration_record, constraint_record, declaration_record,
+    ):
+        return (
+            kernel.ModelRecordEvidence(
+                kind="model_record", record_id=state_registration_record.record_id,
+            ),
+            kernel.ModelRecordEvidence(
+                kind="model_record", record_id=constraint_record.record_id,
+            ),
+            kernel.ModelRecordEvidence(
+                kind="model_record", record_id=declaration_record.record_id,
+            ),
+            STATE_DECLARATION,
+        )
+
+    from_registration = state_registration(
+        state_anchor_id=STATE_A,
+        subject=E1,
+        constraints=(CON_A,),
+        evidence=state_evidence(registrations[0]),
+    )
+    to_registration = state_registration(
+        state_anchor_id=STATE_B,
+        subject=E1,
+        constraints=(CON_B,),
+        evidence=state_evidence(registrations[1]),
+    )
+    from_declaration = state_declaration(
+        from_registration,
+        state_anchor_id=STATE_A,
+        context=AS_OPERATED,
+        condition_pins=pins(
+            constraints=(CON_A,), declarations=by_anchor,
+        ),
+        evidence=declaration_evidence(
+            from_registration, registrations[0], declarations[0],
+        ),
+    )
+    to_declaration = state_declaration(
+        to_registration,
+        state_anchor_id=STATE_B,
+        context=AS_OPERATED,
+        condition_pins=pins(
+            constraints=(CON_B,), declarations=by_anchor,
+        ),
+        evidence=declaration_evidence(
+            to_registration, registrations[1], declarations[1],
+        ),
+    )
+    transition_registration_record = transition_registration(
+        transition_anchor_id=TRANSITION_A,
+        subject=E1,
+        from_registration=from_registration,
+        to_registration=to_registration,
+        from_state=STATE_A,
+        to_state=STATE_B,
+    )
+    transition_declaration_record = transition_declaration(
+        transition_registration_record,
+        from_registration=from_registration,
+        to_registration=to_registration,
+        from_declaration=from_declaration,
+        to_declaration=to_declaration,
+        context=AS_OPERATED,
+    )
+    return model_store(
+        root,
+        include_behavior=False,
+        extra_records=(
+            *registrations,
+            *declarations,
+            from_registration,
+            to_registration,
+            from_declaration,
+            to_declaration,
+            transition_registration_record,
+            transition_declaration_record,
+        ),
+    )
+
+
 def build_world(
     tmp_path,
     *,
@@ -142,12 +252,25 @@ def build_world(
     declare_transition=True,
     from_as_of: datetime | None = None,
     to_as_of: datetime | None = None,
+    from_upper: str | None = None,
+    to_upper: str | None = None,
+    model_mutator=None,
 ) -> AssessmentWorld:
-    model = _model(
-        tmp_path / "model-world",
-        upper=upper,
-        declare_transition=declare_transition,
-    )
+    split = from_upper is not None or to_upper is not None
+    if split:
+        model = _split_endpoint_model(
+            tmp_path / "model-world",
+            from_upper=from_upper or upper,
+            to_upper=to_upper or upper,
+        )
+    else:
+        model = _model(
+            tmp_path / "model-world",
+            upper=upper,
+            declare_transition=declare_transition,
+        )
+    if model_mutator is not None:
+        model_mutator(model)
     _, _, source, temporal = _captured_world(tmp_path / "evidence-world")
     semantic = semantic_queries(
         tmp_path / "semantic-world", model=model, temporal=temporal,
@@ -155,9 +278,16 @@ def build_world(
     classifications = StateClassificationQueries(
         ConstraintEvaluationQueries(semantic),
     )
-    condition_sources = (
+    from_condition_sources = (
         StateConditionSource(
             constraint_anchor_id=CON_A,
+            source=SourceSelector(subject=SUBJECT, property=PROP_TEMP),
+        ),
+    )
+    to_constraint = CON_B if split else CON_A
+    to_condition_sources = (
+        StateConditionSource(
+            constraint_anchor_id=to_constraint,
             source=SourceSelector(subject=SUBJECT, property=PROP_TEMP),
         ),
     )
@@ -169,13 +299,13 @@ def build_world(
         STATE_A,
         context=AS_OPERATED,
         as_of=from_as_of,
-        condition_sources=condition_sources,
+        condition_sources=from_condition_sources,
     )
     to_classification = classifications.state_classification(
         STATE_B,
         context=AS_OPERATED,
         as_of=to_as_of,
-        condition_sources=condition_sources,
+        condition_sources=to_condition_sources,
     )
     compatibilities = tuple(
         classification.constraint_evaluations[0]
