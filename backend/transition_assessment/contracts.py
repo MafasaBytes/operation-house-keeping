@@ -143,11 +143,29 @@ class TransitionAssessmentError(Exception):
 class TransitionAssessmentInputError(TransitionAssessmentError):
     _allowed_codes = ("TRANSITION_ASSESSMENT_INPUT_INVALID",)
 
+    def __init__(
+        self,
+        error_code: TransitionAssessmentInputErrorCode,
+        message: StrictStr,
+    ) -> None:
+        super().__init__(error_code, message)
+
 
 class _Frozen(BaseModel):
     model_config = ConfigDict(
         frozen=True, extra="forbid", revalidate_instances="always",
     )
+
+    @model_validator(mode="before")
+    @classmethod
+    def _strict_content(cls, value):
+        if cls.__name__ in {
+            "DeclaredTransitionAssessmentRequest",
+            "DeclaredTransitionAssessmentResult",
+        }:
+            return value
+        _preflight_graph(value)
+        return _plain_graph(value)
 
 
 class TransitionAssessmentPolicy(_Frozen):
@@ -202,9 +220,10 @@ class DeclaredTransitionAssessmentRequest(_Frozen):
     @model_validator(mode="wrap")
     @classmethod
     def _bounded_reconstruction(cls, value, handler):
-        if not _REQUEST_ALREADY_PREFLIGHTED.get():
+        already_preflighted = _REQUEST_ALREADY_PREFLIGHTED.get()
+        if not already_preflighted:
             _preflight_graph(value)
-        plain = _plain_graph(value)
+        plain = value if already_preflighted else _plain_graph(value)
         rebuilt = handler(plain)
         if len(rebuilt.evidence_alignments) > 128:
             raise ValueError("alignment cardinality exceeds the fixed limit")

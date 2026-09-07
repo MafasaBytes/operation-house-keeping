@@ -69,7 +69,12 @@ def _string_size(value: str) -> int:
     return _string_content_size(value) + 2
 
 
-def _model_items(value: BaseModel) -> tuple[tuple[str, object], ...]:
+def _model_items(
+    value: BaseModel,
+    inherited_material: object | None = None,
+    *,
+    validate_binding: bool = False,
+) -> tuple[tuple[tuple[str, object], ...], object | None]:
     if not type(value).__module__.startswith("backend."):
         raise ValueError("invalid model type")
     field_map = type(value).model_fields
@@ -91,28 +96,47 @@ def _model_items(value: BaseModel) -> tuple[tuple[str, object], ...]:
         )
     if set(private) - private_names:
         raise ValueError("model contains unexpected private content")
-    return tuple((name, getattr(value, name)) for name in fields)
+    local_material = (
+        getattr(value, "material") if "material" in field_map
+        else inherited_material
+    )
+    if validate_binding and "_material" in private_names:
+        private_material = (
+            stored.get("_material")
+            if "_material" in stored else private.get("_material")
+        )
+        if local_material is None or private_material is not local_material:
+            raise ValueError("model private material binding is substituted")
+    return (
+        tuple((name, getattr(value, name)) for name in fields),
+        local_material,
+    )
 
 
 def _container(
     value: object,
-) -> tuple[Iterator[tuple[str | int, object]], int, int] | None:
+    inherited_material: object | None,
+) -> tuple[
+    Iterator[tuple[str | int, object]], int, int, object | None,
+] | None:
     """Return children, punctuation bytes, and identity for a container."""
     if isinstance(value, BaseModel):
-        items = _model_items(value)
+        items, local_material = _model_items(
+            value, inherited_material, validate_binding=True,
+        )
         key_bytes = sum(_string_size(name) + 1 for name, _ in items)
         punctuation = 2 + max(len(items) - 1, 0) + key_bytes
-        return iter(items), punctuation, id(value)
+        return iter(items), punctuation, id(value), local_material
     if type(value) is dict:
         for key in value:
             if type(key) is not str:
                 raise ValueError("mapping key must be an ordinary string")
         key_bytes = sum(_string_size(key) + 1 for key in value)
         punctuation = 2 + max(len(value) - 1, 0) + key_bytes
-        return iter(value.items()), punctuation, id(value)
+        return iter(value.items()), punctuation, id(value), inherited_material
     if type(value) in (tuple, list):
         punctuation = 2 + max(len(value) - 1, 0)
-        return iter(enumerate(value)), punctuation, id(value)
+        return iter(enumerate(value)), punctuation, id(value), inherited_material
     return None
 
 
@@ -162,11 +186,13 @@ def _preflight_graph(
     maximum_depth = 0
     byte_count = 0
     active: set[int] = set()
-    current = (None, None, value, 0)
-    frames: list[tuple[Iterator[tuple[str | int, object]], int, int, str | None]] = []
+    current = (None, None, value, 0, None)
+    frames: list[tuple[
+        Iterator[tuple[str | int, object]], int, int, str | None, object | None,
+    ]] = []
 
     while True:
-        name, parent_name, item, depth = current
+        name, parent_name, item, depth, inherited_material = current
         if depth > max_depth:
             raise ValueError("nesting depth limit exceeded")
         nodes += 1
@@ -176,23 +202,26 @@ def _preflight_graph(
 
         if type(item) is bool and _boolean_index(name, parent_name):
             raise ValueError("boolean index is invalid")
-        container = _container(item)
+        container = _container(item, inherited_material)
         if container is None:
             byte_count += _scalar_size(item)
         else:
-            children, structural_bytes, identity = container
+            children, structural_bytes, identity, local_material = container
             if identity in active:
                 raise ValueError("cyclic content is invalid")
             active.add(identity)
             byte_count += structural_bytes
             frames.append((children, depth, identity,
-                           name if type(name) is str else parent_name))
+                           name if type(name) is str else parent_name,
+                           local_material))
 
         if byte_count > max_bytes:
             raise ValueError("canonical byte limit exceeded")
 
         while frames:
-            children, container_depth, identity, container_name = frames[-1]
+            children, container_depth, identity, container_name, material = (
+                frames[-1]
+            )
             try:
                 child_name, child = next(children)
             except StopIteration:
@@ -204,6 +233,7 @@ def _preflight_graph(
                 container_name,
                 child,
                 container_depth + 1,
+                material,
             )
             break
         else:
@@ -213,9 +243,10 @@ def _preflight_graph(
 def _plain_graph(value: object) -> object:
     """Create ordinary content only after a successful bounded preflight."""
     if isinstance(value, BaseModel):
+        items, _ = _model_items(value)
         return {
             name: _plain_graph(item)
-            for name, item in _model_items(value)
+            for name, item in items
         }
     if type(value) is dict:
         return {key: _plain_graph(item) for key, item in value.items()}
