@@ -312,3 +312,121 @@ def test_compact_result_cycle_rejects_before_carried_request_reconstruction(
     with pytest.raises((ValidationError, ValueError)):
         DeclaredTransitionAssessmentResult.model_validate(raw)
     assert calls == []
+
+
+def test_t50_every_public_model_level_rejects_hidden_missing_and_private_state(
+    tmp_path,
+):
+    world = build_world(tmp_path)
+    result = assess_declared_transition_endpoints(world.request)
+    issue_result = assess_declared_transition_endpoints(
+        type(world.request).model_validate({
+            **world.request.model_dump(mode="python", warnings=False),
+            "to_as_of": world.request.from_as_of,
+        }),
+    )
+    instances = (
+        world.request.policy,
+        result.fixed_limits,
+        world.request,
+        issue_result.issues[0],
+        result.condition_traces[0],
+        result.from_endpoint,
+        result,
+    )
+    for instance in instances:
+        contract = type(instance)
+
+        hidden = instance.model_copy()
+        hidden.__dict__["hidden_cache"] = "forged"
+        with pytest.raises((ValidationError, ValueError)):
+            contract.model_validate(hidden)
+
+        extra = instance.model_copy()
+        object.__setattr__(extra, "__pydantic_extra__", {"forged": True})
+        with pytest.raises((ValidationError, ValueError)):
+            contract.model_validate(extra)
+
+        private = instance.model_copy()
+        object.__setattr__(private, "__pydantic_private__", {"forged": True})
+        with pytest.raises((ValidationError, ValueError)):
+            contract.model_validate(private)
+
+        plain = instance.model_dump(mode="python", warnings=False)
+        plain.pop(next(iter(contract.model_fields)))
+        missing = contract.model_construct(**plain)
+        with pytest.raises((ValidationError, ValueError)):
+            contract.model_validate(missing)
+
+
+def test_t53_t54_every_compact_result_partition_is_authoritative(tmp_path):
+    result = assess_declared_transition_endpoints(build_world(tmp_path).request)
+
+    def rejected(update):
+        raw = result.model_dump(mode="python", warnings=False)
+        update(raw)
+        with pytest.raises((ValidationError, ValueError)):
+            DeclaredTransitionAssessmentResult.model_validate(raw)
+
+    top_level_updates = (
+        lambda raw: raw.__setitem__("ruleset_version", "ta001.2"),
+        lambda raw: raw["fixed_limits"].__setitem__(
+            "maximum_nesting_depth", 127,
+        ),
+        lambda raw: raw.__setitem__("source_time_use", "not_evaluated"),
+        lambda raw: raw.__setitem__("temporal_cohort", "asserted"),
+        lambda raw: raw.__setitem__("continuity", "continuous"),
+        lambda raw: raw["from_endpoint"].__setitem__("role", "to"),
+        lambda raw: raw["to_endpoint"].__setitem__("role", "from"),
+        lambda raw: raw["condition_traces"][0].__setitem__(
+            "observation_presence", "absent",
+        ),
+        lambda raw: raw.__setitem__("issues", ({
+            "code": "cutoffs_equal",
+            "endpoint_role": None,
+            "condition_index": None,
+            "evidence_alignment_index": None,
+        },)),
+    )
+    for update in top_level_updates:
+        rejected(update)
+
+    endpoint_values = {
+        "declared_state_anchor_id": result.to_endpoint.declared_state_anchor_id,
+        "classified_state_anchor_id": result.to_endpoint.classified_state_anchor_id,
+        "state_anchor_relation": "different",
+        "subject_relation": "different",
+        "pin_alignment": "not_current",
+        "classification_context_relation": "different",
+        "classification_cutoff_relation": "different",
+        "state_declaration_conclusion": "inactive",
+        "condition_coverage": "incomplete",
+        "classification_execution": "not_executed",
+        "computed_match": "does_not_match",
+        "condition_trace_indices": (),
+    }
+    for field, value in endpoint_values.items():
+        rejected(lambda raw, field=field, value=value: raw[
+            "from_endpoint"
+        ].__setitem__(field, value))
+
+    trace_values = {
+        "trace_index": 1,
+        "endpoint_role": "to",
+        "condition_index": 1,
+        "constraint_evaluation_index": 1,
+        "semantic_candidate_index": None,
+        "value_candidate_index": None,
+        "observation_presence": "absent",
+        "evidence_alignment_index": None,
+        "alignment_relation": "not_aligned",
+        "evidence_selection_status": "refused",
+        "evidence_completeness": "incomplete_within_declared_horizon",
+        "expected_fingerprint_relation": "mismatched",
+        "selected_occurrence_role": "pre_horizon_seed",
+        "source_time_use": "not_applicable",
+    }
+    for field, value in trace_values.items():
+        rejected(lambda raw, field=field, value=value: raw[
+            "condition_traces"
+        ][0].__setitem__(field, value))
