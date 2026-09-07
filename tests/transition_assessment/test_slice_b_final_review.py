@@ -135,6 +135,33 @@ def test_cross_union_discriminator_substitution_rejects_during_preflight(
         assess_declared_transition_endpoints(request)
 
 
+def test_wrong_exact_model_union_arm_rejects_during_preflight(tmp_path):
+    import backend.transition_assessment.preflight as preflight
+
+    world = build_world(tmp_path)
+    request = world.request.model_dump(mode="python", warnings=False)
+    predicates = []
+
+    def visit(value):
+        if type(value) is dict:
+            if "predicate" in value:
+                predicates.append(value)
+            for item in value.values():
+                visit(item)
+        elif type(value) in (list, tuple):
+            for item in value:
+                visit(item)
+
+    visit(request)
+    assert predicates
+    assert preflight._preflight_graph(request).nodes > 0
+    predicates[0]["predicate"] = world.request.context
+    with pytest.raises(ValueError, match="union arm"):
+        preflight._preflight_graph(request)
+    with pytest.raises(TransitionAssessmentInputError):
+        assess_declared_transition_endpoints(request)
+
+
 def test_floats_in_every_fixed_integer_field_reject_without_coercion(tmp_path):
     from backend.transition_assessment import TransitionAssessmentLimits
 
