@@ -5,7 +5,7 @@ from __future__ import annotations
 from .contracts import (
     DeclaredTransitionAssessmentRequest,
     DeclaredTransitionAssessmentResult,
-    FIXED_LIMITS,
+    _fixed_limits,
     TransitionAssessmentConditionTrace,
     TransitionAssessmentEndpointDisclosure,
     TransitionAssessmentInputError,
@@ -458,7 +458,7 @@ def _derive_result_fields(request: DeclaredTransitionAssessmentRequest) -> dict:
 
     return {
         "ruleset_version": "ta001.1",
-        "fixed_limits": FIXED_LIMITS,
+        "fixed_limits": _fixed_limits(),
         "declaration_admission": declaration_admission,
         "context_relation": context_relation,
         "model_revision_relation": model_revision_relation,
@@ -481,6 +481,7 @@ def _derive_result_fields(request: DeclaredTransitionAssessmentRequest) -> dict:
 def assess_declared_transition_endpoints(
     request: DeclaredTransitionAssessmentRequest,
 ) -> DeclaredTransitionAssessmentResult:
+    failure = None
     try:
         rebuilt = DeclaredTransitionAssessmentRequest.model_validate(request)
         fields = _derive_result_fields(rebuilt)
@@ -489,8 +490,9 @@ def assess_declared_transition_endpoints(
         )
     except TransitionAssessmentInputError:
         raise
-    except Exception as error:
-        raise TransitionAssessmentInputError(
+    except Exception:
+        failure = TransitionAssessmentInputError(
             "TRANSITION_ASSESSMENT_INPUT_INVALID",
             "transition assessment request is invalid",
-        ) from error
+        )
+    raise failure

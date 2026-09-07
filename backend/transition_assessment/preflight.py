@@ -21,6 +21,9 @@ _JSON_NUMBER = re.compile(
 )
 _STRICT_INTEGER_NAMES = {"sweep_position"}
 _STRICT_INTEGER_COLLECTION_NAMES: set[str] = set()
+_UNION_DISCRIMINATORS: dict[
+    str, tuple[tuple[str, frozenset[str]], ...]
+] = {}
 _TRUSTED_MODEL_TYPES: frozenset[type[BaseModel]] = frozenset()
 
 
@@ -100,12 +103,25 @@ def _register_trusted_model_types(roots: tuple[type[BaseModel], ...]) -> None:
                     annotations.extend(get_args(annotation))
     global _TRUSTED_MODEL_TYPES
     _TRUSTED_MODEL_TYPES = frozenset(trusted)
+    union_discriminators: dict[
+        str, set[tuple[str, frozenset[str]]]
+    ] = {}
     for candidate in trusted:
         for name, field in candidate.model_fields.items():
             if _annotation_is_integer(field.annotation):
                 _STRICT_INTEGER_NAMES.add(name)
             if _annotation_is_integer_collection(field.annotation):
                 _STRICT_INTEGER_COLLECTION_NAMES.add(name)
+            discriminator = _union_discriminator(field.annotation)
+            if discriminator is not None:
+                union_discriminators.setdefault(name, set()).add(
+                    discriminator,
+                )
+    global _UNION_DISCRIMINATORS
+    _UNION_DISCRIMINATORS = {
+        name: tuple(sorted(options, key=lambda item: (item[0], tuple(item[1]))))
+        for name, options in union_discriminators.items()
+    }
 
 
 def _annotation_is_integer(annotation: object) -> bool:
@@ -139,6 +155,50 @@ def _annotation_is_integer_collection(annotation: object) -> bool:
         return False
     members = tuple(item for item in arguments if item is not Ellipsis)
     return bool(members) and all(_annotation_is_integer(item) for item in members)
+
+
+def _literal_strings(annotation: object) -> frozenset[str] | None:
+    origin = get_origin(annotation)
+    arguments = get_args(annotation)
+    if origin is Annotated:
+        return _literal_strings(arguments[0])
+    if origin is not Literal or not arguments or not all(
+        type(item) is str for item in arguments
+    ):
+        return None
+    return frozenset(arguments)
+
+
+def _union_discriminator(
+    annotation: object,
+) -> tuple[str, frozenset[str]] | None:
+    origin = get_origin(annotation)
+    arguments = get_args(annotation)
+    if origin is Annotated:
+        return _union_discriminator(arguments[0])
+    if origin not in (Union, UnionType):
+        return None
+    arms = tuple(
+        item for item in arguments
+        if isinstance(item, type) and issubclass(item, BaseModel)
+    )
+    if len(arms) < 2:
+        return None
+    for discriminator in ("kind", "dimension", "record_kind", "type"):
+        values = []
+        for arm in arms:
+            field = arm.model_fields.get(discriminator)
+            literals = (
+                None if field is None else _literal_strings(field.annotation)
+            )
+            if literals is None:
+                break
+            values.append(literals)
+        else:
+            combined = frozenset().union(*values)
+            if len(combined) >= len(arms):
+                return discriminator, combined
+    return None
 
 
 def _model_items(
@@ -274,21 +334,28 @@ def _boolean_index(name: str | int | None, parent_name: str | None) -> bool:
     )
 
 
-def _validate_context_union_arm(
+def _validate_union_arm(
     name: str | int | None,
     item: object,
 ) -> None:
-    if name != "context" or type(item) is not dict:
+    options = (
+        _UNION_DISCRIMINATORS.get(name, ())
+        if type(name) is str else ()
+    )
+    if not options or type(item) is not dict:
         return
-    kind = None
-    for key, value in item.items():
-        if type(key) is str and key == "kind":
-            kind = value
-            break
-    if type(kind) is not str or kind not in {
-        "lifecycle_view", "view_independent",
-    }:
-        raise ValueError("unexpected context union arm")
+    found_discriminator = False
+    for discriminator, admitted in options:
+        value = None
+        for key, candidate in item.items():
+            if type(key) is str and key == discriminator:
+                value = candidate
+                found_discriminator = True
+                break
+        if type(value) is str and value in admitted:
+            return
+    if found_discriminator:
+        raise ValueError("unexpected union arm")
 
 
 def _preflight_graph(
@@ -328,9 +395,12 @@ def _preflight_graph(
             raise ValueError("reconstructed node limit exceeded")
         maximum_depth = max(maximum_depth, depth)
 
-        if type(item) is bool and _boolean_index(name, parent_name):
+        integer_position = _boolean_index(name, parent_name)
+        if type(item) is bool and integer_position:
             raise ValueError("boolean index is invalid")
-        _validate_context_union_arm(name, item)
+        if type(item) is float and integer_position:
+            raise ValueError("invalid scalar")
+        _validate_union_arm(name, item)
         container = _container(item, inherited_material)
         if container is None:
             byte_count += _scalar_size(item, maximum=max_bytes - byte_count)

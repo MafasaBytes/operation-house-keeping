@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import re
-from contextvars import ContextVar
 from datetime import UTC
 from typing import Annotated, Literal
 
@@ -213,11 +212,6 @@ _StrictNonnegativeInt = Annotated[StrictInt, Field(ge=0)]
 _TransitionAnchorId = Annotated[
     StrictStr, StringConstraints(pattern=r"^trn_[0-9a-f]{32}$"),
 ]
-_REQUEST_ALREADY_PREFLIGHTED: ContextVar[bool] = ContextVar(
-    "ta_request_already_preflighted", default=False,
-)
-
-
 class DeclaredTransitionAssessmentRequest(_Frozen):
     schema_version: Literal["1"]
     transition_anchor_id: _TransitionAnchorId
@@ -233,9 +227,6 @@ class DeclaredTransitionAssessmentRequest(_Frozen):
     @model_validator(mode="wrap")
     @classmethod
     def _bounded_reconstruction(cls, value, handler):
-        already_preflighted = _REQUEST_ALREADY_PREFLIGHTED.get()
-        if already_preflighted and type(value) is cls:
-            return value
         admission = _preflight_graph(value)
         plain = _plain_graph(value)
         _verify_canonical_plain(plain, admission.canonical_bytes)
@@ -301,6 +292,28 @@ class TransitionAssessmentEndpointDisclosure(_Frozen):
     condition_trace_indices: tuple[_StrictNonnegativeInt, ...]
 
 
+class _DeclaredTransitionAssessmentCompact(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    schema_version: Literal["1"]
+    ruleset_version: Literal["ta001.1"]
+    fixed_limits: TransitionAssessmentLimits
+    declaration_admission: TransitionAssessmentDeclarationAdmission
+    context_relation: TransitionAssessmentContextRelation
+    model_revision_relation: TransitionAssessmentModelRevisionRelation
+    cutoff_relation: TransitionAssessmentCutoffRelation
+    from_endpoint: TransitionAssessmentEndpointDisclosure
+    to_endpoint: TransitionAssessmentEndpointDisclosure
+    condition_traces: tuple[TransitionAssessmentConditionTrace, ...]
+    evidence_completeness: TransitionAssessmentEvidenceCompleteness
+    source_time_use: TransitionAssessmentSourceTimeUse
+    temporal_cohort: TransitionAssessmentTemporalCohort
+    continuity: TransitionAssessmentContinuity
+    execution: TransitionAssessmentExecution
+    issues: tuple[TransitionAssessmentIssue, ...]
+    conclusion: TransitionAssessmentConclusion | None
+
+
 class DeclaredTransitionAssessmentResult(_Frozen):
     schema_version: Literal["1"]
     request: DeclaredTransitionAssessmentRequest
@@ -342,12 +355,14 @@ class DeclaredTransitionAssessmentResult(_Frozen):
         request = DeclaredTransitionAssessmentRequest.model_validate(
             outer["request"],
         )
-        plain = {"request": request, **plain}
-        token = _REQUEST_ALREADY_PREFLIGHTED.set(True)
-        try:
-            return handler(plain)
-        finally:
-            _REQUEST_ALREADY_PREFLIGHTED.reset(token)
+        rebuilt = _DeclaredTransitionAssessmentCompact.model_validate(plain)
+        return cls.model_construct(
+            request=request,
+            **{
+                name: getattr(rebuilt, name)
+                for name in _DeclaredTransitionAssessmentCompact.model_fields
+            },
+        )
 
     @model_validator(mode="after")
     def _authoritative(self):
@@ -369,15 +384,16 @@ FIXED_POLICY = TransitionAssessmentPolicy(
     temporal_cohort="not_asserted",
     continuity="not_assessed",
 )
-FIXED_LIMITS = TransitionAssessmentLimits(
-    schema_version="1",
-    maximum_endpoint_conditions=64,
-    maximum_condition_traces=128,
-    maximum_distinct_alignments=128,
-    maximum_canonical_request_bytes=134_217_728,
-    maximum_reconstructed_nodes=200_000,
-    maximum_nesting_depth=128,
-)
+def _fixed_limits() -> TransitionAssessmentLimits:
+    return TransitionAssessmentLimits(
+        schema_version="1",
+        maximum_endpoint_conditions=64,
+        maximum_condition_traces=128,
+        maximum_distinct_alignments=128,
+        maximum_canonical_request_bytes=134_217_728,
+        maximum_reconstructed_nodes=200_000,
+        maximum_nesting_depth=128,
+    )
 
 
 _register_trusted_model_types((
