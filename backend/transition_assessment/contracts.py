@@ -161,6 +161,15 @@ class _Frozen(BaseModel):
         frozen=True, extra="forbid", revalidate_instances="always",
     )
 
+    @classmethod
+    def model_validate(cls, obj, *args, **kwargs):
+        candidate = type(obj)
+        if candidate is cls:
+            _model_items(obj, validate_binding=True)
+        elif isinstance(candidate, type) and issubclass(candidate, BaseModel):
+            raise ValueError("invalid model type")
+        return super().model_validate(obj, *args, **kwargs)
+
     @model_validator(mode="before")
     @classmethod
     def _strict_content(cls, value):
