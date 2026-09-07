@@ -70,7 +70,11 @@ limits are 134,217,728 canonical-request bytes, 200,000 reconstructed nodes,
 and nesting depth 128. Every governing observed condition requires a supplied,
 matched expected fingerprint. The design adds no facade, demonstration,
 occurrence or non-occurrence claim, store, ledger, identity, or persistence.
-No TA-001 implementation is present or authorized by this documentation gate.
+The documentation checkpoint is owner accepted at
+`a4754d8659c08af8fb86bf18bd3c5aac4ea355fe`. TA-001 Slice A is separately
+authorized for the exact contracts, bounded preflight, pure derivation,
+authoritative reconstruction, tests, and documentation in the accepted
+design. Slice B remains unauthorized.
 
 The unapproved architectural frontier includes flow measurement association
 and assessment and eventual configuration identity, causality, diagnosis,
@@ -91,9 +95,8 @@ later demonstration remains unauthorized.
 [ADR-0019](docs/adr/0019-content-bound-operational-evidence-selection-and-assurance.md)
 records the accepted EA-001 architecture.
 [ADR-0020](docs/adr/0020-evidence-gated-declared-transition-assessment.md)
-records the owner-accepted but unimplemented TA-001 design. TA-001's
-implementation requires its separate owner gate; no Slice A or Slice B is
-complete under this status.
+records the owner-accepted TA-001 design. Slice A is authorized but not yet
+accepted or complete; Slice B remains separately gated.
 
 ## Current Phase
 
