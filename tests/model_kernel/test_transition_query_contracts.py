@@ -132,7 +132,7 @@ def test_exact_transition_literals_are_public_in_normative_order():
 
 
 def test_exact_transition_result_field_order_and_exports():
-    assert len(kernel.__all__) == 203
+    assert len(kernel.__all__) == 205
     expected = {
         "TransitionEndpointResult": (
             "role", "state_anchor_id", "state_registration_index",
