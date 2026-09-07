@@ -134,3 +134,35 @@ def test_definitely_oversized_integer_rejects_before_decimal_conversion(
     with pytest.raises(ValueError, match="canonical byte limit exceeded"):
         module._preflight_graph(2**34, max_bytes=10)
     assert calls == []
+
+
+@pytest.mark.parametrize(
+    "field",
+    [
+        "attempts_failed",
+        "records_seen",
+        "records_accepted",
+        "retries_used",
+        "intervening_failed_attempts",
+        "later_empty_snapshots",
+    ],
+)
+def test_unsuffixed_carried_count_booleans_reject_structurally(field):
+    module = _preflight()
+    assert module._preflight_graph({field: 0}).nodes == 2
+    with pytest.raises(ValueError, match="boolean index"):
+        module._preflight_graph({field: True})
+
+
+def test_carried_integer_collection_booleans_reject_structurally():
+    module = _preflight()
+    module._preflight_graph({"levels_achieved": [0, 1]})
+    with pytest.raises(ValueError, match="boolean index"):
+        module._preflight_graph({"levels_achieved": [0, True]})
+
+
+def test_unrecognized_context_union_arm_rejects_structurally():
+    module = _preflight()
+    module._preflight_graph({"context": {"kind": "view_independent"}})
+    with pytest.raises(ValueError, match="union arm"):
+        module._preflight_graph({"context": {"kind": "unknown_context"}})

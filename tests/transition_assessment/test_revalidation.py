@@ -260,3 +260,55 @@ def test_rejected_model_metadata_never_invokes_caller_truthiness(
     with pytest.raises(TransitionAssessmentInputError):
         assess_declared_transition_endpoints(raw)
     assert calls == []
+
+
+def test_request_reconstructs_each_expensive_lower_result_once(
+    tmp_path, monkeypatch,
+):
+    import backend.evidence_alignment.derivation as alignment_derivation
+    import backend.state_classification.derivation as state_derivation
+
+    raw = build_world(tmp_path).request.model_dump(mode="python", warnings=False)
+    state_original = state_derivation.derive_classification
+    alignment_original = alignment_derivation._derive_alignment_fields
+    state_calls = []
+    alignment_calls = []
+
+    def state_counted(*args, **kwargs):
+        state_calls.append(1)
+        return state_original(*args, **kwargs)
+
+    def alignment_counted(*args, **kwargs):
+        alignment_calls.append(1)
+        return alignment_original(*args, **kwargs)
+
+    monkeypatch.setattr(state_derivation, "derive_classification", state_counted)
+    monkeypatch.setattr(
+        alignment_derivation, "_derive_alignment_fields", alignment_counted,
+    )
+    assert assess_declared_transition_endpoints(raw).execution == "executed"
+    assert len(state_calls) == 2
+    assert len(alignment_calls) == 2
+
+
+def test_compact_result_cycle_rejects_before_carried_request_reconstruction(
+    tmp_path, monkeypatch,
+):
+    import backend.state_classification.derivation as state_derivation
+
+    result = assess_declared_transition_endpoints(build_world(tmp_path).request)
+    raw = result.model_dump(mode="python", warnings=False)
+    cycle = []
+    cycle.append(cycle)
+    raw["issues"] = cycle
+    calls = []
+    original = state_derivation.derive_classification
+
+    def counted(*args, **kwargs):
+        calls.append(1)
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(state_derivation, "derive_classification", counted)
+    with pytest.raises((ValidationError, ValueError)):
+        DeclaredTransitionAssessmentResult.model_validate(raw)
+    assert calls == []
