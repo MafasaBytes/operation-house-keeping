@@ -72,16 +72,26 @@ def _string_size(value: str) -> int:
 def _model_items(value: BaseModel) -> tuple[tuple[str, object], ...]:
     if not type(value).__module__.startswith("backend."):
         raise ValueError("invalid model type")
-    fields = tuple(type(value).model_fields)
+    field_map = type(value).model_fields
+    fields = tuple(field_map)
     stored = vars(value)
     private_names = set(getattr(type(value), "__private_attributes__", {}))
     extras = getattr(value, "__pydantic_extra__", None) or {}
     private = getattr(value, "__pydantic_private__", None) or {}
-    if set(stored) != set(fields) or extras:
-        raise ValueError("model contains hidden or missing content")
+    hidden = set(stored) - set(fields) - private_names
+    missing_required = {
+        name for name, field in field_map.items()
+        if name not in stored and field.is_required()
+    }
+    if hidden or missing_required or extras:
+        raise ValueError(
+            "model contains hidden or missing content: "
+            f"{type(value).__name__} hidden={sorted(hidden)} "
+            f"missing={sorted(missing_required)} extras={sorted(extras)}"
+        )
     if set(private) - private_names:
         raise ValueError("model contains unexpected private content")
-    return tuple((name, stored[name]) for name in fields)
+    return tuple((name, getattr(value, name)) for name in fields)
 
 
 def _container(
