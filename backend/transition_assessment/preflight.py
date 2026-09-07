@@ -6,7 +6,7 @@ import math
 import re
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Iterator
+from typing import Iterator, get_args
 
 from pydantic import BaseModel
 
@@ -19,6 +19,7 @@ _JSON_NUMBER = re.compile(
     r"-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:e[+-]?[0-9]+)?\Z"
 )
 _STRICT_INTEGER_NAMES = {"sweep_position"}
+_TRUSTED_MODEL_TYPES: frozenset[type[BaseModel]] = frozenset()
 
 
 @dataclass(frozen=True)
@@ -47,7 +48,7 @@ def _datetime_token(value: datetime) -> str:
     return normalized.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def _string_content_size(value: str) -> int:
+def _string_content_size(value: str, *, maximum: int | None = None) -> int:
     if type(value) is not str:
         raise ValueError("invalid scalar")
     size = 0
@@ -62,11 +63,41 @@ def _string_content_size(value: str) -> int:
                 size += len(character.encode("utf-8"))
             except UnicodeError as error:
                 raise ValueError("invalid scalar") from error
+        if maximum is not None and size > maximum:
+            raise ValueError("canonical byte limit exceeded")
     return size
 
 
-def _string_size(value: str) -> int:
-    return _string_content_size(value) + 2
+def _string_size(value: str, *, maximum: int | None = None) -> int:
+    if maximum is not None and maximum < 2:
+        raise ValueError("canonical byte limit exceeded")
+    content_maximum = None if maximum is None else maximum - 2
+    return _string_content_size(value, maximum=content_maximum) + 2
+
+
+def _register_trusted_model_types(roots: tuple[type[BaseModel], ...]) -> None:
+    """Pin exact nominal model classes reachable from the public TA roots."""
+    pending = list(roots)
+    trusted: set[type[BaseModel]] = set()
+    while pending:
+        candidate = pending.pop()
+        if candidate in trusted:
+            continue
+        if not isinstance(candidate, type) or not issubclass(candidate, BaseModel):
+            continue
+        trusted.add(candidate)
+        for field in candidate.model_fields.values():
+            annotations = [field.annotation]
+            while annotations:
+                annotation = annotations.pop()
+                if isinstance(annotation, type) and issubclass(
+                    annotation, BaseModel,
+                ):
+                    pending.append(annotation)
+                else:
+                    annotations.extend(get_args(annotation))
+    global _TRUSTED_MODEL_TYPES
+    _TRUSTED_MODEL_TYPES = frozenset(trusted)
 
 
 def _model_items(
@@ -75,30 +106,26 @@ def _model_items(
     *,
     validate_binding: bool = False,
 ) -> tuple[tuple[tuple[str, object], ...], object | None]:
-    if not type(value).__module__.startswith("backend."):
+    if type(value) not in _TRUSTED_MODEL_TYPES:
         raise ValueError("invalid model type")
     field_map = type(value).model_fields
     fields = tuple(field_map)
-    stored = vars(value)
+    stored = object.__getattribute__(value, "__dict__")
     private_names = set(getattr(type(value), "__private_attributes__", {}))
-    extras = getattr(value, "__pydantic_extra__", None) or {}
-    private = getattr(value, "__pydantic_private__", None) or {}
+    extras = object.__getattribute__(value, "__pydantic_extra__") or {}
+    private = object.__getattribute__(value, "__pydantic_private__") or {}
     hidden = set(stored) - set(fields) - private_names
-    missing_required = {
-        name for name, field in field_map.items()
-        if name not in stored and field.is_required()
-    }
-    if hidden or missing_required or extras:
+    missing = set(fields) - set(stored)
+    if hidden or missing or extras:
         raise ValueError(
             "model contains hidden or missing content: "
             f"{type(value).__name__} hidden={sorted(hidden)} "
-            f"missing={sorted(missing_required)} extras={sorted(extras)}"
+            f"missing={sorted(missing)} extras={sorted(extras)}"
         )
     if set(private) - private_names:
         raise ValueError("model contains unexpected private content")
-    local_material = (
-        getattr(value, "material") if "material" in field_map
-        else inherited_material
+    local_material = stored["material"] if "material" in field_map else (
+        inherited_material
     )
     if validate_binding and "_material" in private_names:
         private_material = (
@@ -108,7 +135,7 @@ def _model_items(
         if local_material is None or private_material is not local_material:
             raise ValueError("model private material binding is substituted")
     return (
-        tuple((name, getattr(value, name)) for name in fields),
+        tuple((name, stored[name]) for name in fields),
         local_material,
     )
 
@@ -117,45 +144,57 @@ def _container(
     value: object,
     inherited_material: object | None,
 ) -> tuple[
-    Iterator[tuple[str | int, object]], int, int, object | None,
+    Iterator[tuple[str | int, object]], int, int, object | None, bool, int,
 ] | None:
-    """Return children, punctuation bytes, and identity for a container."""
+    """Return children and O(1) structural facts for a container."""
     if isinstance(value, BaseModel):
         items, local_material = _model_items(
             value, inherited_material, validate_binding=True,
         )
-        key_bytes = sum(_string_size(name) + 1 for name, _ in items)
-        punctuation = 2 + max(len(items) - 1, 0) + key_bytes
-        return iter(items), punctuation, id(value), local_material
+        punctuation = 2 + max(len(items) - 1, 0)
+        return (
+            iter(items), punctuation, id(value), local_material, True,
+            len(items),
+        )
     if type(value) is dict:
-        for key in value:
-            if type(key) is not str:
-                raise ValueError("mapping key must be an ordinary string")
-        key_bytes = sum(_string_size(key) + 1 for key in value)
-        punctuation = 2 + max(len(value) - 1, 0) + key_bytes
-        return iter(value.items()), punctuation, id(value), inherited_material
+        punctuation = 2 + max(len(value) - 1, 0)
+        return (
+            iter(value.items()), punctuation, id(value), inherited_material,
+            True, len(value),
+        )
     if type(value) in (tuple, list):
         punctuation = 2 + max(len(value) - 1, 0)
-        return iter(enumerate(value)), punctuation, id(value), inherited_material
+        return (
+            iter(enumerate(value)), punctuation, id(value), inherited_material,
+            False, len(value),
+        )
     return None
 
 
-def _scalar_size(value: object) -> int:
+def _scalar_size(value: object, *, maximum: int) -> int:
     if value is None:
         return 4
     if type(value) is bool:
         return 4 if value else 5
     if type(value) is str:
-        return _string_size(value)
+        return _string_size(value, maximum=maximum)
     if type(value) is int:
+        if value and value.bit_length() > maximum * 4 + 4:
+            raise ValueError("canonical byte limit exceeded")
         try:
-            return len(str(value))
+            size = len(str(value))
         except (ValueError, OverflowError) as error:
             raise ValueError("invalid scalar") from error
+        if size > maximum:
+            raise ValueError("canonical byte limit exceeded")
+        return size
     if type(value) is float:
-        return len(_float_token(value))
+        size = len(_float_token(value))
+        if size > maximum:
+            raise ValueError("canonical byte limit exceeded")
+        return size
     if type(value) is datetime:
-        return _string_size(_datetime_token(value))
+        return _string_size(_datetime_token(value), maximum=maximum)
     raise ValueError("invalid scalar")
 
 
@@ -177,9 +216,14 @@ def _preflight_graph(
     max_bytes: int = MAXIMUM_CANONICAL_REQUEST_BYTES,
 ) -> _PreflightResult:
     """Inspect without serialization, recursive descent, or caller equality."""
-    if any(type(limit) is not int or limit < 1 for limit in (
-        max_nodes, max_depth, max_bytes,
-    )):
+    if (
+        type(max_nodes) is not int
+        or max_nodes < 1
+        or type(max_depth) is not int
+        or max_depth < 0
+        or type(max_bytes) is not int
+        or max_bytes < 1
+    ):
         raise ValueError("invalid preflight configuration")
 
     nodes = 0
@@ -189,6 +233,7 @@ def _preflight_graph(
     current = (None, None, value, 0, None)
     frames: list[tuple[
         Iterator[tuple[str | int, object]], int, int, str | None, object | None,
+        bool,
     ]] = []
 
     while True:
@@ -204,30 +249,53 @@ def _preflight_graph(
             raise ValueError("boolean index is invalid")
         container = _container(item, inherited_material)
         if container is None:
-            byte_count += _scalar_size(item)
+            byte_count += _scalar_size(item, maximum=max_bytes - byte_count)
         else:
-            children, structural_bytes, identity, local_material = container
+            (
+                children, structural_bytes, identity, local_material,
+                mapping, child_count,
+            ) = container
             if identity in active:
                 raise ValueError("cyclic content is invalid")
+            if nodes + child_count > max_nodes:
+                raise ValueError("reconstructed node limit exceeded")
+            if (
+                name == "evidence_alignments" and child_count > 128
+            ) or (
+                name == "conditions"
+                and parent_name in {"from_classification", "to_classification"}
+                and child_count > 64
+            ):
+                raise ValueError("fixed container cardinality exceeded")
             active.add(identity)
             byte_count += structural_bytes
             frames.append((children, depth, identity,
                            name if type(name) is str else parent_name,
-                           local_material))
+                           local_material, mapping))
 
         if byte_count > max_bytes:
             raise ValueError("canonical byte limit exceeded")
 
         while frames:
-            children, container_depth, identity, container_name, material = (
-                frames[-1]
-            )
+            (
+                children, container_depth, identity, container_name, material,
+                mapping,
+            ) = frames[-1]
             try:
                 child_name, child = next(children)
             except StopIteration:
                 frames.pop()
                 active.remove(identity)
                 continue
+            if mapping:
+                if type(child_name) is not str:
+                    raise ValueError("mapping key must be an ordinary string")
+                key_budget = max_bytes - byte_count
+                if key_budget < 1:
+                    raise ValueError("canonical byte limit exceeded")
+                byte_count += (
+                    _string_size(child_name, maximum=key_budget - 1) + 1
+                )
             current = (
                 child_name,
                 container_name,
@@ -257,61 +325,116 @@ def _plain_graph(value: object) -> object:
     return value
 
 
-def _quoted(value: str) -> bytes:
-    chunks = [b'"']
+def _graphs_have_same_shape(left: object, right: object) -> bool:
+    """Compare admitted content without coercive cross-type equality."""
+    pending = [(left, right)]
+    while pending:
+        first, second = pending.pop()
+        if isinstance(second, BaseModel):
+            try:
+                items, _ = _model_items(second)
+            except ValueError:
+                return False
+            second = {name: item for name, item in items}
+        if type(first) is dict:
+            if (
+                type(second) is not dict
+                or len(first) != len(second)
+                or set(first) != set(second)
+            ):
+                return False
+            pending.extend((first[key], second[key]) for key in first)
+        elif type(first) in (tuple, list):
+            if type(second) not in (tuple, list) or len(first) != len(second):
+                return False
+            pending.extend(zip(first, second))
+        elif type(first) is datetime and type(second) is datetime:
+            if first.astimezone(UTC) != second.astimezone(UTC):
+                return False
+        elif type(first) is not type(second) or first != second:
+            return False
+    return True
+
+
+class _CountingSink:
+    def __init__(self) -> None:
+        self.count = 0
+
+    def write(self, chunk: bytes) -> None:
+        self.count += len(chunk)
+
+
+class _RetainingSink(_CountingSink):
+    def __init__(self) -> None:
+        super().__init__()
+        self.content = bytearray()
+
+    def write(self, chunk: bytes) -> None:
+        super().write(chunk)
+        self.content.extend(chunk)
+
+
+def _write_quoted(value: str, sink: _CountingSink) -> None:
+    sink.write(b'"')
     escapes = {
         '"': b'\\"', "\\": b"\\\\", "\b": b"\\b", "\f": b"\\f",
         "\n": b"\\n", "\r": b"\\r", "\t": b"\\t",
     }
     for character in value:
         if character in escapes:
-            chunks.append(escapes[character])
+            sink.write(escapes[character])
         elif ord(character) < 0x20:
-            chunks.append(f"\\u{ord(character):04x}".encode("ascii"))
+            sink.write(f"\\u{ord(character):04x}".encode("ascii"))
         else:
-            chunks.append(character.encode("utf-8"))
-    chunks.append(b'"')
-    return b"".join(chunks)
+            sink.write(character.encode("utf-8"))
+    sink.write(b'"')
 
 
-def _encode(value: object, sink: bytearray) -> None:
+def _encode(value: object, sink: _CountingSink) -> None:
     if value is None:
-        sink.extend(b"null")
+        sink.write(b"null")
     elif type(value) is bool:
-        sink.extend(b"true" if value else b"false")
+        sink.write(b"true" if value else b"false")
     elif type(value) is str:
-        sink.extend(_quoted(value))
+        _write_quoted(value, sink)
     elif type(value) is int:
-        sink.extend(str(value).encode("ascii"))
+        sink.write(str(value).encode("ascii"))
     elif type(value) is float:
-        sink.extend(_float_token(value).encode("ascii"))
+        sink.write(_float_token(value).encode("ascii"))
     elif type(value) is datetime:
-        sink.extend(_quoted(_datetime_token(value)))
+        _write_quoted(_datetime_token(value), sink)
     elif type(value) is dict:
-        sink.extend(b"{")
+        sink.write(b"{")
         for index, key in enumerate(sorted(value)):
             if index:
-                sink.extend(b",")
-            sink.extend(_quoted(key))
-            sink.extend(b":")
+                sink.write(b",")
+            _write_quoted(key, sink)
+            sink.write(b":")
             _encode(value[key], sink)
-        sink.extend(b"}")
+        sink.write(b"}")
     elif type(value) in (tuple, list):
-        sink.extend(b"[")
+        sink.write(b"[")
         for index, item in enumerate(value):
             if index:
-                sink.extend(b",")
+                sink.write(b",")
             _encode(item, sink)
-        sink.extend(b"]")
+        sink.write(b"]")
     else:
         raise ValueError("invalid scalar")
+
+
+def _verify_canonical_plain(value: object, expected_size: int) -> None:
+    sink = _CountingSink()
+    _encode(value, sink)
+    if sink.count != expected_size:
+        raise ValueError("canonical byte counter disagrees with encoder")
 
 
 def _canonical_json_bytes(value: object) -> bytes:
     admission = _preflight_graph(value)
     plain = _plain_graph(value)
-    sink = bytearray()
+    sink = _RetainingSink()
     _encode(plain, sink)
-    if len(sink) != admission.canonical_bytes:
+    if sink.count != admission.canonical_bytes:
         raise ValueError("canonical byte counter disagrees with encoder")
-    return bytes(sink)
+    return bytes(sink.content)

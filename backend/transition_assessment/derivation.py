@@ -109,7 +109,9 @@ def _endpoint_facts(request, role, group, transition_subject):
     classified_subject = _classification_subject(classification)
     subject_relation = (
         "not_evaluated"
-        if transition_subject is None or classified_subject is None
+        if group is None
+        or transition_subject is None
+        or classified_subject is None
         else "exact" if transition_subject == classified_subject
         else "different"
     )
@@ -292,8 +294,7 @@ def _evidence_completeness(request, traces):
         request.from_classification, request.to_classification,
     )
     if any(
-        item.execution != "executed"
-        or item.condition_coverage == "not_evaluated"
+        item.condition_coverage == "not_evaluated"
         for item in classifications
     ) or any(trace.evidence_selection_status == "refused" for trace in traces):
         return "not_evaluated"

@@ -35,7 +35,14 @@ from backend.state_classification import (
     StateConditionCoverage,
 )
 
-from .preflight import _plain_graph, _preflight_graph
+from .preflight import (
+    _graphs_have_same_shape,
+    _model_items,
+    _plain_graph,
+    _preflight_graph,
+    _register_trusted_model_types,
+    _verify_canonical_plain,
+)
 
 
 TransitionAssessmentInputErrorCode = Literal[
@@ -221,9 +228,11 @@ class DeclaredTransitionAssessmentRequest(_Frozen):
     @classmethod
     def _bounded_reconstruction(cls, value, handler):
         already_preflighted = _REQUEST_ALREADY_PREFLIGHTED.get()
-        if not already_preflighted:
-            _preflight_graph(value)
-        plain = value if already_preflighted else _plain_graph(value)
+        if already_preflighted and type(value) is cls:
+            return value
+        admission = _preflight_graph(value)
+        plain = _plain_graph(value)
+        _verify_canonical_plain(plain, admission.canonical_bytes)
         rebuilt = handler(plain)
         if len(rebuilt.evidence_alignments) > 128:
             raise ValueError("alignment cardinality exceeds the fixed limit")
@@ -231,27 +240,29 @@ class DeclaredTransitionAssessmentRequest(_Frozen):
             rebuilt.from_classification, rebuilt.to_classification,
         )):
             raise ValueError("endpoint condition cardinality exceeds the fixed limit")
+        if not _graphs_have_same_shape(plain, rebuilt):
+            raise ValueError("nominal reconstruction changed serialized shape")
         return rebuilt
 
     @field_validator("context", mode="before")
     @classmethod
     def _context(cls, value):
-        return _CONTEXT.validate_python(_plain_graph(value))
+        return _CONTEXT.validate_python(value)
 
     @field_validator("policy", mode="before")
     @classmethod
     def _policy(cls, value):
-        return TransitionAssessmentPolicy.model_validate(_plain_graph(value))
+        return TransitionAssessmentPolicy.model_validate(value)
 
     @field_validator("transition", mode="before")
     @classmethod
     def _transition(cls, value):
-        return TransitionDeclarationResult.model_validate(_plain_graph(value))
+        return TransitionDeclarationResult.model_validate(value)
 
     @field_validator("from_classification", "to_classification", mode="before")
     @classmethod
     def _classification(cls, value):
-        return StateClassificationResult.model_validate(_plain_graph(value))
+        return StateClassificationResult.model_validate(value)
 
     @field_validator("evidence_alignments", mode="before")
     @classmethod
@@ -259,7 +270,7 @@ class DeclaredTransitionAssessmentRequest(_Frozen):
         if type(value) not in (tuple, list):
             raise ValueError("evidence alignments must be a sequence")
         return tuple(
-            OperationalEvidenceAlignmentResult.model_validate(_plain_graph(item))
+            OperationalEvidenceAlignmentResult.model_validate(item)
             for item in value
         )
 
@@ -338,8 +349,25 @@ class DeclaredTransitionAssessmentResult(_Frozen):
     @model_validator(mode="wrap")
     @classmethod
     def _bounded_reconstruction(cls, value, handler):
-        _preflight_graph(value)
-        plain = _plain_graph(value)
+        if type(value) is dict:
+            outer = value
+        elif type(value) is cls:
+            items, _ = _model_items(value)
+            outer = {name: item for name, item in items}
+        else:
+            raise ValueError("assessment result must be an ordinary mapping")
+        if any(type(name) is not str for name in outer):
+            raise ValueError("assessment result keys are not ordinary strings")
+        fields = tuple(cls.model_fields)
+        if set(outer) != set(fields):
+            raise ValueError("assessment result fields are not exact")
+        request = DeclaredTransitionAssessmentRequest.model_validate(
+            outer["request"],
+        )
+        compact = {name: outer[name] for name in fields if name != "request"}
+        _preflight_graph(compact)
+        plain = _plain_graph(compact)
+        plain = {"request": request, **plain}
         token = _REQUEST_ALREADY_PREFLIGHTED.set(True)
         try:
             return handler(plain)
@@ -375,3 +403,18 @@ FIXED_LIMITS = TransitionAssessmentLimits(
     maximum_reconstructed_nodes=200_000,
     maximum_nesting_depth=128,
 )
+
+
+_register_trusted_model_types((
+    AssertionContext,
+    TransitionDeclarationResult,
+    StateClassificationResult,
+    OperationalEvidenceAlignmentResult,
+    TransitionAssessmentPolicy,
+    TransitionAssessmentLimits,
+    DeclaredTransitionAssessmentRequest,
+    TransitionAssessmentIssue,
+    TransitionAssessmentConditionTrace,
+    TransitionAssessmentEndpointDisclosure,
+    DeclaredTransitionAssessmentResult,
+))
