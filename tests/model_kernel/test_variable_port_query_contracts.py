@@ -60,7 +60,7 @@ def test_exact_public_result_names_fields_and_exports():
                 set(RESULT_FIELDS) | set(ALIASES) | {
                     "VariablePortAssociation",
                     "VariablePortAssociationWithdrawal"})
-    assert len(kernel.__all__) == 203
+    assert len(kernel.__all__) == 205
     assert len(kernel.__all__) == len(set(kernel.__all__))
 
 

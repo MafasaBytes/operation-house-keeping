@@ -71,11 +71,11 @@ FA-001, Slice B, or upper-layer import. It stops for owner validation.
 | FM-S27 | Immutable indexes cover subject, flow, variable, port, context, root, and record ID for Slice B. |
 | FM-S28 | Index construction is deterministic across insertion order and hash seeds. |
 | FM-S29 | Hostile nested records, wrong union arms, hidden state, cycles, stale values, and scalar subclasses refuse. |
-| FM-S30 | All integer/index fields reject booleans and negative/out-of-range values. |
+| FM-S30 | Slice A exposes no public result/index fields; this row is a negative boundary. Boolean/negative/out-of-range result-index testing belongs to Slice B. |
 | FM-S31 | Canonical/store/load/append failure does not mutate existing records, IDs, or revisions. |
 | FM-S32 | Public `__all__` adds only the exact Slice A names once and preserves prior order. |
 | FM-S33 | Model-kernel import isolation excludes evidence, temporal, upper evaluation, connectors, and UI. |
-| FM-S34 | No filesystem, store, clock, environment, network, EA, TA, observation, or write access occurs in pure validation. |
+| FM-S34 | Pure contract/canonical reconstruction and in-memory validation perform no I/O; authorized ModelStore append/load may perform filesystem I/O at its explicit boundary. |
 | FM-S35 | No result/query class or five public FM query method is added in Slice A. |
 | FM-S36 | No fixture, demo, identity mint, authoritative append, or FA-001 artifact is created. |
 
