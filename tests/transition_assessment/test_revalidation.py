@@ -182,3 +182,33 @@ def test_alignment_cardinality_rejects_before_lower_reconstruction(
     with pytest.raises(TransitionAssessmentInputError):
         assess_declared_transition_endpoints(raw)
     assert calls == []
+
+
+def test_request_runs_one_full_plain_copy_and_canonical_agreement_pass(
+    tmp_path, monkeypatch,
+):
+    import backend.transition_assessment.contracts as contracts
+
+    raw = build_world(tmp_path).request.model_dump(mode="python", warnings=False)
+    plain_graph = contracts._plain_graph
+    verify = contracts._verify_canonical_plain
+    full_copies = []
+    canonical_checks = []
+
+    def recording_plain(value):
+        if type(value) is dict and {
+            "transition", "from_classification", "to_classification",
+            "evidence_alignments",
+        } <= set(value):
+            full_copies.append(value)
+        return plain_graph(value)
+
+    def recording_verify(value, expected_size):
+        canonical_checks.append((value, expected_size))
+        return verify(value, expected_size)
+
+    monkeypatch.setattr(contracts, "_plain_graph", recording_plain)
+    monkeypatch.setattr(contracts, "_verify_canonical_plain", recording_verify)
+    assert assess_declared_transition_endpoints(raw).execution == "executed"
+    assert len(full_copies) == 1
+    assert len(canonical_checks) == 1

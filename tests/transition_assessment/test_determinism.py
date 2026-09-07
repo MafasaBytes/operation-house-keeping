@@ -74,3 +74,23 @@ def test_private_bytes_are_not_public_identity_and_have_no_newline(tmp_path):
     assert not data.endswith(b"\n")
     assert "_canonical_json_bytes" not in package.__all__
     assert len(hashlib.sha256(data).hexdigest()) == 64
+
+
+def test_recursive_nested_mapping_order_does_not_change_bytes(tmp_path):
+    world = build_world(tmp_path)
+    original = assess_declared_transition_endpoints(world.request)
+
+    def reverse(value):
+        if type(value) is dict:
+            return {
+                key: reverse(item)
+                for key, item in reversed(tuple(value.items()))
+            }
+        if type(value) in (tuple, list):
+            return type(value)(reverse(item) for item in value)
+        return value
+
+    raw = reverse(world.request.model_dump(mode="python", warnings=False))
+    rebuilt = DeclaredTransitionAssessmentRequest.model_validate(raw)
+    permuted = assess_declared_transition_endpoints(rebuilt)
+    assert _canonical_json_bytes(permuted) == _canonical_json_bytes(original)

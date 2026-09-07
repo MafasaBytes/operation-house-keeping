@@ -106,7 +106,11 @@ def test_missing_or_reordered_exact_alignment_collection_is_malformed(tmp_path):
         assert captured.value.error_code == "TRANSITION_ASSESSMENT_INPUT_INVALID"
 
 
-def test_corrected_t43_candidate_zero_twin_and_candidate_one_attack(tmp_path):
+def test_corrected_t43_candidate_zero_twin_and_candidate_one_attack(
+    tmp_path, monkeypatch,
+):
+    import backend.transition_assessment.derivation as derivation
+
     world = build_world(tmp_path)
     assert tuple(
         alignment.aligned_candidate_index
@@ -116,9 +120,18 @@ def test_corrected_t43_candidate_zero_twin_and_candidate_one_attack(tmp_path):
 
     raw = world.request.model_dump(mode="python", warnings=False)
     raw["evidence_alignments"][0]["aligned_candidate_index"] = 1
+    original = derivation._derive_result_fields
+    calls = []
+
+    def recording(request):
+        calls.append(request)
+        return original(request)
+
+    monkeypatch.setattr(derivation, "_derive_result_fields", recording)
     with pytest.raises(TransitionAssessmentInputError) as captured:
         assess_declared_transition_endpoints(raw)
     assert captured.value.error_code == "TRANSITION_ASSESSMENT_INPUT_INVALID"
+    assert calls == []
 
 
 def test_finite_float_in_nonfloat_field_remains_malformed(tmp_path):
