@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import importlib
+import gc
 import math
+import sys
+from datetime import UTC, datetime
 
 import pytest
 
@@ -110,6 +113,74 @@ def test_public_constants_are_exact():
     assert module.MAXIMUM_NESTING_DEPTH == 128
 
 
+def test_t64_t69_exact_production_byte_node_and_depth_boundaries():
+    module = _preflight()
+    byte_limit = module.MAXIMUM_CANONICAL_REQUEST_BYTES
+    exact = "a" * (byte_limit - 2)
+    admitted = module._preflight_graph(exact)
+    assert admitted.canonical_bytes == byte_limit
+    del exact
+    gc.collect()
+
+    plus_one = "a" * (byte_limit - 1)
+    with pytest.raises(ValueError, match="byte limit"):
+        module._preflight_graph(plus_one)
+    del plus_one
+    gc.collect()
+
+    node_limit = module.MAXIMUM_RECONSTRUCTED_NODES
+    assert module._preflight_graph([None] * (node_limit - 1)).nodes == node_limit
+    with pytest.raises(ValueError, match="node limit"):
+        module._preflight_graph([None] * node_limit)
+
+    depth_limit = module.MAXIMUM_NESTING_DEPTH
+    exact_depth = None
+    for _ in range(depth_limit):
+        exact_depth = [exact_depth]
+    assert module._preflight_graph(exact_depth).maximum_depth == depth_limit
+    too_deep = [exact_depth]
+    with pytest.raises(ValueError, match="depth limit"):
+        module._preflight_graph(too_deep)
+
+
+def test_t70_t72_iterative_active_path_and_container_admission():
+    module = _preflight()
+    shared = [None]
+    assert module._preflight_graph(
+        [shared, shared], max_nodes=5,
+    ).nodes == 5
+    with pytest.raises(ValueError, match="node limit"):
+        module._preflight_graph([shared, shared], max_nodes=4)
+
+    cycle = []
+    cycle.append(cycle)
+    with pytest.raises(ValueError, match="cyclic"):
+        module._preflight_graph(cycle)
+
+    previous = sys.getrecursionlimit()
+    try:
+        sys.setrecursionlimit(96)
+        deep = None
+        for _ in range(90):
+            deep = [deep]
+        assert module._preflight_graph(deep, max_depth=90).maximum_depth == 90
+    finally:
+        sys.setrecursionlimit(previous)
+
+    class HostileList(list):
+        def __iter__(self):
+            raise AssertionError("hostile sequence iteration")
+
+        def __len__(self):
+            raise AssertionError("hostile sequence length")
+
+    with pytest.raises(ValueError, match="invalid scalar"):
+        module._preflight_graph(HostileList([None]))
+
+    with pytest.raises(ValueError, match="invalid scalar"):
+        module._preflight_graph(b"not admitted")
+
+
 def test_compact_result_cardinalities_reject_during_preflight():
     module = _preflight()
     module._preflight_graph({"condition_traces": [None] * 128})
@@ -166,3 +237,76 @@ def test_unrecognized_context_union_arm_rejects_structurally():
     module._preflight_graph({"context": {"kind": "view_independent"}})
     with pytest.raises(ValueError, match="union arm"):
         module._preflight_graph({"context": {"kind": "unknown_context"}})
+
+
+def test_t22_t51_all_strict_integer_names_and_datetime_subclasses_fail_early():
+    module = _preflight()
+    assert module._STRICT_INTEGER_NAMES
+    for name in module._STRICT_INTEGER_NAMES:
+        assert module._preflight_graph({name: 0}).nodes == 2
+        with pytest.raises(ValueError, match="boolean index"):
+            module._preflight_graph({name: True})
+    for name in module._STRICT_INTEGER_COLLECTION_NAMES:
+        assert module._preflight_graph({name: [0]}).nodes == 3
+        with pytest.raises(ValueError, match="boolean index"):
+            module._preflight_graph({name: [True]})
+
+    with pytest.raises(ValueError, match="invalid scalar"):
+        module._preflight_graph(datetime(2026, 9, 7, 12, 0))
+
+    calls = []
+
+    class HostileDatetime(datetime):
+        def __getattribute__(self, name):
+            calls.append(name)
+            raise AssertionError("datetime subclass accessed")
+
+    hostile = HostileDatetime(2026, 9, 7, 12, 0, tzinfo=UTC)
+    with pytest.raises(ValueError, match="invalid scalar"):
+        module._preflight_graph(hostile)
+    assert calls == []
+
+
+def test_t52_scalar_subclasses_reject_without_caller_protocols():
+    module = _preflight()
+    calls = []
+
+    class HostileString(str):
+        def _called(self, name):
+            calls.append(name)
+            raise AssertionError(name)
+
+        def __eq__(self, other):
+            return self._called("eq")
+
+        def __hash__(self):
+            return self._called("hash")
+
+        def __iter__(self):
+            return self._called("iter")
+
+        def __len__(self):
+            return self._called("len")
+
+        def __repr__(self):
+            return self._called("repr")
+
+        def encode(self, *args, **kwargs):
+            return self._called("encode")
+
+    with pytest.raises(ValueError, match="invalid scalar"):
+        module._preflight_graph(HostileString("ordinary-looking"))
+    assert calls == []
+
+    class HostileInt(int):
+        def bit_length(self):
+            calls.append("bit_length")
+            raise AssertionError("bit length")
+
+        def __str__(self):
+            calls.append("str")
+            raise AssertionError("string conversion")
+
+    with pytest.raises(ValueError, match="invalid scalar"):
+        module._preflight_graph(HostileInt(1))
+    assert calls == []
