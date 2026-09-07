@@ -32,10 +32,11 @@ boundaries remain binding.
 
 The owner-accepted milestone sequence is DS-001, DS-002, DS-003, DS-004,
 TS-001, IB-001, MK-001, VM-001, VS-001, SN-001, ES-001, CN-001, PT-001,
-VP-001, BH-001, ST-001, ST-002, and FL-001. FL-001 is complete, owner
-accepted, adversarially reviewed, full-suite verified, and
-dual-clean-checkout verified. No successor milestone is currently approved
-or in implementation. Accepted designs and decisions are indexed in
+VP-001, BH-001, ST-001, ST-002, FL-001, and EA-001. Both FL-001 and EA-001 are
+complete and owner accepted. FL-001 is adversarially reviewed; EA-001 is
+adversarially repaired. Both are full-suite and dual-clean-checkout verified.
+No successor milestone is currently approved or in implementation. Accepted
+designs and decisions are indexed in
 `README.md`, `docs/superpowers/specs/`, and `docs/adr/`.
 
 Also accepted: ES-001, adversarially reviewed, repaired, and
@@ -47,9 +48,10 @@ The accepted backend comprises `data_sources`, `temporal_state`,
 `system_identity`, `identity_binding`, `model_kernel`, `structural_evidence`,
 `model_state`, `observation_compatibility`, `source_interpretation`,
 `semantic_compatibility`, `constraint_evaluation`, `behavior_evaluation`, and
-`state_classification`. Lower evidence and identity packages do not import
-upper model or evaluation packages. Read-only composition layers own no
-authoritative ledger.
+`state_classification`, plus the read-only `evidence_assurance` and
+`evidence_alignment` composition layers. Lower evidence and identity packages
+do not import upper model or evaluation packages. Read-only composition layers
+own no authoritative ledger.
 
 The authoritative synthetic demo model contains exactly 36 records at
 `mrv_b8f03e1c03c23efc5c4454d00e43e6b89b8254ab87ce724d7418b8a94288c7ee`,
@@ -68,18 +70,16 @@ configuration identity, causality, diagnosis, impact analysis, goals, actions,
 and planning. This status assigns none of those concerns a permanent milestone
 contract or module name and authorizes no implementation.
 
-EA-001 has an owner-accepted corrected contract. Its Slice A lower read seams
-and integrity repair are owner accepted at
-`ceee1446f18ae9b7134005089046a5a4d69e10ae`. Repaired Slice B, including the
-R1-R4 integrity repairs, is owner accepted at implementation HEAD
-`932514a456bcafe690a94d2d774b61913c352fbf`. This documentation-only acceptance
-does not accept the complete EA-001 milestone. The bounded Slice C design is
-owner approved. Slice C1 contracts, pure derivation, and red-first adversarial
-tests, including the bounded expected-fingerprint integrity repair, are owner
-accepted at `64c0a8ba7678c7567c2b596947167535cf8fbab3`. Slice C2 package-level
-exports and final verification are implemented and verified at
-`96d0dfec1a73c6250159dae0df498880ac5e26b0`; final EA-001 acceptance remains
-pending. Every later demonstration remains unauthorized.
+EA-001 is complete and owner accepted. Its accepted lineage includes the Slice
+A lower read seams and integrity repair at
+`ceee1446f18ae9b7134005089046a5a4d69e10ae`; repaired Slice B at
+`932514a456bcafe690a94d2d774b61913c352fbf`; Slice C1 contracts, pure
+derivation, adversarial tests, and expected-fingerprint repair at
+`64c0a8ba7678c7567c2b596947167535cf8fbab3`; and the exact tested Slice C2
+public surface at `96d0dfec1a73c6250159dae0df498880ac5e26b0`. EA-001 is
+adversarially repaired, full-suite verified, and dual-clean-checkout verified.
+It adds no demonstration or committed alignment-result artifact, and every
+later demonstration remains unauthorized.
 
 ## Current Phase
 

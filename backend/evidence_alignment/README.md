@@ -5,6 +5,15 @@ surface. It relates one already-computed operational-evidence selection to one
 already-computed observation-compatibility result. It owns no evidence,
 model, store, identity, revision, or persistent result.
 
+## Status
+
+EA-001 is complete and owner accepted. The exact tested Slice C2
+implementation is `96d0dfec1a73c6250159dae0df498880ac5e26b0`; later
+administrative commits record acceptance without changing runtime behavior.
+The milestone is adversarially repaired, full-suite verified, and
+dual-clean-checkout verified. No demonstration, committed alignment-result
+artifact, or second consumer was added.
+
 ## Public boundary
 
 The single public operation is:
