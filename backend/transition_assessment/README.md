@@ -9,7 +9,9 @@ support the declared endpoint pattern at ordered cutoffs.
 
 TA-001 Slice A is owner accepted at exact tested implementation
 `76738ac0d098eb59b0fec4f6970aa862528647d9`. Slice B adversarial hardening and
-final verification are authorized; final TA-001 acceptance is pending. The accepted design is recorded in
+final verification are implemented at exact tested implementation
+`2ec18f7234273dba98098d268df4568d5cc84d85`; final TA-001 acceptance is pending.
+The accepted design is recorded in
 [ADR-0020](../../docs/adr/0020-evidence-gated-declared-transition-assessment.md).
 
 ## Public boundary
@@ -67,6 +69,8 @@ PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest \
   -o addopts='' -p no:cacheprovider tests/transition_assessment -q
 ```
 
-The Slice A completion report records the focused, affected, architecture,
-working full-suite, clean-checkout, deterministic, preservation, compilation,
-dependency, and whitespace evidence.
+The Slice A completion report records its accepted implementation evidence.
+The uncommitted Slice B completion report records adversarial T01-T74 closure,
+final full-suite and clean-checkout verification, deterministic reproduction,
+preservation, compilation, dependency, and whitespace evidence for owner
+validation.

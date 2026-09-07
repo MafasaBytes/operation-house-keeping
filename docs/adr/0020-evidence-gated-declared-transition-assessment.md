@@ -2,8 +2,8 @@
 
 Date: 2026-09-07
 
-Status: TA-001 design and Slice A owner accepted; Slice B adversarial hardening
-and final verification authorized; final TA-001 acceptance pending
+Status: TA-001 design and Slice A owner accepted; Slice B implemented and
+verified; final TA-001 acceptance pending
 
 Authoritative design:
 [`docs/superpowers/specs/2026-09-07-ta001-evidence-gated-declared-transition-assessment-design.md`](../superpowers/specs/2026-09-07-ta001-evidence-gated-declared-transition-assessment-design.md),
@@ -105,7 +105,8 @@ Slice A implements the exact contracts, bounded reconstruction, pure
 derivation, authoritative revalidation, tests, and package documentation. It
 is adversarially reviewed and owner accepted at exact tested implementation
 `76738ac0d098eb59b0fec4f6970aa862528647d9`. Slice B adversarial hardening and
-final verification are authorized. Any later discrepancy in accepted joins or limit enforcement
+final verification are implemented at exact tested implementation
+`2ec18f7234273dba98098d268df4568d5cc84d85`. Any later discrepancy in accepted joins or limit enforcement
 must stop for a bounded contract decision rather than read private lower
 fields or silently weaken the design.
 
