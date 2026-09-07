@@ -8,9 +8,10 @@ contains the binding project guidance.
 
 ## Current status
 
-The accepted milestone sequence through FL-001 is complete. FL-001 is the
+The accepted milestone sequence through EA-001 is complete. EA-001 is the
 latest owner-accepted milestone; no successor milestone is currently approved
-or in implementation.
+or in implementation. EA-001 is adversarially repaired, full-suite verified,
+and dual-clean-checkout verified.
 
 The authoritative synthetic demo model contains exactly 36 records at
 `mrv_b8f03e1c03c23efc5c4454d00e43e6b89b8254ab87ce724d7418b8a94288c7ee`.
@@ -19,18 +20,25 @@ or TRW records. The flow fixture is an explicit declaration only; it is not a
 claim that physical flow was active, observed, commanded, measured, conserved,
 or occurred.
 
+EA-001 adds bounded, content-bound operational-evidence selection and
+assurance plus one pure carried-result alignment to an already-computed
+variable-value compatibility result. Its fingerprints are not signatures,
+source or sensor authority, trusted time, global atomicity, or physical truth.
+
 ## Architecture
 
 | Module | Accepted responsibility |
 | --- | --- |
 | `backend/data_sources` | Read-only evidence acquisition, immutable raw storage, format extraction, provenance, and quarantine for CSV/BOM, STEP, PDF, and the bounded operational API. |
 | `backend/temporal_state` | Rebuildable source-native observation projection with explicit receipt-axis cutoffs; never model truth. |
+| `backend/evidence_assurance` | Read-only, bounded selection and content-fingerprint assurance over captured operational source and temporal material; no ledger, durable identity, semantic admission, or truth claim. |
 | `backend/system_identity` | Pure opaque anchor value contracts and public minters; no storage or authority. |
 | `backend/identity_binding` | Append-only explicit source-to-model identity decisions and read-only resolution. |
 | `backend/model_kernel` | Append-only typed, evidence-bearing model declarations, exact `mrv_` replay, lifecycle/index derivation, and read-only model queries. |
 | `backend/structural_evidence` | Read-only normalization and reconciliation of source-reported structure; no model acceptance or ledger ownership. |
 | `backend/model_state` | Read-only composition of one loaded model with explicitly selected identity-bound temporal evidence. |
 | `backend/observation_compatibility` | Read-only comparison of an attached observation with explicit model value-shape and unit declarations. |
+| `backend/evidence_alignment` | Pure carried-result alignment of one EA selection with one variable-value compatibility result; no I/O, reselection, persistence, or generic consumer framework. |
 | `backend/source_interpretation` | Append-only authority declarations for exact source-property quantity, role, and unit meaning. |
 | `backend/semantic_compatibility` | Read-only comparison of accepted model semantics, source interpretation, and observation compatibility. |
 | `backend/constraint_evaluation` | Read-only evidence-gated evaluation of explicit variable constraints. |
@@ -46,7 +54,7 @@ sources and disclosures are test artifacts, never engineering truth.
 
 ## Milestones
 
-| Order | Milestone | Accepted capability | ADR |
+| Order | Milestone | Accepted capability | ADR or accepted design |
 | ---: | --- | --- | --- |
 | 1 | DS-001 | CSV/BOM source boundary | [ADR-0001](docs/adr/0001-ds001-python-pydantic-stack.md) |
 | 2 | DS-002 | STEP ingestion and OCP boundary | [ADR-0002](docs/adr/0002-step-toolchain-ocp.md) |
@@ -66,6 +74,7 @@ sources and disclosures are test artifacts, never engineering truth.
 | 16 | ST-001 | Explicit state identity and evidence-gated classification | [ADR-0016](docs/adr/0016-explicit-state-identity-and-evidence-gated-classification.md) |
 | 17 | ST-002 | Explicit transition identity and declaration-only disclosure | [ADR-0017](docs/adr/0017-explicit-state-transition-identity-and-declaration.md) |
 | 18 | FL-001 | Explicit flow identity and declaration-only disclosure | [ADR-0018](docs/adr/0018-explicit-flow-identity-and-declaration.md) |
+| 19 | EA-001 | Content-bound operational-evidence selection, assurance, and bounded value-compatibility alignment | [Accepted design](docs/superpowers/specs/2026-09-04-ea001-content-bound-operational-evidence-selection-and-assurance-design.md) — ADR-0019 reconciliation pending |
 
 Accepted specifications live in `docs/superpowers/specs/`; accepted decisions
 live in `docs/adr/`; owner gates and verification evidence live in
@@ -80,14 +89,18 @@ interface, changed observation, classification at two cutoffs, transition
 declaration, or flow declaration does not establish a physical transition,
 transfer, influence, cause, or occurrence.
 
+An EA snapshot fingerprint or successful evidence-alignment result establishes
+only the accepted bounded content and relation. It does not authenticate the
+source, sensor, signer, clock, engineering conclusion, or physical condition.
+
 ## Architectural frontier — not approved work
 
-The current frontier includes content-bound evidence authentication and
-immutable assessment selection; transition evidence assessment; flow
-measurement association and assessment; and, eventually, configuration
-identity, causality, diagnosis, impact analysis, goals, actions, and planning.
-These are possible future concerns only. This reconciliation assigns them no
-permanent milestone contract or module name and authorizes no implementation.
+The current frontier includes transition evidence assessment; flow measurement
+association and assessment; and, eventually, configuration identity,
+causality, diagnosis, impact analysis, goals, actions, and planning. EA-001 did
+not create a generic immutable assessment identity or assessment framework.
+These are possible future concerns only. This status assigns them no permanent
+milestone contract or module name and authorizes no implementation.
 
 ## Verification
 
