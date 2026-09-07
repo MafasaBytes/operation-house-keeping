@@ -10,9 +10,8 @@ contains the binding project guidance.
 
 The accepted implemented milestone sequence through EA-001 is complete.
 EA-001 is adversarially repaired, full-suite verified, and
-dual-clean-checkout verified. The TA-001 design is owner accepted, but its
-implementation has not started and no transition-assessment runtime capability
-exists.
+dual-clean-checkout verified. TA-001 Slice A is implemented and adversarially
+reviewed and awaits owner acceptance. Slice B remains unauthorized.
 
 The authoritative synthetic demo model contains exactly 36 records at
 `mrv_b8f03e1c03c23efc5c4454d00e43e6b89b8254ab87ce724d7418b8a94288c7ee`.
@@ -40,6 +39,7 @@ source or sensor authority, trusted time, global atomicity, or physical truth.
 | `backend/model_state` | Read-only composition of one loaded model with explicitly selected identity-bound temporal evidence. |
 | `backend/observation_compatibility` | Read-only comparison of an attached observation with explicit model value-shape and unit declarations. |
 | `backend/evidence_alignment` | Pure carried-result alignment of one EA selection with one variable-value compatibility result; no I/O, reselection, persistence, or generic consumer framework. |
+| `backend/transition_assessment` | Pure carried-result assessment of whether two independently classified endpoint views support one declared transition pattern; no I/O, occurrence claim, facade, or persistence. |
 | `backend/source_interpretation` | Append-only authority declarations for exact source-property quantity, role, and unit meaning. |
 | `backend/semantic_compatibility` | Read-only comparison of accepted model semantics, source interpretation, and observation compatibility. |
 | `backend/constraint_evaluation` | Read-only evidence-gated evaluation of explicit variable constraints. |
@@ -76,7 +76,7 @@ sources and disclosures are test artifacts, never engineering truth.
 | 17 | ST-002 | Explicit transition identity and declaration-only disclosure | [ADR-0017](docs/adr/0017-explicit-state-transition-identity-and-declaration.md) |
 | 18 | FL-001 | Explicit flow identity and declaration-only disclosure | [ADR-0018](docs/adr/0018-explicit-flow-identity-and-declaration.md) |
 | 19 | EA-001 | Content-bound operational-evidence selection, assurance, and bounded value-compatibility alignment | [ADR-0019](docs/adr/0019-content-bound-operational-evidence-selection-and-assurance.md) |
-| 20 | TA-001 | Owner-accepted design for pure evidence-gated declared-transition assessment; implementation not started | [ADR-0020](docs/adr/0020-evidence-gated-declared-transition-assessment.md) |
+| 20 | TA-001 | Owner-accepted design; Slice A pure evidence-gated declared-transition assessment implemented and awaiting owner acceptance; Slice B unauthorized | [ADR-0020](docs/adr/0020-evidence-gated-declared-transition-assessment.md) |
 
 Accepted specifications live in `docs/superpowers/specs/`; accepted decisions
 live in `docs/adr/`; owner gates and verification evidence live in
@@ -100,9 +100,10 @@ source, sensor, signer, clock, engineering conclusion, or physical condition.
 TA-001 has an [owner-accepted design](docs/superpowers/specs/2026-09-07-ta001-evidence-gated-declared-transition-assessment-design.md),
 recorded by [ADR-0020](docs/adr/0020-evidence-gated-declared-transition-assessment.md),
 for a pure, read-only assessment of whether two independently classified
-endpoint views support one declared transition pattern. Implementation has not
-started. It will not establish transition occurrence or non-occurrence, add an
-orchestration facade or demonstration, or create a generic immutable
+endpoint views support one declared transition pattern. Slice A implements
+that exact leaf assessment and awaits owner acceptance; Slice B remains
+unauthorized. It does not establish transition occurrence or non-occurrence,
+add an orchestration facade or demonstration, or create a generic immutable
 assessment identity.
 
 The unapproved frontier beyond that design includes flow measurement

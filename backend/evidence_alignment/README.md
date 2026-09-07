@@ -16,10 +16,10 @@ artifact, or second consumer was added.
 
 The accepted EA-001 decisions are recorded in
 [ADR-0019](../../docs/adr/0019-content-bound-operational-evidence-selection-and-assurance.md).
-The owner-accepted, unimplemented TA-001 design may later consume complete
-alignment results as carried inputs. That design does not change this package,
-make `transition_assessment` a second evidence-alignment consumer, or authorize
-TA implementation. The sole v1 consumer described below remains unchanged.
+TA-001 Slice A now consumes complete alignment results as carried inputs from
+the authorized upper `transition_assessment` leaf and awaits owner acceptance.
+That implementation does not change this package or the single aligned
+value-compatibility consumer contract described below.
 
 ## Public boundary
 

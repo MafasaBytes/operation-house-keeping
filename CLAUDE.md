@@ -35,8 +35,8 @@ TS-001, IB-001, MK-001, VM-001, VS-001, SN-001, ES-001, CN-001, PT-001,
 VP-001, BH-001, ST-001, ST-002, FL-001, and EA-001. Both FL-001 and EA-001 are
 complete and owner accepted. FL-001 is adversarially reviewed; EA-001 is
 adversarially repaired. Both are full-suite and dual-clean-checkout verified.
-TA-001's final design is owner accepted, but its implementation has not
-started. Accepted designs and decisions are indexed in
+TA-001 Slice A is implemented and adversarially reviewed and is awaiting owner
+acceptance. Slice B remains unauthorized. Accepted designs and decisions are indexed in
 `README.md`, `docs/superpowers/specs/`, and `docs/adr/`.
 
 Also accepted: ES-001, adversarially reviewed, repaired, and
@@ -49,9 +49,10 @@ The accepted backend comprises `data_sources`, `temporal_state`,
 `model_state`, `observation_compatibility`, `source_interpretation`,
 `semantic_compatibility`, `constraint_evaluation`, `behavior_evaluation`, and
 `state_classification`, plus the read-only `evidence_assurance` and
-`evidence_alignment` composition layers. Lower evidence and identity packages
-do not import upper model or evaluation packages. Read-only composition layers
-own no authoritative ledger.
+`evidence_alignment` composition layers, plus the pure read-only
+`transition_assessment` leaf. Lower evidence and identity packages do not
+import upper model or evaluation packages. Read-only composition layers own no
+authoritative ledger.
 
 The authoritative synthetic demo model contains exactly 36 records at
 `mrv_b8f03e1c03c23efc5c4454d00e43e6b89b8254ab87ce724d7418b8a94288c7ee`,
@@ -63,8 +64,8 @@ assessment or occurrence assertion. FL-001 declares one synthetic logical
 directed flow but performs no measurement assessment and asserts no physical
 flow occurrence.
 
-TA-001's accepted design assigns `backend.transition_assessment` to a future
-pure, read-only leaf composition over carried public transition-declaration,
+TA-001 Slice A implements `backend.transition_assessment` as a pure, read-only
+leaf composition over carried public transition-declaration,
 state-classification, and evidence-alignment results. Its fixed admission
 limits are 134,217,728 canonical-request bytes, 200,000 reconstructed nodes,
 and nesting depth 128. Every governing observed condition requires a supplied,
@@ -72,9 +73,10 @@ matched expected fingerprint. The design adds no facade, demonstration,
 occurrence or non-occurrence claim, store, ledger, identity, or persistence.
 The documentation checkpoint is owner accepted at
 `a4754d8659c08af8fb86bf18bd3c5aac4ea355fe`. TA-001 Slice A is separately
-authorized for the exact contracts, bounded preflight, pure derivation,
-authoritative reconstruction, tests, and documentation in the accepted
-design. Slice B remains unauthorized.
+implemented and adversarially reviewed for the exact contracts, bounded
+preflight, pure derivation, authoritative reconstruction, tests, and
+documentation in the accepted design; it awaits owner acceptance. Slice B
+remains unauthorized.
 
 The unapproved architectural frontier includes flow measurement association
 and assessment and eventual configuration identity, causality, diagnosis,
@@ -95,8 +97,8 @@ later demonstration remains unauthorized.
 [ADR-0019](docs/adr/0019-content-bound-operational-evidence-selection-and-assurance.md)
 records the accepted EA-001 architecture.
 [ADR-0020](docs/adr/0020-evidence-gated-declared-transition-assessment.md)
-records the owner-accepted TA-001 design. Slice A is authorized but not yet
-accepted or complete; Slice B remains separately gated.
+records the owner-accepted TA-001 design. Slice A is implemented and awaiting
+owner acceptance; Slice B remains separately gated and unauthorized.
 
 ## Current Phase
 

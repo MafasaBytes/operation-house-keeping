@@ -2,12 +2,19 @@
 
 Date: 2026-09-07
 
-Status: TA-001 design owner accepted; implementation not started
+Status: TA-001 design owner accepted; Slice A implemented and awaiting owner
+acceptance; Slice B unauthorized
 
 Authoritative design:
 [`docs/superpowers/specs/2026-09-07-ta001-evidence-gated-declared-transition-assessment-design.md`](../superpowers/specs/2026-09-07-ta001-evidence-gated-declared-transition-assessment-design.md),
 SHA-256
-`99db3b31f5fa94eb119b32529784a64aff08c604f71ee9eb7530225963816062`.
+`3468a2a5ca48540e3656b1224e6af34364ea94671379253f1755df51e99092bd`.
+
+The pre-correction accepted digest
+`99db3b31f5fa94eb119b32529784a64aff08c604f71ee9eb7530225963816062`
+remains historical evidence. The bounded finite-float and T43 correction is
+recorded in
+[`docs/superpowers/reports/2026-09-07-ta001-slice-a-contract-correction-and-owner-resolution.md`](../superpowers/reports/2026-09-07-ta001-slice-a-contract-correction-and-owner-resolution.md).
 
 Owner approval:
 [`docs/superpowers/reports/2026-09-07-ta001-final-design-owner-approval.md`](../superpowers/reports/2026-09-07-ta001-final-design-owner-approval.md).
@@ -22,8 +29,8 @@ declared endpoint pattern across an ordered pair of cutoffs.
 
 ## Accepted design decisions
 
-1. **TA is a pure leaf composition.** A future
-   `backend.transition_assessment` package will consume only public
+1. **TA is a pure leaf composition.** The
+   `backend.transition_assessment` package consumes only public
    model-kernel transition-declaration, state-classification, and
    evidence-alignment results, plus Pydantic and the standard library. It will
    own strict reconstruction and pure derivation only. No existing package
@@ -94,10 +101,10 @@ execution, and bounded conclusion without collapsing them into occurrence.
 It preserves historical replay because every result derives only from carried
 public material; later store or ledger changes do not rewrite it.
 
-No `backend.transition_assessment` package or TA tests exist at this ADR
-checkpoint, and no claim is made that the proposed public surface passes. A
-separate owner instruction must authorize implementation. If implementation
-exposes a concrete discrepancy in the accepted joins or limit enforcement, it
+Slice A implements the exact contracts, bounded reconstruction, pure
+derivation, authoritative revalidation, tests, and package documentation. It
+is adversarially reviewed and awaits owner acceptance. Slice B remains
+unauthorized. Any later discrepancy in accepted joins or limit enforcement
 must stop for a bounded contract decision rather than read private lower
 fields or silently weaken the design.
 
