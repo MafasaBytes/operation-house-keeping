@@ -46,9 +46,11 @@ def test_c34_c36_derivation_performs_no_io_or_reselection(world, monkeypatch):
 
 def test_c35_import_direction_and_authorized_c2_exports():
     package_root = Path("backend/evidence_alignment")
+    authorized_upper = Path("backend/transition_assessment")
     existing_roots = [
         path for path in Path("backend").glob("*/**/*.py")
         if package_root not in path.parents
+        and authorized_upper not in path.parents
     ]
     assert all(
         "backend.evidence_alignment" not in path.read_text(encoding="utf-8")

@@ -156,8 +156,11 @@ def test_c39_root_import_is_pure_and_import_direction_stays_one_way(monkeypatch)
     assert reloaded.__all__ == EXPECTED_EXPORTS
 
     root = Path("backend/evidence_alignment")
-    lower_files = [path for path in Path("backend").glob("*/**/*.py")
-                   if root not in path.parents]
+    authorized_upper = Path("backend/transition_assessment")
+    lower_files = [
+        path for path in Path("backend").glob("*/**/*.py")
+        if root not in path.parents and authorized_upper not in path.parents
+    ]
     assert all(
         "backend.evidence_alignment" not in path.read_text(encoding="utf-8")
         for path in lower_files

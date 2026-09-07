@@ -105,14 +105,14 @@ def test_slice_b_kernel_exports_exact_transition_contract_and_result_surface():
         assert not hasattr(kernel, forbidden)
 
 
-def test_import_direction_and_no_assessment_occurrence_package_are_exact():
+def test_import_direction_and_assessment_remains_an_upper_sibling():
     forbidden_imports = (
         "backend.state_classification", "backend.behavior_evaluation",
         "backend.constraint_evaluation", "backend.semantic_compatibility",
         "backend.observation_compatibility", "backend.model_state",
         "backend.temporal_state", "backend.identity_binding",
         "backend.source_interpretation", "backend.data_sources",
-        "backend.structural_evidence",
+        "backend.structural_evidence", "backend.transition_assessment",
     )
     imports = []
     for path in Path("backend/model_kernel").glob("*.py"):
@@ -123,7 +123,7 @@ def test_import_direction_and_no_assessment_occurrence_package_are_exact():
             elif isinstance(node, ast.ImportFrom):
                 imports.append(node.module or "")
     assert not any(name.startswith(forbidden_imports) for name in imports)
-    assert not Path("backend/transition_assessment").exists()
+    assert Path("backend/transition_assessment").is_dir()
     assert not Path("backend/transition_occurrence").exists()
     assert Path("backend/model_kernel/transition_results.py").is_file()
     helper = Path(
