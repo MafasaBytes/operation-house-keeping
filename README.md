@@ -10,8 +10,10 @@ contains the binding project guidance.
 
 The accepted implemented milestone sequence through EA-001 is complete.
 EA-001 is adversarially repaired, full-suite verified, and
-dual-clean-checkout verified. TA-001 Slice A is implemented and adversarially
-reviewed and awaits owner acceptance. Slice B remains unauthorized.
+dual-clean-checkout verified. TA-001 Slice A is owner accepted at exact tested
+implementation `76738ac0d098eb59b0fec4f6970aa862528647d9`. Slice B adversarial
+hardening and final verification are authorized; final TA-001 acceptance is
+pending.
 
 The authoritative synthetic demo model contains exactly 36 records at
 `mrv_b8f03e1c03c23efc5c4454d00e43e6b89b8254ab87ce724d7418b8a94288c7ee`.
@@ -76,7 +78,7 @@ sources and disclosures are test artifacts, never engineering truth.
 | 17 | ST-002 | Explicit transition identity and declaration-only disclosure | [ADR-0017](docs/adr/0017-explicit-state-transition-identity-and-declaration.md) |
 | 18 | FL-001 | Explicit flow identity and declaration-only disclosure | [ADR-0018](docs/adr/0018-explicit-flow-identity-and-declaration.md) |
 | 19 | EA-001 | Content-bound operational-evidence selection, assurance, and bounded value-compatibility alignment | [ADR-0019](docs/adr/0019-content-bound-operational-evidence-selection-and-assurance.md) |
-| 20 | TA-001 | Owner-accepted design; Slice A pure evidence-gated declared-transition assessment implemented and awaiting owner acceptance; Slice B unauthorized | [ADR-0020](docs/adr/0020-evidence-gated-declared-transition-assessment.md) |
+| 20 | TA-001 | Owner-accepted design and Slice A; Slice B adversarial hardening and final verification authorized; final acceptance pending | [ADR-0020](docs/adr/0020-evidence-gated-declared-transition-assessment.md) |
 
 Accepted specifications live in `docs/superpowers/specs/`; accepted decisions
 live in `docs/adr/`; owner gates and verification evidence live in
@@ -100,9 +102,10 @@ source, sensor, signer, clock, engineering conclusion, or physical condition.
 TA-001 has an [owner-accepted design](docs/superpowers/specs/2026-09-07-ta001-evidence-gated-declared-transition-assessment-design.md),
 recorded by [ADR-0020](docs/adr/0020-evidence-gated-declared-transition-assessment.md),
 for a pure, read-only assessment of whether two independently classified
-endpoint views support one declared transition pattern. Slice A implements
-that exact leaf assessment and awaits owner acceptance; Slice B remains
-unauthorized. It does not establish transition occurrence or non-occurrence,
+endpoint views support one declared transition pattern. Slice A is owner
+accepted at exact tested implementation
+`76738ac0d098eb59b0fec4f6970aa862528647d9`; Slice B adversarial hardening and
+final verification are authorized. It does not establish transition occurrence or non-occurrence,
 add an orchestration facade or demonstration, or create a generic immutable
 assessment identity.
 

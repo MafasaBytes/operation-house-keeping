@@ -7,8 +7,9 @@ support the declared endpoint pattern at ordered cutoffs.
 
 ## Status
 
-TA-001 Slice A is implemented and adversarially reviewed and awaits owner
-acceptance. Slice B remains unauthorized. The accepted design is recorded in
+TA-001 Slice A is owner accepted at exact tested implementation
+`76738ac0d098eb59b0fec4f6970aa862528647d9`. Slice B adversarial hardening and
+final verification are authorized; final TA-001 acceptance is pending. The accepted design is recorded in
 [ADR-0020](../../docs/adr/0020-evidence-gated-declared-transition-assessment.md).
 
 ## Public boundary

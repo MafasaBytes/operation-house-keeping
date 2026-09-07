@@ -16,9 +16,9 @@ artifact, or second consumer was added.
 
 The accepted EA-001 decisions are recorded in
 [ADR-0019](../../docs/adr/0019-content-bound-operational-evidence-selection-and-assurance.md).
-TA-001 Slice A now consumes complete alignment results as carried inputs from
-the authorized upper `transition_assessment` leaf and awaits owner acceptance.
-That implementation does not change this package or the single aligned
+TA-001 Slice A consumes complete alignment results as carried inputs from the
+owner-accepted upper `transition_assessment` leaf. Slice B adversarial
+hardening changes no lower contract. The implementation does not change this package or the single aligned
 value-compatibility consumer contract described below.
 
 ## Public boundary
