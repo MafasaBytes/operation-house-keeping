@@ -207,6 +207,12 @@ def test_fixed_policy_limits_and_strict_issue_indices():
             code="cutoffs_equal", endpoint_role=None, condition_index=True,
             evidence_alignment_index=None,
         )
+    hostile = type("HostileString", (str,), {})
+    with pytest.raises(Exception):
+        module.TransitionAssessmentIssue(
+            code=hostile("cutoffs_equal"), endpoint_role=None,
+            condition_index=None, evidence_alignment_index=None,
+        )
 
 
 def test_input_error_tree_and_operation_signature_are_exact():
@@ -227,6 +233,8 @@ def test_input_error_tree_and_operation_signature_are_exact():
         module.TransitionAssessmentInputError(
             "TRANSITION_ASSESSMENT_INPUT_INVALID", "password=secret",
         )
+    error_signature = inspect.signature(module.TransitionAssessmentInputError)
+    assert tuple(error_signature.parameters) == ("error_code", "message")
     signature = inspect.signature(module.assess_declared_transition_endpoints)
     assert tuple(signature.parameters) == ("request",)
     assert signature.return_annotation in (
