@@ -212,3 +212,51 @@ def test_request_runs_one_full_plain_copy_and_canonical_agreement_pass(
     assert assess_declared_transition_endpoints(raw).execution == "executed"
     assert len(full_copies) == 1
     assert len(canonical_checks) == 1
+
+
+def test_rejected_hidden_model_key_never_invokes_caller_representation(tmp_path):
+    world = build_world(tmp_path)
+    raw = world.request.model_dump(mode="python", warnings=False)
+    policy = world.request.policy.model_copy()
+    calls = []
+
+    class HiddenKey:
+        def __hash__(self):
+            return 7
+
+        def __repr__(self):
+            calls.append("repr")
+            raise AssertionError("caller representation was invoked")
+
+    policy.__dict__[HiddenKey()] = "hidden"
+    raw["policy"] = policy
+    with pytest.raises(TransitionAssessmentInputError):
+        assess_declared_transition_endpoints(raw)
+    assert calls == []
+
+    ordinary = world.request.policy.model_copy()
+    ordinary.__dict__["hidden_cache"] = "hidden"
+    raw["policy"] = ordinary
+    with pytest.raises(TransitionAssessmentInputError):
+        assess_declared_transition_endpoints(raw)
+
+
+@pytest.mark.parametrize("attribute", ["__pydantic_extra__", "__pydantic_private__"])
+def test_rejected_model_metadata_never_invokes_caller_truthiness(
+    tmp_path, attribute,
+):
+    world = build_world(tmp_path)
+    raw = world.request.model_dump(mode="python", warnings=False)
+    policy = world.request.policy.model_copy()
+    calls = []
+
+    class HostileMetadata:
+        def __bool__(self):
+            calls.append("bool")
+            raise AssertionError("caller truthiness was invoked")
+
+    object.__setattr__(policy, attribute, HostileMetadata())
+    raw["policy"] = policy
+    with pytest.raises(TransitionAssessmentInputError):
+        assess_declared_transition_endpoints(raw)
+    assert calls == []

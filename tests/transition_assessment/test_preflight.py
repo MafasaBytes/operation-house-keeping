@@ -108,3 +108,29 @@ def test_public_constants_are_exact():
     assert module.MAXIMUM_CANONICAL_REQUEST_BYTES == 134_217_728
     assert module.MAXIMUM_RECONSTRUCTED_NODES == 200_000
     assert module.MAXIMUM_NESTING_DEPTH == 128
+
+
+def test_compact_result_cardinalities_reject_during_preflight():
+    module = _preflight()
+    module._preflight_graph({"condition_traces": [None] * 128})
+    module._preflight_graph({"condition_trace_indices": [None] * 64})
+    with pytest.raises(ValueError, match="fixed container cardinality"):
+        module._preflight_graph({"condition_traces": [None] * 129})
+    with pytest.raises(ValueError, match="fixed container cardinality"):
+        module._preflight_graph({"condition_trace_indices": [None] * 65})
+
+
+def test_definitely_oversized_integer_rejects_before_decimal_conversion(
+    monkeypatch,
+):
+    module = _preflight()
+    calls = []
+
+    def forbidden(value):
+        calls.append(value)
+        raise AssertionError("decimal conversion ran after inevitable refusal")
+
+    monkeypatch.setattr(module, "str", forbidden, raising=False)
+    with pytest.raises(ValueError, match="canonical byte limit exceeded"):
+        module._preflight_graph(10**10, max_bytes=10)
+    assert calls == []
