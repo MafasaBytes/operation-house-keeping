@@ -2,8 +2,8 @@
 
 Date: 2026-09-07
 
-Status: TA-001 design and Slice A owner accepted; Slice B implemented and
-verified; final TA-001 acceptance pending
+Status: TA-001 complete, owner accepted, adversarially hardened, and
+dual-clean-checkout verified
 
 Authoritative design:
 [`docs/superpowers/specs/2026-09-07-ta001-evidence-gated-declared-transition-assessment-design.md`](../superpowers/specs/2026-09-07-ta001-evidence-gated-declared-transition-assessment-design.md),

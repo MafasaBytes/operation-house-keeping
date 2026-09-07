@@ -3,7 +3,7 @@
 Date: 2026-09-07
 
 Status: Slice A owner accepted; Slice B adversarial hardening and final
-verification authorized; final TA-001 acceptance pending
+verification complete; TA-001 owner accepted
 
 ## 1. Authority, checkpoint, and immutable boundaries
 

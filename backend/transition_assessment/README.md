@@ -9,8 +9,9 @@ support the declared endpoint pattern at ordered cutoffs.
 
 TA-001 Slice A is owner accepted at exact tested implementation
 `76738ac0d098eb59b0fec4f6970aa862528647d9`. Slice B adversarial hardening and
-final verification are implemented at exact tested implementation
-`2ec18f7234273dba98098d268df4568d5cc84d85`; final TA-001 acceptance is pending.
+final verification are implemented and owner accepted at exact tested
+implementation `2ec18f7234273dba98098d268df4568d5cc84d85`. TA-001 complete,
+owner accepted, adversarially hardened, and dual-clean-checkout verified.
 The accepted design is recorded in
 [ADR-0020](../../docs/adr/0020-evidence-gated-declared-transition-assessment.md).
 

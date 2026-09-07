@@ -13,7 +13,8 @@ EA-001 is adversarially repaired, full-suite verified, and
 dual-clean-checkout verified. TA-001 Slice A is owner accepted at exact tested
 implementation `76738ac0d098eb59b0fec4f6970aa862528647d9`. Slice B adversarial
 hardening is implemented and verified at
-`2ec18f7234273dba98098d268df4568d5cc84d85`; final TA-001 acceptance is pending.
+`2ec18f7234273dba98098d268df4568d5cc84d85`. TA-001 complete, owner accepted,
+adversarially hardened, and dual-clean-checkout verified.
 
 The authoritative synthetic demo model contains exactly 36 records at
 `mrv_b8f03e1c03c23efc5c4454d00e43e6b89b8254ab87ce724d7418b8a94288c7ee`.
@@ -78,7 +79,7 @@ sources and disclosures are test artifacts, never engineering truth.
 | 17 | ST-002 | Explicit transition identity and declaration-only disclosure | [ADR-0017](docs/adr/0017-explicit-state-transition-identity-and-declaration.md) |
 | 18 | FL-001 | Explicit flow identity and declaration-only disclosure | [ADR-0018](docs/adr/0018-explicit-flow-identity-and-declaration.md) |
 | 19 | EA-001 | Content-bound operational-evidence selection, assurance, and bounded value-compatibility alignment | [ADR-0019](docs/adr/0019-content-bound-operational-evidence-selection-and-assurance.md) |
-| 20 | TA-001 | Owner-accepted design and Slice A; Slice B implemented and verified; final acceptance pending | [ADR-0020](docs/adr/0020-evidence-gated-declared-transition-assessment.md) |
+| 20 | TA-001 | Complete, owner accepted, adversarially hardened, and dual-clean-checkout verified | [ADR-0020](docs/adr/0020-evidence-gated-declared-transition-assessment.md) |
 
 Accepted specifications live in `docs/superpowers/specs/`; accepted decisions
 live in `docs/adr/`; owner gates and verification evidence live in
@@ -105,8 +106,8 @@ for a pure, read-only assessment of whether two independently classified
 endpoint views support one declared transition pattern. Slice A is owner
 accepted at exact tested implementation
 `76738ac0d098eb59b0fec4f6970aa862528647d9`; Slice B is implemented and
-verified at `2ec18f7234273dba98098d268df4568d5cc84d85`, with final acceptance
-pending. It does not establish transition occurrence or non-occurrence,
+verified and owner accepted at `2ec18f7234273dba98098d268df4568d5cc84d85`. It
+does not establish transition occurrence or non-occurrence,
 add an orchestration facade or demonstration, or create a generic immutable
 assessment identity.
 

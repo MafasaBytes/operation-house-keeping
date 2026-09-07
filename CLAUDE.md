@@ -38,8 +38,8 @@ adversarially repaired. Both are full-suite and dual-clean-checkout verified.
 TA-001 Slice A is owner accepted at exact tested implementation
 `76738ac0d098eb59b0fec4f6970aa862528647d9`. Slice B adversarial hardening is
 implemented and verified at exact tested implementation
-`2ec18f7234273dba98098d268df4568d5cc84d85`; final TA-001 acceptance remains
-pending.
+`2ec18f7234273dba98098d268df4568d5cc84d85`. TA-001 complete, owner accepted,
+adversarially hardened, and dual-clean-checkout verified.
 Accepted designs and decisions are indexed in
 `README.md`, `docs/superpowers/specs/`, and `docs/adr/`.
 
@@ -82,8 +82,10 @@ owner accepted at exact tested implementation
 preflight, pure derivation, authoritative reconstruction, tests, and
 documentation in the accepted design. Slice B adversarial hardening and final
 verification are implemented at
-`2ec18f7234273dba98098d268df4568d5cc84d85`; final milestone acceptance remains
-owner-gated.
+`2ec18f7234273dba98098d268df4568d5cc84d85`; final milestone acceptance is
+recorded in the owner-acceptance report. TA-001 remains a pure, read-only leaf
+with no occurrence claim, durable identity, ledger, store, facade,
+demonstration, or second consumer.
 
 The unapproved architectural frontier includes flow measurement association
 and assessment and eventual configuration identity, causality, diagnosis,
@@ -104,8 +106,8 @@ later demonstration remains unauthorized.
 [ADR-0019](docs/adr/0019-content-bound-operational-evidence-selection-and-assurance.md)
 records the accepted EA-001 architecture.
 [ADR-0020](docs/adr/0020-evidence-gated-declared-transition-assessment.md)
-records the owner-accepted TA-001 design. Slice A is owner accepted; Slice B is
-implemented and verified, with final TA-001 acceptance pending.
+records the owner-accepted TA-001 design. TA-001 is complete, owner accepted,
+adversarially hardened, and dual-clean-checkout verified.
 
 ## Current Phase
 
