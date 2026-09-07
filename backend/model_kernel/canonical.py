@@ -46,6 +46,8 @@ _PREFIX_BY_KIND = {
     "flow_registration": "frg",
     "flow_declaration": "fld",
     "flow_declaration_withdrawal": "flw",
+    "flow_measurement_association": "fma",
+    "flow_measurement_association_withdrawal": "fmw",
 }
 
 _BEHAVIOR_EFFECTIVE_BODY_FIELDS = (

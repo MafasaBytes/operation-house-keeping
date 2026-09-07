@@ -53,7 +53,7 @@ from backend.system_identity import (
 UtcDatetime = Annotated[AwareDatetime, AfterValidator(lambda v: v.astimezone(UTC))]
 
 MODEL_ID_PATTERN = r"^[a-z0-9-]+$"
-MODEL_RECORD_ID_PATTERN = r"^(reg|rtd|rel|rwd|vrg|vsp|vsm|crg|vcn|prg|pif|pcn|pcm|ptw|vpa|vpw|brg|bhd|bhw|srg|std|stw|trg|trd|trw|frg|fld|flw)_[0-9a-f]{64}$"
+MODEL_RECORD_ID_PATTERN = r"^(reg|rtd|rel|rwd|vrg|vsp|vsm|crg|vcn|prg|pif|pcn|pcm|ptw|vpa|vpw|brg|bhd|bhw|srg|std|stw|trg|trd|trw|frg|fld|flw|fma|fmw)_[0-9a-f]{64}$"
 
 ReferentKind = Literal[
     "logical_instance", "physical_instance", "type_definition", "unknown"
@@ -117,7 +117,7 @@ class ModelRecordEvidence(_Frozen):
     # uncitable
     kind: Literal["model_record"]
     record_id: str = Field(
-        pattern=r"^(reg|rtd|rel|vrg|vsp|vsm|crg|vcn|prg|pif|pcn|pcm|vpa|brg|bhd|srg|std|trg|trd|frg|fld)_[0-9a-f]{64}$")
+        pattern=r"^(reg|rtd|rel|vrg|vsp|vsm|crg|vcn|prg|pif|pcn|pcm|vpa|brg|bhd|srg|std|trg|trd|frg|fld|fma)_[0-9a-f]{64}$")
 
 
 class IdentityBindingRecordEvidence(_Frozen):
@@ -1706,6 +1706,46 @@ class VariablePortAssociationWithdrawal(_Frozen):
 
 
 
+class FlowMeasurementAssociation(_Frozen):
+    record_kind: Literal["flow_measurement_association"] = "flow_measurement_association"
+    schema_version: Literal["1"] = "1"
+    record_id: str = Field(pattern=r"^fma_[0-9a-f]{64}$")
+    flow_anchor_id: str = Field(pattern=FLOW_ANCHOR_ID_PATTERN)
+    variable_anchor_id: str = Field(pattern=VARIABLE_ANCHOR_ID_PATTERN)
+    participant_port_anchor_id: str = Field(pattern=PORT_ANCHOR_ID_PATTERN)
+    context: AssertionContext
+    orientation: Literal["aligned", "opposite", "unsigned_magnitude", "not_applicable"]
+    flow_registration_record_id: str = Field(pattern=r"^frg_[0-9a-f]{64}$")
+    variable_registration_record_id: str = Field(pattern=r"^vrg_[0-9a-f]{64}$")
+    port_registration_record_id: str = Field(pattern=r"^prg_[0-9a-f]{64}$")
+    flow_declaration_record_id: str = Field(pattern=r"^fld_[0-9a-f]{64}$")
+    variable_port_association_record_id: str = Field(pattern=r"^vpa_[0-9a-f]{64}$")
+    variable_semantic_declaration_record_id: str = Field(pattern=r"^vsm_[0-9a-f]{64}$")
+    evidence: Annotated[tuple[EvidenceRef, ...], Field(min_length=1), AfterValidator(_canonical_evidence)]
+    supersedes: Annotated[tuple[str, ...], AfterValidator(_canonical_parents)] = ()
+    recorded_at: UtcDatetime
+    authority: AuthorityRef
+    note: str = ""
+
+    @model_validator(mode="after")
+    def _parents(self):
+        if any(not re.fullmatch(r"fma_[0-9a-f]{64}", p) for p in self.supersedes):
+            raise ValueError("an FM parent is not an FMA record id")
+        if self.record_id in self.supersedes:
+            raise ValueError("an FM association cannot supersede itself")
+        return self
+
+
+class FlowMeasurementAssociationWithdrawal(_Frozen):
+    record_kind: Literal["flow_measurement_association_withdrawal"] = "flow_measurement_association_withdrawal"
+    schema_version: Literal["1"] = "1"
+    record_id: str = Field(pattern=r"^fmw_[0-9a-f]{64}$")
+    withdraws: str = Field(pattern=r"^fma_[0-9a-f]{64}$")
+    recorded_at: UtcDatetime
+    authority: AuthorityRef
+    note: str = ""
+
+
 ModelRecord = Union[
     EntityRegistration, VariableRegistration, VariableValueSpecification,
     VariableSemanticDeclaration,
@@ -1720,6 +1760,7 @@ ModelRecord = Union[
     PortRegistration, PortInterfaceDeclaration, PortConnectionAssertion,
     PortCompatibilityDeclaration, PortClaimWithdrawal,
     VariablePortAssociation, VariablePortAssociationWithdrawal,
+    FlowMeasurementAssociation, FlowMeasurementAssociationWithdrawal,
 ]
 
 

@@ -58,6 +58,7 @@ from backend.model_kernel.contracts import (
     TransitionDeclaration,
     TransitionDeclarationWithdrawal,
     TransitionRegistration,
+    FlowMeasurementAssociation, FlowMeasurementAssociationWithdrawal,
     VariableConstraintDeclaration,
     VariablePortAssociation,
     VariablePortAssociationWithdrawal,
@@ -69,7 +70,7 @@ from backend.model_kernel.contracts import (
 _RECORD_ADAPTER: TypeAdapter = TypeAdapter(ModelRecord)
 _RECORD_ID = re.compile(MODEL_RECORD_ID_PATTERN)
 _FILENAME = re.compile(
-    r"^(reg|rtd|rel|rwd|vrg|vsp|vsm|crg|vcn|prg|pif|pcn|pcm|ptw|vpa|vpw|brg|bhd|bhw|srg|std|stw|trg|trd|trw|frg|fld|flw)_[0-9a-f]{64}\.json$")
+    r"^(reg|rtd|rel|rwd|vrg|vsp|vsm|crg|vcn|prg|pif|pcn|pcm|ptw|vpa|vpw|brg|bhd|bhw|srg|std|stw|trg|trd|trw|frg|fld|flw|fma|fmw)_[0-9a-f]{64}\.json$")
 
 _EMPTY: Mapping = MappingProxyType({})
 
@@ -443,6 +444,8 @@ def validate_record_collection(
     flow_declarations: dict[str, FlowDeclaration] = {}
     flow_declaration_withdrawals: dict[
         str, FlowDeclarationWithdrawal] = {}
+    flow_measurement_associations: dict[str, FlowMeasurementAssociation] = {}
+    flow_measurement_association_withdrawals: dict[str, FlowMeasurementAssociationWithdrawal] = {}
     types: dict[str, RelationshipTypeDefinition] = {}
     assertions: dict[str, RelationshipAssertion] = {}
     withdrawals: dict[str, RelationshipWithdrawal] = {}
@@ -496,6 +499,8 @@ def validate_record_collection(
             "flow_registration": flow_registrations,
             "flow_declaration": flow_declarations,
             "flow_declaration_withdrawal": flow_declaration_withdrawals,
+            "flow_measurement_association": flow_measurement_associations,
+            "flow_measurement_association_withdrawal": flow_measurement_association_withdrawals,
             "relationship_type_definition": types,
             "relationship_assertion": assertions,
             "relationship_withdrawal": withdrawals,
