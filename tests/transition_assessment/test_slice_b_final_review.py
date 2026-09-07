@@ -101,6 +101,40 @@ def test_wrong_nested_record_union_arm_rejects_during_preflight(tmp_path):
         assess_declared_transition_endpoints(request)
 
 
+def test_cross_union_discriminator_substitution_rejects_during_preflight(
+    tmp_path,
+):
+    import backend.transition_assessment.preflight as preflight
+
+    request = build_world(tmp_path).request.model_dump(
+        mode="python", warnings=False,
+    )
+    declarations = []
+
+    def visit(value):
+        if type(value) is dict:
+            declaration = value.get("declaration")
+            if (
+                type(declaration) is dict
+                and declaration.get("dimension") == "quantity_kind"
+            ):
+                declarations.append(declaration)
+            for item in value.values():
+                visit(item)
+        elif type(value) in (list, tuple):
+            for item in value:
+                visit(item)
+
+    visit(request)
+    assert declarations
+    assert preflight._preflight_graph(request).nodes > 0
+    declarations[0]["dimension"] = "direction_role"
+    with pytest.raises(ValueError, match="union arm"):
+        preflight._preflight_graph(request)
+    with pytest.raises(TransitionAssessmentInputError):
+        assess_declared_transition_endpoints(request)
+
+
 def test_floats_in_every_fixed_integer_field_reject_without_coercion(tmp_path):
     from backend.transition_assessment import TransitionAssessmentLimits
 
