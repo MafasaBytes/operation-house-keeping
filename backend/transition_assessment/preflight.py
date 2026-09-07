@@ -22,7 +22,7 @@ _JSON_NUMBER = re.compile(
 _STRICT_INTEGER_NAMES = {"sweep_position"}
 _STRICT_INTEGER_COLLECTION_NAMES: set[str] = set()
 _UNION_DISCRIMINATORS: dict[str, tuple[tuple[
-    str, tuple[tuple[frozenset[str], frozenset[str]], ...],
+    str, tuple[tuple[frozenset[str], frozenset[str], type[BaseModel]], ...],
 ], ...]] = {}
 _TRUSTED_MODEL_TYPES: frozenset[type[BaseModel]] = frozenset()
 
@@ -104,7 +104,9 @@ def _register_trusted_model_types(roots: tuple[type[BaseModel], ...]) -> None:
     global _TRUSTED_MODEL_TYPES
     _TRUSTED_MODEL_TYPES = frozenset(trusted)
     union_discriminators: dict[str, set[tuple[
-        str, tuple[tuple[frozenset[str], frozenset[str]], ...],
+        str, tuple[
+            tuple[frozenset[str], frozenset[str], type[BaseModel]], ...
+        ],
     ]]] = {}
     for candidate in trusted:
         for name, field in candidate.model_fields.items():
@@ -172,7 +174,9 @@ def _literal_strings(annotation: object) -> frozenset[str] | None:
 def _union_discriminator(
     annotation: object,
 ) -> tuple[
-    str, tuple[tuple[frozenset[str], frozenset[str]], ...],
+    str, tuple[
+        tuple[frozenset[str], frozenset[str], type[BaseModel]], ...
+    ],
 ] | None:
     origin = get_origin(annotation)
     arguments = get_args(annotation)
@@ -203,11 +207,11 @@ def _union_discriminator(
             if literals is None:
                 break
             arms_by_shape.append((
-                literals, frozenset(arm.model_fields),
+                literals, frozenset(arm.model_fields), arm,
             ))
         else:
             combined = frozenset().union(*(
-                literals for literals, _ in arms_by_shape
+                literals for literals, _, _ in arms_by_shape
             ))
             if len(combined) >= len(arms):
                 return discriminator, tuple(arms_by_shape)
@@ -357,23 +361,35 @@ def _validate_union_arm(
         _UNION_DISCRIMINATORS.get(field_name, ())
         if type(field_name) is str else ()
     )
-    if not options or type(item) is not dict:
+    if not options:
+        return
+    item_type = type(item)
+    if item_type is dict:
+        ordinary = item
+    elif item_type in _TRUSTED_MODEL_TYPES:
+        items, _ = _model_items(item, validate_binding=True)
+        ordinary = dict(items)
+    else:
         return
     found_discriminator = False
     invalid_matching_shape = False
     ordinary_fields = frozenset(
-        key for key in item if type(key) is str
+        key for key in ordinary if type(key) is str
     )
     for discriminator, arms in options:
         value = None
-        for key, candidate in item.items():
+        for key, candidate in ordinary.items():
             if type(key) is str and key == discriminator:
                 value = candidate
                 found_discriminator = True
                 break
-        for admitted, fields in arms:
+        for admitted, fields, arm in arms:
             if ordinary_fields == fields:
-                if type(value) is str and value in admitted:
+                if (
+                    type(value) is str
+                    and value in admitted
+                    and (item_type is dict or item_type is arm)
+                ):
                     return
                 invalid_matching_shape = True
     if invalid_matching_shape:
@@ -382,7 +398,7 @@ def _validate_union_arm(
         admitted_anywhere = frozenset().union(*(
             admitted
             for _, arms in options
-            for admitted, _ in arms
+            for admitted, _, _ in arms
         ))
         if type(value) is not str or value not in admitted_anywhere:
             raise ValueError("unexpected union arm")
