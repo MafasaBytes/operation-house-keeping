@@ -242,7 +242,6 @@ __all__ = [
     "TransitionDeclaration", "TransitionDeclarationWithdrawal",
     "FlowKindToken", "FlowDirectionDeclarationPin",
     "FlowRegistration", "FlowDeclaration", "FlowDeclarationWithdrawal",
-    "FlowMeasurementAssociation", "FlowMeasurementAssociationWithdrawal",
     "PortRegistration", "PortInterfaceDeclaration",
     "PortConnectionAssertion", "PortCompatibilityDeclaration",
     "PortClaimWithdrawal",
@@ -360,4 +359,6 @@ __all__ = [
     "ModelStore",
     "LoadedModel",
     "ModelQueries",
+    "FlowMeasurementAssociation",
+    "FlowMeasurementAssociationWithdrawal",
 ]

@@ -1,6 +1,8 @@
 """FM-001 Slice A declaration, closure, lifecycle, index, and replay gates."""
 
 from datetime import UTC, datetime
+import hashlib
+import json
 from types import MappingProxyType
 
 import pytest
@@ -129,8 +131,11 @@ def test_exact_contract_fields_exports_builder_and_no_slice_b_surface():
     assert fma.record_id.startswith("fma_")
     assert fmw.record_id.startswith("fmw_")
     assert len(kernel.__all__) == 205 == len(set(kernel.__all__))
-    flow_index = kernel.__all__.index("FlowDeclarationWithdrawal")
-    assert kernel.__all__[flow_index + 1:flow_index + 3] == [
+    predecessor_digest = hashlib.sha256(json.dumps(
+        kernel.__all__[:-2], separators=(",", ":")).encode()).hexdigest()
+    assert predecessor_digest == \
+        "7821c7582f1332addca8fd467004c477262ea4e679c33f6bbe0a22831db83ce1"
+    assert kernel.__all__[-2:] == [
         "FlowMeasurementAssociation", "FlowMeasurementAssociationWithdrawal"]
     assert not any(name.startswith("FlowMeasurement") for name in
                    kernel.__all__ if name not in {
@@ -218,6 +223,46 @@ def test_same_vsm_supports_distinct_contexts_with_matching_fld_vpa():
         (VAR_A, VIEW_INDEPENDENT)] == (second.record_id,)
 
 
+@pytest.mark.parametrize("support_position", [3, 4])
+def test_fld_and_vpa_context_substitution_rejects(support_position):
+    first_records, support = foundation()
+    other_records, other_support = foundation(VIEW_INDEPENDENT)
+    substituted = list(support)
+    substituted[support_position] = other_support[support_position]
+    attack = association(tuple(substituted))
+    records = {r.record_id: r for r in (
+        *first_records, *other_records, attack)}
+    with pytest.raises(kernel.ModelIntegrityError) as error:
+        validate_record_collection("test-model", records)
+    assert error.value.error_code == "MODEL_FLOW_MEASUREMENT_SUPPORT_INVALID"
+
+
+def test_wrong_variable_vsm_and_quantity_kind_refuse():
+    wrong_variable = "var_" + "f" * 32
+    wrong_vsm = semantic(variable=wrong_variable)
+    records, support = foundation(vsm=wrong_vsm)
+    with pytest.raises(kernel.ModelIntegrityError) as error:
+        validate_record_collection("test-model", {
+            r.record_id: r for r in (*records, association(support))})
+    assert error.value.error_code == "MODEL_REFERENCE_INVALID"
+
+    quantity = kernel.build_record(
+        kernel.VariableSemanticDeclaration,
+        variable_anchor_id=VAR_A,
+        declaration=kernel.QuantityKindDeclaration(
+            dimension="quantity_kind",
+            quantity_kind=kernel.QuantityKindReference(
+                system_id="project_local", system_edition="ohk-quantities-1",
+                code="temperature")),
+        evidence=(CLAIM,), supersedes=(), recorded_at=T0,
+        authority=AUTHORITY, note="")
+    records, support = foundation(vsm=quantity)
+    with pytest.raises(kernel.ModelIntegrityError) as error:
+        validate_record_collection("test-model", {
+            r.record_id: r for r in (*records, association(support))})
+    assert error.value.error_code == "MODEL_FLOW_MEASUREMENT_SEMANTIC_INVALID"
+
+
 def test_forged_vsm_context_and_derived_role_fields_reject():
     vsm = semantic()
     forged = vsm.model_copy(update={"context": AS_DESIGNED})
@@ -297,6 +342,67 @@ def test_replay_is_membership_relative_and_fmw_is_uncitable(tmp_path):
     with pytest.raises(ValidationError):
         kernel.ModelRecordEvidence(
             kind="model_record", record_id=event.record_id)
+
+
+def test_fma_is_citable_but_positive_requires_evidence(tmp_path):
+    store, support = store_with(tmp_path)
+    first = association(support, note="basis")
+    store.append(first)
+    cited = association(
+        support, note="cites FMA",
+        evidence=(kernel.ModelRecordEvidence(
+            kind="model_record", record_id=first.record_id),))
+    store.append(cited)
+    assert cited.record_id in store.load().flow_measurement_associations
+    with pytest.raises(kernel.ModelIntegrityError) as error:
+        association(support, evidence=())
+    assert error.value.error_code == "MODEL_RECORD_INVALID"
+
+
+def test_selective_fork_tip_withdrawal_and_invalid_targets(tmp_path):
+    store, support = store_with(tmp_path)
+    root = association(support, note="root")
+    left = association(support, supersedes=(root.record_id,), note="left")
+    right = association(support, supersedes=(root.record_id,), note="right")
+    for record in (root, left, right):
+        store.append(record)
+    event = withdrawal(left)
+    store.append(event)
+    loaded = store.load()
+    assert loaded.flow_measurement_withdrawn_by[left.record_id] == (
+        event.record_id,)
+    assert loaded.current_flow_measurement_tips_by_root[root.record_id] == (
+        right,)
+    for attack in (
+        withdrawal(left, note="duplicate"),
+        withdrawal(root, note="superseded"),
+    ):
+        before = snapshot(store)
+        with pytest.raises(kernel.ModelIntegrityError) as error:
+            store.append(attack)
+        assert error.value.error_code == \
+            "MODEL_FLOW_MEASUREMENT_WITHDRAWAL_INVALID"
+        assert snapshot(store) == before
+
+
+def test_hostile_nested_instances_orientation_subclass_and_stale_id_refuse():
+    records, support = foundation()
+    class HostileString(str):
+        pass
+
+    with pytest.raises(kernel.ModelIntegrityError):
+        association(support, orientation=HostileString("aligned"))
+
+    valid = association(support)
+    forged_context = valid.context.model_copy(update={"secret": "hidden"})
+    with pytest.raises(kernel.ModelIntegrityError):
+        association(support, context=forged_context)
+
+    stale = valid.model_copy(update={"orientation": "opposite"})
+    with pytest.raises(kernel.ModelIntegrityError) as error:
+        validate_record_collection("test-model", {
+            r.record_id: r for r in (*records, stale)})
+    assert error.value.error_code == "MODEL_RECORD_HASH_MISMATCH"
 
 
 def test_effective_body_and_indexes_are_order_deterministic():
