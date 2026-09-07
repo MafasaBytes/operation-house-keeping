@@ -27,7 +27,8 @@ FA-001, Slice B, or upper-layer import. It stops for owner validation.
    store bucket/load validation without changing existing record semantics.
 3. Add `fma_` evidence admission and explicitly exclude `fmw_` from
    ModelRecordEvidence.
-4. Implement same-revision FRG/VRG/PRG/FLD/VPA/VSM closure and FRG-derived
+4. Implement same-revision FRG/VRG/PRG/FLD/VPA/VSM closure, with
+   context-independent VSM support and exact FMA context on FLD/VPA, plus FRG-derived
    source/sink validation.
 5. Implement immutable subject, effective-body, root, parent, tip,
    corroboration, disagreement, and withdrawal indexes.
@@ -46,9 +47,9 @@ FA-001, Slice B, or upper-layer import. It stops for owner validation.
 | FM-S03 | Generic `build_record` constructs both records; no FM-specific builder or alias exists. |
 | FM-S04 | Existing prefix inventory remains collision-free; new union dispatch is exact. |
 | FM-S05 | Content-derived IDs change when any normative field changes and reject forged IDs. |
-| FM-S06 | Exact FRG/VRG/PRG/FLD/VPA/VSM pins are required in one selected membership. |
+| FM-S06 | Exact FRG/VRG/PRG/FLD/VPA/VSM pins are required in one selected membership; VSM is context-independent while FLD/VPA match FMA context. |
 | FM-S07 | Port must belong to the FRG source or sink set; role is derived, never stored. |
-| FM-S08 | Exact FLD, VPA, VSM context and subject mismatches refuse. |
+| FM-S08 | Exact FLD/VPA context and subject mismatches refuse; VSM variable, dimension, token, revision, and ID mismatches refuse, with no VSM context comparison. |
 | FM-S09 | Only measured-actual VSM observation role admits; command/estimate/derived roles refuse. |
 | FM-S10 | Orientation is one immutable literal; invalid/unknown/boolean/subclass values refuse. |
 | FM-S11 | Null, aggregate, whole-flow, storage, boundary, and control-volume loci refuse. |

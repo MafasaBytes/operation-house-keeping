@@ -23,7 +23,10 @@ durable association anchor and no new ledger.
 The v1 claim is direct-measurement relevance only. The locus is exactly one
 registered participant port from the flow's FRG signature. Source/sink is
 derived from FRG membership and never stored as caller data. Exact same-
-revision FRG/VRG/PRG/FLD/VPA/measured-actual-VSM support is mandatory.
+revision FRG/VRG/PRG/FLD/VPA/measured-actual-VSM support is mandatory. VSM
+support is context-independent and proves the exact variable plus the
+measured-actual observation-role token; only FLD and VPA must match the exact
+FMA assertion context.
 
 The positive record uses the existing generic `build_record` surface and the
 `fma_` prefix. The withdrawal uses `fmw_`, has no evidence field, and is not

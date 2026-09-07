@@ -9,7 +9,8 @@ SHA-256 `4179a46a9413ad7a666171572db058a7b71f8d8734af39ae3650e6bf100238e2`.
 The accepted architecture remains refined Alternative A in the existing
 `backend.model_kernel` ledger. It adds no association anchor or new ledger.
 V1 is direct-measurement relevance only, participant-port only, exact-context,
-and measured-actual supported by same-revision FRG/VRG/PRG/FLD/VPA/VSM pins.
+and measured-actual supported by same-revision FRG/VRG/PRG/FLD/VPA/VSM pins;
+VSM is context-independent while FLD and VPA match the exact FMA context.
 Source/sink is derived from FRG. Orientation is immutable and one of
 `aligned`, `opposite`, `unsigned_magnitude`, or `not_applicable`.
 

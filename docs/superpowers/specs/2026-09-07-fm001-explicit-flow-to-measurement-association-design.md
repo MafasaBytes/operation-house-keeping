@@ -82,7 +82,9 @@ accepted TA result SHA-256 is
 4. **D4 — orientation:** exactly one of the four literals in Section 8 is
    immutable; unknown is represented by status absence, never a positive token.
 5. **D5 — support:** the same-revision six-record matrix in Section 10 is
-   mandatory; no PCN/PIF duplication or sibling/upper pin is allowed.
+   mandatory; FRG/VRG/PRG and VSM are context-independent support, while FLD
+   and VPA carry the exact FMA assertion context; no PCN/PIF duplication or
+   sibling/upper pin is allowed.
 6. **D6 — lifecycle:** the established correction-DAG and uncitable withdrawal
    rules in Section 11 apply exactly.
 7. **D7 — queries:** exactly the five names and orthogonal result axes in
@@ -262,14 +264,16 @@ VRG  variable_registration_record_id          -> variable_anchor_id
 PRG  port_registration_record_id              -> participant_port_anchor_id
 FLD  flow_declaration_record_id               -> flow_anchor_id/context/port support
 VPA  variable_port_association_record_id      -> variable_anchor_id/port/context
-VSM  variable_semantic_declaration_record_id  -> variable_anchor_id/context/measured_actual
+VSM  variable_semantic_declaration_record_id  -> variable_anchor_id/observation_role/measured_actual
 ```
 
 The FRG must contain the participant port in exactly one derived source/sink
 set. The FLD must have the exact context and its source or sink direction pins
 must include the participant port. The VPA must have the exact variable,
-participant port, and context. The VSM must have the exact variable and
-context and the measured-actual observation-role reference.
+participant port, and context. The VSM must have the exact variable and the
+measured-actual observation-role reference (`project_local` /
+`ohk-observation-roles-1` / `measured_actual`). VSM is context-independent;
+only FLD and VPA must match the exact FMA assertion context.
 
 The FM record does not duplicate FLD PCN/PIF pins. It does not cite
 source-interpretation, semantic-compatibility, EA, evidence-alignment, TA,
