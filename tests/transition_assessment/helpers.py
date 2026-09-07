@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from backend.constraint_evaluation import ConstraintEvaluationQueries
 from backend.evidence_alignment import (
@@ -71,7 +71,7 @@ class AssessmentWorld:
     temporal: object
 
 
-def _model(root, *, upper="80"):
+def _model(root, *, upper="80", declare_transition=True):
     constraint_registration_record = constraint_registration(
         CON_A, variable_anchor_id=VAR_A,
     )
@@ -117,6 +117,9 @@ def _model(root, *, upper="80"):
         to_declaration=to_declaration,
         context=AS_OPERATED,
     )
+    transition_records = (
+        (registration, declaration) if declare_transition else (registration,)
+    )
     return model_store(
         root,
         include_behavior=False,
@@ -127,14 +130,24 @@ def _model(root, *, upper="80"):
             to_registration,
             from_declaration,
             to_declaration,
-            registration,
-            declaration,
+            *transition_records,
         ),
     )
 
 
-def build_world(tmp_path, *, upper="80") -> AssessmentWorld:
-    model = _model(tmp_path / "model-world", upper=upper)
+def build_world(
+    tmp_path,
+    *,
+    upper="80",
+    declare_transition=True,
+    from_as_of: datetime | None = None,
+    to_as_of: datetime | None = None,
+) -> AssessmentWorld:
+    model = _model(
+        tmp_path / "model-world",
+        upper=upper,
+        declare_transition=declare_transition,
+    )
     _, _, source, temporal = _captured_world(tmp_path / "evidence-world")
     semantic = semantic_queries(
         tmp_path / "semantic-world", model=model, temporal=temporal,
@@ -148,8 +161,10 @@ def build_world(tmp_path, *, upper="80") -> AssessmentWorld:
             source=SourceSelector(subject=SUBJECT, property=PROP_TEMP),
         ),
     )
-    from_as_of = AS_OF
-    to_as_of = AS_OF + timedelta(minutes=1)
+    from_as_of = AS_OF if from_as_of is None else from_as_of
+    to_as_of = (
+        from_as_of + timedelta(minutes=1) if to_as_of is None else to_as_of
+    )
     from_classification = classifications.state_classification(
         STATE_A,
         context=AS_OPERATED,
@@ -162,20 +177,26 @@ def build_world(tmp_path, *, upper="80") -> AssessmentWorld:
         as_of=to_as_of,
         condition_sources=condition_sources,
     )
-    selections = tuple(
-        EvidenceAssuranceQueries(source=source, temporal=temporal)
-        .select_operational_evidence(
-            evidence_request(start=HORIZON, end=cutoff),
-        )
-        for cutoff in (from_as_of, to_as_of)
-    )
     compatibilities = tuple(
         classification.constraint_evaluations[0]
         .semantic_compatibility.value_compatibility
         for classification in (from_classification, to_classification)
     )
     alignments = []
-    for selection, compatibility in zip(selections, compatibilities):
+    for cutoff, compatibility in zip(
+        (from_as_of, to_as_of), compatibilities,
+    ):
+        if (
+            not compatibility.candidates
+            or compatibility.candidates[0].state_candidate.bound is None
+        ):
+            continue
+        selection = (
+            EvidenceAssuranceQueries(source=source, temporal=temporal)
+            .select_operational_evidence(
+                evidence_request(start=HORIZON, end=cutoff),
+            )
+        )
         assert selection.snapshot is not None
         alignment_request = OperationalEvidenceAlignmentRequest(
             schema_version="1",

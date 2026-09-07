@@ -84,6 +84,24 @@ def test_byte_counter_exact_limit_and_plus_one():
         module._preflight_graph(value, max_bytes=len(encoded) - 1)
 
 
+def test_huge_scalar_stops_at_byte_limit_before_scanning_invalid_suffix():
+    module = _preflight()
+    value = "a" * 10_000 + "\ud800"
+    with pytest.raises(ValueError, match="byte limit"):
+        module._preflight_graph(value, max_bytes=8)
+
+
+def test_oversized_mapping_stops_at_node_lower_bound_before_key_scan():
+    module = _preflight()
+
+    class HostileString(str):
+        pass
+
+    value = {"first": None, HostileString("late"): None}
+    with pytest.raises(ValueError, match="node limit"):
+        module._preflight_graph(value, max_nodes=1)
+
+
 def test_public_constants_are_exact():
     module = _preflight()
     assert module.MAXIMUM_CANONICAL_REQUEST_BYTES == 134_217_728

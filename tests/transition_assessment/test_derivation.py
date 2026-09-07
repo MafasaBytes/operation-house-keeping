@@ -15,6 +15,7 @@ from backend.transition_assessment import (
 )
 
 from tests.transition_assessment.helpers import build_world
+from tests.model_state.helpers import BEFORE_RECEIPT
 
 
 def _request(request, **updates):
@@ -127,3 +128,48 @@ def test_finite_float_in_nonfloat_field_remains_malformed(tmp_path):
     with pytest.raises(TransitionAssessmentInputError) as captured:
         assess_declared_transition_endpoints(raw)
     assert captured.value.error_code == "TRANSITION_ASSESSMENT_INPUT_INVALID"
+
+
+def test_integral_float_in_carried_integer_field_is_not_coerced(tmp_path):
+    world = build_world(tmp_path)
+    raw = world.request.model_dump(mode="python", warnings=False)
+
+    def replace(value):
+        if type(value) is dict:
+            return {
+                key: (
+                    float(item)
+                    if key == "observation_count" and type(item) is int
+                    else replace(item)
+                )
+                for key, item in value.items()
+            }
+        if type(value) in (tuple, list):
+            return type(value)(replace(item) for item in value)
+        return value
+
+    with pytest.raises(TransitionAssessmentInputError) as captured:
+        assess_declared_transition_endpoints(replace(raw))
+    assert captured.value.error_code == "TRANSITION_ASSESSMENT_INPUT_INVALID"
+
+
+def test_incomplete_classification_is_incomplete_not_not_evaluated(tmp_path):
+    world = build_world(
+        tmp_path,
+        from_as_of=BEFORE_RECEIPT,
+        to_as_of=BEFORE_RECEIPT.replace(minute=1),
+    )
+    result = assess_declared_transition_endpoints(world.request)
+    assert world.request.from_classification.condition_coverage == "incomplete"
+    assert result.evidence_completeness == (
+        "incomplete_within_one_or_more_declared_horizons"
+    )
+    assert result.execution == "not_executed"
+
+
+def test_subject_relation_is_not_evaluated_without_effective_body(tmp_path):
+    world = build_world(tmp_path, declare_transition=False)
+    result = assess_declared_transition_endpoints(world.request)
+    assert world.request.transition.effective_body_groups == ()
+    assert result.from_endpoint.subject_relation == "not_evaluated"
+    assert result.to_endpoint.subject_relation == "not_evaluated"

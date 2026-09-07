@@ -109,3 +109,76 @@ def test_missing_duplicate_and_reordered_result_rows_reject(tmp_path):
     for raw in (missing, duplicate, reordered):
         with pytest.raises((ValidationError, ValueError)):
             DeclaredTransitionAssessmentResult.model_validate(raw)
+
+
+def test_result_reconstruction_budgets_carried_request_once(
+    tmp_path, monkeypatch,
+):
+    import backend.transition_assessment.contracts as contracts
+
+    result = assess_declared_transition_endpoints(build_world(tmp_path).request)
+    raw = result.model_dump(mode="python", warnings=False)
+    original = contracts._preflight_graph
+    traversed = []
+
+    def recording(value, *args, **kwargs):
+        if type(value) is dict:
+            traversed.append(frozenset(value))
+        return original(value, *args, **kwargs)
+
+    monkeypatch.setattr(contracts, "_preflight_graph", recording)
+    rebuilt = DeclaredTransitionAssessmentResult.model_validate(raw)
+    assert rebuilt == result
+    assert not any("request" in keys and "fixed_limits" in keys
+                   for keys in traversed)
+    assert sum("transition" in keys and "evidence_alignments" in keys
+               for keys in traversed) == 1
+
+
+def test_spoofed_backend_model_subclass_rejects_without_dispatch(
+    tmp_path,
+):
+    world = build_world(tmp_path)
+    calls = []
+    policy_type = type(world.request.policy)
+
+    class HostilePolicy(policy_type):
+        __module__ = "backend.hostile"
+
+        def __getattribute__(self, name):
+            if name == "kind":
+                calls.append(name)
+            return super().__getattribute__(name)
+
+    hostile = HostilePolicy.model_construct(
+        **world.request.policy.model_dump(mode="python"),
+    )
+    calls.clear()
+    raw = world.request.model_dump(mode="python", warnings=False)
+    raw["policy"] = hostile
+    with pytest.raises(TransitionAssessmentInputError):
+        assess_declared_transition_endpoints(raw)
+    assert calls == []
+
+
+def test_alignment_cardinality_rejects_before_lower_reconstruction(
+    tmp_path, monkeypatch,
+):
+    import backend.transition_assessment.contracts as contracts
+
+    raw = build_world(tmp_path).request.model_dump(mode="python", warnings=False)
+    raw["evidence_alignments"] = [{} for _ in range(129)]
+    calls = []
+
+    def forbidden(*args, **kwargs):
+        calls.append("lower validation")
+        raise AssertionError("lower validation must not run")
+
+    monkeypatch.setattr(
+        contracts.OperationalEvidenceAlignmentResult,
+        "model_validate",
+        forbidden,
+    )
+    with pytest.raises(TransitionAssessmentInputError):
+        assess_declared_transition_endpoints(raw)
+    assert calls == []
