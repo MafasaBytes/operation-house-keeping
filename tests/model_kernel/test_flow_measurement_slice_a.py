@@ -3,7 +3,9 @@
 from datetime import UTC, datetime
 import hashlib
 import json
+from pathlib import Path
 from types import MappingProxyType
+from unittest.mock import patch
 
 import pytest
 from pydantic import ValidationError
@@ -78,6 +80,16 @@ def association(support, *, context=AS_DESIGNED, orientation="aligned",
 def withdrawal(target, *, note=""):
     return kernel.build_record(
         kernel.FlowMeasurementAssociationWithdrawal,
+        withdraws=target.record_id,
+        recorded_at=T0,
+        authority=AUTHORITY,
+        note=note,
+    )
+
+
+def variable_port_withdrawal(target, *, note=""):
+    return kernel.build_record(
+        kernel.VariablePortAssociationWithdrawal,
         withdraws=target.record_id,
         recorded_at=T0,
         authority=AUTHORITY,
@@ -475,3 +487,220 @@ def test_effective_body_and_indexes_are_order_deterministic():
     for name in names:
         assert dict(getattr(forward, name)) == dict(getattr(reverse, name))
     assert forward.revision == reverse.revision
+
+
+def test_support_pins_remain_historical_when_vpa_is_noncurrent():
+    for later_records in ("superseded", "withdrawn", "conflicted"):
+        records, support = foundation()
+        pinned = support[4]
+        if later_records == "superseded":
+            additions = (
+                variable_port(supersedes=(pinned.record_id,), note="later"),
+            )
+        elif later_records == "withdrawn":
+            additions = (variable_port_withdrawal(pinned),)
+        else:
+            additions = (
+                variable_port(supersedes=(pinned.record_id,), note="left"),
+                variable_port(supersedes=(pinned.record_id,), note="right"),
+            )
+        claim = association(support, note=later_records)
+        loaded = validate_record_collection(
+            "test-model",
+            {row.record_id: row for row in (*records, *additions, claim)},
+        )
+        assert loaded.flow_measurement_associations[claim.record_id] == claim
+        assert claim.variable_port_association_record_id == pinned.record_id
+
+
+def test_effective_body_corroboration_and_disagreement_are_exact():
+    records, support = foundation()
+    first = association(support, note="first corroborating root")
+    second = association(support, note="second corroborating root")
+    alternate_vsm = semantic(note="alternate exact support record")
+    alternate_support = (*support[:-1], alternate_vsm)
+    disagreeing = association(alternate_support, note="different six-pin body")
+    loaded = validate_record_collection(
+        "test-model",
+        {row.record_id: row for row in (
+            *records, alternate_vsm, first, second, disagreeing)},
+    )
+    subject = (FLOW_A, VAR_A, PORT_A, AS_DESIGNED,
+               "direct_measurement_relevance", "aligned")
+    first_body = loaded.flow_measurement_effective_body_by_id[first.record_id]
+    assert first_body == loaded.flow_measurement_effective_body_by_id[
+        second.record_id]
+    assert first_body != loaded.flow_measurement_effective_body_by_id[
+        disagreeing.record_id]
+    assert loaded.flow_measurement_root_ids_by_effective_body[first_body] == \
+        tuple(sorted((first.record_id, second.record_id)))
+    assert loaded.flow_measurement_root_ids_by_subject[subject] == tuple(
+        sorted((first.record_id, second.record_id, disagreeing.record_id)))
+    assert loaded.flow_measurement_disagreeing_root_ids_by_subject[subject] == \
+        loaded.flow_measurement_root_ids_by_subject[subject]
+
+
+def test_missing_duplicate_self_and_cyclic_parents_refuse():
+    records, support = foundation()
+    root = association(support, note="root")
+    missing = association(
+        support,
+        supersedes=("fma_" + "f" * 64,),
+        note="missing",
+    )
+    with pytest.raises(kernel.ModelIntegrityError):
+        validate_record_collection(
+            "test-model", {row.record_id: row for row in (*records, missing)})
+
+    duplicate = root.model_copy(update={
+        "supersedes": (root.record_id, root.record_id),
+    })
+    self_parent = root.model_copy(update={"supersedes": (root.record_id,)})
+    for forged in (duplicate, self_parent):
+        with pytest.raises(kernel.ModelIntegrityError):
+            validate_record_collection(
+                "test-model",
+                {row.record_id: row for row in (*records, forged)},
+                verify_hashes=False,
+            )
+
+    first = association(support, note="cycle one")
+    second = association(support, note="cycle two")
+    first = first.model_copy(update={"supersedes": (second.record_id,)})
+    second = second.model_copy(update={"supersedes": (first.record_id,)})
+    with pytest.raises(kernel.ModelIntegrityError) as error:
+        validate_record_collection(
+            "test-model",
+            {row.record_id: row for row in (*records, first, second)},
+            verify_hashes=False,
+        )
+    assert error.value.error_code == "MODEL_FLOW_MEASUREMENT_LINEAGE_INVALID"
+
+
+def test_unknown_and_foreign_withdrawal_targets_refuse():
+    records, support = foundation()
+    claim = association(support)
+    unknown = kernel.build_record(
+        kernel.FlowMeasurementAssociationWithdrawal,
+        withdraws="fma_" + "f" * 64,
+        recorded_at=T0,
+        authority=AUTHORITY,
+        note="unknown",
+    )
+    for event in (unknown,):
+        with pytest.raises(kernel.ModelIntegrityError) as error:
+            validate_record_collection(
+                "test-model",
+                {row.record_id: row for row in (*records, claim, event)},
+            )
+        assert error.value.error_code == "MODEL_REFERENCE_INVALID"
+
+    foreign = unknown.model_copy(update={
+        "withdraws": support[4].record_id,
+    })
+    with pytest.raises(ValidationError):
+        kernel.FlowMeasurementAssociationWithdrawal.model_validate(
+            foreign.model_dump(mode="python", warnings=False),
+        )
+
+
+@pytest.mark.parametrize("value", [
+    None,
+    True,
+    "aggregate",
+    "whole_flow",
+    "storage",
+    "boundary",
+    "control_volume",
+    FLOW_A,
+])
+def test_non_port_locus_forms_refuse_before_store_access(value):
+    _, support = foundation()
+    with pytest.raises(kernel.ModelIntegrityError):
+        association(support, participant_port_anchor_id=value)
+    assert association(support).participant_port_anchor_id == PORT_A
+
+
+@pytest.mark.parametrize("value", [None, True, "unknown", "Aligned"])
+def test_orientation_admission_is_exact(value):
+    _, support = foundation()
+    with pytest.raises(kernel.ModelIntegrityError):
+        association(support, orientation=value)
+    assert association(support).orientation == "aligned"
+
+
+def test_flow_variable_port_and_context_parent_drift_refuse():
+    records, support = foundation()
+    root = association(support, note="root")
+    foreign_records, foreign_support = foundation(VIEW_INDEPENDENT)
+    attacks = (
+        association(
+            foreign_support,
+            context=VIEW_INDEPENDENT,
+            supersedes=(root.record_id,),
+            note="context drift",
+        ),
+        root.model_copy(update={
+            "flow_anchor_id": "flw_" + "f" * 32,
+            "supersedes": (root.record_id,),
+        }),
+        root.model_copy(update={
+            "variable_anchor_id": "var_" + "f" * 32,
+            "supersedes": (root.record_id,),
+        }),
+        root.model_copy(update={
+            "participant_port_anchor_id": "prt_" + "f" * 32,
+            "supersedes": (root.record_id,),
+        }),
+    )
+    all_records = (*records, *foreign_records, root)
+    for attack in attacks:
+        with pytest.raises(kernel.ModelIntegrityError):
+            validate_record_collection(
+                "test-model",
+                {row.record_id: row for row in (*all_records, attack)},
+                verify_hashes=False,
+            )
+
+
+def test_model_construct_hidden_state_and_wrong_nested_union_refuse():
+    records, support = foundation()
+    valid = association(support)
+    plain = valid.model_dump(mode="python", warnings=False)
+    forged = kernel.FlowMeasurementAssociation.model_construct(**plain)
+    forged.__dict__["hidden_state"] = "forged"
+    with pytest.raises(kernel.ModelIntegrityError):
+        validate_record_collection(
+            "test-model",
+            {row.record_id: row for row in (*records, forged)},
+            verify_hashes=False,
+        )
+
+    wrong_union = dict(plain)
+    wrong_union["context"] = {
+        "kind": "forged_context",
+        "view": "as_designed",
+    }
+    with pytest.raises(ValidationError):
+        kernel.FlowMeasurementAssociation.model_validate(wrong_union)
+
+
+def test_pure_fm_contract_canonical_and_collection_validation_do_no_io():
+    records, support = foundation()
+    claim = association(support)
+
+    def forbidden(*_args, **_kwargs):
+        raise AssertionError("pure FM validation attempted I/O")
+
+    with (
+        patch("builtins.open", forbidden),
+        patch.object(Path, "open", forbidden),
+        patch.object(Path, "read_bytes", forbidden),
+        patch.object(Path, "write_bytes", forbidden),
+        patch("socket.socket", forbidden),
+    ):
+        rebuilt = kernel.FlowMeasurementAssociation.model_validate(
+            claim.model_dump(mode="python", warnings=False))
+        loaded = validate_record_collection(
+            "test-model", {row.record_id: row for row in (*records, rebuilt)})
+    assert loaded.flow_measurement_associations[claim.record_id] == claim
