@@ -57,7 +57,7 @@ FA-001, Slice B, or upper-layer import. It stops for owner validation.
 | FM-S13 | Same-subject parentless roots are accepted and independently indexed. |
 | FM-S14 | Identical independent bodies corroborate; different bodies disagree without winner selection. |
 | FM-S15 | Same-root fork produces conflict; complete same-root convergence is accepted. |
-| FM-S16 | Partial/cross-root convergence, foreign parent, cycle, self-parent, and duplicate parent refuse. |
+| FM-S16 | Partial same-root repair remains conflicted; cross-root convergence, foreign parent, cycle, self-parent, and duplicate parent refuse. |
 | FM-S17 | Successor of withdrawn parent refuses; sibling fork tips remain selectively withdrawable. |
 | FM-S18 | Withdrawal accepts exactly one eligible current tip and is uncitable. |
 | FM-S19 | Unknown, foreign, superseded, withdrawn, and duplicate withdrawal targets refuse. |

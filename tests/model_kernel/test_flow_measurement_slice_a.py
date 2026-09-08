@@ -299,6 +299,54 @@ def test_subject_dag_independent_roots_fork_merge_and_withdrawal(tmp_path):
         event.record_id,)
 
 
+def test_partial_same_root_repair_remains_conflicted_until_full_convergence(
+        tmp_path):
+    store, support = store_with(tmp_path)
+    root = association(support, note="root")
+    left = association(support, supersedes=(root.record_id,), note="left")
+    right = association(support, supersedes=(root.record_id,), note="right")
+    partial = association(
+        support, supersedes=(left.record_id,), note="partial repair")
+    for record in (root, left, right, partial):
+        store.append(record)
+    loaded = store.load()
+    assert loaded.current_flow_measurement_tips_by_root[root.record_id] == \
+        tuple(sorted((right, partial), key=lambda item: item.record_id))
+    complete = association(
+        support, supersedes=(right.record_id, partial.record_id),
+        note="complete convergence")
+    store.append(complete)
+    assert store.load().current_flow_measurement_tips_by_root[
+        root.record_id] == (complete,)
+
+
+def test_nonparticipant_port_rejects_before_write(tmp_path):
+    other_port = "prt_" + "9" * 32
+    store, support = store_with(tmp_path)
+    original = support[2]
+    registration = kernel.build_record(
+        kernel.PortRegistration,
+        anchor=original.anchor.model_copy(update={
+            "anchor_id": other_port, "display_name": "Other port"}),
+        owner_entity_anchor_id=original.owner_entity_anchor_id,
+        evidence=original.evidence, recorded_at=original.recorded_at,
+        authority=original.authority, note="")
+    vpa = variable_port(port=other_port)
+    store.append(registration)
+    store.append(vpa)
+    substituted = list(support)
+    substituted[2] = registration
+    substituted[4] = vpa
+    attack = association(
+        tuple(substituted), participant_port_anchor_id=other_port)
+    before = snapshot(store)
+    with pytest.raises(kernel.ModelIntegrityError) as error:
+        store.append(attack)
+    assert error.value.error_code == \
+        "MODEL_FLOW_MEASUREMENT_PARTICIPANT_INVALID"
+    assert snapshot(store) == before
+
+
 def test_cross_root_changed_subject_and_successor_of_withdrawn_reject(tmp_path):
     store, support = store_with(tmp_path)
     first = association(support, note="one")
