@@ -34,7 +34,9 @@ The owner-accepted milestone sequence is DS-001, DS-002, DS-003, DS-004,
 TS-001, IB-001, MK-001, VM-001, VS-001, SN-001, ES-001, CN-001, PT-001,
 VP-001, BH-001, ST-001, ST-002, FL-001, EA-001, TA-001, and FM-001. FL-001,
 EA-001, and TA-001 are complete and owner accepted. FM-001's corrected design
-is owner accepted and Slice A is authorized; Slice B remains owner-gated.
+and repaired Slice A are owner accepted at exact tested implementation
+`6210d3c250b96f54b764a365cb0a3a988d9bf9f6`; Slice B implementation remains
+owner-gated pending approval of its corrected public contract.
 FL-001 is adversarially reviewed; EA-001 is adversarially repaired; TA-001 is
 adversarially hardened. All completed milestones are full-suite and
 dual-clean-checkout verified.
@@ -90,9 +92,10 @@ recorded in the owner-acceptance report. TA-001 remains a pure, read-only leaf
 with no occurrence claim, durable identity, ledger, store, facade,
 demonstration, or second consumer.
 
-The current FM-001 design is owner accepted and Slice A is authorized only for
-the corrected direct-measurement, participant-port declaration contract.
-Slice B is not authorized. The unapproved frontier continues with possible
+The current FM-001 design and repaired Slice A are owner accepted for the
+corrected direct-measurement, participant-port declaration contract at
+`6210d3c250b96f54b764a365cb0a3a988d9bf9f6`. Slice B implementation is not
+authorized while its exact public result contract is corrected. The unapproved frontier continues with possible
 FA-001 evidence-gated bounded flow assessment and, only after explicit
 time-window, continuity, and authenticity contracts, optional accountable flow
 occurrence/history. Configuration identity remains an alternative priority if

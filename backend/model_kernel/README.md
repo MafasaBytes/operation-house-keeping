@@ -342,3 +342,21 @@ A, B, and D are owner accepted, Slice C is absent from v1, and FL-001 is
 complete, adversarially reviewed, full-suite verified, and
 dual-clean-checkout verified at implementation HEAD
 `fe3b15a3caf77974a795dad5b04c0a35abee37b4`.
+
+FM-001's corrected design and repaired Slice A are owner accepted at exact
+tested implementation `6210d3c250b96f54b764a365cb0a3a988d9bf9f6`.
+Slice A adds only `FlowMeasurementAssociation` (`fma_`) and its uncitable
+`FlowMeasurementAssociationWithdrawal` (`fmw_`) to the existing model ledger,
+with exact same-revision FRG/VRG/PRG/FLD/VPA/VSM closure, participant-port
+locus, FRG-derived source/sink role, immutable orientation, correction DAG,
+withdrawal, replay, and immutable indexes. Cross-root disagreement compares
+current effective-body sets between distinct active roots; same-root fork
+multiplicity remains lineage conflict and inactive roots do not create
+cross-root disagreement. VSM is context-independent; exact context matching
+belongs to FLD/VPA.
+
+The authoritative 36-record model contains zero FMA/FMW records. FM-001 Slice
+B implementation is not authorized pending owner approval of its corrected
+five-query public result contract. Slice A adds no FM query/result surface,
+fixture, demonstration, authoritative append, FA-001 evaluator, occurrence
+claim, identity, store, facade, connector, or upper-layer import.

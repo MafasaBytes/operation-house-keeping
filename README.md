@@ -16,6 +16,12 @@ hardening is implemented and verified at
 `2ec18f7234273dba98098d268df4568d5cc84d85`. TA-001 complete, owner accepted,
 adversarially hardened, and dual-clean-checkout verified.
 
+FM-001's corrected design and repaired Slice A are owner accepted at exact
+tested implementation `6210d3c250b96f54b764a365cb0a3a988d9bf9f6`.
+Slice B implementation remains unauthorized pending owner approval of its
+corrected exact public contract. The authoritative model still contains zero
+FMA/FMW records.
+
 The authoritative synthetic demo model contains exactly 36 records at
 `mrv_b8f03e1c03c23efc5c4454d00e43e6b89b8254ab87ce724d7418b8a94288c7ee`.
 It contains one FRG, one FLD, and zero FLW, and still contains zero TRG, TRD,
@@ -80,7 +86,7 @@ sources and disclosures are test artifacts, never engineering truth.
 | 18 | FL-001 | Explicit flow identity and declaration-only disclosure | [ADR-0018](docs/adr/0018-explicit-flow-identity-and-declaration.md) |
 | 19 | EA-001 | Content-bound operational-evidence selection, assurance, and bounded value-compatibility alignment | [ADR-0019](docs/adr/0019-content-bound-operational-evidence-selection-and-assurance.md) |
 | 20 | TA-001 | Complete, owner accepted, adversarially hardened, and dual-clean-checkout verified | [ADR-0020](docs/adr/0020-evidence-gated-declared-transition-assessment.md) |
-| 21 | FM-001 | Corrected design owner accepted; Slice A authorized; Slice B unauthorized | [ADR-0021](docs/adr/0021-explicit-flow-to-measurement-association.md) |
+| 21 | FM-001 | Corrected design and repaired Slice A owner accepted; Slice B contract correction pending and implementation unauthorized | [ADR-0021](docs/adr/0021-explicit-flow-to-measurement-association.md) |
 
 Accepted specifications live in `docs/superpowers/specs/`; accepted decisions
 live in `docs/adr/`; owner gates and verification evidence live in
@@ -108,22 +114,20 @@ transition endpoint pattern from bounded carried evidence. It does not
 establish transition occurrence or non-occurrence, add an orchestration facade
 or demonstration, or create a generic immutable assessment identity.
 
-The next unapproved design candidate is **FM-001 — Explicit Flow-to-Measurement
-Association**. It should investigate an explicit, evidence-bearing,
-replayable relation between an existing `FlowAnchor` and existing
-`VariableAnchor` records, including measurement/boundary role, orientation or
-sign semantics, quantity/unit expectations, exact context and lifecycle, and
-support pins where justified. This is a design recommendation only; no
-proposal or implementation is authorized by this status.
+FM-001 Slice A now supplies the owner-accepted evidence-bearing,
+replayable declaration relating an existing `FlowAnchor`, `VariableAnchor`,
+and participant `PortAnchor` under exact context, orientation, and six pinned
+same-ledger support records. Slice B's five read-only query responsibilities
+remain architecturally accepted, but implementation is unauthorized until its
+corrected exact public result contract is owner approved.
 
-The unapproved roadmap is FM-001 explicit flow-to-measurement association,
-then FA-001 evidence-gated bounded flow assessment, then optional accountable
+The unapproved roadmap continues with FM-001 Slice B, then FA-001
+evidence-gated bounded flow assessment, then optional accountable
 flow occurrence/history only after explicit time-window, continuity, and
 authenticity contracts. Configuration identity remains an alternative priority
 if the owner changes product focus. Causal, diagnostic, impact, goal, action,
 planning, and control layers remain deferred until their explicit model and
-evidence prerequisites exist. The corrected FM-001 design is owner accepted
-and Slice A is authorized; Slice B remains owner-gated. An association would
+evidence prerequisites exist. An FM association would
 establish declared measurement relevance only—not observed flow, occurrence,
 continuity, conservation, balance, causality, correctness, or safety.
 
