@@ -612,7 +612,8 @@ The implementation must refuse or disclose:
 - command, estimate, derived, rate, amount, aggregate, or storage role;
 - orientation drift, participant substitution, non-FRG port, wrong flow, or
   forged source/sink body field;
-- VPA, FLD, VSM, context, subject, revision, or support substitution;
+- FLD/VPA context or subject substitution, or VSM variable, dimension,
+  system, edition, code, revision, ID, or other support substitution;
 - duplicated PCN/PIF pins, sibling-ledger citations, upper-result citations,
   citable withdrawals, or evidence-free positive records;
 - foreign/cross-root/partial parents, cycles, self-parent, duplicate parents,
@@ -666,7 +667,7 @@ Original FM-A01–FM-A28 remain stable and are corrected as follows:
 | FM-A32 | Citable/evidence-bearing withdrawal rejects the withdrawal contract and evidence union. |
 | FM-A33 | Duplicate, foreign, cross-root, partial, cyclic, self, and withdrawn-parent ancestry rejects. |
 | FM-A34 | Different support pins produce different effective bodies. |
-| FM-A35 | Exact measured-actual VSM context/subject substitution rejects. |
+| FM-A35 | Exact measured-actual VSM variable/dimension/system/edition/code/revision/ID substitution rejects; VSM has no context. |
 | FM-A36 | Cross-context query input cannot leak a declaration or support row. |
 | FM-A37 | Independent identical roots corroborate; independent different bodies disagree. |
 | FM-A38 | Result replacement and material replacement are detected by authoritative reconstruction. |
