@@ -2178,13 +2178,16 @@ def validate_record_collection(
     flow_measurement_disagreeing_root_ids_by_subject: dict[
         tuple, tuple[str, ...]] = {}
     for subject, roots in flow_measurement_root_ids_by_subject.items():
-        bodies = {
-            flow_measurement_effective_body_by_id[tip.record_id]
+        active_body_sets = {
+            root: frozenset(
+                flow_measurement_effective_body_by_id[tip.record_id]
+                for tip in current_flow_measurement_tips_by_root[root])
             for root in roots
-            for tip in current_flow_measurement_tips_by_root[root]
+            if current_flow_measurement_tips_by_root[root]
         }
-        if len(bodies) > 1:
-            flow_measurement_disagreeing_root_ids_by_subject[subject] = roots
+        if len(set(active_body_sets.values())) > 1:
+            flow_measurement_disagreeing_root_ids_by_subject[subject] = tuple(
+                sorted(active_body_sets))
 
     record_ids = tuple(sorted(records))
     revision = ModelRevision(
