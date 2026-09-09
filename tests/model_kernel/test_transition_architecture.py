@@ -79,6 +79,7 @@ def test_slice_b_public_query_surface_adds_exactly_four_transition_queries():
         "flow_measurement_associations_for_flow",
         "flow_measurement_associations_for_variable",
         "flow_measurement_associations_at_port", "flow_measurement_assertion",
+        "flow_operating_criterion", "flow_operating_criterion_assertion",
     }
     for forbidden in (
         "assess_transition", "detect_transition",

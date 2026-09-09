@@ -1388,7 +1388,7 @@ class ModelQueries:
         return material,result
 
     def flow_operating_criterion(self, flow_anchor_id: str, variable_anchor_id: str,
-                                 participant_port_anchor_id: str, context, orientation):
+                                 participant_port_anchor_id: str, context, orientation) -> FlowOperatingCriterionResult:
         flow_anchor_id=self._require_flow_anchor_id(flow_anchor_id)
         variable_anchor_id=self._require_variable_anchor_id(variable_anchor_id)
         participant_port_anchor_id=self._require_port_anchor_id(participant_port_anchor_id)
@@ -1397,7 +1397,7 @@ class ModelQueries:
         material, subject=self._flow_operating_criterion_subject(flow_anchor_id,variable_anchor_id,participant_port_anchor_id,context,orientation)
         return FlowOperatingCriterionResult(material=material,subject=subject)
 
-    def flow_operating_criterion_assertion(self, record_id: str):
+    def flow_operating_criterion_assertion(self, record_id: str) -> FlowOperatingCriterionAssertionResult:
         if type(record_id) is not str or not re.fullmatch(r"^(?:fcd|fcw)_[0-9a-f]{64}$", record_id):
             raise ModelQueryError("MODEL_FLOW_CRITERION_QUERY_INVALID", "record id is not a canonical FC id")
         material=self._material(); indices=self._record_index()

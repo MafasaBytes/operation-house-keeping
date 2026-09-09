@@ -66,13 +66,15 @@ def test_exactly_four_flow_methods_and_signatures_are_public():
             ("self", "port_anchor_id", "context"), kernel.PortFlowsResult),
         "flow_assertion": (
             ("self", "record_id"), kernel.FlowAssertionDisclosureResult),
+        "flow_operating_criterion": (("self", "flow_anchor_id", "variable_anchor_id", "participant_port_anchor_id", "context", "orientation"), kernel.FlowOperatingCriterionResult),
+        "flow_operating_criterion_assertion": (("self", "record_id"), kernel.FlowOperatingCriterionAssertionResult),
     }
     assert public_methods() == before | set(expected)
     for name, (parameters, return_annotation) in expected.items():
         signature = inspect.signature(getattr(kernel.ModelQueries, name))
         assert tuple(signature.parameters) == parameters
         assert signature.return_annotation is return_annotation
-        if "context" in parameters:
+        if "context" in parameters and name not in {"flow_operating_criterion"}:
             assert signature.parameters["context"].kind is \
                 inspect.Parameter.KEYWORD_ONLY
             assert signature.parameters["context"].default is \
