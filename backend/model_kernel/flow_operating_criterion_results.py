@@ -1,15 +1,25 @@
 """FC-001 Slice B authoritative read-only result contracts."""
 
 from typing import Annotated, Literal
-from pydantic import BaseModel, ConfigDict, Field, StrictInt, field_validator, model_validator
+from pydantic import (
+    BaseModel, ConfigDict, Field, StrictInt, ValidationError,
+    field_validator, model_validator,
+)
 from backend.model_kernel.contracts import AssertionContext
 from backend.model_kernel.flow_measurement_results import FlowMeasurementOrientation
 from backend.model_kernel.port_results import ModelQueryMaterial
 from backend.model_kernel.result_revalidation import (
-    inspect_supplied_graph as _inspect_supplied_graph,
     rebuild_material as _rebuild_material,
     rebuild_row as _rebuild_row,
     rebuild_rows as _rebuild_rows,
+)
+from backend.model_kernel.flow_operating_criterion_result_validation import (
+    FCResultInvalid as _FCResultInvalid,
+    FCResultLimit as _FCResultLimit,
+    enforce_result_cardinality as _enforce_result_cardinality,
+    parse_result_json as _parse_result_json,
+    plain_result as _plain_result,
+    result_validation_error as _result_validation_error,
 )
 from backend.system_identity import FLOW_ANCHOR_ID_PATTERN, VARIABLE_ANCHOR_ID_PATTERN, PORT_ANCHOR_ID_PATTERN
 
@@ -25,13 +35,44 @@ FlowOperatingCriterionReason = Literal[
 FlowOperatingCriterionLookupStatus = Literal["not_found", "found"]
 
 class _FC(BaseModel):
-    model_config = ConfigDict(frozen=True, extra="forbid", revalidate_instances="always")
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", revalidate_instances="always",
+        hide_input_in_errors=True,
+    )
 
     @model_validator(mode="wrap")
     @classmethod
     def _bounded_graph(cls, value, handler):
-        _inspect_supplied_graph(value)
-        return handler(value)
+        try:
+            plain = _plain_result(value, _trusted_result_models())
+            _enforce_result_cardinality(plain)
+            result = handler(plain)
+            rebuilt = _plain_result(result, _trusted_result_models())
+            _enforce_result_cardinality(rebuilt)
+            return result
+        except _FCResultLimit as error:
+            raise _result_validation_error(limit=True) from error
+        except (ValidationError, _FCResultInvalid, ValueError, TypeError,
+                AttributeError, AssertionError) as error:
+            raise _result_validation_error(limit=False) from error
+
+    @classmethod
+    def model_validate_json(
+            cls, json_data, *, strict=None, context=None, by_alias=None,
+            by_name=None):
+        try:
+            plain = _parse_result_json(json_data)
+        except _FCResultLimit as error:
+            raise _result_validation_error(limit=True) from error
+        except _FCResultInvalid as error:
+            raise _result_validation_error(limit=False) from error
+        return cls.model_validate(
+            plain, strict=strict, context=context, by_alias=by_alias,
+            by_name=by_name)
+
+    @classmethod
+    def model_validate_strings(cls, obj, **kwargs):
+        raise _result_validation_error(limit=False)
 
 class FlowOperatingCriterionLineageRow(_FC):
     root_index: _I
@@ -97,13 +138,19 @@ class FlowOperatingCriterionResult(_FC):
 
     @model_validator(mode="after")
     def _authoritative(self):
-        from backend.model_kernel.queries import ModelQueries
-        _, expected=ModelQueries(self.material.loaded())._flow_operating_criterion_subject(
-            self.subject.flow_anchor_id,self.subject.variable_anchor_id,
-            self.subject.participant_port_anchor_id,self.subject.context,self.subject.orientation)
-        if self.subject.model_dump(mode="python") != expected.model_dump(mode="python"):
-            raise ValueError("flow operating criterion result is forged")
-        return self
+        try:
+            from backend.model_kernel.queries import ModelQueries
+            _, expected=ModelQueries(self.material.loaded())._flow_operating_criterion_subject(
+                self.subject.flow_anchor_id,self.subject.variable_anchor_id,
+                self.subject.participant_port_anchor_id,self.subject.context,self.subject.orientation)
+            if self.subject.model_dump(mode="python") != expected.model_dump(mode="python"):
+                raise _FCResultInvalid
+            return self
+        except _FCResultLimit as error:
+            raise _result_validation_error(limit=True) from error
+        except (ValidationError, _FCResultInvalid, ValueError, TypeError,
+                AttributeError, AssertionError) as error:
+            raise _result_validation_error(limit=False) from error
 
 
 class FlowOperatingCriterionAssertionResult(_FC):
@@ -122,19 +169,46 @@ class FlowOperatingCriterionAssertionResult(_FC):
 
     @model_validator(mode="after")
     def _authoritative(self):
-        loaded=self.material.loaded(); indices={x:i for i,x in enumerate(loaded.revision.record_ids)}
-        record=loaded.records.get(self.record_id)
-        found=record is not None and record.record_kind in {"flow_operating_criterion_declaration","flow_operating_criterion_withdrawal"}
-        if not found:
-            expected=("not_found",None,None,None,None,None)
-        else:
-            target=self.record_id if record.record_kind=="flow_operating_criterion_declaration" else record.withdraws
-            s=loaded.flow_operating_criterion_subject_by_id[target]
-            from backend.model_kernel.queries import ModelQueries
-            _,subject=ModelQueries(loaded)._flow_operating_criterion_subject(s[0],s[1],s[2],s[3],s[5])
-            activity="current" if not loaded.flow_operating_criterion_successor_ids[target] and not loaded.flow_operating_criterion_withdrawn_by[target] else "withdrawn" if loaded.flow_operating_criterion_withdrawn_by[target] else "superseded"
-            gi=next(i for i,g in enumerate(subject.body_groups) if indices[target] in g.declaration_indices)
-            expected=("found",indices[self.record_id],indices[target],activity,gi,subject)
-        actual=(self.lookup_status,self.record_index,self.positive_record_index,self.positive_activity,self.body_group_index,self.subject)
-        if actual != expected: raise ValueError("flow operating criterion assertion is forged")
-        return self
+        try:
+            loaded=self.material.loaded(); indices={x:i for i,x in enumerate(loaded.revision.record_ids)}
+            record=loaded.records.get(self.record_id)
+            found=record is not None and record.record_kind in {"flow_operating_criterion_declaration","flow_operating_criterion_withdrawal"}
+            if not found:
+                expected=("not_found",None,None,None,None,None)
+            else:
+                target=self.record_id if record.record_kind=="flow_operating_criterion_declaration" else record.withdraws
+                s=loaded.flow_operating_criterion_subject_by_id[target]
+                from backend.model_kernel.queries import ModelQueries
+                _,subject=ModelQueries(loaded)._flow_operating_criterion_subject(s[0],s[1],s[2],s[3],s[5])
+                activity="current" if not loaded.flow_operating_criterion_successor_ids[target] and not loaded.flow_operating_criterion_withdrawn_by[target] else "withdrawn" if loaded.flow_operating_criterion_withdrawn_by[target] else "superseded"
+                gi=next(i for i,g in enumerate(subject.body_groups) if indices[target] in g.declaration_indices)
+                expected=("found",indices[self.record_id],indices[target],activity,gi,subject)
+            actual=(self.lookup_status,self.record_index,self.positive_record_index,self.positive_activity,self.body_group_index,self.subject)
+            if actual != expected: raise _FCResultInvalid
+            return self
+        except _FCResultLimit as error:
+            raise _result_validation_error(limit=True) from error
+        except (ValidationError, _FCResultInvalid, ValueError, TypeError,
+                AttributeError, AssertionError) as error:
+            raise _result_validation_error(limit=False) from error
+
+
+def _trusted_result_models() -> tuple[type[BaseModel], ...]:
+    """Exact models permitted in supplied FC result graphs."""
+    return (
+        ModelQueryMaterial,
+        FlowOperatingCriterionLineageRow,
+        FlowOperatingCriterionSupportRow,
+        FlowOperatingCriterionBodyRow,
+        FlowOperatingCriterionSubjectResult,
+        FlowOperatingCriterionResult,
+        FlowOperatingCriterionAssertionResult,
+    )
+
+
+def _result_query_error_code(error: ValidationError) -> str:
+    """Translate fixed outer validation failures to public query codes."""
+    kinds = {entry.get("type") for entry in error.errors(include_input=False)}
+    return ("MODEL_FLOW_CRITERION_RESULT_LIMIT_EXCEEDED"
+            if "FC_RESULT_LIMIT_EXCEEDED" in kinds
+            else "MODEL_FLOW_CRITERION_RESULT_INVALID")

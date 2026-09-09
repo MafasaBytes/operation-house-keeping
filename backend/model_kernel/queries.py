@@ -82,6 +82,10 @@ from backend.model_kernel.flow_operating_criterion_results import (
     FlowOperatingCriterionResult, FlowOperatingCriterionAssertionResult,
     FlowOperatingCriterionSubjectResult, FlowOperatingCriterionLineageRow,
     FlowOperatingCriterionBodyRow, FlowOperatingCriterionSupportRow,
+    _result_query_error_code,
+)
+from backend.model_kernel.flow_operating_criterion_result_validation import (
+    result_validation_error as _fc_result_validation_error,
 )
 from backend.model_kernel.port_results import (
     ConnectionRootResult, ConnectionSubjectResult, SharedConnectionsResult,
@@ -1337,6 +1341,8 @@ class ModelQueries:
     # -- FC-001 explicit governing criterion ------------------------------
     def _flow_operating_criterion_subject(self, flow_anchor_id, variable_anchor_id,
                                           participant_port_anchor_id, context, orientation):
+        if len(self.loaded.records) > 2_048:
+            raise _fc_result_validation_error(limit=True)
         material = self._material()
         indices = self._record_index()
         subject = (flow_anchor_id, variable_anchor_id, participant_port_anchor_id,
@@ -1359,6 +1365,8 @@ class ModelQueries:
             return tuple(out)
         fc_ids=tuple(sorted(x for x,s in self.loaded.flow_operating_criterion_subject_by_id.items() if s==subject))
         fm_ids=tuple(self.loaded.flow_measurement_ids_by_subject.get(subject, ()))
+        if len(fc_ids) > 512 or len(fm_ids) > 512:
+            raise _fc_result_validation_error(limit=True)
         fc_roots=lineage_rows(self.loaded.flow_operating_criterion_root_by_id,
                               self.loaded.flow_operating_criterion_current_tips_by_root,
                               self.loaded.flow_operating_criterion_withdrawn_by, fc_ids)
@@ -1369,6 +1377,22 @@ class ModelQueries:
         for rid in fc_ids:
             body=self.loaded.flow_operating_criterion_effective_body_by_id[rid]
             bodies.setdefault(body,[]).append(rid)
+        if len(fc_roots) > 512 or len(fm_roots) > 512 or len(bodies) > 512:
+            raise _fc_result_validation_error(limit=True)
+        output_rows = len(fc_roots) + len(fm_roots) + len(bodies)
+        for ids in bodies.values():
+            declaration = self.loaded.flow_operating_criterion_declarations[
+                sorted(ids)[0]]
+            witness = self.loaded.flow_measurement_associations[
+                declaration.flow_measurement_association_record_id]
+            flow = self.loaded.records[witness.flow_declaration_record_id]
+            direction_pins = (len(flow.source_direction_pins)
+                              + len(flow.sink_direction_pins))
+            if direction_pins > 64:
+                raise _fc_result_validation_error(limit=True)
+            output_rows += 9 + direction_pins
+        if output_rows > 8_192:
+            raise _fc_result_validation_error(limit=True)
         groups=[]
         reason_order=("fm_inactive", "fm_same_root_conflict", "fm_cross_root_disagreement",
                       "fm_body_not_current", "vcn_conflicted", "vcn_not_current",
@@ -1430,11 +1454,23 @@ class ModelQueries:
             ordered_reasons=tuple(x for x in reason_order if x in lower_reasons)
             groups.append(FlowOperatingCriterionBodyRow(group_index=gi,declaration_indices=tuple(indices[x] for x in ids),current_declaration_indices=tuple(indices[x] for x in current),witness_record_indices=tuple(indices[x] for x in witnesses),matching_fm_current_indices=matching,support_rows=tuple(support),reasons=ordered_reasons))
         active=[i for i,g in enumerate(groups) if g.current_declaration_indices]
+        active_root_groups = {}
+        for group_index in active:
+            for record_index in groups[group_index].current_declaration_indices:
+                record_id = material.revision.record_ids[record_index]
+                root_id = self.loaded.flow_operating_criterion_root_by_id[record_id]
+                active_root_groups.setdefault(root_id, set()).add(group_index)
+        cross_root_disagreement = any(
+            left_root != right_root and left_group != right_group
+            for left_root, left_groups in active_root_groups.items()
+            for right_root, right_groups in active_root_groups.items()
+            for left_group in left_groups
+            for right_group in right_groups)
         if not fc_ids: conclusion="not_declared"; reasons=("fc_not_declared",); gi=None
         elif not active: conclusion="inactive"; reasons=("fc_inactive",); gi=None
         elif any(row.lineage_health == "conflicted" for row in fc_roots):
-            conclusion="conflicted"; reasons=("fc_same_root_conflict",) + (("fc_cross_root_disagreement",) if len(active)>1 else ()); gi=None
-        elif len(active)>1: conclusion="disagreed"; reasons=("fc_cross_root_disagreement",); gi=None
+            conclusion="conflicted"; reasons=("fc_same_root_conflict",) + (("fc_cross_root_disagreement",) if cross_root_disagreement else ()); gi=None
+        elif cross_root_disagreement: conclusion="disagreed"; reasons=("fc_cross_root_disagreement",); gi=None
         else:
             gi=active[0]; reasons=groups[gi].reasons
             conclusion="applicable" if not reasons else "inapplicable"
@@ -1455,23 +1491,33 @@ class ModelQueries:
         except (ModelQueryError, ValueError, TypeError, AttributeError) as error:
             raise ModelQueryError("MODEL_FLOW_CRITERION_QUERY_INVALID",
                                   "flow operating criterion selector is invalid") from error
-        material, subject=self._flow_operating_criterion_subject(flow_anchor_id,variable_anchor_id,participant_port_anchor_id,context,orientation)
-        return FlowOperatingCriterionResult(material=material,subject=subject)
+        try:
+            material, subject=self._flow_operating_criterion_subject(flow_anchor_id,variable_anchor_id,participant_port_anchor_id,context,orientation)
+            return FlowOperatingCriterionResult(material=material,subject=subject)
+        except ValidationError as error:
+            raise ModelQueryError(
+                _result_query_error_code(error),
+                "flow operating criterion result is invalid") from error
 
     def flow_operating_criterion_assertion(self, record_id: str) -> FlowOperatingCriterionAssertionResult:
         if type(record_id) is not str or not re.fullmatch(r"^(?:fcd|fcw)_[0-9a-f]{64}$", record_id):
             raise ModelQueryError("MODEL_FLOW_CRITERION_QUERY_INVALID", "record id is not a canonical FC id")
-        material=self._material(); indices=self._record_index()
-        record=self.loaded.records.get(record_id)
-        if record is None or record.record_kind not in {"flow_operating_criterion_declaration","flow_operating_criterion_withdrawal"}:
-            return FlowOperatingCriterionAssertionResult(material=material,record_id=record_id,lookup_status="not_found",record_index=None,positive_record_index=None,positive_activity=None,body_group_index=None,subject=None)
-        target=record_id if record.record_kind=="flow_operating_criterion_declaration" else record.withdraws
-        d=self.loaded.flow_operating_criterion_declarations[target]; s=self.loaded.flow_operating_criterion_subject_by_id[target]
-        material2, subject=self._flow_operating_criterion_subject(s[0], s[1], s[2], s[3], s[5])
-        activity="current" if not self.loaded.flow_operating_criterion_successor_ids[target] and not self.loaded.flow_operating_criterion_withdrawn_by[target] else "withdrawn" if self.loaded.flow_operating_criterion_withdrawn_by[target] else "superseded"
-        body=self.loaded.flow_operating_criterion_effective_body_by_id[target]
-        gi=next((i for i,g in enumerate(subject.body_groups) if indices[target] in g.declaration_indices),None)
-        return FlowOperatingCriterionAssertionResult(material=material2,record_id=record_id,lookup_status="found",record_index=indices[record_id],positive_record_index=indices[target],positive_activity=activity,body_group_index=gi,subject=subject)
+        try:
+            material=self._material(); indices=self._record_index()
+            record=self.loaded.records.get(record_id)
+            if record is None or record.record_kind not in {"flow_operating_criterion_declaration","flow_operating_criterion_withdrawal"}:
+                return FlowOperatingCriterionAssertionResult(material=material,record_id=record_id,lookup_status="not_found",record_index=None,positive_record_index=None,positive_activity=None,body_group_index=None,subject=None)
+            target=record_id if record.record_kind=="flow_operating_criterion_declaration" else record.withdraws
+            d=self.loaded.flow_operating_criterion_declarations[target]; s=self.loaded.flow_operating_criterion_subject_by_id[target]
+            material2, subject=self._flow_operating_criterion_subject(s[0], s[1], s[2], s[3], s[5])
+            activity="current" if not self.loaded.flow_operating_criterion_successor_ids[target] and not self.loaded.flow_operating_criterion_withdrawn_by[target] else "withdrawn" if self.loaded.flow_operating_criterion_withdrawn_by[target] else "superseded"
+            body=self.loaded.flow_operating_criterion_effective_body_by_id[target]
+            gi=next((i for i,g in enumerate(subject.body_groups) if indices[target] in g.declaration_indices),None)
+            return FlowOperatingCriterionAssertionResult(material=material2,record_id=record_id,lookup_status="found",record_index=indices[record_id],positive_record_index=indices[target],positive_activity=activity,body_group_index=gi,subject=subject)
+        except ValidationError as error:
+            raise ModelQueryError(
+                _result_query_error_code(error),
+                "flow operating criterion assertion result is invalid") from error
 
     # -- VP-001 explicit variable-to-port associations --------------------
 
