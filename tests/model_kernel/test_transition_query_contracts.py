@@ -61,6 +61,7 @@ EXPECTED_METHODS = {
     "flow_measurement_associations_for_flow",
     "flow_measurement_associations_for_variable",
     "flow_measurement_associations_at_port", "flow_measurement_assertion",
+    "flow_operating_criterion", "flow_operating_criterion_assertion",
 }
 
 
