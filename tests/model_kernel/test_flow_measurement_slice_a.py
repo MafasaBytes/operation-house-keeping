@@ -142,7 +142,7 @@ def test_exact_slice_a_contract_and_accepted_slice_b_surface():
         "recorded_at", "authority", "note")
     assert fma.record_id.startswith("fma_")
     assert fmw.record_id.startswith("fmw_")
-    assert len(kernel.__all__) == 227 == len(set(kernel.__all__))
+    assert len(kernel.__all__) == 236 == len(set(kernel.__all__))
     predecessor_digest = hashlib.sha256(json.dumps(
         kernel.__all__[:203], separators=(",", ":")).encode()).hexdigest()
     assert predecessor_digest == \

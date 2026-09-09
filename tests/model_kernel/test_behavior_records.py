@@ -215,7 +215,7 @@ def test_slice_a_records_remain_public_after_slice_b_queries():
         "BehaviorRuleWithdrawal", "BehaviorVariableSemanticLock",
         "ExactNumericEqualityRule",
     }
-    assert len(kernel.__all__) == 227
+    assert len(kernel.__all__) == 236
     assert expected_new <= set(kernel.__all__)
     for forbidden in (
         "BehaviorEvaluationQueries", "BehaviorEvaluationResult",

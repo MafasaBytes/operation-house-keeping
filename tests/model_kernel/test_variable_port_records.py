@@ -153,7 +153,7 @@ def test_model_record_union_revalidates_hostile_nested_context_and_evidence():
 
 
 def test_vp_public_surface_includes_accepted_slice_a_and_b_names_only():
-    assert len(kernel.__all__) == 227
+    assert len(kernel.__all__) == 236
     assert {name for name in kernel.__all__ if "VariablePort" in name} == {
         "VariablePortAssociation", "VariablePortAssociationWithdrawal",
         "VariablePortEndpointStatus", "VariablePortOwnerAlignment",

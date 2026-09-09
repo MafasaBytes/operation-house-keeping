@@ -212,6 +212,17 @@ from backend.model_kernel.flow_measurement_results import (
     FlowMeasurementSupportLineageHealth,
     FlowMeasurementSupportRow,
 )
+from backend.model_kernel.flow_operating_criterion_results import (
+    FlowOperatingCriterionConclusion,
+    FlowOperatingCriterionReason,
+    FlowOperatingCriterionLookupStatus,
+    FlowOperatingCriterionLineageRow,
+    FlowOperatingCriterionSupportRow,
+    FlowOperatingCriterionBodyRow,
+    FlowOperatingCriterionSubjectResult,
+    FlowOperatingCriterionResult,
+    FlowOperatingCriterionAssertionResult,
+)
 from backend.model_kernel.port_results import (
     AssertionActivity,
     CompatibilityEndpointStatus,
@@ -407,4 +418,13 @@ __all__ = [
     "FlowMeasurementAssertionResult",
     "FlowOperatingCriterionDeclaration",
     "FlowOperatingCriterionWithdrawal",
+    "FlowOperatingCriterionConclusion",
+    "FlowOperatingCriterionReason",
+    "FlowOperatingCriterionLookupStatus",
+    "FlowOperatingCriterionLineageRow",
+    "FlowOperatingCriterionSupportRow",
+    "FlowOperatingCriterionBodyRow",
+    "FlowOperatingCriterionSubjectResult",
+    "FlowOperatingCriterionResult",
+    "FlowOperatingCriterionAssertionResult",
 ]

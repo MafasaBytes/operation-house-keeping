@@ -88,7 +88,7 @@ def test_exact_state_query_result_names_fields_and_exports():
         contract = getattr(kernel, name)
         assert tuple(contract.model_fields) == fields
         assert name in kernel.__all__
-    assert len(kernel.__all__) == 227
+    assert len(kernel.__all__) == 236
     assert len(kernel.__all__) == len(set(kernel.__all__))
     start = kernel.__all__.index(SLICE_B_EXPORTS[0])
     assert tuple(kernel.__all__[start:start + len(SLICE_B_EXPORTS)]) == \

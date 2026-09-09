@@ -441,5 +441,10 @@ def test_model_kernel_public_exports_include_accepted_pt_and_vp_slice_a_names():
     assert set(kernel.__all__[:225]) == old | added
     assert len(old | added) == 225
     assert kernel.__all__[225:] == [
-        "FlowOperatingCriterionDeclaration", "FlowOperatingCriterionWithdrawal"]
-    assert len(kernel.__all__) == len(set(kernel.__all__)) == 227
+        "FlowOperatingCriterionDeclaration", "FlowOperatingCriterionWithdrawal",
+        "FlowOperatingCriterionConclusion", "FlowOperatingCriterionReason",
+        "FlowOperatingCriterionLookupStatus", "FlowOperatingCriterionLineageRow",
+        "FlowOperatingCriterionSupportRow", "FlowOperatingCriterionBodyRow",
+        "FlowOperatingCriterionSubjectResult", "FlowOperatingCriterionResult",
+        "FlowOperatingCriterionAssertionResult"]
+    assert len(kernel.__all__) == len(set(kernel.__all__)) == 236

@@ -56,7 +56,7 @@ FLOW_INDEX_NAMES = (
 
 
 def test_slice_b_preserves_foundation_and_adds_exact_flow_query_surface():
-    assert len(kernel.__all__) == 227
+    assert len(kernel.__all__) == 236
     assert {name for name in kernel.__all__[:225] if name.startswith("Flow")} == {
         "FlowKindToken", "FlowDirectionDeclarationPin",
         "FlowRegistration", "FlowDeclaration",

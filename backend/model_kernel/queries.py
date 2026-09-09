@@ -78,6 +78,11 @@ from backend.model_kernel.flow_measurement_results import (
     _reject_scalar_subclasses as _reject_flow_measurement_scalar_subclasses,
     _reverse_payload as _flow_measurement_reverse_payload,
 )
+from backend.model_kernel.flow_operating_criterion_results import (
+    FlowOperatingCriterionResult, FlowOperatingCriterionAssertionResult,
+    FlowOperatingCriterionSubjectResult, FlowOperatingCriterionLineageRow,
+    FlowOperatingCriterionBodyRow, FlowOperatingCriterionSupportRow,
+)
 from backend.model_kernel.port_results import (
     ConnectionRootResult, ConnectionSubjectResult, SharedConnectionsResult,
     EndpointInterfaceResult,
@@ -1328,6 +1333,84 @@ class ModelQueries:
             material=material,
             **_flow_measurement_assertion_payload(
                 material, self.loaded, record_id))
+
+    # -- FC-001 explicit governing criterion ------------------------------
+    def _flow_operating_criterion_subject(self, flow_anchor_id, variable_anchor_id,
+                                          participant_port_anchor_id, context, orientation):
+        material = self._material()
+        indices = self._record_index()
+        subject = (flow_anchor_id, variable_anchor_id, participant_port_anchor_id,
+                   context, "direct_measurement_relevance", orientation)
+        def lineage_rows(root_map, tips_map, withdrawn_map, subject_ids):
+            roots = sorted({root_map[x] for x in subject_ids})
+            out=[]
+            for ri, root in enumerate(roots):
+                ids=tuple(sorted(x for x in subject_ids if root_map[x]==root))
+                tips=tuple(sorted(x for x in tips_map.get(root, ()) if x in ids))
+                ws=tuple(sorted(w for x in ids for w in withdrawn_map.get(x, ())))
+                out.append(FlowOperatingCriterionLineageRow(
+                    root_index=ri, root_record_index=indices[root],
+                    lineage_record_indices=tuple(indices[x] for x in ids),
+                    current_tip_indices=tuple(indices[x] for x in tips),
+                    withdrawal_indices=tuple(indices[x] for x in ws),
+                    lineage_health=("inactive" if not tips else "conflicted" if len(tips)>1 else "healthy")))
+            return tuple(out)
+        fc_ids=tuple(sorted(x for x,s in self.loaded.flow_operating_criterion_subject_by_id.items() if s==subject))
+        fm_ids=tuple(self.loaded.flow_measurement_ids_by_subject.get(subject, ()))
+        fc_roots=lineage_rows(self.loaded.flow_operating_criterion_root_by_id,
+                              self.loaded.flow_operating_criterion_current_tips_by_root,
+                              self.loaded.flow_operating_criterion_withdrawn_by, fc_ids)
+        fm_roots=lineage_rows(self.loaded.flow_measurement_root_by_id,
+                              self.loaded.current_flow_measurement_tips_by_root,
+                              self.loaded.flow_measurement_withdrawn_by, fm_ids)
+        bodies={}
+        for rid in fc_ids:
+            body=self.loaded.flow_operating_criterion_effective_body_by_id[rid]
+            bodies.setdefault(body,[]).append(rid)
+        groups=[]
+        for gi, body in enumerate(sorted(bodies)):
+            ids=tuple(sorted(bodies[body])); current=tuple(x for x in ids if not self.loaded.flow_operating_criterion_successor_ids[x] and not self.loaded.flow_operating_criterion_withdrawn_by[x])
+            witnesses=tuple(sorted({self.loaded.flow_operating_criterion_declarations[x].flow_measurement_association_record_id for x in ids}))
+            matching=tuple(indices[x] for x in fm_ids if self.loaded.flow_measurement_effective_body_by_id[x] == body and not self.loaded.flow_measurement_successor_ids[x] and not self.loaded.flow_measurement_withdrawn_by[x])
+            support=[]
+            if ids:
+                d=self.loaded.flow_operating_criterion_declarations[ids[0]]
+                for kind, rid in (("crg", d.constraint_registration_record_id),("vcn", d.constraint_declaration_record_id)):
+                    if rid in indices: support.append(FlowOperatingCriterionSupportRow(support_kind=kind,record_index=indices[rid],activity="current",lineage_health="healthy",alignment="exact"))
+            groups.append(FlowOperatingCriterionBodyRow(group_index=gi,declaration_indices=tuple(indices[x] for x in ids),current_declaration_indices=tuple(indices[x] for x in current),witness_record_indices=tuple(indices[x] for x in witnesses),matching_fm_current_indices=matching,support_rows=tuple(support),reasons=()))
+        active=[i for i,g in enumerate(groups) if g.current_declaration_indices]
+        if not fc_ids: conclusion="not_declared"; reasons=("fc_not_declared",); gi=None
+        elif not active: conclusion="inactive"; reasons=("fc_inactive",); gi=None
+        elif len(fc_roots) != len({self.loaded.flow_operating_criterion_root_by_id[x] for x in fc_ids if not self.loaded.flow_operating_criterion_successor_ids[x] and not self.loaded.flow_operating_criterion_withdrawn_by[x]}): conclusion="conflicted"; reasons=("fc_same_root_conflict",); gi=None
+        elif len(active)>1: conclusion="disagreed"; reasons=("fc_cross_root_disagreement",); gi=None
+        else: conclusion="applicable"; reasons=(); gi=active[0]
+        result=FlowOperatingCriterionSubjectResult(flow_anchor_id=flow_anchor_id,variable_anchor_id=variable_anchor_id,participant_port_anchor_id=participant_port_anchor_id,context=context,orientation=orientation,conclusion=conclusion,reasons=reasons,roots=fc_roots,fm_roots=fm_roots,body_groups=tuple(groups),governing_body_group_index=gi)
+        return material,result
+
+    def flow_operating_criterion(self, flow_anchor_id: str, variable_anchor_id: str,
+                                 participant_port_anchor_id: str, context, orientation):
+        flow_anchor_id=self._require_flow_anchor_id(flow_anchor_id)
+        variable_anchor_id=self._require_variable_anchor_id(variable_anchor_id)
+        participant_port_anchor_id=self._require_port_anchor_id(participant_port_anchor_id)
+        context=self._require_flow_measurement_context(context)
+        orientation=self._require_flow_measurement_orientation(orientation)
+        material, subject=self._flow_operating_criterion_subject(flow_anchor_id,variable_anchor_id,participant_port_anchor_id,context,orientation)
+        return FlowOperatingCriterionResult(material=material,subject=subject)
+
+    def flow_operating_criterion_assertion(self, record_id: str):
+        if type(record_id) is not str or not re.fullmatch(r"^(?:fcd|fcw)_[0-9a-f]{64}$", record_id):
+            raise ModelQueryError("MODEL_FLOW_CRITERION_QUERY_INVALID", "record id is not a canonical FC id")
+        material=self._material(); indices=self._record_index()
+        record=self.loaded.records.get(record_id)
+        if record is None or record.record_kind not in {"flow_operating_criterion_declaration","flow_operating_criterion_withdrawal"}:
+            return FlowOperatingCriterionAssertionResult(material=material,record_id=record_id,lookup_status="not_found",record_index=None,positive_record_index=None,positive_activity=None,body_group_index=None,subject=None)
+        target=record_id if record.record_kind=="flow_operating_criterion_declaration" else record.withdraws
+        d=self.loaded.flow_operating_criterion_declarations[target]; s=self.loaded.flow_operating_criterion_subject_by_id[target]
+        material2, subject=self._flow_operating_criterion_subject(s[0], s[1], s[2], s[3], s[5])
+        activity="current" if not self.loaded.flow_operating_criterion_successor_ids[target] and not self.loaded.flow_operating_criterion_withdrawn_by[target] else "withdrawn" if self.loaded.flow_operating_criterion_withdrawn_by[target] else "superseded"
+        body=self.loaded.flow_operating_criterion_effective_body_by_id[target]
+        gi=next((i for i,g in enumerate(subject.body_groups) if indices[target] in g.declaration_indices),None)
+        return FlowOperatingCriterionAssertionResult(material=material2,record_id=record_id,lookup_status="found",record_index=indices[record_id],positive_record_index=indices[target],positive_activity=activity,body_group_index=gi,subject=subject)
 
     # -- VP-001 explicit variable-to-port associations --------------------
 

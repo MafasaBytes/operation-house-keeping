@@ -108,7 +108,7 @@ def test_exact_flow_literals_are_public_in_normative_order():
 
 
 def test_exact_flow_result_field_order_and_exports():
-    assert len(kernel.__all__) == 227
+    assert len(kernel.__all__) == 236
     expected = {
         "FlowLookupResult": (
             "material", "flow_anchor_id", "status", "registration_index",

@@ -56,10 +56,10 @@ def test_exact_schema_and_defaults(withdrawal):
 
 
 def test_exact_append_only_exports():
-    assert len(mk.__all__) == len(set(mk.__all__)) == 227
+    assert len(mk.__all__) == len(set(mk.__all__)) == 236
     digest = lambda names: hashlib.sha256(json.dumps(names, separators=(",", ":")).encode()).hexdigest()
     assert digest(mk.__all__[:225]) == "097fe647d38bfd0947d1cac94583a1fd50bda5c15b5386ac3137c781097e414a"
-    assert digest(mk.__all__) == "756698e83e44948ed24646d2808b9cfeb1f0d8c6f7d7650b2d61c455851afefd"
+    assert digest(mk.__all__) == "77d0fc94f21132270c3653d290cf625c322748c7249cff55749af83881a90252"
 
 
 @pytest.mark.parametrize("withdrawal", [False, True])

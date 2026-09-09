@@ -90,7 +90,7 @@ def test_slice_b_public_query_surface_adds_exactly_four_transition_queries():
 
 
 def test_slice_b_kernel_exports_exact_transition_contract_and_result_surface():
-    assert len(kernel.__all__) == 227
+    assert len(kernel.__all__) == 236
     assert {name for name in kernel.__all__
             if name.startswith("Transition")} == {
         "TransitionRegistration", "TransitionStateDeclarationPin",
