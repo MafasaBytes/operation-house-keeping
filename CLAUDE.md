@@ -101,17 +101,19 @@ There is no Slice C or demonstration. The authoritative model retains zero
 FMA/FMW records. The [FA feasibility owner decision](docs/superpowers/reports/2026-09-09-fa001-feasibility-owner-decision.md)
 accepts the proposal and challenger audit because they correctly reject
 baseline-only FA implementation. FA-001 is deferred, not completed or
-implemented. FC-001 — Explicit Flow Operating Criterion Declaration — has an
-owner-approved corrected final design; only Slice A is authorized. See
+implemented. FC-001 — Explicit Flow Operating Criterion Declaration — is
+complete, owner accepted, adversarially hardened, and dual-clean-checkout
+verified at exact tested implementation `9a993bdc7a9a4f2e2fa665ea2282ebefd59a6082`. See
 [ADR-0022](docs/adr/0022-explicit-flow-operating-criterion.md) and the
 [design approval](docs/superpowers/reports/2026-09-09-fc001-final-design-owner-approval.md).
-Slice A admits valid retained historical support, rejects stale content-derived
-IDs and invalid structural closure, and adds no applicability/currentness
-conclusions. Slice B remains unstarted and unauthorized. After the separately
-accepted FC direct-join proof, cancel FA if FC, existing CN and evidence
-disclosures answer the approved question. Reconsideration requires a new
-owner-approved proposal demonstrating an integrity attack that explicit checks
-over existing public results cannot prevent; API convenience is insufficient.
+FC establishes evidence-bearing designation and applicability of one operating
+criterion for an exact FM effective body; it does not evaluate the criterion or
+establish physical flow, occurrence, causality, safety, or operating health.
+The direct public-result proof rejects substitution of satisfied ungoverned B
+for violated governing A, and its satisfied-A twin passes. FA-001 is cancelled
+at this checkpoint. Reconsideration requires a new owner-approved proposal
+demonstrating a concrete integrity attack that existing public-result validation
+cannot prevent; convenience or aggregation preference is insufficient.
 Optional accountable flow occurrence/history still requires explicit
 time-window, continuity, and authenticity contracts. Configuration identity remains an alternative priority if
 the owner changes product focus. Causality, diagnosis, impact analysis, goals,

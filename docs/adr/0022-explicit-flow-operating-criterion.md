@@ -2,7 +2,9 @@
 
 Date: 2026-09-09
 
-Status: final design owner approved; Slice A only authorized
+Status: complete; owner accepted; adversarially hardened; dual-clean-checkout verified
+
+Exact tested implementation: `9a993bdc7a9a4f2e2fa665ea2282ebefd59a6082`.
 
 Authoritative [corrected synthesis](../superpowers/specs/2026-09-09-fc001-explicit-flow-operating-criterion-design.md)
 SHA-256 `7aa5007058c1733720fc624839c19efd98258c800c67461d1afc5ade674a3453`.

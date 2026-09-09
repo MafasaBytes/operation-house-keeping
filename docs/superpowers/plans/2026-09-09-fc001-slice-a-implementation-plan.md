@@ -1,5 +1,11 @@
 # FC-001 Slice A Implementation Plan
 
+**Status:** FC-001 is complete and owner accepted at exact tested implementation
+`9a993bdc7a9a4f2e2fa665ea2282ebefd59a6082`; this plan remains the historical
+Slice A execution record. FA-001 is cancelled under the accepted direct-join
+proof and may be reconsidered only by a new owner-approved proposal
+demonstrating an integrity attack existing public-result validation cannot prevent.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Persist an explicit authority-designated governing criterion for one exact FM meaning, preserving historical support without evaluating applicability or a sample.

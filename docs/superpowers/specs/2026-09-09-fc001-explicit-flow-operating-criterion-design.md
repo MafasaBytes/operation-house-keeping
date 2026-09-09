@@ -2,7 +2,7 @@
 
 ## 1. Corrected final synthesis and authorization boundary
 
-This synthesis freezes the implementation contract for the owner's settled FC-001 semantics. It incorporates the frozen lead proposal, its challenger audit, all fixed owner decisions and correction C1. It is **design-only**: neither this document nor either proposed implementation slice authorizes a runtime change, identity, model append, branch, commit or ADR. Each slice requires separate owner authorization and acceptance.
+This synthesis records the implementation contract for the owner's settled FC-001 semantics. FC-001 is complete and owner accepted at exact tested implementation `9a993bdc7a9a4f2e2fa665ea2282ebefd59a6082`; this remains the normative design record. It incorporates the frozen lead proposal, its challenger audit, all fixed owner decisions and correction C1.
 
 FC records an authority's designation of one exact existing variable-constraint edition for one exact flow-measurement effective body. It reports historical designation and selected-model present applicability. It never evaluates a sample or records satisfaction, violation, physical state/activity/occurrence, continuity, conservation, causality, correctness, safety, diagnosis, recommendation or permission to act.
 
