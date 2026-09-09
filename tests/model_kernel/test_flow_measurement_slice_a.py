@@ -124,7 +124,7 @@ def snapshot(store):
             for path in sorted(store.records_dir.iterdir())}
 
 
-def test_exact_contract_fields_exports_builder_and_no_slice_b_surface():
+def test_exact_slice_a_contract_and_accepted_slice_b_surface():
     records, support = foundation()
     fma = association(support)
     fmw = withdrawal(fma)
@@ -142,18 +142,36 @@ def test_exact_contract_fields_exports_builder_and_no_slice_b_surface():
         "recorded_at", "authority", "note")
     assert fma.record_id.startswith("fma_")
     assert fmw.record_id.startswith("fmw_")
-    assert len(kernel.__all__) == 205 == len(set(kernel.__all__))
+    assert len(kernel.__all__) == 225 == len(set(kernel.__all__))
     predecessor_digest = hashlib.sha256(json.dumps(
-        kernel.__all__[:-2], separators=(",", ":")).encode()).hexdigest()
+        kernel.__all__[:203], separators=(",", ":")).encode()).hexdigest()
     assert predecessor_digest == \
         "7821c7582f1332addca8fd467004c477262ea4e679c33f6bbe0a22831db83ce1"
-    assert kernel.__all__[-2:] == [
+    assert kernel.__all__[203:205] == [
         "FlowMeasurementAssociation", "FlowMeasurementAssociationWithdrawal"]
-    assert not any(name.startswith("FlowMeasurement") for name in
-                   kernel.__all__ if name not in {
-                       "FlowMeasurementAssociation",
-                       "FlowMeasurementAssociationWithdrawal"})
-    assert not any(hasattr(kernel.ModelQueries, name) for name in (
+    assert kernel.__all__[205:] == [
+        "FlowMeasurementEndpointRegistration",
+        "FlowMeasurementReverseRegistration",
+        "FlowMeasurementDeclarationPresence",
+        "FlowMeasurementDeclarationConclusion",
+        "FlowMeasurementSupportKind",
+        "FlowMeasurementSupportActivity",
+        "FlowMeasurementSupportLineageHealth",
+        "FlowMeasurementSupportAlignment",
+        "FlowMeasurementOrientation",
+        "FlowMeasurementAgreementFinding",
+        "FlowMeasurementAssertionLookupStatus",
+        "FlowMeasurementSupportRow",
+        "FlowMeasurementEffectiveBodyGroupRow",
+        "FlowMeasurementRootRow",
+        "FlowMeasurementEntryRow",
+        "FlowMeasurementAssociationResult",
+        "FlowMeasurementAssociationsForFlowResult",
+        "FlowMeasurementAssociationsForVariableResult",
+        "FlowMeasurementAssociationsAtPortResult",
+        "FlowMeasurementAssertionResult",
+    ]
+    assert all(hasattr(kernel.ModelQueries, name) for name in (
         "flow_measurement_association",
         "flow_measurement_associations_for_flow",
         "flow_measurement_associations_for_variable",
