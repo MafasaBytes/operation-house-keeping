@@ -477,7 +477,7 @@ class TestKernelQueries:
         # Accepted VP/BH surface plus ST-001 Slice A records and Slice B queries.
         import backend.model_kernel as kernel
 
-        assert len(kernel.__all__) == 205
+        assert len(kernel.__all__) == 225
         for name in ("VariableRegistration", "VariableRegistrationSummary",
                      "VariableResult", "EntityVariablesResult",
                      "StructuralSourceLocatorEvidence"):

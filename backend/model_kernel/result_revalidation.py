@@ -18,17 +18,26 @@ def inspect_supplied_graph(value) -> None:
 
     def field(container, name, missing):
         if isinstance(container, BaseModel):
-            return vars(container).get(name, missing)
+            stored = vars(container)
+            if type(stored) is not dict:
+                raise ValueError(
+                    "pydantic result storage must be an exact dictionary")
+            return dict.get(stored, name, missing)
+        if type(container) is dict:
+            return dict.get(container, name, missing)
         if isinstance(container, Mapping):
-            return container.get(name, missing)
+            raise ValueError("result mappings must be exact dictionaries")
         return missing
 
     def children(item, outer_material):
         if isinstance(item, BaseModel):
             fields = type(item).model_fields
             stored = vars(item)
+            if type(stored) is not dict:
+                raise ValueError(
+                    "pydantic result storage must be an exact dictionary")
             extras = getattr(item, "__pydantic_extra__", None)
-            if set(stored).difference(fields):
+            if set(dict.keys(stored)).difference(fields):
                 raise ValueError(
                     "pydantic result instance contains extra fields")
             if (extras is not None
@@ -55,9 +64,12 @@ def inspect_supplied_graph(value) -> None:
                         or bound_material is not outer_material):
                     raise ValueError(
                         "nested result is bound to another material snapshot")
-            return tuple(stored[name] for name in fields if name in stored)
+            return tuple(dict.__getitem__(stored, name)
+                         for name in fields if name in stored)
+        if type(item) is dict:
+            return tuple(dict.keys(item)) + tuple(dict.values(item))
         if isinstance(item, Mapping):
-            return tuple(item.keys()) + tuple(item.values())
+            raise ValueError("result mappings must be exact dictionaries")
         if isinstance(item, (tuple, list, set, frozenset)):
             return tuple(item)
         return None
@@ -75,8 +87,8 @@ def inspect_supplied_graph(value) -> None:
     visited = 0
     while stack:
         exiting, item, depth = stack.pop()
-        nested = children(item, material)
-        if nested is None:
+        if not (isinstance(item, (BaseModel, Mapping))
+                or isinstance(item, (tuple, list, set, frozenset))):
             continue
         identity = id(item)
         if exiting:
@@ -92,6 +104,9 @@ def inspect_supplied_graph(value) -> None:
         visited += 1
         if visited > _MAX_RESULT_GRAPH_NODES:
             raise ValueError("result object graph exceeds maximum size")
+        nested = children(item, material)
+        if nested is None:  # pragma: no cover - guarded above
+            continue
         active.add(identity)
         stack.append((True, item, depth))
         stack.extend((False, child, depth + 1)

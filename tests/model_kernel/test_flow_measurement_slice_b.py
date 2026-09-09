@@ -8,11 +8,13 @@ from unittest.mock import patch
 import backend.model_kernel as kernel
 import pytest
 from pydantic import ValidationError
+from backend.model_kernel.canonical import _flow_measurement_effective_body_bytes
 from backend.model_kernel.store import validate_record_collection
 from tests.model_kernel.fl001_slice_a_helpers import (
-    AS_DESIGNED, FLOW_A, PORT_A, PORT_B, VIEW_INDEPENDENT, flow_withdrawal,
+    AS_DESIGNED, FLOW_A, FLOW_B, PORT_A, PORT_B, VIEW_INDEPENDENT,
+    flow_declaration, flow_kind, flow_registration, flow_withdrawal,
 )
-from tests.model_kernel.builders import VAR_A
+from tests.model_kernel.builders import VAR_A, VAR_B, variable_registration
 from tests.model_kernel.test_flow_measurement_slice_a import (
     CLAIM, T0, association, foundation, semantic, variable_port,
     variable_port_withdrawal, withdrawal,
@@ -138,6 +140,13 @@ def test_exact_public_additions_literals_fields_and_signatures():
         assert parameters["context"].kind is inspect.Parameter.KEYWORD_ONLY
     assert tuple(inspect.signature(methods.flow_measurement_assertion).parameters) == (
         "self", "record_id")
+    for forbidden in (
+        "flow_measurement_associations", "query_flow_measurement",
+        "build_flow_measurement_association", "FlowMeasurementQueries",
+        "FlowMeasurementStore", "FlowMeasurementFacade",
+    ):
+        assert forbidden not in kernel.__all__
+        assert not hasattr(kernel, forbidden)
 
 
 def test_accepted_36_record_revision_returns_exact_structured_absence():
@@ -179,6 +188,10 @@ def test_accepted_36_record_revision_returns_exact_structured_absence():
     assert missing.successor_indices == missing.withdrawal_indices == ()
     assert missing.participant_role is missing.orientation is None
     assert missing.support_rows == ()
+    missing_withdrawal = queries.flow_measurement_assertion("fmw_" + "0" * 64)
+    assert missing_withdrawal.lookup_status == "not_found"
+    assert missing_withdrawal.record_index is None
+    assert missing_withdrawal.support_rows == ()
 
 
 def _queries(*claims, extra=()):
@@ -269,6 +282,11 @@ def test_one_healthy_root_six_support_rows_reverse_and_assertion_agree():
     assert assertion_result.participant_role == "source"
     assert assertion_result.orientation == "aligned"
     assert assertion_result.support_rows == group.support_rows
+    result_index = loaded.revision.record_ids.index(claim.record_id)
+    assert assertion_result.record_index == result_index
+    assert assertion_result.root_record_index == result_index
+    assert assertion_result.successor_indices == ()
+    assert assertion_result.withdrawal_indices == ()
 
     for result in (exact, *reverse_results, assertion_result):
         rebuilt = type(result).model_validate(result.model_dump(mode="python"))
@@ -297,6 +315,7 @@ def test_withdrawal_assertion_has_exact_null_and_empty_shape():
     result = queries.flow_measurement_assertion(event.record_id)
     assert result.lookup_status == "found"
     assert result.record_index is not None
+    assert result.material.records[result.record_index].withdraws == claim.record_id
     assert result.assertion_activity is None
     assert result.containing_root_health is None
     assert result.containing_subject_conclusion is None
@@ -378,6 +397,90 @@ def test_same_root_conflict_retains_all_groups_without_selecting_a_body():
             }
 
 
+def test_same_body_conflicts_and_mixed_root_precedence_are_exact():
+    records, support = foundation()
+    root = association(support, note="conflict root")
+    left = association(support, supersedes=(root.record_id,), note="left")
+    right = association(support, supersedes=(root.record_id,), note="right")
+    loaded = validate_record_collection(
+        "test-model", {record.record_id: record for record in (
+            *records, root, left, right)})
+    result = kernel.ModelQueries(loaded).flow_measurement_association(
+        FLOW_A, VAR_A, PORT_A, AS_DESIGNED, "aligned")
+    assert result.agreement_findings == ("same_root_conflict",)
+    assert result.declaration_conclusion == "conflicted"
+    assert len(result.roots) == len(result.effective_body_groups) == 1
+    assert result.roots[0].effective_body_group_indices == (0,)
+
+    healthy = association(support, note="healthy root")
+    loaded = validate_record_collection(
+        "test-model", {record.record_id: record for record in (
+            *records, healthy, root, left, right)})
+    result = kernel.ModelQueries(loaded).flow_measurement_association(
+        FLOW_A, VAR_A, PORT_A, AS_DESIGNED, "aligned")
+    assert result.agreement_findings == (
+        "one_healthy_root", "same_root_conflict")
+    assert result.declaration_conclusion == "conflicted"
+    reverse = kernel.ModelQueries(loaded).flow_measurement_associations_for_flow(
+        FLOW_A, context=AS_DESIGNED)
+    assert len(reverse.entries) == 1
+    assert len(reverse.entries[0].roots) == 2
+
+
+def test_equal_and_unequal_conflicted_root_body_sets_and_ordering():
+    records, support = foundation()
+    first_root = association(support, note="first root")
+    first_tips = (
+        association(support, supersedes=(first_root.record_id,), note="first left"),
+        association(support, supersedes=(first_root.record_id,), note="first right"),
+    )
+    second_root = association(support, note="second root")
+    second_tips = (
+        association(support, supersedes=(second_root.record_id,), note="second left"),
+        association(support, supersedes=(second_root.record_id,), note="second right"),
+    )
+    loaded = validate_record_collection(
+        "test-model", {record.record_id: record for record in (
+            *records, first_root, *first_tips, second_root, *second_tips)})
+    result = kernel.ModelQueries(loaded).flow_measurement_association(
+        FLOW_A, VAR_A, PORT_A, AS_DESIGNED, "aligned")
+    assert result.agreement_findings == ("same_root_conflict",)
+    assert len(result.roots) == 2
+    assert len(result.effective_body_groups) == 1
+
+    alternate_vsm = semantic(note="alternate exact body support")
+    alternate_support = (*support[:-1], alternate_vsm)
+    second_root = association(alternate_support, note="alternate root")
+    second_tips = (
+        association(alternate_support, supersedes=(second_root.record_id,),
+                    note="alternate left"),
+        association(alternate_support, supersedes=(second_root.record_id,),
+                    note="alternate right"),
+    )
+    loaded = validate_record_collection(
+        "test-model", {record.record_id: record for record in (
+            *records, alternate_vsm, first_root, *first_tips,
+            second_root, *second_tips)})
+    result = kernel.ModelQueries(loaded).flow_measurement_association(
+        FLOW_A, VAR_A, PORT_A, AS_DESIGNED, "aligned")
+    assert result.agreement_findings == (
+        "same_root_conflict", "cross_root_effective_body_disagreement")
+    root_ids = tuple(result.material.revision.record_ids[row.root_record_index]
+                     for row in result.roots)
+    assert root_ids == tuple(sorted(root_ids))
+    group_bodies = tuple(_flow_measurement_effective_body_bytes(
+        result.material.records[group.representative_current_tip_index])
+        for group in result.effective_body_groups)
+    assert group_bodies == tuple(sorted(group_bodies))
+    for group in result.effective_body_groups:
+        assert group.representative_current_tip_index == min(
+            group.current_tip_indices)
+    for root_row in result.roots:
+        for group_index in root_row.effective_body_group_indices:
+            assert root_row.root_index in result.effective_body_groups[
+                group_index].participating_root_indices
+
+
 def test_support_rows_disclose_historical_lower_lifecycle_without_retargeting():
     records, support = foundation()
     pinned_fld = support[3]
@@ -439,6 +542,8 @@ def test_support_rows_disclose_historical_lower_lifecycle_without_retargeting():
     (FLOW_A, "variable", PORT_A, "variable_not_registered"),
     (FLOW_A, VAR_A, "port", "port_not_registered"),
     ("flow", "variable", PORT_A, "multiple_not_registered"),
+    ("flow", VAR_A, "port", "multiple_not_registered"),
+    (FLOW_A, "variable", "port", "multiple_not_registered"),
     ("flow", "variable", "port", "multiple_not_registered"),
 ])
 def test_endpoint_registration_axes_are_exact(flow, variable, port, expected):
@@ -474,6 +579,11 @@ def test_registered_nonparticipant_and_cross_context_do_not_create_relevance():
         FLOW_A, VAR_A, PORT_B, AS_DESIGNED, "aligned")
     assert nonparticipant.endpoint_registration == "all_registered"
     assert nonparticipant.declaration_presence == "not_declared"
+    assert nonparticipant.declaration_conclusion == "not_evaluated"
+    assert nonparticipant.participant_role is None
+    assert nonparticipant.agreement_findings == nonparticipant.roots == ()
+    assert nonparticipant.effective_body_groups == \
+        nonparticipant.current_assertion_indices == ()
     for result in (
         queries.flow_measurement_association(
             FLOW_A, VAR_A, PORT_A, AS_DESIGNED, "aligned"),
@@ -486,6 +596,18 @@ def test_registered_nonparticipant_and_cross_context_do_not_create_relevance():
     ):
         assert result.declaration_presence == "not_declared"
         assert getattr(result, "entries", ()) == ()
+
+    for reverse in (
+        queries.flow_measurement_associations_for_flow(
+            FLOW_A, context=AS_DESIGNED),
+        queries.flow_measurement_associations_for_variable(
+            VAR_A, context=AS_DESIGNED),
+        queries.flow_measurement_associations_at_port(
+            PORT_A, context=AS_DESIGNED),
+    ):
+        assert reverse.registration_status == "registered"
+        assert reverse.declaration_presence == "not_declared"
+        assert reverse.entries == ()
 
 
 def test_orientation_subjects_remain_distinct_and_reverse_order_is_normative():
@@ -516,6 +638,88 @@ def test_orientation_subjects_remain_distinct_and_reverse_order_is_normative():
         assert tuple(entry.entry_index for entry in result.entries) == (0, 1, 2, 3)
 
 
+def test_multi_identifier_reverse_axes_sort_semantically_and_share_payloads():
+    records, support = foundation()
+    ports = tuple(record for record in records
+                  if record.record_kind == "port_registration")
+    connection = next(record for record in records
+                      if record.record_kind == "port_connection_assertion")
+    interfaces = tuple(record for record in records
+                       if record.record_kind == "port_interface_declaration")
+    source_interfaces = tuple(
+        record for record in interfaces if record.declaration.value == "output")
+    sink_interfaces = tuple(
+        record for record in interfaces if record.declaration.value == "input")
+
+    alternate_vrg = variable_registration(VAR_B)
+    alternate_vpa = variable_port(variable=VAR_B)
+    alternate_vsm = semantic(variable=VAR_B)
+    alternate_variable_claim = association(
+        (support[0], alternate_vrg, support[2], support[3],
+         alternate_vpa, alternate_vsm),
+        variable_anchor_id=VAR_B,
+    )
+    alternate_frg = flow_registration(
+        flow_anchor_id=FLOW_B, port_records=ports,
+        kind=flow_kind(code="secondary_transfer"))
+    alternate_fld = flow_declaration(
+        alternate_frg, port_records=ports, pcn=connection,
+        source_pifs=source_interfaces, sink_pifs=sink_interfaces)
+    alternate_flow_claim = association(
+        (alternate_frg, support[1], support[2], alternate_fld,
+         support[4], support[5]),
+        flow_anchor_id=FLOW_B,
+    )
+    base_claim = association(support)
+    members = (
+        *records, alternate_vrg, alternate_vpa, alternate_vsm,
+        alternate_frg, alternate_fld, alternate_variable_claim,
+        alternate_flow_claim, base_claim,
+    )
+    loaded = validate_record_collection(
+        "test-model", {record.record_id: record
+                       for record in reversed(members)})
+    queries = kernel.ModelQueries(loaded)
+    reverse_results = (
+        queries.flow_measurement_associations_for_flow(
+            FLOW_A, context=AS_DESIGNED),
+        queries.flow_measurement_associations_for_variable(
+            VAR_A, context=AS_DESIGNED),
+        queries.flow_measurement_associations_at_port(
+            PORT_A, context=AS_DESIGNED),
+    )
+    expected_subjects = (
+        ((FLOW_A, VAR_A, PORT_A, "aligned"),
+         (FLOW_A, VAR_B, PORT_A, "aligned")),
+        ((FLOW_A, VAR_A, PORT_A, "aligned"),
+         (FLOW_B, VAR_A, PORT_A, "aligned")),
+        ((FLOW_A, VAR_A, PORT_A, "aligned"),
+         (FLOW_A, VAR_B, PORT_A, "aligned"),
+         (FLOW_B, VAR_A, PORT_A, "aligned")),
+    )
+    for reverse, expected in zip(reverse_results, expected_subjects):
+        actual = tuple((
+            entry.flow_anchor_id, entry.variable_anchor_id,
+            entry.participant_port_anchor_id, entry.orientation,
+        ) for entry in reverse.entries)
+        assert actual == expected
+        assert tuple(entry.entry_index for entry in reverse.entries) == \
+            tuple(range(len(expected)))
+        for entry in reverse.entries:
+            exact = queries.flow_measurement_association(
+                entry.flow_anchor_id, entry.variable_anchor_id,
+                entry.participant_port_anchor_id, AS_DESIGNED,
+                entry.orientation)
+            assert entry.model_dump(mode="json", exclude={
+                "entry_index", "flow_anchor_id", "variable_anchor_id",
+                "participant_port_anchor_id", "orientation",
+            }) == exact.model_dump(mode="json", exclude={
+                "material", "flow_anchor_id", "variable_anchor_id",
+                "participant_port_anchor_id", "context", "orientation",
+                "endpoint_registration", "declaration_presence",
+            })
+
+
 def test_authoritative_result_reconstruction_rejects_hostile_values():
     records, support = foundation()
     claim = association(support)
@@ -539,6 +743,10 @@ def test_authoritative_result_reconstruction_rejects_hostile_values():
     del missing["agreement_findings"]
     with pytest.raises(ValidationError):
         contract.model_validate(missing)
+    for unordered in (set(result.agreement_findings),
+                      frozenset(result.agreement_findings)):
+        with pytest.raises(ValidationError):
+            contract.model_validate({**valid, "agreement_findings": unordered})
 
     forged_group = dict(valid)
     forged_group["effective_body_groups"] = tuple(
@@ -572,21 +780,47 @@ def test_result_revalidation_and_queries_perform_no_io_or_ambient_discovery():
     loaded = validate_record_collection(
         "test-model", {record.record_id: record for record in (*records, claim)})
     queries = kernel.ModelQueries(loaded)
-    baseline = queries.flow_measurement_association(
-        FLOW_A, VAR_A, PORT_A, AS_DESIGNED, "aligned")
-    payload = baseline.model_dump(mode="python")
+    baselines = (
+        queries.flow_measurement_association(
+            FLOW_A, VAR_A, PORT_A, AS_DESIGNED, "aligned"),
+        queries.flow_measurement_associations_for_flow(
+            FLOW_A, context=AS_DESIGNED),
+        queries.flow_measurement_associations_for_variable(
+            VAR_A, context=AS_DESIGNED),
+        queries.flow_measurement_associations_at_port(
+            PORT_A, context=AS_DESIGNED),
+        queries.flow_measurement_assertion(claim.record_id),
+    )
+    payloads = tuple(result.model_dump(mode="python") for result in baselines)
 
     def forbidden(*args, **kwargs):
         raise AssertionError("ambient operation attempted")
 
-    with patch("pathlib.Path.open", forbidden), \
+    with patch("builtins.open", forbidden), \
+            patch("pathlib.Path.open", forbidden), \
             patch("pathlib.Path.read_bytes", forbidden), \
             patch("pathlib.Path.read_text", forbidden), \
+            patch("pathlib.Path.write_bytes", forbidden), \
+            patch("pathlib.Path.write_text", forbidden), \
+            patch("pathlib.Path.mkdir", forbidden), \
+            patch("pathlib.Path.touch", forbidden), \
             patch("socket.socket", forbidden), \
+            patch("socket.create_connection", forbidden), \
             patch("sqlite3.connect", forbidden), \
             patch("os.getenv", forbidden), \
             patch("time.time", forbidden):
-        rebuilt = kernel.FlowMeasurementAssociationResult.model_validate(payload)
-        queried = queries.flow_measurement_assertion(claim.record_id)
-    assert rebuilt == baseline
-    assert queried.lookup_status == "found"
+        rebuilt = tuple(type(result).model_validate(payload)
+                        for result, payload in zip(baselines, payloads))
+        queried = (
+            queries.flow_measurement_association(
+                FLOW_A, VAR_A, PORT_A, AS_DESIGNED, "aligned"),
+            queries.flow_measurement_associations_for_flow(
+                FLOW_A, context=AS_DESIGNED),
+            queries.flow_measurement_associations_for_variable(
+                VAR_A, context=AS_DESIGNED),
+            queries.flow_measurement_associations_at_port(
+                PORT_A, context=AS_DESIGNED),
+            queries.flow_measurement_assertion(claim.record_id),
+        )
+    assert rebuilt == baselines
+    assert queried == baselines

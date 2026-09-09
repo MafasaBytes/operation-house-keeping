@@ -52,6 +52,10 @@ def test_exactly_four_flow_methods_and_signatures_are_public():
         "variable_port_assertion", "variable_port_association",
         "variable_semantics", "variable_value_specification",
         "variables_associated_with_port", "variables_of",
+        "flow_measurement_association",
+        "flow_measurement_associations_for_flow",
+        "flow_measurement_associations_for_variable",
+        "flow_measurement_associations_at_port", "flow_measurement_assertion",
     }
     expected = {
         "flow": (("self", "flow_anchor_id"), kernel.FlowLookupResult),
@@ -104,7 +108,7 @@ def test_exact_flow_literals_are_public_in_normative_order():
 
 
 def test_exact_flow_result_field_order_and_exports():
-    assert len(kernel.__all__) == 205
+    assert len(kernel.__all__) == 225
     expected = {
         "FlowLookupResult": (
             "material", "flow_anchor_id", "status", "registration_index",

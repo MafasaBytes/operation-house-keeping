@@ -7,6 +7,7 @@ or safety.
 """
 
 from collections.abc import Mapping
+from datetime import datetime, timedelta, timezone
 from typing import Annotated, Literal
 
 from pydantic import (
@@ -14,6 +15,8 @@ from pydantic import (
     model_validator,
 )
 
+import backend.model_kernel.contracts as _model_contracts
+import backend.system_identity as _identity_contracts
 from backend.model_kernel.contracts import AssertionContext
 from backend.model_kernel.flow_results import FlowPortRole
 from backend.model_kernel.port_results import (
@@ -72,6 +75,18 @@ _ORIENTATION_RANK = {
 _SUPPORT_KINDS = ("frg", "vrg", "prg", "fld", "vpa", "vsm")
 
 
+def _module_model_types(module) -> tuple[type[BaseModel], ...]:
+    return tuple(value for value in vars(module).values()
+                 if isinstance(value, type) and issubclass(value, BaseModel))
+
+
+_TRUSTED_MODEL_TYPES = (
+    *_module_model_types(_model_contracts),
+    *_module_model_types(_identity_contracts),
+    ModelQueryMaterial,
+)
+
+
 def _strictly_increasing(values, label: str, *, allow_empty: bool = True) -> None:
     if not allow_empty and not values:
         raise ValueError(f"{label} must not be empty")
@@ -80,11 +95,20 @@ def _strictly_increasing(values, label: str, *, allow_empty: bool = True) -> Non
 
 
 def _reject_scalar_subclasses(value) -> None:
-    """Reject coercive caller scalars before Pydantic or derived access."""
+    """Reject hostile containers/models/scalars before caller callbacks."""
     stack = [value]
     seen = set()
     while stack:
         item = stack.pop()
+        if isinstance(item, datetime) and type(item) is not datetime:
+            raise ValueError("result datetimes must be exact datetime values")
+        if type(item) is datetime:
+            zone = item.tzinfo
+            if (type(zone) is not timezone
+                    or type(timezone.utcoffset(zone, None)) is not timedelta
+                    or type(timezone.tzname(zone, None)) is not str):
+                raise ValueError(
+                    "result datetime timezones must contain exact built-ins")
         if isinstance(item, str) and type(item) is not str:
             raise ValueError("result strings must be exact built-in strings")
         if isinstance(item, bool) and type(item) is not bool:
@@ -95,17 +119,56 @@ def _reject_scalar_subclasses(value) -> None:
         if isinstance(item, float) and type(item) is not float:
             raise ValueError("result floats must be exact built-in floats")
         if isinstance(item, BaseModel):
-            nested = tuple(vars(item).values())
+            item_type = type(item)
+            if not any(item_type is trusted
+                       for trusted in _TRUSTED_MODEL_TYPES):
+                raise ValueError("result contains a caller-defined model")
+            identity = id(item)
+            if identity in seen:
+                continue
+            seen.add(identity)
+            stored = vars(item)
+            if type(stored) is not dict:
+                raise ValueError(
+                    "result model storage must be an exact dictionary")
+            try:
+                fields_set = object.__getattribute__(
+                    item, "__pydantic_fields_set__")
+            except AttributeError as exc:
+                raise ValueError(
+                    "result model fields-set metadata is missing") from exc
+            if (type(fields_set) is not set
+                    or any(type(name) is not str for name in fields_set)
+                    or fields_set != set(item_type.model_fields)):
+                raise ValueError(
+                    "result model fields-set metadata is invalid")
+            nested = tuple(dict.values(stored))
+        elif type(item) is dict:
+            identity = id(item)
+            if identity in seen:
+                continue
+            seen.add(identity)
+            nested = tuple(dict.keys(item)) + tuple(dict.values(item))
         elif isinstance(item, Mapping):
-            nested = tuple(item.keys()) + tuple(item.values())
-        elif isinstance(item, (tuple, list, set, frozenset)):
+            raise ValueError("result mappings must be exact built-in dictionaries")
+        elif type(item) is tuple:
+            identity = id(item)
+            if identity in seen:
+                continue
+            seen.add(identity)
+            nested = item
+        elif type(item) is list:
+            identity = id(item)
+            if identity in seen:
+                continue
+            seen.add(identity)
             nested = tuple(item)
+        elif type(item) in {set, frozenset}:
+            raise ValueError("unordered result containers are not admitted")
+        elif isinstance(item, (tuple, list, set, frozenset)):
+            raise ValueError("result containers must use exact built-in types")
         else:
             continue
-        identity = id(item)
-        if identity in seen:
-            continue
-        seen.add(identity)
         stack.extend(nested)
 
 
@@ -116,8 +179,8 @@ class _FlowMeasurementResult(BaseModel):
     @model_validator(mode="wrap")
     @classmethod
     def _reject_hostile_supplied_graph(cls, value, handler):
-        _inspect_supplied_graph(value)
         _reject_scalar_subclasses(value)
+        _inspect_supplied_graph(value)
         return handler(value)
 
 
@@ -155,6 +218,11 @@ class FlowMeasurementSupportRow(_FlowMeasurementResult):
                 or self.containing_lineage_health not in {
                     "healthy", "conflicted"}):
             raise ValueError("semantic support state is unreachable")
+        if (self.activity == "current"
+                and self.containing_lineage_health == "healthy"
+                and self.current_alignment != "exact"):
+            raise ValueError(
+                "a sole current measured-actual support must be aligned")
         return self
 
 
@@ -829,3 +897,16 @@ class FlowMeasurementAssertionResult(_FlowMeasurementResult):
         if self.model_dump(mode="python", exclude={"material"}) != expected:
             raise ValueError("flow-measurement assertion disclosure is forged")
         return self
+
+
+_TRUSTED_MODEL_TYPES += (
+    FlowMeasurementSupportRow,
+    FlowMeasurementEffectiveBodyGroupRow,
+    FlowMeasurementRootRow,
+    FlowMeasurementEntryRow,
+    FlowMeasurementAssociationResult,
+    FlowMeasurementAssociationsForFlowResult,
+    FlowMeasurementAssociationsForVariableResult,
+    FlowMeasurementAssociationsAtPortResult,
+    FlowMeasurementAssertionResult,
+)

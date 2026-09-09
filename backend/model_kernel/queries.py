@@ -249,7 +249,7 @@ class ModelQueries:
                 or not _FLOW_MEASUREMENT_RECORD_ID.fullmatch(record_id)):
             raise ModelQueryError(
                 "MODEL_RECORD_ID_INVALID",
-                f"{record_id!r} is not an FM-001 record id")
+                "record id is not a canonical FM-001 record id")
         return record_id
 
     def _require_flow_measurement_orientation(self, orientation: str) -> str:
@@ -257,7 +257,7 @@ class ModelQueries:
                 or orientation not in _FLOW_MEASUREMENT_ORIENTATIONS):
             raise ModelQueryError(
                 "MODEL_ORIENTATION_INVALID",
-                f"{orientation!r} is not an FM-001 orientation")
+                "orientation is not an FM-001 orientation")
         return orientation
 
     def _require_flow_measurement_context(self, context) -> AssertionContext:
@@ -1249,15 +1249,15 @@ class ModelQueries:
         if type(flow_anchor_id) is not str:
             raise ModelQueryError(
                 "MODEL_ANCHOR_ID_INVALID",
-                f"{flow_anchor_id!r} is not a canonical flow anchor id")
+                "flow anchor id is not canonical")
         if type(variable_anchor_id) is not str:
             raise ModelQueryError(
                 "MODEL_ANCHOR_ID_INVALID",
-                f"{variable_anchor_id!r} is not a canonical variable anchor id")
+                "variable anchor id is not canonical")
         if type(participant_port_anchor_id) is not str:
             raise ModelQueryError(
                 "MODEL_ANCHOR_ID_INVALID",
-                f"{participant_port_anchor_id!r} is not a canonical port anchor id")
+                "participant port anchor id is not canonical")
         flow_anchor_id = self._require_flow_anchor_id(flow_anchor_id)
         variable_anchor_id = self._require_variable_anchor_id(variable_anchor_id)
         participant_port_anchor_id = self._require_port_anchor_id(
@@ -1277,7 +1277,7 @@ class ModelQueries:
         if type(flow_anchor_id) is not str:
             raise ModelQueryError(
                 "MODEL_ANCHOR_ID_INVALID",
-                f"{flow_anchor_id!r} is not a canonical flow anchor id")
+                "flow anchor id is not canonical")
         flow_anchor_id = self._require_flow_anchor_id(flow_anchor_id)
         context = self._require_flow_measurement_context(context)
         material = self._material()
@@ -1292,7 +1292,7 @@ class ModelQueries:
         if type(variable_anchor_id) is not str:
             raise ModelQueryError(
                 "MODEL_ANCHOR_ID_INVALID",
-                f"{variable_anchor_id!r} is not a canonical variable anchor id")
+                "variable anchor id is not canonical")
         variable_anchor_id = self._require_variable_anchor_id(variable_anchor_id)
         context = self._require_flow_measurement_context(context)
         material = self._material()
@@ -1308,7 +1308,7 @@ class ModelQueries:
         if type(participant_port_anchor_id) is not str:
             raise ModelQueryError(
                 "MODEL_ANCHOR_ID_INVALID",
-                f"{participant_port_anchor_id!r} is not a canonical port anchor id")
+                "participant port anchor id is not canonical")
         participant_port_anchor_id = self._require_port_anchor_id(
             participant_port_anchor_id)
         context = self._require_flow_measurement_context(context)

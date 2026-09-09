@@ -75,6 +75,10 @@ def test_slice_b_public_query_surface_adds_exactly_four_transition_queries():
         "variable", "variable_port_assertion", "variable_port_association",
         "variable_semantics", "variable_value_specification",
         "variables_associated_with_port", "variables_of",
+        "flow_measurement_association",
+        "flow_measurement_associations_for_flow",
+        "flow_measurement_associations_for_variable",
+        "flow_measurement_associations_at_port", "flow_measurement_assertion",
     }
     for forbidden in (
         "assess_transition", "detect_transition",
@@ -86,7 +90,7 @@ def test_slice_b_public_query_surface_adds_exactly_four_transition_queries():
 
 
 def test_slice_b_kernel_exports_exact_transition_contract_and_result_surface():
-    assert len(kernel.__all__) == 205
+    assert len(kernel.__all__) == 225
     assert {name for name in kernel.__all__
             if name.startswith("Transition")} == {
         "TransitionRegistration", "TransitionStateDeclarationPin",
