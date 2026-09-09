@@ -100,6 +100,68 @@ def test_witness_and_normalization():
     assert mk.build_record(cls, **values) == first
 
 
+@pytest.mark.parametrize("withdrawal", [False, True])
+@pytest.mark.parametrize("timestamp", [
+    "2026-09-09T00:00:00Z", "2026-09-09T02:00:00+02:00",
+    "2026-09-08T19:00:00-05:00"])
+def test_exact_pydantic_parsed_timezone_is_trusted(withdrawal, timestamp):
+    from backend.model_kernel.store import revalidate
+
+    parsed = TypeAdapter(datetime).validate_python(timestamp)
+    assert type(parsed.tzinfo) is not timezone  # exercise Pydantic's own type
+    expected = mk.build_record(contract(withdrawal), **fields(withdrawal))
+    actual = mk.build_record(contract(withdrawal), **(fields(withdrawal) | {"recorded_at": parsed}))
+    assert actual == expected
+    supplied = expected.model_copy(update={"recorded_at": parsed})
+    assert contract(withdrawal).model_validate(supplied) == expected
+    assert revalidate(supplied) == expected
+    assert canonical_bytes(actual) == canonical_bytes(expected)
+
+
+def test_timezone_name_impersonation_cannot_enter_trusted_types():
+    calls = []
+
+    class TzInfo(tzinfo):
+        __module__ = "pydantic_core._pydantic_core"
+
+        def utcoffset(self, dt):
+            calls.append("utcoffset")
+            raise AssertionError("caller timezone executed")
+
+    with pytest.raises(ValidationError) as caught:
+        contract()(**(raw() | {"recorded_at": datetime(2026, 9, 9, tzinfo=TzInfo())}))
+    assert caught.value.errors()[0]["type"] == "FC_RECORD_INVALID"
+    assert calls == []
+
+
+@pytest.mark.parametrize("withdrawal", [False, True])
+@pytest.mark.parametrize("limit", [False, True])
+def test_fixed_error_shapes_survive_public_pydantic_error_construction(withdrawal, limit):
+    from backend.model_kernel.store import revalidate
+
+    cls = contract(withdrawal)
+    code = "FC_RECORD_LIMIT_EXCEEDED" if limit else "FC_RECORD_INVALID"
+    note = "sensitive" * 1025 if limit else None
+    expected_rows = [{"type": code, "loc": (), "msg": code, "input": None}]
+    for validate in (
+        lambda: cls(**(raw(withdrawal) | {"note": note})),
+        lambda: cls.model_validate_json(json.dumps(raw(withdrawal) | {"note": note})),
+    ):
+        with pytest.raises(ValidationError) as caught:
+            validate()
+        assert caught.value.title == cls.__name__
+        assert caught.value.errors() == expected_rows
+        assert str(caught.value) == f"1 validation error for {cls.__name__}\n  {code} [type={code}]"
+    built = mk.build_record(cls, **fields(withdrawal))
+    with pytest.raises(mk.ModelIntegrityError) as caught:
+        revalidate(built.model_copy(update={"note": note}))
+    assert caught.value.error_code == (
+        "MODEL_FLOW_CRITERION_RECORD_LIMIT_EXCEEDED" if limit else "MODEL_RECORD_INVALID")
+    assert isinstance(caught.value.__cause__, ValidationError)
+    assert caught.value.__cause__.errors() == expected_rows
+    assert "sensitive" not in str(caught.value)
+
+
 @pytest.mark.parametrize("change", [dict(evidence=[]), dict(evidence=None), dict(note=None),
     dict(supersedes=["fcd_" + "a" * 64] * 2), dict(supersedes=["fcd_" + "0" * 64]),
     dict(supersedes=["fcw_" + "a" * 64]), dict(recorded_at=0), dict(recorded_at="2026-09-09"),

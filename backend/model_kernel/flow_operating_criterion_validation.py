@@ -7,10 +7,39 @@ cycles without mistaking shared DAG nodes for free serialized material.
 import json
 import math
 from datetime import UTC, datetime, timezone
+from typing import Annotated
 from zoneinfo import ZoneInfo
 
-from pydantic import ValidationError
-from pydantic_core import PydanticCustomError, TzInfo
+from pydantic import ConfigDict, Discriminator, Tag, TypeAdapter, ValidationError
+
+
+# Learn only the exact timezone implementation returned by trusted Pydantic
+# parsing of a static literal. Never derive trusted types from supplied input.
+_PARSED_TIMEZONE_TYPE = type(TypeAdapter(datetime).validate_python(
+    "2000-01-01T00:00:00+00:00").tzinfo)
+
+
+def _missing_error_tag(value):
+    # Error adapters receive only None; no caller graph reaches a discriminator.
+    return None
+
+
+# Public Pydantic discriminator errors provide exact custom error codes without
+# a direct core dependency. Both tagged arms are unreachable: this fixed schema
+# only constructs the four existing title/code combinations, never FC records.
+_ERROR_ADAPTERS = {
+    (withdrawal, limit): TypeAdapter(
+        Annotated[
+            Annotated[str, Tag("text")] | Annotated[int, Tag("integer")],
+            Discriminator(_missing_error_tag, custom_error_type=message,
+                          custom_error_message=message)],
+        config=ConfigDict(title=title, hide_input_in_errors=True))
+    for withdrawal, title in (
+        (False, "FlowOperatingCriterionDeclaration"),
+        (True, "FlowOperatingCriterionWithdrawal"))
+    for limit, message in (
+        (False, "FC_RECORD_INVALID"), (True, "FC_RECORD_LIMIT_EXCEEDED"))
+}
 
 
 class _Invalid(ValueError):
@@ -22,10 +51,15 @@ class _Limit(ValueError):
 
 
 def _validation_error(cls, limit=False):
-    message = "FC_RECORD_LIMIT_EXCEEDED" if limit else "FC_RECORD_INVALID"
-    return ValidationError.from_exception_data(cls.__name__, [{
-        "type": PydanticCustomError(message, message), "loc": (), "input": None,
-    }], hide_input=True)
+    from backend.model_kernel.contracts import FlowOperatingCriterionWithdrawal
+
+    # Fixed titles avoid consulting metadata on a supplied/forged class.
+    adapter = _ERROR_ADAPTERS[(cls is FlowOperatingCriterionWithdrawal, limit)]
+    try:
+        adapter.validate_python(None)
+    except ValidationError as error:
+        return error
+    raise AssertionError("fixed FC error discriminator unexpectedly matched")
 
 
 def _trusted_classes():
@@ -81,7 +115,7 @@ def _plain_record(value):
             charge(len(json.dumps(item, allow_nan=False)))
             return item
         if kind is datetime:
-            if type(item.tzinfo) not in (timezone, ZoneInfo, TzInfo):
+            if type(item.tzinfo) not in (timezone, ZoneInfo, _PARSED_TIMEZONE_TYPE):
                 raise _Invalid
             normalized = item.astimezone(UTC)
             charge(len(json.dumps(normalized.isoformat())))

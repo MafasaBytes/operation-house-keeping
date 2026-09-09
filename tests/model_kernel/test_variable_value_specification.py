@@ -284,8 +284,14 @@ class TestCanonicalIdentity:
 
         members = typing.get_args(ModelRecord)
         assert VariableValueSpecification in members
-        # 22 pre-ST-002, three ST-002, three FL-001, and two FM-001 kinds.
-        assert len(_PREFIX_BY_KIND) == len(members) == 30
+        # 22 pre-ST-002, three ST-002, three FL-001, two FM-001, two FC-001.
+        assert len(_PREFIX_BY_KIND) == len(members) == 32
+        assert tuple(_PREFIX_BY_KIND.items())[-2:] == (
+            ("flow_operating_criterion_declaration", "fcd"),
+            ("flow_operating_criterion_withdrawal", "fcw"))
+        assert tuple(cls.__name__ for cls in members[-2:]) == (
+            "FlowOperatingCriterionDeclaration", "FlowOperatingCriterionWithdrawal")
+        assert {cls.model_fields["record_kind"].default for cls in members} == set(_PREFIX_BY_KIND)
         for prefix in _PREFIX_BY_KIND.values():
             sample = f"{prefix}_{'0' * 64}"
             assert re.fullmatch(MODEL_RECORD_ID_PATTERN, sample)

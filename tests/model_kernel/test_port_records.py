@@ -438,5 +438,8 @@ def test_model_kernel_public_exports_include_accepted_pt_and_vp_slice_a_names():
         "ParentConflictReport", "HierarchyHealth", "build_record",
         "ModelStore", "LoadedModel", "ModelQueries",
     }
-    assert set(kernel.__all__) == old | added
-    assert len(kernel.__all__) == len(old | added)
+    assert set(kernel.__all__[:225]) == old | added
+    assert len(old | added) == 225
+    assert kernel.__all__[225:] == [
+        "FlowOperatingCriterionDeclaration", "FlowOperatingCriterionWithdrawal"]
+    assert len(kernel.__all__) == len(set(kernel.__all__)) == 227
