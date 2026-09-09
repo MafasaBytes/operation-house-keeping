@@ -67,6 +67,17 @@ from backend.model_kernel.flow_results import (
     PortFlowsResult, _flow_assertion_payload, _flow_declaration_payload,
     _flow_lookup_payload, _port_flows_payload,
 )
+from backend.model_kernel.flow_measurement_results import (
+    FlowMeasurementAssociationResult,
+    FlowMeasurementAssociationsAtPortResult,
+    FlowMeasurementAssociationsForFlowResult,
+    FlowMeasurementAssociationsForVariableResult,
+    FlowMeasurementAssertionResult,
+    _assertion_payload as _flow_measurement_assertion_payload,
+    _exact_payload as _flow_measurement_exact_payload,
+    _reject_scalar_subclasses as _reject_flow_measurement_scalar_subclasses,
+    _reverse_payload as _flow_measurement_reverse_payload,
+)
 from backend.model_kernel.port_results import (
     ConnectionRootResult, ConnectionSubjectResult, SharedConnectionsResult,
     EndpointInterfaceResult,
@@ -106,6 +117,9 @@ _BEHAVIOR_RECORD_ID = re.compile(r"^(?:brg|bhd|bhw)_[0-9a-f]{64}$")
 _STATE_RECORD_ID = re.compile(r"^(?:srg|std|stw)_[0-9a-f]{64}$")
 _TRANSITION_RECORD_ID = re.compile(r"^(?:trg|trd|trw)_[0-9a-f]{64}$")
 _FLOW_RECORD_ID = re.compile(r"^(?:frg|fld|flw)_[0-9a-f]{64}$")
+_FLOW_MEASUREMENT_RECORD_ID = re.compile(r"^(?:fma|fmw)_[0-9a-f]{64}$")
+_FLOW_MEASUREMENT_ORIENTATIONS = (
+    "aligned", "opposite", "unsigned_magnitude", "not_applicable")
 _CONTEXT_ADAPTER: TypeAdapter = TypeAdapter(AssertionContext)
 _LIFECYCLE_VIEWS = frozenset(typing.get_args(LifecycleView))
 
@@ -229,6 +243,31 @@ class ModelQueries:
                 "MODEL_RECORD_ID_INVALID",
                 f"{record_id!r} is not an FL-001 flow record id")
         return record_id
+
+    def _require_flow_measurement_record_id(self, record_id: str) -> str:
+        if (type(record_id) is not str
+                or not _FLOW_MEASUREMENT_RECORD_ID.fullmatch(record_id)):
+            raise ModelQueryError(
+                "MODEL_RECORD_ID_INVALID",
+                f"{record_id!r} is not an FM-001 record id")
+        return record_id
+
+    def _require_flow_measurement_orientation(self, orientation: str) -> str:
+        if (type(orientation) is not str
+                or orientation not in _FLOW_MEASUREMENT_ORIENTATIONS):
+            raise ModelQueryError(
+                "MODEL_ORIENTATION_INVALID",
+                f"{orientation!r} is not an FM-001 orientation")
+        return orientation
+
+    def _require_flow_measurement_context(self, context) -> AssertionContext:
+        try:
+            _reject_flow_measurement_scalar_subclasses(context)
+        except (ValueError, TypeError, AttributeError) as error:
+            raise ModelQueryError(
+                "MODEL_CONTEXT_INVALID",
+                "FM context contains a non-built-in scalar") from error
+        return self._require_context(context)
 
     def _material(self) -> ModelQueryMaterial:
         return ModelQueryMaterial(
@@ -1200,6 +1239,95 @@ class ModelQueries:
         return FlowAssertionDisclosureResult(
             material=material,
             **_flow_assertion_payload(material, self.loaded, record_id))
+
+    # -- FM-001 explicit flow-to-measurement associations ---------------
+
+    def flow_measurement_association(
+            self, flow_anchor_id, variable_anchor_id,
+            participant_port_anchor_id, context, orientation
+    ) -> FlowMeasurementAssociationResult:
+        if type(flow_anchor_id) is not str:
+            raise ModelQueryError(
+                "MODEL_ANCHOR_ID_INVALID",
+                f"{flow_anchor_id!r} is not a canonical flow anchor id")
+        if type(variable_anchor_id) is not str:
+            raise ModelQueryError(
+                "MODEL_ANCHOR_ID_INVALID",
+                f"{variable_anchor_id!r} is not a canonical variable anchor id")
+        if type(participant_port_anchor_id) is not str:
+            raise ModelQueryError(
+                "MODEL_ANCHOR_ID_INVALID",
+                f"{participant_port_anchor_id!r} is not a canonical port anchor id")
+        flow_anchor_id = self._require_flow_anchor_id(flow_anchor_id)
+        variable_anchor_id = self._require_variable_anchor_id(variable_anchor_id)
+        participant_port_anchor_id = self._require_port_anchor_id(
+            participant_port_anchor_id)
+        context = self._require_flow_measurement_context(context)
+        orientation = self._require_flow_measurement_orientation(orientation)
+        material = self._material()
+        return FlowMeasurementAssociationResult(
+            material=material,
+            **_flow_measurement_exact_payload(
+                material, self.loaded, flow_anchor_id, variable_anchor_id,
+                participant_port_anchor_id, context, orientation))
+
+    def flow_measurement_associations_for_flow(
+            self, flow_anchor_id, *, context
+    ) -> FlowMeasurementAssociationsForFlowResult:
+        if type(flow_anchor_id) is not str:
+            raise ModelQueryError(
+                "MODEL_ANCHOR_ID_INVALID",
+                f"{flow_anchor_id!r} is not a canonical flow anchor id")
+        flow_anchor_id = self._require_flow_anchor_id(flow_anchor_id)
+        context = self._require_flow_measurement_context(context)
+        material = self._material()
+        return FlowMeasurementAssociationsForFlowResult(
+            material=material,
+            **_flow_measurement_reverse_payload(
+                material, self.loaded, flow_anchor_id, context, axis="flow"))
+
+    def flow_measurement_associations_for_variable(
+            self, variable_anchor_id, *, context
+    ) -> FlowMeasurementAssociationsForVariableResult:
+        if type(variable_anchor_id) is not str:
+            raise ModelQueryError(
+                "MODEL_ANCHOR_ID_INVALID",
+                f"{variable_anchor_id!r} is not a canonical variable anchor id")
+        variable_anchor_id = self._require_variable_anchor_id(variable_anchor_id)
+        context = self._require_flow_measurement_context(context)
+        material = self._material()
+        return FlowMeasurementAssociationsForVariableResult(
+            material=material,
+            **_flow_measurement_reverse_payload(
+                material, self.loaded, variable_anchor_id, context,
+                axis="variable"))
+
+    def flow_measurement_associations_at_port(
+            self, participant_port_anchor_id, *, context
+    ) -> FlowMeasurementAssociationsAtPortResult:
+        if type(participant_port_anchor_id) is not str:
+            raise ModelQueryError(
+                "MODEL_ANCHOR_ID_INVALID",
+                f"{participant_port_anchor_id!r} is not a canonical port anchor id")
+        participant_port_anchor_id = self._require_port_anchor_id(
+            participant_port_anchor_id)
+        context = self._require_flow_measurement_context(context)
+        material = self._material()
+        return FlowMeasurementAssociationsAtPortResult(
+            material=material,
+            **_flow_measurement_reverse_payload(
+                material, self.loaded, participant_port_anchor_id, context,
+                axis="port"))
+
+    def flow_measurement_assertion(
+            self, record_id
+    ) -> FlowMeasurementAssertionResult:
+        record_id = self._require_flow_measurement_record_id(record_id)
+        material = self._material()
+        return FlowMeasurementAssertionResult(
+            material=material,
+            **_flow_measurement_assertion_payload(
+                material, self.loaded, record_id))
 
     # -- VP-001 explicit variable-to-port associations --------------------
 

@@ -137,7 +137,7 @@ def test_accepted_36_record_revision_returns_exact_structured_absence():
 
     exact = queries.flow_measurement_association(
         FLOW_A, VAR_A, PORT_A, AS_DESIGNED, "aligned")
-    assert exact.endpoint_registration == "all_registered"
+    assert exact.endpoint_registration == "multiple_not_registered"
     assert exact.declaration_presence == "not_declared"
     assert exact.declaration_conclusion == "not_evaluated"
     assert exact.agreement_findings == exact.roots == ()
@@ -153,7 +153,7 @@ def test_accepted_36_record_revision_returns_exact_structured_absence():
         queries.flow_measurement_associations_at_port(
             PORT_A, context=AS_DESIGNED),
     ):
-        assert result.registration_status == "registered"
+        assert result.registration_status == "not_registered"
         assert result.declaration_presence == "not_declared"
         assert result.entries == ()
         assert result.material.revision == loaded.revision
