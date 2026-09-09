@@ -356,8 +356,9 @@ cross-root disagreement. VSM is context-independent; exact context matching
 belongs to FLD/VPA.
 
 The authoritative 36-record model contains zero FMA/FMW records. The corrected
-FM-001 Slice B five-query public result contract is documented as a candidate;
-owner approval and separate implementation authorization remain pending. Slice
-A adds no FM query/result surface, fixture, demonstration, authoritative
+FM-001 Slice B five-query public result contract is owner accepted at
+`7bb7db8ec27af74bdd887d763222757c1f1fc821`; Slice B implementation only is
+authorized and incomplete. Slice A adds no FM query/result surface, fixture,
+demonstration, authoritative
 append, FA-001 evaluator, occurrence
 claim, identity, store, facade, connector, or upper-layer import.

@@ -2,9 +2,9 @@
 
 Date: 2026-09-07
 
-Status: FM-001 corrected final design and repaired Slice A owner accepted;
-corrected Slice B contract pending owner approval; Slice B implementation and
-demonstration unauthorized
+Status: FM-001 corrected final design, repaired Slice A, and corrected Slice B
+contract owner accepted; Slice B implementation only authorized and not yet
+complete; demonstration unauthorized
 
 Authoritative design:
 [`docs/superpowers/specs/2026-09-07-fm001-explicit-flow-to-measurement-association-design.md`](../superpowers/specs/2026-09-07-fm001-explicit-flow-to-measurement-association-design.md),
@@ -23,6 +23,9 @@ Corrected future Slice B contract records:
 - [`docs/superpowers/plans/2026-09-09-fm001-slice-b-implementation-plan.md`](../superpowers/plans/2026-09-09-fm001-slice-b-implementation-plan.md);
 - [`docs/superpowers/plans/2026-09-09-fm001-slice-b-adversarial-acceptance-matrix.md`](../superpowers/plans/2026-09-09-fm001-slice-b-adversarial-acceptance-matrix.md);
 - [`docs/superpowers/reports/2026-09-09-fm001-slice-b-contract-correction-report.md`](../superpowers/reports/2026-09-09-fm001-slice-b-contract-correction-report.md).
+
+Owner acceptance and implementation authorization:
+[`docs/superpowers/reports/2026-09-09-fm001-slice-b-contract-owner-acceptance.md`](../superpowers/reports/2026-09-09-fm001-slice-b-contract-owner-acceptance.md).
 
 ## Decision
 
@@ -72,8 +75,9 @@ corroborating, and cross-root disagreeing states remain simultaneous ordered
 findings under one explicit aggregate-conclusion precedence. One reverse
 entry represents one complete immutable subject in the requested context.
 Every outer result carries one complete `ModelQueryMaterial` once, and nested
-rows use strict indices only. These corrected Slice B contracts are not yet
-owner accepted or authorized for implementation.
+rows use strict indices only. The owner accepts these exact contracts at
+`7bb7db8ec27af74bdd887d763222757c1f1fc821` and authorizes Slice B
+implementation only; neither Slice B nor FM-001 is yet complete.
 
 ## Truth boundary
 
@@ -84,8 +88,8 @@ recommendation, or physical occurrence. FM does not read evidence or temporal
 stores, select observations, calculate signs, convert units, or assess flow.
 
 Accepted Slice A is limited to records, canonical/store/replay/DAG/withdrawal
-integrity, and immutable indexes. A future authorized Slice B is limited to
-the five read-only queries and authoritatively reconstructed results. There is
-no Slice C or demonstration slice.
+integrity, and immutable indexes. Authorized Slice B is limited to the five
+read-only queries and authoritatively reconstructed results. There is no Slice
+C or demonstration slice.
 
 END OF ADR-0021
