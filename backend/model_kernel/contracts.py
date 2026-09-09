@@ -53,7 +53,7 @@ from backend.system_identity import (
 UtcDatetime = Annotated[AwareDatetime, AfterValidator(lambda v: v.astimezone(UTC))]
 
 MODEL_ID_PATTERN = r"^[a-z0-9-]+$"
-MODEL_RECORD_ID_PATTERN = r"^(reg|rtd|rel|rwd|vrg|vsp|vsm|crg|vcn|prg|pif|pcn|pcm|ptw|vpa|vpw|brg|bhd|bhw|srg|std|stw|trg|trd|trw|frg|fld|flw|fma|fmw)_[0-9a-f]{64}$"
+MODEL_RECORD_ID_PATTERN = r"^(reg|rtd|rel|rwd|vrg|vsp|vsm|crg|vcn|prg|pif|pcn|pcm|ptw|vpa|vpw|brg|bhd|bhw|srg|std|stw|trg|trd|trw|frg|fld|flw|fma|fmw|fcd|fcw)_[0-9a-f]{64}$"
 
 ReferentKind = Literal[
     "logical_instance", "physical_instance", "type_definition", "unknown"
@@ -117,7 +117,7 @@ class ModelRecordEvidence(_Frozen):
     # uncitable
     kind: Literal["model_record"]
     record_id: str = Field(
-        pattern=r"^(reg|rtd|rel|vrg|vsp|vsm|crg|vcn|prg|pif|pcn|pcm|vpa|brg|bhd|srg|std|trg|trd|frg|fld|fma)_[0-9a-f]{64}$")
+        pattern=r"^(reg|rtd|rel|vrg|vsp|vsm|crg|vcn|prg|pif|pcn|pcm|vpa|brg|bhd|srg|std|trg|trd|frg|fld|fma|fcd)_[0-9a-f]{64}$")
 
 
 class IdentityBindingRecordEvidence(_Frozen):
@@ -1787,6 +1787,84 @@ class FlowMeasurementAssociationWithdrawal(_Frozen):
         return value
 
 
+class _FlowCriterionRecord(_Frozen):
+    """Fixed outer errors and strict reconstruction for the two FC arms only."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid", revalidate_instances="always",
+                              hide_input_in_errors=True)
+
+    @model_validator(mode="wrap")
+    @classmethod
+    def _bounded_record(cls, value, handler):
+        from datetime import datetime
+        from backend.model_kernel.flow_operating_criterion_validation import (
+            _Invalid, _Limit, _plain_record, _validation_error,
+        )
+        try:
+            plain = _plain_record(value)
+            if type(plain) is not dict or type(plain.get("recorded_at")) not in (str, datetime):
+                raise _Invalid
+            result = handler(plain)
+            if "supersedes" in cls.model_fields:
+                if (any(not re.fullmatch(r"fcd_[0-9a-f]{64}", parent)
+                        for parent in result.supersedes)
+                        or result.record_id in result.supersedes):
+                    raise _Invalid
+            # Defaults, normalized timestamps and evidence also consume budgets.
+            _plain_record(result)
+            return result
+        except (_Limit, MemoryError, RecursionError, OverflowError) as error:
+            raise _validation_error(cls, limit=True) from error
+        except (ValueError, TypeError, AttributeError) as error:
+            raise _validation_error(cls) from error
+
+    @classmethod
+    def model_validate_json(cls, json_data, *, strict=None, context=None, by_alias=None, by_name=None):
+        from backend.model_kernel.flow_operating_criterion_validation import (
+            _Invalid, _Limit, _parse_record_json, _validation_error,
+        )
+        try:
+            plain = _parse_record_json(json_data)
+        except _Limit as error:
+            raise _validation_error(cls, limit=True) from error
+        except _Invalid as error:
+            raise _validation_error(cls) from error
+        return cls.model_validate(plain, strict=strict, context=context,
+                                  by_alias=by_alias, by_name=by_name)
+
+    @classmethod
+    def model_validate_strings(cls, obj, **kwargs):
+        from backend.model_kernel.flow_operating_criterion_validation import _validation_error
+        raise _validation_error(cls)
+
+
+class FlowOperatingCriterionDeclaration(_FlowCriterionRecord):
+    """Authority designation of an exact constraint edition for an FM witness."""
+
+    record_kind: Literal["flow_operating_criterion_declaration"] = "flow_operating_criterion_declaration"
+    schema_version: Literal["1"] = "1"
+    record_id: str = Field(pattern=r"^fcd_[0-9a-f]{64}$")
+    flow_measurement_association_record_id: str = Field(pattern=r"^fma_[0-9a-f]{64}$")
+    constraint_registration_record_id: str = Field(pattern=r"^crg_[0-9a-f]{64}$")
+    constraint_declaration_record_id: str = Field(pattern=r"^vcn_[0-9a-f]{64}$")
+    evidence: Annotated[tuple[EvidenceRef, ...], Field(min_length=1), AfterValidator(_canonical_evidence)]
+    supersedes: Annotated[tuple[str, ...], AfterValidator(_canonical_parents)] = ()
+    recorded_at: UtcDatetime
+    authority: AuthorityRef
+    note: str = ""
+
+class FlowOperatingCriterionWithdrawal(_FlowCriterionRecord):
+    """Uncitable withdrawal of one retained positive FC designation."""
+
+    record_kind: Literal["flow_operating_criterion_withdrawal"] = "flow_operating_criterion_withdrawal"
+    schema_version: Literal["1"] = "1"
+    record_id: str = Field(pattern=r"^fcw_[0-9a-f]{64}$")
+    withdraws: str = Field(pattern=r"^fcd_[0-9a-f]{64}$")
+    recorded_at: UtcDatetime
+    authority: AuthorityRef
+    note: str = ""
+
+
 ModelRecord = Union[
     EntityRegistration, VariableRegistration, VariableValueSpecification,
     VariableSemanticDeclaration,
@@ -1802,6 +1880,7 @@ ModelRecord = Union[
     PortCompatibilityDeclaration, PortClaimWithdrawal,
     VariablePortAssociation, VariablePortAssociationWithdrawal,
     FlowMeasurementAssociation, FlowMeasurementAssociationWithdrawal,
+    FlowOperatingCriterionDeclaration, FlowOperatingCriterionWithdrawal,
 ]
 
 

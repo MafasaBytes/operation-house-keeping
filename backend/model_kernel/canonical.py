@@ -48,6 +48,8 @@ _PREFIX_BY_KIND = {
     "flow_declaration_withdrawal": "flw",
     "flow_measurement_association": "fma",
     "flow_measurement_association_withdrawal": "fmw",
+    "flow_operating_criterion_declaration": "fcd",
+    "flow_operating_criterion_withdrawal": "fcw",
 }
 
 _BEHAVIOR_EFFECTIVE_BODY_FIELDS = (
@@ -105,7 +107,29 @@ def _canonical_value(value):
     return value
 
 
+def _validated_flow_criterion(record):
+    """New-family strict boundary; old canonical dispatch remains unchanged."""
+    from backend.model_kernel.contracts import (
+        FlowOperatingCriterionDeclaration, FlowOperatingCriterionWithdrawal,
+    )
+    from pydantic import ValidationError
+    classes = (FlowOperatingCriterionDeclaration, FlowOperatingCriterionWithdrawal)
+    kind = type(record)
+    if not any(base is cls for base in type.__getattribute__(kind, "__mro__")
+               for cls in classes):
+        return record
+    if not any(kind is cls for cls in classes):
+        raise ModelIntegrityError("MODEL_RECORD_INVALID", "invalid flow criterion record")
+    try:
+        return kind.model_validate(record)
+    except ValidationError as error:
+        limit = any(item["type"] == "FC_RECORD_LIMIT_EXCEEDED" for item in error.errors())
+        code = "MODEL_FLOW_CRITERION_RECORD_LIMIT_EXCEEDED" if limit else "MODEL_RECORD_INVALID"
+        raise ModelIntegrityError(code, "invalid flow criterion record") from error
+
+
 def canonical_payload(record) -> dict:
+    record = _validated_flow_criterion(record)
     dumped = record.model_dump(mode="python", exclude={"record_id"})
     return _canonical_value(dumped)
 
@@ -230,6 +254,7 @@ def _flow_measurement_effective_body_bytes(record) -> bytes:
 
 
 def compute_record_id(record) -> str:
+    record = _validated_flow_criterion(record)
     try:
         prefix = _PREFIX_BY_KIND[record.record_kind]
     except (KeyError, AttributeError, TypeError) as error:
@@ -253,6 +278,26 @@ def build_record(record_cls, **fields):
     kind, missing or invalid fields, and pydantic ``ValidationError`` (a
     ``ValueError``) all fail typed. The message is path-free and never
     echoes field values — the record class name at most."""
+    from typing import get_args
+    from backend.model_kernel.contracts import (
+        FlowOperatingCriterionDeclaration, FlowOperatingCriterionWithdrawal, ModelRecord,
+    )
+    # Identity comparisons never inspect caller-controlled class attributes.
+    if not any(record_cls is known for known in get_args(ModelRecord)):
+        raise ModelIntegrityError("MODEL_RECORD_INVALID", "could not build a valid model record")
+    if record_cls is FlowOperatingCriterionDeclaration or record_cls is FlowOperatingCriterionWithdrawal:
+        from pydantic import ValidationError
+        try:
+            prefix = "fcd" if record_cls is FlowOperatingCriterionDeclaration else "fcw"
+            draft = record_cls(record_id=prefix + "_" + "0" * 64, **fields)
+            final = draft.model_dump(mode="python")
+            final["record_id"] = compute_record_id(draft)
+            return record_cls.model_validate(final)
+        except (TypeError, ValueError) as error:
+            limit = isinstance(error, ValidationError) and any(
+                item["type"] == "FC_RECORD_LIMIT_EXCEEDED" for item in error.errors())
+            code = "MODEL_FLOW_CRITERION_RECORD_LIMIT_EXCEEDED" if limit else "MODEL_RECORD_INVALID"
+            raise ModelIntegrityError(code, "could not build a valid flow criterion record") from error
     try:
         kind = record_cls.model_fields["record_kind"].default
         placeholder = f"{_PREFIX_BY_KIND[kind]}_{'0' * 64}"

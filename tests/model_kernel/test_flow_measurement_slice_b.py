@@ -50,8 +50,8 @@ def _literal(name):
 
 
 def test_exact_public_additions_literals_fields_and_signatures():
-    assert len(kernel.__all__) == len(set(kernel.__all__)) == 225
-    assert kernel.__all__[-20:] == PUBLIC_ADDITIONS
+    assert len(kernel.__all__) == len(set(kernel.__all__)) == 227
+    assert kernel.__all__[205:225] == PUBLIC_ADDITIONS
     assert _literal("FlowMeasurementEndpointRegistration") == (
         "all_registered", "flow_not_registered", "variable_not_registered",
         "port_not_registered", "multiple_not_registered")

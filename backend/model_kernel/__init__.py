@@ -49,6 +49,8 @@ from backend.model_kernel.contracts import (
     FlowRegistration,
     FlowMeasurementAssociation,
     FlowMeasurementAssociationWithdrawal,
+    FlowOperatingCriterionDeclaration,
+    FlowOperatingCriterionWithdrawal,
     HierarchyHealth,
     IdentityBindingRecordEvidence,
     InterfaceDomainDeclaration,
@@ -403,4 +405,6 @@ __all__ = [
     "FlowMeasurementAssociationsForVariableResult",
     "FlowMeasurementAssociationsAtPortResult",
     "FlowMeasurementAssertionResult",
+    "FlowOperatingCriterionDeclaration",
+    "FlowOperatingCriterionWithdrawal",
 ]

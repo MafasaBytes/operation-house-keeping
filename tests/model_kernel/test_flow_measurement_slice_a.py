@@ -142,14 +142,14 @@ def test_exact_slice_a_contract_and_accepted_slice_b_surface():
         "recorded_at", "authority", "note")
     assert fma.record_id.startswith("fma_")
     assert fmw.record_id.startswith("fmw_")
-    assert len(kernel.__all__) == 225 == len(set(kernel.__all__))
+    assert len(kernel.__all__) == 227 == len(set(kernel.__all__))
     predecessor_digest = hashlib.sha256(json.dumps(
         kernel.__all__[:203], separators=(",", ":")).encode()).hexdigest()
     assert predecessor_digest == \
         "7821c7582f1332addca8fd467004c477262ea4e679c33f6bbe0a22831db83ce1"
     assert kernel.__all__[203:205] == [
         "FlowMeasurementAssociation", "FlowMeasurementAssociationWithdrawal"]
-    assert kernel.__all__[205:] == [
+    assert kernel.__all__[205:225] == [
         "FlowMeasurementEndpointRegistration",
         "FlowMeasurementReverseRegistration",
         "FlowMeasurementDeclarationPresence",
