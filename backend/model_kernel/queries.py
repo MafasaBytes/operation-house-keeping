@@ -1381,7 +1381,7 @@ class ModelQueries:
         active=[i for i,g in enumerate(groups) if g.current_declaration_indices]
         if not fc_ids: conclusion="not_declared"; reasons=("fc_not_declared",); gi=None
         elif not active: conclusion="inactive"; reasons=("fc_inactive",); gi=None
-        elif len(fc_roots) != len({self.loaded.flow_operating_criterion_root_by_id[x] for x in fc_ids if not self.loaded.flow_operating_criterion_successor_ids[x] and not self.loaded.flow_operating_criterion_withdrawn_by[x]}): conclusion="conflicted"; reasons=("fc_same_root_conflict",); gi=None
+        elif any(row.lineage_health == "conflicted" for row in fc_roots): conclusion="conflicted"; reasons=("fc_same_root_conflict",); gi=None
         elif len(active)>1: conclusion="disagreed"; reasons=("fc_cross_root_disagreement",); gi=None
         else: conclusion="applicable"; reasons=(); gi=active[0]
         result=FlowOperatingCriterionSubjectResult(flow_anchor_id=flow_anchor_id,variable_anchor_id=variable_anchor_id,participant_port_anchor_id=participant_port_anchor_id,context=context,orientation=orientation,conclusion=conclusion,reasons=reasons,roots=fc_roots,fm_roots=fm_roots,body_groups=tuple(groups),governing_body_group_index=gi)
