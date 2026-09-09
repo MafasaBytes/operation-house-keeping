@@ -1,5 +1,15 @@
 # model_kernel
 
+FC-001's corrected final design is owner approved. Only Slice A is authorized:
+two additive declaration/withdrawal records and their canonical, store, replay,
+DAG and immutable-index foundation. See [ADR-0022](../../docs/adr/0022-explicit-flow-operating-criterion.md).
+The target Slice A public surface is 227 names, preserving the accepted 225-name
+prefix and appending only the two FC records. No FC query/result surface is
+authorized yet. Historical support remains structurally admissible; stale IDs,
+substitution and invalid closure reject. Applicability/currentness conclusions
+are reserved for Slice B. Neither designation nor applicability evaluates a
+sample or establishes physical flow, state, causality, correctness or safety.
+
 The MK-001 typed entity/relationship kernel: an append-only ledger of
 explicit model knowledge over canonical `system_identity` anchors, with a
 containment-derived hierarchy view. The bridge target of:

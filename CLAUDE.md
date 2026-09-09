@@ -101,10 +101,17 @@ There is no Slice C or demonstration. The authoritative model retains zero
 FMA/FMW records. The [FA feasibility owner decision](docs/superpowers/reports/2026-09-09-fa001-feasibility-owner-decision.md)
 accepts the proposal and challenger audit because they correctly reject
 baseline-only FA implementation. FA-001 is deferred, not completed or
-implemented. FC-001 — Explicit Flow Operating Criterion Declaration — is
-authorized for design investigation only; ADR-0022 remains absent and
-unallocated. After FC acceptance and implementation, reassess FA and cancel it
-if an FC query plus existing CN already answers the approved question.
+implemented. FC-001 — Explicit Flow Operating Criterion Declaration — has an
+owner-approved corrected final design; only Slice A is authorized. See
+[ADR-0022](docs/adr/0022-explicit-flow-operating-criterion.md) and the
+[design approval](docs/superpowers/reports/2026-09-09-fc001-final-design-owner-approval.md).
+Slice A admits valid retained historical support, rejects stale content-derived
+IDs and invalid structural closure, and adds no applicability/currentness
+conclusions. Slice B remains unstarted and unauthorized. After the separately
+accepted FC direct-join proof, cancel FA if FC, existing CN and evidence
+disclosures answer the approved question. Reconsideration requires a new
+owner-approved proposal demonstrating an integrity attack that explicit checks
+over existing public results cannot prevent; API convenience is insufficient.
 Optional accountable flow occurrence/history still requires explicit
 time-window, continuity, and authenticity contracts. Configuration identity remains an alternative priority if
 the owner changes product focus. Causality, diagnosis, impact analysis, goals,
