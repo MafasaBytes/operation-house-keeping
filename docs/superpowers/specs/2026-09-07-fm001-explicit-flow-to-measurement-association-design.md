@@ -4,8 +4,8 @@ Corrected final synthesis — design only
 
 ## 1. Status, inputs, and baseline
 
-Status: owner-corrected final synthesis; FM-001 implementation remains
-unauthorized.
+Status: owner-accepted design and repaired Slice A; corrected Slice B public
+contract pending owner approval; Slice B implementation unauthorized.
 
 This synthesis is based on `main` at
 `a069cb664af1638cef2168ced6034eb2d30f2f14`.
@@ -25,7 +25,8 @@ Frozen challenger audit:
 
 The post-TA-001 reconciliation is SHA-256
 `c07bd4311d4dbe0345fd877d41a6b9cc7005396dc2c09fd6e2dca85beb09a2fa`.
-ADRs 0001–0020 are contiguous and unique; ADR-0021 is absent. The accepted
+At that design baseline ADRs 0001–0020 were contiguous and unique and
+ADR-0021 was absent; ADR-0021 now records the accepted architecture. The accepted
 model has 36 records at
 `mrv_b8f03e1c03c23efc5c4454d00e43e6b89b8254ab87ce724d7418b8a94288c7ee`,
 FRG/FLD/FLW `1/1/0`, TRG/TRD/TRW `0/0/0`, and ledger aggregate
@@ -53,11 +54,11 @@ accepted TA result SHA-256 is
 | RC2 — fix support closure | Exact same-revision FRG, VRG, PRG, FLD, VPA, and measured-actual VSM pins are mandatory. |
 | RC3 — fix model semantic/value policy | Direct measurement requires exact `measured_actual` VSM support; VSP, quantity-kind, units, and conversion remain outside FM admission. |
 | RC4 — make sign/orientation explicit | The immutable orientation literal set is `aligned`, `opposite`, `unsigned_magnitude`, `not_applicable`; no positive unknown token exists. |
-| RC5 — separate result axes | Endpoint admission, declaration conclusion, lineage health, assertion activity, support activity, derived role, relation, orientation, and semantic support are separate fields. |
+| RC5 — separate result axes | Endpoint admission, declaration presence/conclusion, per-root health, individual assertion activity, support activity/health/current alignment, derived role, orientation, and agreement findings are separate fields. |
 | RC6 — complete lineage rules | Parents must be membership-present positive FM records in the same subject and derived root; complete same-root convergence is allowed and cross-root convergence is rejected. |
 | RC7 — define exact body identity | Effective-body grouping includes all six support-pin IDs and immutable body dimensions, while excluding evidence, authority, recorded time, note, ID, and ancestry. |
 | RC8 — preserve withdrawal behavior | A withdrawal targets one eligible current tip; sibling fork tips do not block selective withdrawal; withdrawal is inactive, not false or non-measurement. |
-| RC9 — tighten query contract | Exact lookup includes every immutable subject dimension including relation and orientation; the four reverse lookups use non-overlapping indexes and exact context. |
+| RC9 — tighten query contract | Exact lookup includes every caller-variable subject dimension including orientation; relation is the fixed v1 dimension, the three reverse lookups use non-overlapping exact-context indexes, and assertion lookup is separate. |
 | RC10 — add hostile twins | Acceptance rows cover cross-lineage correction, body/support/citability substitution, role/orientation drift, context, duplicates, supersession, and no-I/O validation. |
 
 ## 4. Change log: NB1–NB5 observations
@@ -86,10 +87,10 @@ accepted TA result SHA-256 is
    and VPA carry the exact FMA assertion context; no PCN/PIF duplication or
    sibling/upper pin is allowed.
 6. **D6 — lifecycle:** the established correction-DAG and uncitable withdrawal
-   rules in Section 11 apply exactly.
+   rules in Section 14 apply exactly.
 7. **D7 — queries:** exactly the five names and orthogonal result axes in
-   Section 15 are public.
-8. **D8 — slices:** only the two owner-gated slices in Section 23 exist; no
+   Sections 16–18 are public; Slice B implementation remains separately gated.
+8. **D8 — slices:** only the two owner-gated slices in Section 24 exist; no
    Slice C and no demonstration are authorized.
 
 ## 6. Objective and strongest claim
@@ -378,43 +379,55 @@ The exact public Slice B type aliases, in literal order, are:
 FlowMeasurementEndpointRegistration = Literal[
   "all_registered", "flow_not_registered", "variable_not_registered",
   "port_not_registered", "multiple_not_registered"]
+FlowMeasurementReverseRegistration = Literal[
+  "not_registered", "registered"]
 FlowMeasurementDeclarationPresence = Literal["not_declared", "declared"]
 FlowMeasurementDeclarationConclusion = Literal[
   "not_evaluated", "declared_direct_measurement_relevance", "conflicted",
   "inactive"]
-FlowMeasurementLineageHealth = Literal[
+FlowMeasurementSupportKind = Literal[
+  "frg", "vrg", "prg", "fld", "vpa", "vsm"]
+FlowMeasurementSupportActivity = Literal[
+  "permanent", "current", "superseded", "withdrawn"]
+FlowMeasurementSupportLineageHealth = Literal[
   "not_applicable", "healthy", "conflicted", "inactive"]
-FlowMeasurementPinnedAssertionActivity = Literal[
-  "current", "superseded", "withdrawn"]
-FlowMeasurementSupportPresence = Literal["present", "not_applicable"]
-FlowMeasurementSupportAlignment = Literal[
-  "exact_current", "unaligned", "not_applicable"]
-FlowMeasurementParticipantRole = Literal["source", "sink", "not_evaluated"]
+FlowMeasurementSupportAlignment = Literal["exact", "unaligned"]
 FlowMeasurementOrientation = Literal[
-  "aligned", "opposite", "unsigned_magnitude", "not_applicable",
-  "not_evaluated"]
-FlowMeasurementSemanticSupport = Literal[
-  "measured_actual_current", "measured_actual_superseded",
-  "measured_actual_withdrawn", "measured_actual_conflicted",
-  "measured_actual_inactive", "not_evaluated"]
+  "aligned", "opposite", "unsigned_magnitude", "not_applicable"]
+FlowMeasurementAgreementFinding = Literal[
+  "one_healthy_root", "corroborating_healthy_roots",
+  "same_root_conflict", "inactive_roots_present",
+  "cross_root_effective_body_disagreement"]
 FlowMeasurementAssertionLookupStatus = Literal["not_found", "found"]
 ```
 
-`FlowMeasurementSupportPresence` has no `absent` arm. An admitted FMA has all
-six pins in the selected membership, so every support row is `present`; a
-no-declaration result carries no support rows and uses `not_applicable` only
-at its outer declaration axis. `measured_actual_absent` is not a public
-literal because it is not independently derived by these queries.
+The existing public `AssertionActivity`, `ContainingLineageHealth`, and
+`FlowPortRole` aliases are reused where their semantics are exact. They are
+not re-exported under FM-specific duplicate names. There is no support-
+presence alias: a support row exists only for one of the six mandatory pins.
+There is no separate semantic-support alias because the VSM row already
+discloses activity, health, and current alignment. There is no positive
+`unknown` or result-only orientation token; optional outer fields use explicit
+`None` when no positive assertion selects an orientation or role.
 
 The required nested public rows, with exact field order, are:
 
 ```text
 FlowMeasurementSupportRow:
-  support_kind: Literal["frg", "vrg", "prg", "fld", "vpa", "vsm"]
+  support_kind: FlowMeasurementSupportKind
   record_index: StrictInt >= 0
-  record_id: str
-  presence: FlowMeasurementSupportPresence
-  alignment: FlowMeasurementSupportAlignment
+  activity: FlowMeasurementSupportActivity
+  containing_lineage_health: FlowMeasurementSupportLineageHealth
+  current_alignment: FlowMeasurementSupportAlignment
+
+FlowMeasurementEffectiveBodyGroupRow:
+  group_index: StrictInt >= 0
+  representative_current_tip_index: StrictInt >= 0
+  current_tip_indices: tuple[StrictInt >= 0, ...]
+  participating_root_indices: tuple[StrictInt >= 0, ...]
+  participant_role: FlowPortRole
+  orientation: FlowMeasurementOrientation
+  support_rows: tuple[FlowMeasurementSupportRow, ...]
 
 FlowMeasurementRootRow:
   root_index: StrictInt >= 0
@@ -422,123 +435,205 @@ FlowMeasurementRootRow:
   lineage_record_indices: tuple[StrictInt >= 0, ...]
   current_tip_indices: tuple[StrictInt >= 0, ...]
   withdrawal_indices: tuple[StrictInt >= 0, ...]
-  lineage_health: FlowMeasurementLineageHealth
-  effective_body_key: str
-  assertion_activity: FlowMeasurementPinnedAssertionActivity
-  participant_role: FlowMeasurementParticipantRole
-  orientation: Literal["aligned", "opposite", "unsigned_magnitude", "not_applicable"]
-  support_rows: tuple[FlowMeasurementSupportRow, ...]
+  lineage_health: ContainingLineageHealth
+  effective_body_group_indices: tuple[StrictInt >= 0, ...]
 
 FlowMeasurementEntryRow:
   entry_index: StrictInt >= 0
-  record_index: StrictInt >= 0
-  record_id: str
-  root_indices: tuple[StrictInt >= 0, ...]
-  assertion_activity: FlowMeasurementPinnedAssertionActivity
-  lineage_health: FlowMeasurementLineageHealth
-  participant_role: FlowMeasurementParticipantRole
-  orientation: Literal["aligned", "opposite", "unsigned_magnitude", "not_applicable"]
-  support_rows: tuple[FlowMeasurementSupportRow, ...]
+  flow_anchor_id: str matching FLOW_ANCHOR_ID_PATTERN
+  variable_anchor_id: str matching VARIABLE_ANCHOR_ID_PATTERN
+  participant_port_anchor_id: str matching PORT_ANCHOR_ID_PATTERN
+  orientation: FlowMeasurementOrientation
+  declaration_conclusion: FlowMeasurementDeclarationConclusion
+  agreement_findings: tuple[FlowMeasurementAgreementFinding, ...]
+  participant_role: FlowPortRole
+  roots: tuple[FlowMeasurementRootRow, ...]
+  effective_body_groups: tuple[FlowMeasurementEffectiveBodyGroupRow, ...]
+  current_assertion_indices: tuple[StrictInt >= 0, ...]
 ```
 
-All index tuples are strictly increasing, unique, in range, and non-boolean.
-`support_rows` has exactly six rows for a positive FMA and is ordered `frg`,
-`vrg`, `prg`, `fld`, `vpa`, `vsm`. Root rows are ordered by root record ID;
-entry rows are ordered by `(flow_anchor_id, variable_anchor_id,
-participant_port_anchor_id, context, orientation, root_record_id, record_id)`.
-The effective body key is the canonical SHA-256 key of the exact Section 10
-body tuple.
+All nested fields are required; there are no omitted defaults. Every empty
+tuple must be serialized explicitly. Material indices are non-boolean,
+nonnegative, unique where plural, in range, and strictly increasing by the
+selected material's record-ID order. `root_index`, `group_index`, and
+`entry_index` are likewise non-boolean, contiguous from zero, and refer only
+to their containing tuple. Root rows are ordered by root record ID.
+
+An effective-body group contains only current tips with one identical private
+canonical Section 10 body. Groups are ordered by those canonical body bytes;
+the representative is the lowest-record-ID current tip in the group. A root
+with tips in two bodies points to two group indices and no row selects one of
+them. A group may contain tips from several roots, and one conflicted root may
+participate in several groups. Inactive roots have no current tips and an
+empty group-index tuple.
+
+Every effective-body group and every found positive assertion disclosure has
+exactly six support rows ordered `frg`, `vrg`, `prg`, `fld`, `vpa`, `vsm`.
+There are no support rows on roots, absent results, reverse-result emptiness,
+not-found assertion results, or withdrawal disclosures. Reverse entries carry
+one complete immutable subject in the outer result's exact context. They do
+not repeat material or context.
 
 The five outer public result classes and exact field order are:
 
 ```text
 FlowMeasurementAssociationResult:
   material: ModelQueryMaterial
-  flow_anchor_id: str
-  variable_anchor_id: str
-  participant_port_anchor_id: str
+  flow_anchor_id: str matching FLOW_ANCHOR_ID_PATTERN
+  variable_anchor_id: str matching VARIABLE_ANCHOR_ID_PATTERN
+  participant_port_anchor_id: str matching PORT_ANCHOR_ID_PATTERN
   context: AssertionContext
   orientation: FlowMeasurementOrientation
   endpoint_registration: FlowMeasurementEndpointRegistration
   declaration_presence: FlowMeasurementDeclarationPresence
   declaration_conclusion: FlowMeasurementDeclarationConclusion
-  lineage_health: FlowMeasurementLineageHealth
-  assertion_activity: FlowMeasurementPinnedAssertionActivity | None
-  participant_role: FlowMeasurementParticipantRole
-  semantic_support: FlowMeasurementSemanticSupport
+  agreement_findings: tuple[FlowMeasurementAgreementFinding, ...]
+  participant_role: FlowPortRole | None
   roots: tuple[FlowMeasurementRootRow, ...]
+  effective_body_groups: tuple[FlowMeasurementEffectiveBodyGroupRow, ...]
+  current_assertion_indices: tuple[StrictInt >= 0, ...]
 
 FlowMeasurementAssociationsForFlowResult:
   material: ModelQueryMaterial
-  flow_anchor_id: str
+  flow_anchor_id: str matching FLOW_ANCHOR_ID_PATTERN
   context: AssertionContext
-  endpoint_registration: FlowMeasurementEndpointRegistration
+  registration_status: FlowMeasurementReverseRegistration
   declaration_presence: FlowMeasurementDeclarationPresence
   entries: tuple[FlowMeasurementEntryRow, ...]
 
 FlowMeasurementAssociationsForVariableResult:
   material: ModelQueryMaterial
-  variable_anchor_id: str
+  variable_anchor_id: str matching VARIABLE_ANCHOR_ID_PATTERN
   context: AssertionContext
-  endpoint_registration: FlowMeasurementEndpointRegistration
+  registration_status: FlowMeasurementReverseRegistration
   declaration_presence: FlowMeasurementDeclarationPresence
   entries: tuple[FlowMeasurementEntryRow, ...]
 
 FlowMeasurementAssociationsAtPortResult:
   material: ModelQueryMaterial
-  participant_port_anchor_id: str
+  participant_port_anchor_id: str matching PORT_ANCHOR_ID_PATTERN
   context: AssertionContext
-  endpoint_registration: FlowMeasurementEndpointRegistration
+  registration_status: FlowMeasurementReverseRegistration
   declaration_presence: FlowMeasurementDeclarationPresence
   entries: tuple[FlowMeasurementEntryRow, ...]
 
 FlowMeasurementAssertionResult:
   material: ModelQueryMaterial
-  record_id: str
+  record_id: str matching ^(?:fma|fmw)_[0-9a-f]{64}$
   lookup_status: FlowMeasurementAssertionLookupStatus
   record_index: StrictInt >= 0 | None
-  assertion_activity: FlowMeasurementPinnedAssertionActivity | None
-  lineage_health: FlowMeasurementLineageHealth
-  participant_role: FlowMeasurementParticipantRole
-  orientation: FlowMeasurementOrientation
+  assertion_activity: AssertionActivity | None
+  containing_root_health: ContainingLineageHealth | None
+  containing_subject_conclusion: FlowMeasurementDeclarationConclusion | None
+  containing_agreement_findings: tuple[FlowMeasurementAgreementFinding, ...] | None
+  root_record_index: StrictInt >= 0 | None
+  successor_indices: tuple[StrictInt >= 0, ...]
+  withdrawal_indices: tuple[StrictInt >= 0, ...]
+  participant_role: FlowPortRole | None
+  orientation: FlowMeasurementOrientation | None
   support_rows: tuple[FlowMeasurementSupportRow, ...]
-  root_indices: tuple[StrictInt >= 0, ...]
 ```
 
-For a no-declaration exact lookup, `declaration_presence` is `not_declared`,
-`declaration_conclusion` is `not_evaluated`, `lineage_health` is
-`not_applicable`, `assertion_activity` is `None`, `participant_role` is
-`not_evaluated`, `semantic_support` is `not_evaluated`, and `roots` is empty.
-It carries no fabricated support rows. Permanent FRG/VRG/PRG registrations
-use `lineage_health == "not_applicable"`; they never expose impossible
-superseded/withdrawn/conflicted/inactive registration states.
+Every listed outer field is required; empty tuples and `None` values must be
+serialized explicitly and cannot be supplied by omission. Each outer result
+carries one complete `ModelQueryMaterial` exactly once. Nested rows never
+carry material, records, or duplicate record IDs.
 
-The declaration conclusion is distinct from each root's health. Healthy roots
-with identical effective bodies disclose corroboration; same-root conflict,
-inactive roots, and cross-root effective-body disagreement remain visible in
-the root rows and do not select a winner. `FlowMeasurementAssertionResult`
-uses `lookup_status == "not_found"` with null/empty derived fields and no
-support rows when the record is absent; `found` reconstructs the exact positive
-or uncitable withdrawal disclosure.
+For an exact lookup with any unregistered endpoint or no matching subject,
+`declaration_presence` is `not_declared`, `declaration_conclusion` is
+`not_evaluated`, `agreement_findings`, `roots`, `effective_body_groups`, and
+`current_assertion_indices` are empty, and `participant_role` is `None`.
+`endpoint_registration` independently states which endpoint registration is
+absent. If all endpoints are registered but the port is not a participant in
+that flow, the result is the same structured no-declaration shape with
+`all_registered`; registration does not manufacture FM relevance.
 
-The exact new root exports, in order after the existing model-kernel exports,
-are:
+For each reverse result, an unregistered selected endpoint uses
+`registration_status == "not_registered"`, `declaration_presence ==
+"not_declared"`, and an empty entry tuple. A registered endpoint with no FM
+subject in the exact context uses `registered`, `not_declared`, and an empty
+entry tuple. A non-empty entry tuple requires `registered` and `declared`.
+Cross-context entries never appear.
+
+The reverse methods use only these accepted immutable indexes:
+
+- flow: `flow_measurement_ids_by_flow_context[(flow_anchor_id, context)]`;
+- variable: `flow_measurement_ids_by_variable_context[(variable_anchor_id, context)]`;
+- port: `flow_measurement_ids_by_port_context[(participant_port_anchor_id, context)]`.
+
+Each selected record ID is grouped by the complete Section 10 subject; one
+subject becomes one entry regardless of its root count. Flow entries order by
+`(variable_anchor_id, participant_port_anchor_id, orientation_rank)`, variable
+entries by `(flow_anchor_id, participant_port_anchor_id, orientation_rank)`,
+and port entries by `(flow_anchor_id, variable_anchor_id, orientation_rank)`.
+`orientation_rank` is the Section 12 literal position, never lexicographic or
+caller-defined. Entry indices are assigned only after semantic sorting.
+Duplicate subjects reject reconstruction; no reverse method aliases another,
+scans unbounded records, or emits one entry per root or assertion.
+
+`FlowMeasurementAssertionResult` accepts only syntactically valid `fma_` or
+`fmw_` IDs. A missing ID uses `not_found`, null optional fields, and empty
+index/support tuples. A found withdrawal carries only its `record_index`; the
+withdrawal record at that index contains its target, while every positive-only
+field remains null/empty. A found positive carries its activity, containing
+root health and subject conclusion/findings, root/successor/withdrawal
+indices, derived role, orientation, and exactly six support rows for that
+selected assertion body.
+
+The subject conclusion has exact precedence. With no matching FMA it is
+`not_evaluated`. With declarations, any same-root conflict or cross-root body-
+set disagreement yields `conflicted`. Otherwise any healthy active root yields
+`declared_direct_measurement_relevance`, including mixtures with inactive
+roots. Only an all-inactive declared subject yields `inactive`. No singular
+assertion activity or lineage health is selected at subject level.
+
+Agreement findings are retained in their literal order. `one_healthy_root`
+appears when exactly one root is healthy; `corroborating_healthy_roots` appears
+when at least two healthy roots participate in one body group;
+`same_root_conflict` appears when any root is conflicted;
+`inactive_roots_present` appears when any root is inactive; and
+`cross_root_effective_body_disagreement` appears exactly when distinct active
+roots have unequal current body sets. Applicable findings coexist and do not
+select a winner.
+
+Support-row reachability is exact:
+
+| Kind | Activity | Containing lineage health | Current alignment |
+|---|---|---|---|
+| FRG / VRG / PRG | `permanent` only | `not_applicable` only | `exact` only |
+| FLD / VPA, pinned record is a current tip | `current` | `healthy` or `conflicted` | `exact` |
+| FLD / VPA, pinned record is superseded | `superseded` | `healthy`, `conflicted`, or `inactive` | `exact` while active; `unaligned` when inactive |
+| FLD / VPA, pinned record is withdrawn | `withdrawn` | `healthy`, `conflicted`, or `inactive` | `exact` while another active tip remains; `unaligned` when inactive |
+| VSM, pinned record is current | `current` | `healthy` or `conflicted` | `exact` when every current observation-role tip remains exact measured-actual; otherwise `unaligned` |
+| VSM, pinned record is superseded | `superseded` | `healthy` or `conflicted` | `exact` when every current observation-role tip remains exact measured-actual; otherwise `unaligned` |
+
+FLD/VPA lineage subjects preserve the exact FM-required context/participant
+relation, so an active lineage remains aligned even when the pinned record is
+stale. An inactive FLD/VPA lineage has no current support and is unaligned.
+VSM alignment compares the complete current context-independent observation-
+role tip set with the exact measured-actual token. VSM has no
+`AssertionContext`, withdrawal record, `withdrawn` activity, or `inactive`
+health. Every table cell has a future valid-world witness; all other kind/
+activity/health/alignment products are invalid.
+
+The accepted 205-name Slice A export prefix remains byte-order exact. Slice B
+adds exactly these 20 public names in this order, producing exactly 225 total
+`backend.model_kernel.__all__` names:
 
 ```text
-FlowMeasurementAssociation
-FlowMeasurementAssociationWithdrawal
 FlowMeasurementEndpointRegistration
+FlowMeasurementReverseRegistration
 FlowMeasurementDeclarationPresence
 FlowMeasurementDeclarationConclusion
-FlowMeasurementLineageHealth
-FlowMeasurementPinnedAssertionActivity
-FlowMeasurementSupportPresence
+FlowMeasurementSupportKind
+FlowMeasurementSupportActivity
+FlowMeasurementSupportLineageHealth
 FlowMeasurementSupportAlignment
-FlowMeasurementParticipantRole
 FlowMeasurementOrientation
-FlowMeasurementSemanticSupport
+FlowMeasurementAgreementFinding
 FlowMeasurementAssertionLookupStatus
 FlowMeasurementSupportRow
+FlowMeasurementEffectiveBodyGroupRow
 FlowMeasurementRootRow
 FlowMeasurementEntryRow
 FlowMeasurementAssociationResult
@@ -548,9 +643,10 @@ FlowMeasurementAssociationsAtPortResult
 FlowMeasurementAssertionResult
 ```
 
-The five query methods are Slice B additions and are not exported as module
-aliases in Slice A. Private helpers remain private. Records are built only
-through generic `build_record(record_cls, **fields)`.
+This is 11 new aliases, four nested rows, and five outer results. The five
+query methods are methods only and are never exported as free functions.
+Private helpers remain private. No FM-specific record builder is added;
+records continue to use only generic `build_record(record_cls, **fields)`.
 
 ## 18. Authoritative result reconstruction
 
@@ -559,8 +655,12 @@ values through existing model-kernel revalidation. It proves every referenced
 record belongs to the selected revision, recomputes record IDs, revision ID,
 registration status, subject matches, FRG-derived role, FLD/VPA/VSM exact
 support, roots, parents, tips, body groups, corroboration/disagreement,
-withdrawal activity, support activity, indices, counts, and deterministic
-ordering.
+withdrawal activity, support activity/health/current alignment, conclusions,
+findings, indices, counts, and deterministic ordering. It derives each
+reverse entry from exactly one subject selected through the existing
+flow/context, variable/context, or port/context FM index, then uses the same
+private subject-payload builder as the exact lookup. Revalidation never calls
+a public query recursively and never silently reselects material.
 
 It rejects forged Pydantic instances, `model_construct`, `model_copy`, hidden
 or private state, scalar subclasses, booleans as indices, wrong union arms,
@@ -569,10 +669,13 @@ cross-context leakage, revision/material substitution, cycles, and oversized
 graphs using accepted model-kernel limits. It performs no store, filesystem,
 network, clock, environment, cache, or write operation.
 
-Individual assertion activity, containing-lineage health, and each support
-pin's activity remain distinct. Stale support is not current support and is
-not physical invalidity. A 36-record pre-FM revision returns structured
-absence with exactly its original material.
+Result validation uses the existing `ModelQueryMaterial` reconstruction and
+`validate_record_collection` authority; FM adds no second graph-validation
+system. Only after material reconstruction succeeds may private builders
+derive rows. Individual assertion activity, containing-root health, support
+activity, support-lineage health, and current alignment remain distinct.
+Stale or unaligned support is disclosure, not physical invalidity. A 36-record
+pre-FM revision returns structured absence with exactly its original material.
 
 ## 19. Import and isolation direction
 
@@ -645,9 +748,9 @@ Original FM-A01–FM-A28 remain stable and are corrected as follows:
 | FM-A10 | Withdrawal has no evidence and targets only one eligible current tip. |
 | FM-A11 | Historical replay revives explicit prior membership and never chooses by time/rank/order. |
 | FM-A12 | Later support supersession/withdrawal/conflict is disclosed without retargeting bytes. |
-| FM-A13 | Exact lookup includes flow, variable, port, context, relation, and orientation. |
-| FM-A14 | Four reverse indexes are non-overlapping, exact-context, deterministic, and bounded. |
-| FM-A15 | Results distinguish registration, declaration, lineage, assertion, support, role, relation, orientation, and semantic axes. |
+| FM-A13 | Exact lookup includes flow, variable, port, context, the fixed implicit v1 relation, and orientation. |
+| FM-A14 | Three reverse indexes are non-overlapping, exact-context, deterministic, and bounded; assertion lookup is separate. |
+| FM-A15 | Results distinguish registration, declaration conclusion, per-root lineage, assertion activity, support activity, support health, current alignment, role, orientation, and agreement axes. |
 | FM-A16 | Pre-FM 36-record material returns structured absence. |
 | FM-A17 | One complete material object is carried once in each result. |
 | FM-A18 | Forged nested models, wrong unions, hidden state, stale fields, indices, rows, cycles, and substitutions reject. |
@@ -673,6 +776,24 @@ Original FM-A01–FM-A28 remain stable and are corrected as follows:
 | FM-A38 | Result replacement and material replacement are detected by authoritative reconstruction. |
 | FM-A39 | Boolean indices, hostile scalar subclasses, oversized/deep/cyclic graphs reject before lower work. |
 | FM-A40 | Exact deterministic reproduction covers alternate construction order and hash seeds. |
+| FM-A41 | One conflicted root with current tips in multiple bodies points to every applicable body group and selects no body/support set. |
+| FM-A42 | Independent healthy roots in one effective-body group disclose ordered corroboration without selecting a representative root as authority. |
+| FM-A43 | Independent active roots with unequal body sets retain every group/root and disclose cross-root disagreement without a winner. |
+| FM-A44 | Healthy-plus-conflicted mixtures retain both findings and produce aggregate `conflicted` precedence. |
+| FM-A45 | Healthy-plus-inactive mixtures retain both findings and remain positively declared because a healthy active root exists. |
+| FM-A46 | Conflicted roots with equal body sets do not manufacture cross-root disagreement; unequal sets do. |
+| FM-A47 | All-inactive roots retain their lineage rows, have no active body groups, and produce aggregate `inactive`. |
+| FM-A48 | All four orientations produce separate exact/reverse entries and exact/assertion agreement in literal order. |
+| FM-A49 | Every reachable FRG/VRG/PRG/FLD/VPA/VSM activity-health-alignment combination has a valid-world witness. |
+| FM-A50 | Impossible registration lifecycle states and contextual/withdrawn/inactive VSM states reject reconstruction. |
+| FM-A51 | Exact, flow reverse, variable reverse, port reverse, and assertion results agree through one shared subject payload. |
+| FM-A52 | Exact-context filtering excludes every otherwise matching cross-context subject from all three reverse indexes. |
+| FM-A53 | Unregistered, registered-but-empty, no-declaration, positive, not-found, and withdrawal shapes have exact null/empty cardinality. |
+| FM-A54 | Missing, duplicate, extra, reordered, Boolean, negative, out-of-range, or substituted rows and indices reject. |
+| FM-A55 | Forged material, revision, record ID, nested instance, hidden state, wrong union, cycle, and stale derived value reject before disclosure. |
+| FM-A56 | Each outer result carries material once; nested rows are index-only and validation performs no I/O or writes. |
+| FM-A57 | The accepted 36-record pre-FM membership returns structured absence from all five queries with exact unchanged material. |
+| FM-A58 | Public tests pin all 20 Slice B additions, 225 total exports, every field in order, and every literal in order using equality, never subsets. |
 
 Every public literal and refusal is reached by a valid disposable world or is
 identified as structurally impossible by the exact contract. Tests assert full
@@ -701,12 +822,14 @@ claimed until an implementation slice runs it.
 
 ### Slice A — declaration and ledger integrity
 
-Slice A may add only `FlowMeasurementAssociation`,
+Slice A is owner accepted at exact tested implementation
+`6210d3c250b96f54b764a365cb0a3a988d9bf9f6`. Its authorized scope added only
+`FlowMeasurementAssociation`,
 `FlowMeasurementAssociationWithdrawal`, exact canonical/store/evidence/DAG
 validation, prefix/union dispatch, immutable indexes, replay, builders,
-exports, and hostile integrity tests. It must implement the ten-step append
-order in Section 15, preserve all existing records and bytes, prepare the
-immutable indexes needed by Slice B, and stop for owner validation.
+exports, and hostile integrity tests. It implemented the ten-step append order
+in Section 15, preserved all existing records and bytes, and prepared the
+immutable indexes needed by Slice B.
 
 Slice A must not implement the five public query methods beyond construction
 needs, append a fixture, create a demo, call evidence or temporal stores, or
@@ -714,10 +837,18 @@ add an upper composition layer.
 
 ### Slice B — queries and authoritative results
 
-Slice B may add exactly the five methods and five result classes, exact
+The corrected contract permits Slice B to add exactly the five methods, 11
+aliases, four nested rows, and five outer result classes in Section 17, exact
 orthogonal statuses, deterministic indexed ordering, carry-once material,
 authoritative reconstruction, adversarial hardening, import isolation, and
-full verification. It must stop for owner validation.
+full verification. Implementation remains unauthorized until the owner
+accepts this exact correction and separately authorizes Slice B.
+
+The future execution sequence and exact FM-B01–FM-B58 executable obligations
+are recorded in
+`docs/superpowers/plans/2026-09-09-fm001-slice-b-implementation-plan.md` and
+`docs/superpowers/plans/2026-09-09-fm001-slice-b-adversarial-acceptance-matrix.md`.
+Those documents are plans, not implementation authorization.
 
 There is no Slice C and no demonstration slice. Any later rehearsal, fixture,
 identity mint, append, or authoritative artifact requires a separate owner
@@ -740,11 +871,14 @@ must separately decide time, numeric, unit/conversion, aggregation, coverage,
 and refusal policies. FM-001 is not sufficient for FA-001 and makes no promise
 that FA-001 will be implemented.
 
-The synthesis is implementation-ready: names, prefixes, record kinds, IDs,
-fields, immutable subject/body keys, support matrix, lifecycle, withdrawal,
-validation order, indexes, queries, result axes, exports, import boundary,
-replay, limits, hostile requirements, slices, and exclusions are frozen.
-There are zero unresolved owner questions. FM-001 remains unapproved pending
-owner acceptance of this exact synthesis; no ADR-0021 is created or reserved.
+The corrected Slice B contract is implementation-ready: names, prefixes,
+record kinds, IDs, fields, immutable subject/body keys, support matrix,
+lifecycle, withdrawal, validation order, indexes, queries, result axes,
+exports, import boundary, replay, limits, hostile requirements, slices, and
+exclusions are frozen.
+There are zero unresolved semantic questions. The sole owner gate is approval
+of this exact Slice B public-contract correction and separate authorization to
+implement it. ADR-0021 exists and is amended to reference these corrected
+bytes.
 
 END OF FM-001 CORRECTED FINAL SYNTHESIS

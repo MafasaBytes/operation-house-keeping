@@ -355,8 +355,9 @@ multiplicity remains lineage conflict and inactive roots do not create
 cross-root disagreement. VSM is context-independent; exact context matching
 belongs to FLD/VPA.
 
-The authoritative 36-record model contains zero FMA/FMW records. FM-001 Slice
-B implementation is not authorized pending owner approval of its corrected
-five-query public result contract. Slice A adds no FM query/result surface,
-fixture, demonstration, authoritative append, FA-001 evaluator, occurrence
+The authoritative 36-record model contains zero FMA/FMW records. The corrected
+FM-001 Slice B five-query public result contract is documented as a candidate;
+owner approval and separate implementation authorization remain pending. Slice
+A adds no FM query/result surface, fixture, demonstration, authoritative
+append, FA-001 evaluator, occurrence
 claim, identity, store, facade, connector, or upper-layer import.

@@ -18,9 +18,9 @@ adversarially hardened, and dual-clean-checkout verified.
 
 FM-001's corrected design and repaired Slice A are owner accepted at exact
 tested implementation `6210d3c250b96f54b764a365cb0a3a988d9bf9f6`.
-Slice B implementation remains unauthorized pending owner approval of its
-corrected exact public contract. The authoritative model still contains zero
-FMA/FMW records.
+The corrected exact Slice B public contract is documented as a candidate;
+owner approval and separate implementation authorization remain pending. The
+authoritative model still contains zero FMA/FMW records.
 
 The authoritative synthetic demo model contains exactly 36 records at
 `mrv_b8f03e1c03c23efc5c4454d00e43e6b89b8254ab87ce724d7418b8a94288c7ee`.
@@ -86,7 +86,7 @@ sources and disclosures are test artifacts, never engineering truth.
 | 18 | FL-001 | Explicit flow identity and declaration-only disclosure | [ADR-0018](docs/adr/0018-explicit-flow-identity-and-declaration.md) |
 | 19 | EA-001 | Content-bound operational-evidence selection, assurance, and bounded value-compatibility alignment | [ADR-0019](docs/adr/0019-content-bound-operational-evidence-selection-and-assurance.md) |
 | 20 | TA-001 | Complete, owner accepted, adversarially hardened, and dual-clean-checkout verified | [ADR-0020](docs/adr/0020-evidence-gated-declared-transition-assessment.md) |
-| 21 | FM-001 | Corrected design and repaired Slice A owner accepted; Slice B contract correction pending and implementation unauthorized | [ADR-0021](docs/adr/0021-explicit-flow-to-measurement-association.md) |
+| 21 | FM-001 | Corrected design and repaired Slice A owner accepted; corrected Slice B contract awaits approval and implementation remains unauthorized | [ADR-0021](docs/adr/0021-explicit-flow-to-measurement-association.md) |
 
 Accepted specifications live in `docs/superpowers/specs/`; accepted decisions
 live in `docs/adr/`; owner gates and verification evidence live in
@@ -118,8 +118,8 @@ FM-001 Slice A now supplies the owner-accepted evidence-bearing,
 replayable declaration relating an existing `FlowAnchor`, `VariableAnchor`,
 and participant `PortAnchor` under exact context, orientation, and six pinned
 same-ledger support records. Slice B's five read-only query responsibilities
-remain architecturally accepted, but implementation is unauthorized until its
-corrected exact public result contract is owner approved.
+remain architecturally accepted. Their corrected exact public result contract
+is documented but not yet owner approved, and implementation is unauthorized.
 
 The unapproved roadmap continues with FM-001 Slice B, then FA-001
 evidence-gated bounded flow assessment, then optional accountable
