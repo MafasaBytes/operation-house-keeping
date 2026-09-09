@@ -2,12 +2,13 @@
 
 Date: 2026-09-09
 
-Status: corrected executable contract pending owner approval; Slice B
-implementation unauthorized
+Status: executed and owner accepted at exact tested implementation
+`4d8219d88d3f5f531c1a1cf250b36cb25e001c2f`; FM-001 complete
 
-Authoritative synthesis:
+Accepted tested-implementation synthesis blob:
 `docs/superpowers/specs/2026-09-07-fm001-explicit-flow-to-measurement-association-design.md`
-at SHA-256 `6c1061fe63bf77d0975a4854fb0ba9a462cf03bef6af125d91b3ed43433592f7`.
+at exact implementation `4d8219d88d3f5f531c1a1cf250b36cb25e001c2f`,
+SHA-256 `6c1061fe63bf77d0975a4854fb0ba9a462cf03bef6af125d91b3ed43433592f7`.
 
 Accepted Slice A implementation:
 `6210d3c250b96f54b764a365cb0a3a988d9bf9f6`.
@@ -199,7 +200,7 @@ discrepancy report and stop.
 
 ## 10. Verification and stopping point
 
-Future implementation verification must include the complete FM suite,
+Completed implementation verification included the complete FM suite,
 model-kernel, identity, affected FL/VP/VS/ES, architecture/isolation, full
 working repository, fresh base-only and all-extras checkouts, permitted
 loopback reconciliation, CAD/STEP/PDF, five hash seeds, reverse construction,
@@ -212,7 +213,10 @@ FRG/FLD/FLW `1/1/0`, TRG/TRD/TRW `0/0/0`, FMA/FMW `0/0`, ledger aggregate
 and every accepted disclosure, lower reproduction, identity, membership,
 fixture, record, and artifact.
 
-This plan is not implementation authorization. Stop after the documentation
-checkpoint for owner approval of the corrected contract.
+The accepted completion report is
+`docs/superpowers/reports/2026-09-09-fm001-slice-b-completion-report.md` at
+SHA-256 `f7ce3280a6d1af1682b6ef1139fc8d8d2166c26e56525c703029f03586d8c290`.
+FM-001 is complete; there is no Slice C or demonstration, and FA-001 remains
+separate and unauthorized.
 
 END OF FM-001 SLICE B IMPLEMENTATION PLAN

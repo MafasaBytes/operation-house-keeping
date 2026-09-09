@@ -8,7 +8,7 @@ contains the binding project guidance.
 
 ## Current status
 
-The accepted implemented milestone sequence through TA-001 is complete.
+The accepted implemented milestone sequence through FM-001 is complete.
 EA-001 is adversarially repaired, full-suite verified, and
 dual-clean-checkout verified. TA-001 Slice A is owner accepted at exact tested
 implementation `76738ac0d098eb59b0fec4f6970aa862528647d9`. Slice B adversarial
@@ -16,11 +16,10 @@ hardening is implemented and verified at
 `2ec18f7234273dba98098d268df4568d5cc84d85`. TA-001 complete, owner accepted,
 adversarially hardened, and dual-clean-checkout verified.
 
-FM-001's corrected design and repaired Slice A are owner accepted at exact
-tested implementation `6210d3c250b96f54b764a365cb0a3a988d9bf9f6`.
-The corrected exact Slice B public contract is owner accepted at
-`7bb7db8ec27af74bdd887d763222757c1f1fc821`; Slice B implementation only is
-authorized and not yet complete. The authoritative model still contains zero
+FM-001 is complete and owner accepted at exact tested implementation
+`4d8219d88d3f5f531c1a1cf250b36cb25e001c2f`. Its exact 225-name public surface
+and five read-only Slice B query responsibilities are accepted. There is no
+Slice C or demonstration, and the authoritative model still contains zero
 FMA/FMW records.
 
 The authoritative synthetic demo model contains exactly 36 records at
@@ -87,7 +86,7 @@ sources and disclosures are test artifacts, never engineering truth.
 | 18 | FL-001 | Explicit flow identity and declaration-only disclosure | [ADR-0018](docs/adr/0018-explicit-flow-identity-and-declaration.md) |
 | 19 | EA-001 | Content-bound operational-evidence selection, assurance, and bounded value-compatibility alignment | [ADR-0019](docs/adr/0019-content-bound-operational-evidence-selection-and-assurance.md) |
 | 20 | TA-001 | Complete, owner accepted, adversarially hardened, and dual-clean-checkout verified | [ADR-0020](docs/adr/0020-evidence-gated-declared-transition-assessment.md) |
-| 21 | FM-001 | Repaired Slice A and corrected Slice B contract owner accepted; Slice B implementation authorized and incomplete | [ADR-0021](docs/adr/0021-explicit-flow-to-measurement-association.md) |
+| 21 | FM-001 | Complete and owner accepted: explicit flow-to-measurement declarations and five read-only queries over the exact 225-name surface | [ADR-0021](docs/adr/0021-explicit-flow-to-measurement-association.md) |
 
 Accepted specifications live in `docs/superpowers/specs/`; accepted decisions
 live in `docs/adr/`; owner gates and verification evidence live in
@@ -108,21 +107,15 @@ source, sensor, signer, clock, engineering conclusion, or physical condition.
 
 ## Architectural frontier
 
-TA-001 is the current completed boundary: its [owner-accepted design](docs/superpowers/specs/2026-09-07-ta001-evidence-gated-declared-transition-assessment-design.md)
-is recorded by [ADR-0020](docs/adr/0020-evidence-gated-declared-transition-assessment.md),
-and its pure, read-only assessment supports or does not support one declared
-transition endpoint pattern from bounded carried evidence. It does not
-establish transition occurrence or non-occurrence, add an orchestration facade
-or demonstration, or create a generic immutable assessment identity.
-
-FM-001 Slice A now supplies the owner-accepted evidence-bearing,
+FM-001 is the current completed boundary. Slice A supplies the owner-accepted
+evidence-bearing,
 replayable declaration relating an existing `FlowAnchor`, `VariableAnchor`,
 and participant `PortAnchor` under exact context, orientation, and six pinned
-same-ledger support records. Slice B's five read-only query responsibilities
-remain architecturally accepted. Their corrected exact public result contract
-is owner accepted; Slice B implementation only is authorized and incomplete.
+same-ledger support records. Slice B supplies the five accepted read-only query
+responsibilities through the exact 225-name public surface. There is no Slice
+C or demonstration.
 
-The unapproved roadmap after the current FM-001 Slice B implementation gate
+The unapproved roadmap after completed FM-001
 continues with possible FA-001 evidence-gated bounded flow assessment, then optional accountable
 flow occurrence/history only after explicit time-window, continuity, and
 authenticity contracts. Configuration identity remains an alternative priority

@@ -1,11 +1,11 @@
 # FM-001 — Explicit Flow-to-Measurement Association
 
-Corrected final synthesis — design only
+Corrected final synthesis — implemented and owner accepted
 
 ## 1. Status, inputs, and baseline
 
-Status: owner-accepted design and repaired Slice A; corrected Slice B public
-contract pending owner approval; Slice B implementation unauthorized.
+Status: FM-001 complete and owner accepted at exact tested implementation
+`4d8219d88d3f5f531c1a1cf250b36cb25e001c2f`; no Slice C or demonstration.
 
 This synthesis is based on `main` at
 `a069cb664af1638cef2168ced6034eb2d30f2f14`.
@@ -837,18 +837,20 @@ add an upper composition layer.
 
 ### Slice B — queries and authoritative results
 
-The corrected contract permits Slice B to add exactly the five methods, 11
+The accepted Slice B implementation adds exactly the five methods, 11
 aliases, four nested rows, and five outer result classes in Section 17, exact
 orthogonal statuses, deterministic indexed ordering, carry-once material,
 authoritative reconstruction, adversarial hardening, import isolation, and
-full verification. Implementation remains unauthorized until the owner
-accepts this exact correction and separately authorizes Slice B.
+full verification. It is owner accepted at exact tested implementation
+`4d8219d88d3f5f531c1a1cf250b36cb25e001c2f`.
 
-The future execution sequence and exact FM-B01–FM-B58 executable obligations
+The completed execution sequence and exact FM-B01–FM-B58 executable obligations
 are recorded in
 `docs/superpowers/plans/2026-09-09-fm001-slice-b-implementation-plan.md` and
 `docs/superpowers/plans/2026-09-09-fm001-slice-b-adversarial-acceptance-matrix.md`.
-Those documents are plans, not implementation authorization.
+The accepted completion evidence is recorded in
+`docs/superpowers/reports/2026-09-09-fm001-slice-b-completion-report.md` at
+SHA-256 `f7ce3280a6d1af1682b6ef1139fc8d8d2166c26e56525c703029f03586d8c290`.
 
 There is no Slice C and no demonstration slice. Any later rehearsal, fixture,
 identity mint, append, or authoritative artifact requires a separate owner
@@ -871,7 +873,7 @@ must separately decide time, numeric, unit/conversion, aggregation, coverage,
 and refusal policies. FM-001 is not sufficient for FA-001 and makes no promise
 that FA-001 will be implemented.
 
-The corrected Slice B contract is implementation-ready: names, prefixes,
+The accepted Slice B contract is implemented: names, prefixes,
 record kinds, IDs, fields, immutable subject/body keys, support matrix,
 lifecycle, withdrawal, validation order, indexes, queries, result axes,
 exports, import boundary, replay, limits, hostile requirements, slices, and

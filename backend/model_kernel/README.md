@@ -343,8 +343,10 @@ complete, adversarially reviewed, full-suite verified, and
 dual-clean-checkout verified at implementation HEAD
 `fe3b15a3caf77974a795dad5b04c0a35abee37b4`.
 
-FM-001's corrected design and repaired Slice A are owner accepted at exact
-tested implementation `6210d3c250b96f54b764a365cb0a3a988d9bf9f6`.
+FM-001 is complete and owner accepted at exact tested implementation
+`4d8219d88d3f5f531c1a1cf250b36cb25e001c2f`. Its corrected design and repaired
+Slice A remain accepted at
+`6210d3c250b96f54b764a365cb0a3a988d9bf9f6`.
 Slice A adds only `FlowMeasurementAssociation` (`fma_`) and its uncitable
 `FlowMeasurementAssociationWithdrawal` (`fmw_`) to the existing model ledger,
 with exact same-revision FRG/VRG/PRG/FLD/VPA/VSM closure, participant-port
@@ -355,10 +357,9 @@ multiplicity remains lineage conflict and inactive roots do not create
 cross-root disagreement. VSM is context-independent; exact context matching
 belongs to FLD/VPA.
 
-The authoritative 36-record model contains zero FMA/FMW records. The corrected
-FM-001 Slice B five-query public result contract is owner accepted at
-`7bb7db8ec27af74bdd887d763222757c1f1fc821`; Slice B implementation only is
-authorized and incomplete. Slice A adds no FM query/result surface, fixture,
-demonstration, authoritative
-append, FA-001 evaluator, occurrence
-claim, identity, store, facade, connector, or upper-layer import.
+The authoritative 36-record model contains zero FMA/FMW records. Slice B adds
+exactly five read-only query responsibilities, 11 aliases, four nested rows,
+and five outer results, producing the accepted exact 225-name public surface.
+There is no Slice C or demonstration. FM-001 adds no authoritative append,
+FA-001 evaluator, occurrence claim, identity, store, facade, connector, or
+upper-layer import.

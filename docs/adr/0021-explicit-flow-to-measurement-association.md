@@ -2,13 +2,14 @@
 
 Date: 2026-09-07
 
-Status: FM-001 corrected final design, repaired Slice A, and corrected Slice B
-contract owner accepted; Slice B implementation only authorized and not yet
-complete; demonstration unauthorized
+Status: FM-001 complete and owner accepted at exact tested implementation
+`4d8219d88d3f5f531c1a1cf250b36cb25e001c2f`; no Slice C or demonstration
 
-Authoritative design:
+The authoritative design blob at the exact tested implementation is:
 [`docs/superpowers/specs/2026-09-07-fm001-explicit-flow-to-measurement-association-design.md`](../superpowers/specs/2026-09-07-fm001-explicit-flow-to-measurement-association-design.md),
 SHA-256 `6c1061fe63bf77d0975a4854fb0ba9a462cf03bef6af125d91b3ed43433592f7`.
+Its current path now contains only the final status reconciliation after that
+tested implementation.
 
 Correction record:
 [`docs/superpowers/reports/2026-09-07-fm001-final-contract-correction-report.md`](../superpowers/reports/2026-09-07-fm001-final-contract-correction-report.md).
@@ -18,7 +19,7 @@ Accepted Slice A evidence and decision:
 - [`docs/superpowers/reports/2026-09-07-fm001-slice-a-completion-report.md`](../superpowers/reports/2026-09-07-fm001-slice-a-completion-report.md);
 - [`docs/superpowers/reports/2026-09-09-fm001-slice-a-owner-acceptance.md`](../superpowers/reports/2026-09-09-fm001-slice-a-owner-acceptance.md).
 
-Corrected future Slice B contract records:
+Accepted Slice B contract records:
 
 - [`docs/superpowers/plans/2026-09-09-fm001-slice-b-implementation-plan.md`](../superpowers/plans/2026-09-09-fm001-slice-b-implementation-plan.md);
 - [`docs/superpowers/plans/2026-09-09-fm001-slice-b-adversarial-acceptance-matrix.md`](../superpowers/plans/2026-09-09-fm001-slice-b-adversarial-acceptance-matrix.md);
@@ -26,6 +27,11 @@ Corrected future Slice B contract records:
 
 Owner acceptance and implementation authorization:
 [`docs/superpowers/reports/2026-09-09-fm001-slice-b-contract-owner-acceptance.md`](../superpowers/reports/2026-09-09-fm001-slice-b-contract-owner-acceptance.md).
+
+Accepted Slice B completion and final owner decision:
+
+- [`docs/superpowers/reports/2026-09-09-fm001-slice-b-completion-report.md`](../superpowers/reports/2026-09-09-fm001-slice-b-completion-report.md), SHA-256 `f7ce3280a6d1af1682b6ef1139fc8d8d2166c26e56525c703029f03586d8c290`;
+- [`docs/superpowers/reports/2026-09-09-fm001-final-owner-acceptance.md`](../superpowers/reports/2026-09-09-fm001-final-owner-acceptance.md).
 
 ## Decision
 
@@ -55,7 +61,7 @@ follow accepted model-kernel precedent. Repaired Slice A is owner accepted at
 exact tested implementation
 `6210d3c250b96f54b764a365cb0a3a988d9bf9f6`.
 
-The corrected future Slice B surface retains exactly five read-only query
+The accepted Slice B surface contains exactly five read-only query
 methods. It adds exactly 11 aliases, four nested rows, and five outer results:
 20 ordered additions after the accepted 205-name Slice A export prefix, for
 225 total `backend.model_kernel.__all__` names. The five methods are methods
@@ -75,9 +81,9 @@ corroborating, and cross-root disagreeing states remain simultaneous ordered
 findings under one explicit aggregate-conclusion precedence. One reverse
 entry represents one complete immutable subject in the requested context.
 Every outer result carries one complete `ModelQueryMaterial` once, and nested
-rows use strict indices only. The owner accepts these exact contracts at
-`7bb7db8ec27af74bdd887d763222757c1f1fc821` and authorizes Slice B
-implementation only; neither Slice B nor FM-001 is yet complete.
+rows use strict indices only. The owner accepted these exact contracts at
+`7bb7db8ec27af74bdd887d763222757c1f1fc821` and accepts their implementation
+at `4d8219d88d3f5f531c1a1cf250b36cb25e001c2f`. FM-001 is complete.
 
 ## Truth boundary
 
@@ -88,8 +94,8 @@ recommendation, or physical occurrence. FM does not read evidence or temporal
 stores, select observations, calculate signs, convert units, or assess flow.
 
 Accepted Slice A is limited to records, canonical/store/replay/DAG/withdrawal
-integrity, and immutable indexes. Authorized Slice B is limited to the five
+integrity, and immutable indexes. Accepted Slice B is limited to the five
 read-only queries and authoritatively reconstructed results. There is no Slice
-C or demonstration slice.
+C or demonstration slice. FA-001 remains separate and unauthorized.
 
 END OF ADR-0021

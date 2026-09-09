@@ -33,11 +33,11 @@ boundaries remain binding.
 The owner-accepted milestone sequence is DS-001, DS-002, DS-003, DS-004,
 TS-001, IB-001, MK-001, VM-001, VS-001, SN-001, ES-001, CN-001, PT-001,
 VP-001, BH-001, ST-001, ST-002, FL-001, EA-001, TA-001, and FM-001. FL-001,
-EA-001, and TA-001 are complete and owner accepted. FM-001's corrected design
-and repaired Slice A are owner accepted at exact tested implementation
-`6210d3c250b96f54b764a365cb0a3a988d9bf9f6`. The corrected Slice B public
-contract is owner accepted at `7bb7db8ec27af74bdd887d763222757c1f1fc821`;
-Slice B implementation only is authorized and not yet complete.
+EA-001, TA-001, and FM-001 are complete and owner accepted. FM-001's corrected
+design and repaired Slice A are owner accepted at exact tested implementation
+`6210d3c250b96f54b764a365cb0a3a988d9bf9f6`; Slice B and the complete FM-001
+milestone are owner accepted at exact tested implementation
+`4d8219d88d3f5f531c1a1cf250b36cb25e001c2f`.
 FL-001 is adversarially reviewed; EA-001 is adversarially repaired; TA-001 is
 adversarially hardened. All completed milestones are full-suite and
 dual-clean-checkout verified.
@@ -93,12 +93,12 @@ recorded in the owner-acceptance report. TA-001 remains a pure, read-only leaf
 with no occurrence claim, durable identity, ledger, store, facade,
 demonstration, or second consumer.
 
-The current FM-001 design and repaired Slice A are owner accepted for the
-corrected direct-measurement, participant-port declaration contract at
-`6210d3c250b96f54b764a365cb0a3a988d9bf9f6`. The corrected Slice B public
-result contract is owner accepted at
-`7bb7db8ec27af74bdd887d763222757c1f1fc821`, and only its implementation is
-authorized. The unapproved frontier continues with possible FA-001
+FM-001 is complete and owner accepted. Its repaired Slice A remains accepted
+at `6210d3c250b96f54b764a365cb0a3a988d9bf9f6`; its exact 225-name public
+surface and five read-only Slice B query responsibilities are accepted at
+tested implementation `4d8219d88d3f5f531c1a1cf250b36cb25e001c2f`.
+There is no Slice C or demonstration. The authoritative model retains zero
+FMA/FMW records. The unapproved frontier continues with possible FA-001
 evidence-gated bounded flow assessment and, only after explicit
 time-window, continuity, and authenticity contracts, optional accountable flow
 occurrence/history. Configuration identity remains an alternative priority if

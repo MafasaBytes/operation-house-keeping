@@ -2,18 +2,20 @@
 
 Date: 2026-09-09
 
-Status: corrected future executable matrix; Slice B implementation
-unauthorized pending owner approval
+Status: executed and owner accepted at exact tested implementation
+`4d8219d88d3f5f531c1a1cf250b36cb25e001c2f`; FM-B01–FM-B58 closed
 
-This matrix is governed by the corrected FM synthesis at SHA-256
-`6c1061fe63bf77d0975a4854fb0ba9a462cf03bef6af125d91b3ed43433592f7` and the accepted Slice A implementation
+This matrix is governed by the corrected FM synthesis blob at exact tested
+implementation `4d8219d88d3f5f531c1a1cf250b36cb25e001c2f`, SHA-256
+`6c1061fe63bf77d0975a4854fb0ba9a462cf03bef6af125d91b3ed43433592f7`,
+and the accepted Slice A implementation
 `6210d3c250b96f54b764a365cb0a3a988d9bf9f6`. Every row requires exact public
-field/literal equality and a valid twin. No row is claimed implemented by this
-documentation checkpoint.
+field/literal equality and a valid twin. All rows are implemented and verified
+by the accepted Slice B completion evidence.
 
 ## 1. Public surface and query boundary
 
-| ID | Future executable acceptance |
+| ID | Executable acceptance |
 |---|---|
 | FM-B01 | The accepted 205-name Slice A export prefix remains exact and Slice B appends the exact ordered 20 names for 225 total. |
 | FM-B02 | Exactly 11 new aliases expose their complete literal tuples in normative order; no subset assertion is accepted. |
@@ -26,7 +28,7 @@ documentation checkpoint.
 
 ## 2. Exact lookup and structured absence
 
-| ID | Future executable acceptance |
+| ID | Executable acceptance |
 |---|---|
 | FM-B09 | All three endpoints registered plus no exact subject yields `all_registered`, `not_declared`, `not_evaluated`, null role, and empty findings/roots/groups/current indices. |
 | FM-B10 | Each single missing endpoint yields its exact endpoint-registration literal and the same no-declaration cardinality. |
@@ -38,7 +40,7 @@ documentation checkpoint.
 
 ## 3. Root, body-group, and mixed-state cardinality
 
-| ID | Future executable acceptance |
+| ID | Executable acceptance |
 |---|---|
 | FM-B16 | One conflicted root with two current bodies has one root row, two group indices, two groups/support sets, and no cross-root disagreement. |
 | FM-B17 | One conflicted root whose tips share one body has one group and retains `same_root_conflict`. |
@@ -55,7 +57,7 @@ documentation checkpoint.
 
 ## 4. Support-row reachability
 
-| ID | Future executable acceptance |
+| ID | Executable acceptance |
 |---|---|
 | FM-B28 | Every positive effective-body group and found positive assertion has exactly six rows ordered FRG/VRG/PRG/FLD/VPA/VSM. |
 | FM-B29 | FRG/VRG/PRG expose only `permanent` / `not_applicable` / `exact`; every lifecycle alternative rejects. |
@@ -70,7 +72,7 @@ documentation checkpoint.
 
 ## 5. Reverse-entry semantics
 
-| ID | Future executable acceptance |
+| ID | Executable acceptance |
 |---|---|
 | FM-B38 | Flow reverse uses only the flow/context index and orders one entry per subject by variable, port, orientation rank. |
 | FM-B39 | Variable reverse uses only the variable/context index and orders one entry per subject by flow, port, orientation rank. |
@@ -83,7 +85,7 @@ documentation checkpoint.
 
 ## 6. Assertion disclosure
 
-| ID | Future executable acceptance |
+| ID | Executable acceptance |
 |---|---|
 | FM-B46 | A syntactically valid absent FMA/FMW ID yields `not_found`, null optional fields, and empty index/support tuples. |
 | FM-B47 | A found positive yields exact record/root/successor/withdrawal indices, activity, root health, subject conclusion/findings, role, orientation, and six support rows. |
@@ -92,7 +94,7 @@ documentation checkpoint.
 
 ## 7. Reconstruction, indices, purity, and preservation
 
-| ID | Future executable acceptance |
+| ID | Executable acceptance |
 |---|---|
 | FM-B50 | Full plain-content reconstruction rejects forged Pydantic instances, `model_construct`, `model_copy`, hidden/private state, and wrong union arms. |
 | FM-B51 | Boolean, negative, out-of-range, duplicate, missing, extra, reordered, or substituted material/root/group/entry indices reject. |
@@ -111,10 +113,11 @@ defective implementation behavior, followed by the smallest repair and a
 valid twin. Public contract tests compare exact fields, aliases, literal
 orders, exports, and result cardinality; subset assertions are insufficient.
 
-After owner authorization, implementation completes only after focused,
+Implementation completed after focused,
 affected, isolation, full working, fresh base-only, fresh all-extras,
 CAD/STEP/PDF, deterministic, dependency, compilation, whitespace, and
-protected-state verification at one exact runtime commit. Until then this
-matrix records design obligations only.
+protected-state verification at one exact runtime commit. The accepted report
+is `docs/superpowers/reports/2026-09-09-fm001-slice-b-completion-report.md` at
+SHA-256 `f7ce3280a6d1af1682b6ef1139fc8d8d2166c26e56525c703029f03586d8c290`.
 
 END OF FM-001 SLICE B ADVERSARIAL ACCEPTANCE MATRIX
