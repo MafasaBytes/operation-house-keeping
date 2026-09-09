@@ -184,6 +184,29 @@ def test_unreachable_support_products_reject(values):
             current_alignment=values[3])
 
 
+def test_public_nested_rows_enforce_local_cardinality_without_outer_material():
+    with pytest.raises(ValidationError):
+        kernel.FlowMeasurementEffectiveBodyGroupRow(
+            group_index=0,
+            representative_current_tip_index=1,
+            current_tip_indices=(1,),
+            participating_root_indices=(0,),
+            participant_role="source",
+            orientation="aligned",
+            support_rows=(),
+        )
+    with pytest.raises(ValidationError):
+        kernel.FlowMeasurementRootRow(
+            root_index=0,
+            root_record_index=1,
+            lineage_record_indices=(1,),
+            current_tip_indices=(),
+            withdrawal_indices=(),
+            lineage_health="healthy",
+            effective_body_group_indices=(),
+        )
+
+
 def test_missing_duplicate_extra_reordered_and_substituted_rows_reject():
     records, support = foundation()
     claim = association(support)

@@ -72,6 +72,13 @@ _ORIENTATION_RANK = {
 _SUPPORT_KINDS = ("frg", "vrg", "prg", "fld", "vpa", "vsm")
 
 
+def _strictly_increasing(values, label: str, *, allow_empty: bool = True) -> None:
+    if not allow_empty and not values:
+        raise ValueError(f"{label} must not be empty")
+    if tuple(values) != tuple(sorted(set(values))):
+        raise ValueError(f"{label} must be unique and strictly increasing")
+
+
 def _reject_scalar_subclasses(value) -> None:
     """Reject coercive caller scalars before Pydantic or derived access."""
     stack = [value]
@@ -165,6 +172,25 @@ class FlowMeasurementEffectiveBodyGroupRow(_FlowMeasurementResult):
     def _support_before(cls, value):
         return _rebuild_rows(value, FlowMeasurementSupportRow, "support rows")
 
+    @model_validator(mode="after")
+    def _local_invariants(self):
+        _strictly_increasing(
+            self.current_tip_indices, "group current-tip indices",
+            allow_empty=False)
+        _strictly_increasing(
+            self.participating_root_indices,
+            "group participating-root indices", allow_empty=False)
+        if self.representative_current_tip_index != min(
+                self.current_tip_indices):
+            raise ValueError(
+                "group representative must be its lowest current tip")
+        if tuple(row.support_kind for row in self.support_rows) != \
+                _SUPPORT_KINDS:
+            raise ValueError("group must carry the exact six support rows")
+        if len({row.record_index for row in self.support_rows}) != 6:
+            raise ValueError("group support record indices must be unique")
+        return self
+
 
 class FlowMeasurementRootRow(_FlowMeasurementResult):
     root_index: _Index
@@ -174,6 +200,31 @@ class FlowMeasurementRootRow(_FlowMeasurementResult):
     withdrawal_indices: tuple[_Index, ...]
     lineage_health: ContainingLineageHealth
     effective_body_group_indices: tuple[_Index, ...]
+
+    @model_validator(mode="after")
+    def _local_invariants(self):
+        _strictly_increasing(
+            self.lineage_record_indices, "root lineage indices",
+            allow_empty=False)
+        _strictly_increasing(self.current_tip_indices, "root current-tip indices")
+        _strictly_increasing(self.withdrawal_indices, "root withdrawal indices")
+        _strictly_increasing(
+            self.effective_body_group_indices, "root body-group indices")
+        if self.root_record_index not in self.lineage_record_indices:
+            raise ValueError("root record must belong to its lineage")
+        if not set(self.current_tip_indices).issubset(
+                self.lineage_record_indices):
+            raise ValueError("root current tips must belong to its lineage")
+        expected = (
+            "inactive" if not self.current_tip_indices else
+            "conflicted" if len(self.current_tip_indices) > 1 else
+            "healthy")
+        if self.lineage_health != expected:
+            raise ValueError("root health disagrees with current-tip cardinality")
+        if ((self.lineage_health == "inactive")
+                != (not self.effective_body_group_indices)):
+            raise ValueError("root body groups disagree with root activity")
+        return self
 
 
 class FlowMeasurementEntryRow(_FlowMeasurementResult):
@@ -200,6 +251,72 @@ class FlowMeasurementEntryRow(_FlowMeasurementResult):
         return _rebuild_rows(
             value, FlowMeasurementEffectiveBodyGroupRow,
             "effective body groups")
+
+    @model_validator(mode="after")
+    def _local_invariants(self):
+        if tuple(row.root_index for row in self.roots) != tuple(
+                range(len(self.roots))):
+            raise ValueError("entry root indices must be contiguous")
+        if tuple(row.group_index for row in self.effective_body_groups) != tuple(
+                range(len(self.effective_body_groups))):
+            raise ValueError("entry body-group indices must be contiguous")
+        _strictly_increasing(
+            self.current_assertion_indices, "entry current assertion indices")
+        current = tuple(sorted(
+            index for group in self.effective_body_groups
+            for index in group.current_tip_indices))
+        if current != self.current_assertion_indices:
+            raise ValueError("entry current assertions disagree with body groups")
+        for group in self.effective_body_groups:
+            if (group.participant_role != self.participant_role
+                    or group.orientation != self.orientation):
+                raise ValueError("entry body group changes immutable subject")
+            if any(index >= len(self.roots)
+                   for index in group.participating_root_indices):
+                raise ValueError("entry body group references an absent root")
+        for root in self.roots:
+            if any(index >= len(self.effective_body_groups)
+                   for index in root.effective_body_group_indices):
+                raise ValueError("entry root references an absent body group")
+            reciprocal = tuple(
+                group.group_index for group in self.effective_body_groups
+                if root.root_index in group.participating_root_indices)
+            if reciprocal != root.effective_body_group_indices:
+                raise ValueError("entry root/body-group links are not reciprocal")
+        healthy = tuple(root for root in self.roots
+                        if root.lineage_health == "healthy")
+        conflicted = tuple(root for root in self.roots
+                           if root.lineage_health == "conflicted")
+        inactive = tuple(root for root in self.roots
+                         if root.lineage_health == "inactive")
+        corroborating = any(
+            len(tuple(index for index in group.participating_root_indices
+                      if self.roots[index].lineage_health == "healthy")) >= 2
+            for group in self.effective_body_groups)
+        active_sets = tuple(
+            frozenset(root.effective_body_group_indices)
+            for root in self.roots if root.current_tip_indices)
+        disagreement = len(set(active_sets)) > 1
+        findings = []
+        if len(healthy) == 1:
+            findings.append("one_healthy_root")
+        if corroborating:
+            findings.append("corroborating_healthy_roots")
+        if conflicted:
+            findings.append("same_root_conflict")
+        if inactive:
+            findings.append("inactive_roots_present")
+        if disagreement:
+            findings.append("cross_root_effective_body_disagreement")
+        if self.agreement_findings != tuple(findings):
+            raise ValueError("entry agreement findings are stale")
+        expected = (
+            "conflicted" if conflicted or disagreement else
+            "declared_direct_measurement_relevance" if healthy else
+            "inactive")
+        if not self.roots or self.declaration_conclusion != expected:
+            raise ValueError("entry declaration conclusion is stale")
+        return self
 
 
 def _subject(record) -> tuple:
