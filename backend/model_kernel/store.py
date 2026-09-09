@@ -526,9 +526,28 @@ def validate_record_collection(
     # This is itself a public boundary: revalidate structurally BEFORE any
     # key binding, hashing, or semantic check, and keep the revalidated
     # instances as the authoritative collection.
-    records = {key: revalidate(record) for key, record in records.items()}
+    items = list(records.items())
+    fc_items = [item for item in items
+                if type(item[1]) is FlowOperatingCriterionDeclaration
+                or type(item[1]) is FlowOperatingCriterionWithdrawal]
+    if fc_items:
+        # Order the new family before reconstruction/hash failure selection.
+        # Never compare caller key subclasses or inspect unvalidated own IDs.
+        if any(type(key) is not str for key, _ in items):
+            _fail("MODEL_RECORD_INVALID", "invalid flow criterion collection key")
+        ordered_items = [item for item in items
+                         if type(item[1]) is not FlowOperatingCriterionDeclaration
+                         and type(item[1]) is not FlowOperatingCriterionWithdrawal]
+        ordered_items.extend(sorted(fc_items, key=lambda item: item[0]))
+    else:
+        ordered_items = items
+    rebuilt = {key: revalidate(record) for key, record in ordered_items}
+    # Preserve accepted membership iteration and legacy-family relative order;
+    # only FC structural/hash failure selection receives a new ordering rule.
+    records = {key: rebuilt[key] for key, _ in items}
 
-    for record_id, record in records.items():
+    for record_id, _ in ordered_items:
+        record = records[record_id]
         if record_id != record.record_id:
             _fail("MODEL_RECORD_KEY_MISMATCH",
                   f"collection key {record_id!r} does not match the record's "

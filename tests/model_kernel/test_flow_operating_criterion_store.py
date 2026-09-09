@@ -9,20 +9,12 @@ import backend.model_kernel as kernel
 from backend.model_kernel.store import revalidate, validate_record_collection
 from tests.model_kernel.builders import CON_B, VAR_B, variable_registration
 from tests.model_kernel.fc001_slice_a_helpers import (
-    declaration, membership, replace, withdrawal, world,
+    INDEX_NAMES, declaration, membership, replace, withdrawal, world,
 )
 from tests.model_kernel.test_flow_measurement_slice_a import (
     withdrawal as fm_withdrawal,
 )
 from tests.model_kernel.fl001_slice_a_helpers import VIEW_INDEPENDENT
-
-
-INDEX_NAMES = (
-    "declarations", "withdrawals", "subject_by_id", "ids_by_subject",
-    "parent_ids", "successor_ids", "root_by_id", "ancestry_by_id",
-    "current_tips_by_root", "withdrawn_by", "effective_body_by_id",
-    "ids_by_effective_body",
-)
 
 
 def load(*records, verify_hashes=True):
@@ -38,6 +30,162 @@ def reject(records, code, **kwargs):
     with pytest.raises(kernel.ModelIntegrityError) as caught:
         load(*records, **kwargs)
     assert caught.value.error_code == code
+
+
+@pytest.mark.parametrize("first_note,second_note,expected", [
+    (None, "x" * 8193, "MODEL_RECORD_INVALID"),
+    ("x" * 8193, None, "MODEL_FLOW_CRITERION_RECORD_LIMIT_EXCEEDED"),
+], ids=["invalid-first", "limit-first"])
+def test_fc_structural_failure_precedence_uses_record_order(first_note, second_note, expected):
+    records, witness, crg, vcn = world()
+    a, b = sorted((declaration(witness, crg, vcn, note="a"),
+                   declaration(witness, crg, vcn, note="b")), key=lambda r: r.record_id)
+    malformed = (a.model_copy(update={"note": first_note}),
+                 b.model_copy(update={"note": second_note}))
+    for order in (malformed, malformed[::-1]):
+        reject((*records, *order), expected)
+
+
+def test_fc_structural_failure_precedes_hash_failure_in_both_orders():
+    records, witness, crg, vcn = world()
+    a = declaration(witness, crg, vcn, note="a").model_copy(update={"note": "stale hash"})
+    b = declaration(witness, crg, vcn, note="b").model_copy(update={"note": None})
+    for order in ((a, b), (b, a)):
+        reject((*records, *order), "MODEL_RECORD_INVALID")
+
+
+def test_fc_hash_failure_precedence_uses_record_order():
+    records, witness, crg, vcn = world()
+    malformed = tuple(r.model_copy(update={"note": "stale hash"}) for r in sorted(
+        (declaration(witness, crg, vcn, note="a"),
+         declaration(witness, crg, vcn, note="b")), key=lambda r: r.record_id))
+    failures = []
+    for order in (malformed, malformed[::-1]):
+        with pytest.raises(kernel.ModelIntegrityError) as caught:
+            load(*records, *order)
+        assert caught.value.error_code == "MODEL_RECORD_HASH_MISMATCH"
+        failures.append(str(caught.value))
+    assert failures[0] == failures[1]
+    assert malformed[0].record_id in failures[0]
+
+
+def test_fc_collection_rejects_hostile_key_before_ordering_callbacks():
+    records, witness, crg, vcn = world()
+    d = declaration(witness, crg, vcn)
+    calls = []
+
+    class HostileKey(str):
+        def __lt__(self, other):
+            calls.append("lt")
+            raise AssertionError("key comparison called")
+
+        def __ne__(self, other):
+            calls.append("ne")
+            raise AssertionError("key comparison called")
+
+    supplied = membership(*records)
+    supplied[HostileKey(d.record_id)] = d
+    with pytest.raises(kernel.ModelIntegrityError) as caught:
+        validate_record_collection("fc001-disposable", supplied)
+    assert caught.value.error_code == "MODEL_RECORD_INVALID"
+    assert calls == []
+
+
+@pytest.mark.parametrize("fm_same_authority", [True, False])
+@pytest.mark.parametrize("fc_same_authority", [True, False])
+def test_fm_and_fc_withdrawals_only_retract_exact_targets(fm_same_authority, fc_same_authority):
+    records, witness, crg, vcn = world()
+    equal_witness = replace(witness, note="independent equal witness")
+    root = declaration(witness, crg, vcn)
+    sibling = declaration(witness, crg, vcn, note="independent designation")
+    other = kernel.AuthorityRef(kind="test_fixture", agent="independent-author",
+                                method="manual_declaration")
+    fw = replace(fm_withdrawal(witness),
+                 authority=witness.authority if fm_same_authority else other)
+    cw = withdrawal(root, authority=root.authority if fc_same_authority else other)
+    before = load(*records, equal_witness, root, sibling)
+    after_fc = load(*records, equal_witness, root, sibling, cw)
+    after_fm = load(*records, equal_witness, root, sibling, fw)
+    after_both = load(*records, equal_witness, root, sibling, fw, cw)
+    assert after_fm.flow_measurement_withdrawn_by[witness.record_id] == (fw.record_id,)
+    assert after_fm.flow_measurement_withdrawn_by[equal_witness.record_id] == ()
+    assert index(after_fm, "current_tips_by_root")[root.record_id] == (root.record_id,)
+    assert index(after_both, "current_tips_by_root")[root.record_id] == ()
+    assert index(after_both, "current_tips_by_root")[sibling.record_id] == (sibling.record_id,)
+    assert index(after_both, "withdrawn_by")[root.record_id] == (cw.record_id,)
+    assert index(after_both, "withdrawn_by")[sibling.record_id] == ()
+    assert index(after_fc, "current_tips_by_root")[root.record_id] == ()
+    assert index(after_fc, "current_tips_by_root")[sibling.record_id] == (sibling.record_id,)
+    assert after_fc.flow_measurement_withdrawn_by == before.flow_measurement_withdrawn_by
+    assert after_fc.current_flow_measurement_tips_by_root == before.current_flow_measurement_tips_by_root
+    assert after_both.flow_measurement_withdrawn_by == after_fm.flow_measurement_withdrawn_by
+    assert after_both.current_flow_measurement_tips_by_root == after_fm.current_flow_measurement_tips_by_root
+    for loaded in (after_fm, after_both):
+        assert loaded.records[witness.record_id] == witness
+        assert index(loaded, "declarations")[root.record_id] == root
+        assert index(loaded, "effective_body_by_id") == index(before, "effective_body_by_id")
+        assert loaded.records[fw.record_id].authority == fw.authority
+    assert after_both.records[cw.record_id].authority == cw.authority
+
+
+def test_identical_vcn_correction_requires_explicit_same_root_fc_renewal():
+    records, witness, crg, old_vcn = world()
+    old = declaration(witness, crg, old_vcn)
+    before = load(*records, old)
+    new_vcn = replace(old_vcn, supersedes=(old_vcn.record_id,))
+    # Ancestry alone changes the edition: every apparent predicate/provenance
+    # field is identical, yet the old designation continues to pin its old ID.
+    old_fields, new_fields = old_vcn.model_dump(), new_vcn.model_dump()
+    for fields in (old_fields, new_fields):
+        fields.pop("record_id")
+        fields.pop("supersedes")
+    assert old_fields == new_fields
+    assert new_vcn.record_id != old_vcn.record_id
+    retained = load(*records, old, new_vcn)
+    assert index(retained, "declarations")[old.record_id] == old
+    assert index(retained, "effective_body_by_id") == index(before, "effective_body_by_id")
+    renewed = declaration(witness, crg, new_vcn, supersedes=(old.record_id,))
+    after = load(*records, old, new_vcn, renewed)
+    bodies = index(after, "effective_body_by_id")
+    assert bodies[old.record_id] == index(before, "effective_body_by_id")[old.record_id]
+    assert bodies[renewed.record_id] != bodies[old.record_id]
+    assert json.loads(bodies[renewed.record_id])["constraint_declaration_record_id"] == new_vcn.record_id
+    assert index(after, "declarations")[old.record_id].constraint_declaration_record_id == old_vcn.record_id
+    assert index(after, "subject_by_id")[old.record_id] == index(after, "subject_by_id")[renewed.record_id]
+    assert index(after, "root_by_id")[renewed.record_id] == old.record_id
+    assert index(after, "parent_ids")[renewed.record_id] == (old.record_id,)
+    assert index(after, "current_tips_by_root") == {old.record_id: (renewed.record_id,)}
+
+
+@pytest.mark.parametrize("kind", ["owner_declaration", "model_record",
+    "identity_binding_record", "source_raw_record", "temporal_occurrence",
+    "structural_source_locator"])
+def test_all_six_evidence_arms_at_exact_fc_boundaries(kind):
+    records, witness, crg, vcn = world()
+    cited = declaration(witness, crg, vcn, note="exact cited member")
+    arms = {
+        "owner_declaration": dict(kind="owner_declaration", statement="disposable designation"),
+        "model_record": dict(kind="model_record", record_id=cited.record_id),
+        "identity_binding_record": dict(kind="identity_binding_record", binding_set_id="absent-disposable", record_id="iba_" + "a" * 64),
+        "source_raw_record": dict(kind="source_raw_record", raw_record_id="a" * 32, payload_checksum="sha256:" + "b" * 64),
+        "temporal_occurrence": dict(kind="temporal_occurrence", occurrence_id="c" * 32),
+        "structural_source_locator": dict(kind="structural_source_locator", raw_record_id="d" * 32,
+            payload_checksum="sha256:" + "e" * 64, extractor_name="csv_extractor",
+            extractor_version="1.0.0", extractor_config_fingerprint="a" * 16,
+            extractor_toolchain_fingerprint="b" * 16, locator_scheme="csv_row", locator_value="r=1"),
+    }
+    built = declaration(witness, crg, vcn, evidence=(arms[kind],))
+    direct = kernel.FlowOperatingCriterionDeclaration(**built.model_dump())
+    parsed = kernel.FlowOperatingCriterionDeclaration.model_validate_json(direct.model_dump_json())
+    assert parsed == direct == built
+    assert parsed.evidence[0].model_dump() == arms[kind]
+    selected = (*records, cited) if kind == "model_record" else records
+    loaded = load(*selected, parsed)
+    assert index(loaded, "declarations")[built.record_id].evidence == built.evidence
+    if kind == "model_record":
+        # Same governing body in a different member cannot satisfy this cite.
+        equal = replace(cited, note="equal body is not exact membership")
+        reject((*records, equal, parsed), "MODEL_REFERENCE_INVALID")
 
 
 @pytest.mark.parametrize("orientation", [

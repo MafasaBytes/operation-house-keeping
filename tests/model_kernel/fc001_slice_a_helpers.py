@@ -9,6 +9,14 @@ from tests.model_kernel.test_flow_measurement_slice_a import (
 )
 
 
+INDEX_NAMES = (
+    "declarations", "withdrawals", "subject_by_id", "ids_by_subject",
+    "parent_ids", "successor_ids", "root_by_id", "ancestry_by_id",
+    "current_tips_by_root", "withdrawn_by", "effective_body_by_id",
+    "ids_by_effective_body",
+)
+
+
 def world(*, orientation="aligned", context=None, participant="source"):
     records, support = foundation() if context is None else foundation(context)
     context = support[3].context
