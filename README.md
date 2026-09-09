@@ -115,9 +115,14 @@ same-ledger support records. Slice B supplies the five accepted read-only query
 responsibilities through the exact 225-name public surface. There is no Slice
 C or demonstration.
 
-The unapproved roadmap after completed FM-001
-continues with possible FA-001 evidence-gated bounded flow assessment, then optional accountable
-flow occurrence/history only after explicit time-window, continuity, and
+The [FA feasibility owner decision](docs/superpowers/reports/2026-09-09-fa001-feasibility-owner-decision.md)
+accepts the proposal and challenger audit for correctly rejecting baseline-only
+FA implementation. FA-001 is deferred, not completed or implemented.
+FC-001 — Explicit Flow Operating Criterion Declaration — is authorized for
+design investigation only. ADR-0022 remains absent and unallocated. After FC
+acceptance and implementation, FA must be reassessed and cancelled if an FC
+query plus existing CN already answers the approved question.
+Optional accountable flow occurrence/history still requires explicit time-window, continuity, and
 authenticity contracts. Configuration identity remains an alternative priority
 if the owner changes product focus. Causal, diagnostic, impact, goal, action,
 planning, and control layers remain deferred until their explicit model and

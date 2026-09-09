@@ -98,10 +98,15 @@ at `6210d3c250b96f54b764a365cb0a3a988d9bf9f6`; its exact 225-name public
 surface and five read-only Slice B query responsibilities are accepted at
 tested implementation `4d8219d88d3f5f531c1a1cf250b36cb25e001c2f`.
 There is no Slice C or demonstration. The authoritative model retains zero
-FMA/FMW records. The unapproved frontier continues with possible FA-001
-evidence-gated bounded flow assessment and, only after explicit
-time-window, continuity, and authenticity contracts, optional accountable flow
-occurrence/history. Configuration identity remains an alternative priority if
+FMA/FMW records. The [FA feasibility owner decision](docs/superpowers/reports/2026-09-09-fa001-feasibility-owner-decision.md)
+accepts the proposal and challenger audit because they correctly reject
+baseline-only FA implementation. FA-001 is deferred, not completed or
+implemented. FC-001 — Explicit Flow Operating Criterion Declaration — is
+authorized for design investigation only; ADR-0022 remains absent and
+unallocated. After FC acceptance and implementation, reassess FA and cancel it
+if an FC query plus existing CN already answers the approved question.
+Optional accountable flow occurrence/history still requires explicit
+time-window, continuity, and authenticity contracts. Configuration identity remains an alternative priority if
 the owner changes product focus. Causality, diagnosis, impact analysis, goals,
 actions, planning, and control remain deferred. This status assigns none of
 those concerns an implemented capability and authorizes no work on them.
