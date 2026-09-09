@@ -19,7 +19,7 @@ import warnings
 from dataclasses import dataclass
 from pathlib import Path
 from types import MappingProxyType
-from typing import Iterable, Mapping
+from typing import Iterable, Mapping, get_args
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
@@ -27,6 +27,7 @@ from backend.model_kernel.canonical import (
     _flow_effective_body_bytes,
     _flow_measurement_effective_body_bytes,
     canonical_payload,
+    canonical_sort_key,
     compute_revision_id,
     verify_record_id,
 )
@@ -39,6 +40,8 @@ from backend.model_kernel.contracts import (
     FlowDeclaration,
     FlowDeclarationWithdrawal,
     FlowRegistration,
+    FlowOperatingCriterionDeclaration,
+    FlowOperatingCriterionWithdrawal,
     MODEL_ID_PATTERN,
     MODEL_RECORD_ID_PATTERN,
     ModelConfigurationError,
@@ -69,9 +72,10 @@ from backend.model_kernel.contracts import (
 )
 
 _RECORD_ADAPTER: TypeAdapter = TypeAdapter(ModelRecord)
+_RECORD_CLASSES = get_args(ModelRecord)
 _RECORD_ID = re.compile(MODEL_RECORD_ID_PATTERN)
 _FILENAME = re.compile(
-    r"^(reg|rtd|rel|rwd|vrg|vsp|vsm|crg|vcn|prg|pif|pcn|pcm|ptw|vpa|vpw|brg|bhd|bhw|srg|std|stw|trg|trd|trw|frg|fld|flw|fma|fmw)_[0-9a-f]{64}\.json$")
+    r"^(reg|rtd|rel|rwd|vrg|vsp|vsm|crg|vcn|prg|pif|pcn|pcm|ptw|vpa|vpw|brg|bhd|bhw|srg|std|stw|trg|trd|trw|frg|fld|flw|fma|fmw|fcd|fcw)_[0-9a-f]{64}\.json$")
 
 _EMPTY: Mapping = MappingProxyType({})
 
@@ -279,6 +283,20 @@ class LoadedModel:
         bytes, tuple[str, ...]] = _EMPTY
     flow_measurement_disagreeing_root_ids_by_subject: Mapping[
         tuple, tuple[str, ...]] = _EMPTY
+    flow_operating_criterion_declarations: Mapping[
+        str, FlowOperatingCriterionDeclaration] = _EMPTY
+    flow_operating_criterion_withdrawals: Mapping[
+        str, FlowOperatingCriterionWithdrawal] = _EMPTY
+    flow_operating_criterion_subject_by_id: Mapping[str, tuple] = _EMPTY
+    flow_operating_criterion_ids_by_subject: Mapping[tuple, tuple[str, ...]] = _EMPTY
+    flow_operating_criterion_parent_ids: Mapping[str, tuple[str, ...]] = _EMPTY
+    flow_operating_criterion_successor_ids: Mapping[str, tuple[str, ...]] = _EMPTY
+    flow_operating_criterion_root_by_id: Mapping[str, str] = _EMPTY
+    flow_operating_criterion_ancestry_by_id: Mapping[str, tuple[str, ...]] = _EMPTY
+    flow_operating_criterion_current_tips_by_root: Mapping[str, tuple[str, ...]] = _EMPTY
+    flow_operating_criterion_withdrawn_by: Mapping[str, tuple[str, ...]] = _EMPTY
+    flow_operating_criterion_effective_body_by_id: Mapping[str, bytes] = _EMPTY
+    flow_operating_criterion_ids_by_effective_body: Mapping[bytes, tuple[str, ...]] = _EMPTY
 
 
 def _fail(code: str, message: str) -> None:
@@ -387,6 +405,23 @@ def revalidate(record) -> ModelRecord:
     validation, or the ledger. Shape failures (and any serializer warning
     they would raise) surface as a typed, path-free
     ``MODEL_RECORD_INVALID``."""
+    # Dispatch by trusted runtime identity before accessing supplied methods:
+    # an arbitrary serializer could otherwise impersonate a new FC record.
+    if not any(type(record) is cls for cls in _RECORD_CLASSES):
+        _fail("MODEL_RECORD_INVALID", "invalid model record class")
+    # FC instances must not enter the legacy visited-once walk or call the
+    # supplied serializer. Their bounded reconstruction checks every edge.
+    if type(record) in (
+            FlowOperatingCriterionDeclaration, FlowOperatingCriterionWithdrawal):
+        try:
+            return type(record).model_validate(record)
+        except ValidationError as error:
+            code = ("MODEL_FLOW_CRITERION_RECORD_LIMIT_EXCEEDED"
+                    if any(
+                        row["type"] == "FC_RECORD_LIMIT_EXCEEDED"
+                        for row in error.errors(include_input=False))
+                    else "MODEL_RECORD_INVALID")
+            raise ModelIntegrityError(code, "invalid flow criterion record") from error
     try:
         # ``model_copy(update={unknown: ...})`` can place fields in a
         # Pydantic instance's storage that its serializer silently omits
@@ -474,6 +509,8 @@ def validate_record_collection(
         str, FlowDeclarationWithdrawal] = {}
     flow_measurement_associations: dict[str, FlowMeasurementAssociation] = {}
     flow_measurement_association_withdrawals: dict[str, FlowMeasurementAssociationWithdrawal] = {}
+    fc_declarations: dict[str, FlowOperatingCriterionDeclaration] = {}
+    fc_withdrawals: dict[str, FlowOperatingCriterionWithdrawal] = {}
     types: dict[str, RelationshipTypeDefinition] = {}
     assertions: dict[str, RelationshipAssertion] = {}
     withdrawals: dict[str, RelationshipWithdrawal] = {}
@@ -529,6 +566,8 @@ def validate_record_collection(
             "flow_declaration_withdrawal": flow_declaration_withdrawals,
             "flow_measurement_association": flow_measurement_associations,
             "flow_measurement_association_withdrawal": flow_measurement_association_withdrawals,
+            "flow_operating_criterion_declaration": fc_declarations,
+            "flow_operating_criterion_withdrawal": fc_withdrawals,
             "relationship_type_definition": types,
             "relationship_assertion": assertions,
             "relationship_withdrawal": withdrawals,
@@ -2189,12 +2228,104 @@ def validate_record_collection(
             flow_measurement_disagreeing_root_ids_by_subject[subject] = tuple(
                 sorted(active_body_sets))
 
+    # -- explicit governing criterion designation -----------------------
+    # All lower collection invariants have just been rebuilt. Resolve exact
+    # retained witnesses; activity/currentness never gates this admission.
+    fc_declarations = dict(sorted(fc_declarations.items()))
+    fc_subjects: dict[str, tuple] = {}
+    fc_ids_by_subject: dict[tuple, tuple[str, ...]] = {}
+    fc_bodies: dict[str, bytes] = {}
+    fc_ids_by_body: dict[bytes, tuple[str, ...]] = {}
+    for record_id in sorted(fc_declarations):
+        declaration = fc_declarations[record_id]
+        witness = flow_measurement_associations.get(
+            declaration.flow_measurement_association_record_id)
+        crg = constraint_registrations.get(
+            declaration.constraint_registration_record_id)
+        vcn = constraint_declarations.get(
+            declaration.constraint_declaration_record_id)
+        if witness is None or crg is None or vcn is None:
+            _fail("MODEL_REFERENCE_INVALID",
+                  "flow criterion has missing or wrong-kind support")
+        subject = flow_measurement_subject(witness)
+        if (crg.variable_anchor_id != witness.variable_anchor_id
+                or vcn.constraint_anchor_id != crg.anchor.anchor_id):
+            _fail("MODEL_FLOW_CRITERION_SUPPORT_INVALID",
+                  "flow criterion constraint support does not match its subject")
+        vsm = semantic_declarations[witness.variable_semantic_declaration_record_id]
+        if (vcn.expected_semantics.observation_role
+                != vsm.declaration.observation_role):
+            _fail("MODEL_FLOW_CRITERION_SEMANTIC_INVALID",
+                  "flow criterion expected observation role does not match its support")
+        _check_model_record_evidence(records, declaration, "flow criterion")
+        body = json.dumps({
+            "flow_measurement_body": json.loads(
+                flow_measurement_effective_body_by_id[witness.record_id]),
+            "constraint_registration_record_id": crg.record_id,
+            "constraint_declaration_record_id": vcn.record_id,
+        }, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+        fc_subjects[record_id] = subject
+        fc_ids_by_subject[subject] = (*fc_ids_by_subject.get(subject, ()), record_id)
+        fc_bodies[record_id] = body
+        fc_ids_by_body[body] = (*fc_ids_by_body.get(body, ()), record_id)
+
+    fc_successors, fc_roots = _pt_dag_indexes(
+        fc_declarations, lambda record: fc_subjects[record.record_id],
+        "MODEL_FLOW_CRITERION_LINEAGE_INVALID", "flow criterion")
+    fc_parents = {record_id: fc_declarations[record_id].supersedes
+                  for record_id in sorted(fc_declarations)}
+    fc_ancestry: dict[str, tuple[str, ...]] = {}
+    pending = set(fc_declarations)
+    while pending:
+        for record_id in sorted(pending):
+            parents = fc_parents[record_id]
+            if any(parent not in fc_ancestry for parent in parents):
+                continue
+            fc_ancestry[record_id] = tuple(sorted({
+                ancestor for parent in parents
+                for ancestor in (parent, *fc_ancestry[parent])}))
+            pending.remove(record_id)
+    fc_withdrawn = {record_id: () for record_id in sorted(fc_declarations)}
+    for withdrawal_id in sorted(fc_withdrawals):
+        target = fc_withdrawals[withdrawal_id].withdraws
+        if target not in fc_declarations:
+            _fail("MODEL_REFERENCE_INVALID", "flow criterion withdrawal target is missing")
+        if fc_successors[target] or fc_withdrawn[target]:
+            _fail("MODEL_FLOW_CRITERION_WITHDRAWAL_INVALID",
+                  "flow criterion withdrawal target is superseded or already withdrawn")
+        fc_withdrawn[target] = (withdrawal_id,)
+    fc_tips = {root: () for root in sorted(set(fc_roots.values()))}
+    for record_id in sorted(fc_declarations):
+        if not fc_successors[record_id] and not fc_withdrawn[record_id]:
+            root = fc_roots[record_id]
+            fc_tips[root] = (*fc_tips[root], record_id)
+
     record_ids = tuple(sorted(records))
     revision = ModelRevision(
         revision_id=compute_revision_id(model_id, record_ids),
         record_ids=record_ids, record_count=len(record_ids),
         model_id=model_id)
     return LoadedModel(
+        flow_operating_criterion_declarations=_frozen_mapping({
+            key: fc_declarations[key] for key in sorted(fc_declarations)}),
+        flow_operating_criterion_withdrawals=_frozen_mapping({
+            key: fc_withdrawals[key] for key in sorted(fc_withdrawals)}),
+        flow_operating_criterion_subject_by_id=_frozen_mapping(fc_subjects),
+        flow_operating_criterion_ids_by_subject=_frozen_mapping({
+            subject: fc_ids_by_subject[subject]
+            for subject in sorted(fc_ids_by_subject, key=lambda subject: (
+                *subject[:3], canonical_sort_key(subject[3]),
+                ("aligned", "opposite", "unsigned_magnitude", "not_applicable").index(
+                    subject[5])))}),
+        flow_operating_criterion_parent_ids=_frozen_mapping(fc_parents),
+        flow_operating_criterion_successor_ids=_frozen_mapping(fc_successors),
+        flow_operating_criterion_root_by_id=_frozen_mapping(fc_roots),
+        flow_operating_criterion_ancestry_by_id=_frozen_mapping(fc_ancestry),
+        flow_operating_criterion_current_tips_by_root=_frozen_mapping(fc_tips),
+        flow_operating_criterion_withdrawn_by=_frozen_mapping(fc_withdrawn),
+        flow_operating_criterion_effective_body_by_id=_frozen_mapping(fc_bodies),
+        flow_operating_criterion_ids_by_effective_body=_frozen_mapping({
+            body: fc_ids_by_body[body] for body in sorted(fc_ids_by_body)}),
         revision=revision, records=_frozen_mapping(records),
         registrations_by_anchor=_frozen_mapping(registrations_by_anchor),
         types=_frozen_mapping(types),
@@ -2563,8 +2694,33 @@ class ModelStore:
                 "MODEL_RECORD_INVALID",
                 f"{path.name} is not an ordinary model record file")
         try:
-            record = _RECORD_ADAPTER.validate_json(
-                path.read_text(encoding="utf-8"))
+            if path.name.startswith(("fcd_", "fcw_")):
+                from backend.model_kernel.flow_operating_criterion_validation import (
+                    _Invalid, _Limit, _parse_record_json,
+                )
+                try:
+                    with path.open("rb") as source:
+                        raw = source.read(1048577)
+                    payload = _parse_record_json(raw)
+                except _Limit as error:
+                    raise ModelIntegrityError(
+                        "MODEL_FLOW_CRITERION_RECORD_LIMIT_EXCEEDED",
+                        "flow criterion record exceeds its limit") from error
+                except _Invalid as error:
+                    raise ModelIntegrityError(
+                        "MODEL_RECORD_INVALID", "invalid flow criterion record") from error
+                try:
+                    record = _RECORD_ADAPTER.validate_python(payload)
+                except ValidationError as error:
+                    if any(row["type"] == "FC_RECORD_LIMIT_EXCEEDED"
+                           for row in error.errors(include_input=False)):
+                        raise ModelIntegrityError(
+                            "MODEL_FLOW_CRITERION_RECORD_LIMIT_EXCEEDED",
+                            "flow criterion record exceeds its limit") from error
+                    raise
+            else:
+                record = _RECORD_ADAPTER.validate_json(
+                    path.read_text(encoding="utf-8"))
         except (ValidationError, ValueError, OSError) as error:
             raise ModelIntegrityError(
                 "MODEL_RECORD_INVALID",
