@@ -1346,7 +1346,9 @@ class ModelQueries:
             out=[]
             for ri, root in enumerate(roots):
                 ids=tuple(sorted(x for x in subject_ids if root_map[x]==root))
-                tips=tuple(sorted(x for x in tips_map.get(root, ()) if x in ids))
+                tips=tuple(sorted(
+                    getattr(x, "record_id", x) for x in tips_map.get(root, ())
+                    if getattr(x, "record_id", x) in ids))
                 ws=tuple(sorted(w for x in ids for w in withdrawn_map.get(x, ())))
                 out.append(FlowOperatingCriterionLineageRow(
                     root_index=ri, root_record_index=indices[root],
@@ -1368,32 +1370,91 @@ class ModelQueries:
             body=self.loaded.flow_operating_criterion_effective_body_by_id[rid]
             bodies.setdefault(body,[]).append(rid)
         groups=[]
+        reason_order=("fm_inactive", "fm_same_root_conflict", "fm_cross_root_disagreement",
+                      "fm_body_not_current", "vcn_conflicted", "vcn_not_current",
+                      "typed_support_not_current", "typed_support_conflicted",
+                      "typed_support_inactive", "typed_support_unaligned")
         for gi, body in enumerate(sorted(bodies)):
             ids=tuple(sorted(bodies[body])); current=tuple(x for x in ids if not self.loaded.flow_operating_criterion_successor_ids[x] and not self.loaded.flow_operating_criterion_withdrawn_by[x])
             witnesses=tuple(sorted({self.loaded.flow_operating_criterion_declarations[x].flow_measurement_association_record_id for x in ids}))
-            matching=tuple(indices[x] for x in fm_ids if self.loaded.flow_measurement_effective_body_by_id[x] == body and not self.loaded.flow_measurement_successor_ids[x] and not self.loaded.flow_measurement_withdrawn_by[x])
+            witness=self.loaded.flow_measurement_associations[witnesses[0]]
+            fm_body=self.loaded.flow_measurement_effective_body_by_id[witness.record_id]
+            matching=tuple(indices[x] for x in fm_ids if self.loaded.flow_measurement_effective_body_by_id[x] == fm_body and not self.loaded.flow_measurement_successor_ids[x] and not self.loaded.flow_measurement_withdrawn_by[x])
+            lower_reasons=set()
+            if not any(row.current_tip_indices for row in fm_roots): lower_reasons.add("fm_inactive")
+            if any(row.lineage_health == "conflicted" for row in fm_roots): lower_reasons.add("fm_same_root_conflict")
+            if self.loaded.flow_measurement_disagreeing_root_ids_by_subject.get(subject): lower_reasons.add("fm_cross_root_disagreement")
+            if not matching: lower_reasons.add("fm_body_not_current")
             support=[]
             if ids:
                 d=self.loaded.flow_operating_criterion_declarations[ids[0]]
-                for kind, rid in (("crg", d.constraint_registration_record_id),("vcn", d.constraint_declaration_record_id)):
-                    if rid in indices: support.append(FlowOperatingCriterionSupportRow(support_kind=kind,record_index=indices[rid],activity="current",lineage_health="healthy",alignment="exact"))
-            groups.append(FlowOperatingCriterionBodyRow(group_index=gi,declaration_indices=tuple(indices[x] for x in ids),current_declaration_indices=tuple(indices[x] for x in current),witness_record_indices=tuple(indices[x] for x in witnesses),matching_fm_current_indices=matching,support_rows=tuple(support),reasons=()))
+                fm_disclosure=_flow_measurement_assertion_payload(material, self.loaded, witness.record_id)
+                for row in fm_disclosure["support_rows"]:
+                    support.append(FlowOperatingCriterionSupportRow(
+                        support_kind=row["support_kind"], record_index=row["record_index"],
+                        activity=row["activity"], lineage_health=row["containing_lineage_health"],
+                        alignment=row["current_alignment"]))
+                    if row["support_kind"] in {"fld", "vpa", "vsm"}:
+                        if row["activity"] != "current": lower_reasons.add("typed_support_not_current")
+                        if row["containing_lineage_health"] == "conflicted": lower_reasons.add("typed_support_conflicted")
+                        if row["containing_lineage_health"] == "inactive": lower_reasons.add("typed_support_inactive")
+                        if row["current_alignment"] != "exact": lower_reasons.add("typed_support_unaligned")
+                support.append(FlowOperatingCriterionSupportRow(
+                    support_kind="crg", record_index=indices[d.constraint_registration_record_id],
+                    activity="permanent", lineage_health="not_applicable", alignment="exact"))
+                vcn=self.loaded.constraint_declarations[d.constraint_declaration_record_id]
+                vcn_tips=self.loaded.current_constraint_tips_by_anchor[vcn.constraint_anchor_id]
+                vcn_current=not self.loaded.constraint_superseded_by[vcn.record_id]
+                if len(vcn_tips)>1: lower_reasons.add("vcn_conflicted")
+                if not vcn_current: lower_reasons.add("vcn_not_current")
+                support.append(FlowOperatingCriterionSupportRow(
+                    support_kind="vcn", record_index=indices[vcn.record_id],
+                    activity="current" if vcn_current else "superseded",
+                    lineage_health="conflicted" if len(vcn_tips)>1 else "healthy",
+                    alignment="exact" if len(vcn_tips)==1 and vcn_tips[0].record_id==vcn.record_id else "unaligned"))
+                fld=self.loaded.records[witness.flow_declaration_record_id]
+                typed=(('pcn', fld.connection_assertion_record_id),
+                       *(("pif", pin.declaration_record_id) for pin in sorted(fld.source_direction_pins, key=lambda p:p.port_anchor_id)),
+                       *(("pif", pin.declaration_record_id) for pin in sorted(fld.sink_direction_pins, key=lambda p:p.port_anchor_id)))
+                for kind,rid in typed:
+                    row=_port_assertion_payload(material,self.loaded,rid,record_indices=indices)
+                    activity=row["activity"]; health=row["lineage_health"]
+                    alignment="exact" if activity=="current" and health=="healthy" else "unaligned"
+                    support.append(FlowOperatingCriterionSupportRow(
+                        support_kind=kind,record_index=indices[rid],activity=activity,
+                        lineage_health=health,alignment=alignment))
+                    if activity != "current": lower_reasons.add("typed_support_not_current")
+                    if health == "conflicted": lower_reasons.add("typed_support_conflicted")
+                    if health == "inactive": lower_reasons.add("typed_support_inactive")
+                    if alignment != "exact": lower_reasons.add("typed_support_unaligned")
+            ordered_reasons=tuple(x for x in reason_order if x in lower_reasons)
+            groups.append(FlowOperatingCriterionBodyRow(group_index=gi,declaration_indices=tuple(indices[x] for x in ids),current_declaration_indices=tuple(indices[x] for x in current),witness_record_indices=tuple(indices[x] for x in witnesses),matching_fm_current_indices=matching,support_rows=tuple(support),reasons=ordered_reasons))
         active=[i for i,g in enumerate(groups) if g.current_declaration_indices]
         if not fc_ids: conclusion="not_declared"; reasons=("fc_not_declared",); gi=None
         elif not active: conclusion="inactive"; reasons=("fc_inactive",); gi=None
-        elif any(row.lineage_health == "conflicted" for row in fc_roots): conclusion="conflicted"; reasons=("fc_same_root_conflict",); gi=None
+        elif any(row.lineage_health == "conflicted" for row in fc_roots):
+            conclusion="conflicted"; reasons=("fc_same_root_conflict",) + (("fc_cross_root_disagreement",) if len(active)>1 else ()); gi=None
         elif len(active)>1: conclusion="disagreed"; reasons=("fc_cross_root_disagreement",); gi=None
-        else: conclusion="applicable"; reasons=(); gi=active[0]
+        else:
+            gi=active[0]; reasons=groups[gi].reasons
+            conclusion="applicable" if not reasons else "inapplicable"
         result=FlowOperatingCriterionSubjectResult(flow_anchor_id=flow_anchor_id,variable_anchor_id=variable_anchor_id,participant_port_anchor_id=participant_port_anchor_id,context=context,orientation=orientation,conclusion=conclusion,reasons=reasons,roots=fc_roots,fm_roots=fm_roots,body_groups=tuple(groups),governing_body_group_index=gi)
         return material,result
 
     def flow_operating_criterion(self, flow_anchor_id: str, variable_anchor_id: str,
                                  participant_port_anchor_id: str, context, orientation) -> FlowOperatingCriterionResult:
-        flow_anchor_id=self._require_flow_anchor_id(flow_anchor_id)
-        variable_anchor_id=self._require_variable_anchor_id(variable_anchor_id)
-        participant_port_anchor_id=self._require_port_anchor_id(participant_port_anchor_id)
-        context=self._require_flow_measurement_context(context)
-        orientation=self._require_flow_measurement_orientation(orientation)
+        try:
+            if type(flow_anchor_id) is not str: raise ValueError
+            flow_anchor_id=self._require_flow_anchor_id(flow_anchor_id)
+            if type(variable_anchor_id) is not str: raise ValueError
+            variable_anchor_id=self._require_variable_anchor_id(variable_anchor_id)
+            if type(participant_port_anchor_id) is not str: raise ValueError
+            participant_port_anchor_id=self._require_port_anchor_id(participant_port_anchor_id)
+            context=self._require_flow_measurement_context(context)
+            orientation=self._require_flow_measurement_orientation(orientation)
+        except (ModelQueryError, ValueError, TypeError, AttributeError) as error:
+            raise ModelQueryError("MODEL_FLOW_CRITERION_QUERY_INVALID",
+                                  "flow operating criterion selector is invalid") from error
         material, subject=self._flow_operating_criterion_subject(flow_anchor_id,variable_anchor_id,participant_port_anchor_id,context,orientation)
         return FlowOperatingCriterionResult(material=material,subject=subject)
 
