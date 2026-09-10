@@ -145,9 +145,20 @@ for their bounded questions. DI covers explicit model material and a supplied
 decision inventory, not globally complete decision discovery or physical impact;
 omitted or unavailable scopes remain unknown, not unaffected. No reusable
 traversal package is justified without a second concrete consumer or demonstrated
-correctness failure. Causal diagnosis remains premature. Further progress should
-begin from a concrete application decision or demonstrated integrity gap, not
-another generic kernel abstraction. No successor milestone has been approved.
+correctness failure. CV-001 backend additions are cancelled; CV-001 application
+delivery is deferred pending concrete application requirements, as recorded in
+the [CV-001 owner decision](docs/superpowers/reports/2026-09-10-cv001-deferral-owner-decision.md).
+Existing public APIs suffice for correct in-process composition, but no stable
+application entry point exposes the complete commissioning answer. Objectives
+2 and 7 have architecture/test support, not delivered application capability.
+Further application work must await all consumer requirements listed in that
+decision: ingress/invocation, authentication/authorization, policy authority,
+policy schema/version/retention, decision-result retention, application/user
+identity, confidentiality, capacity/latency, error presentation,
+deployment/resource ownership, and scope completeness. Further backend abstraction
+must not begin without a demonstrated integrity gap. Causal diagnosis remains
+premature; causal diagnosis, next-test ranking, impact prediction, and planning
+remain unauthorized. No successor milestone has been approved.
 ADR-0023 remains absent, unallocated, and unreserved.
 
 Physical-flow occurrence, automatic candidate selection, causal explanation,

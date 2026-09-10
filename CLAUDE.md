@@ -138,9 +138,20 @@ decisions; unknown or omitted scopes are never unaffected. Lifecycle, currentnes
 closure, effective-body semantics and result revalidation remain kernel-owned;
 the application owns its bounded inventory, documented field map, generic
 traversal and explicit limits. No reusable traversal package is justified without
-a second concrete consumer or demonstrated correctness failure. Causal diagnosis
-remains premature. Further progress should begin from a concrete application
-decision or demonstrated integrity gap, not another generic kernel abstraction.
+a second concrete consumer or demonstrated correctness failure. CV-001 backend
+additions are cancelled; CV-001 application delivery is deferred pending concrete
+application requirements; see the [CV-001 owner decision](docs/superpowers/reports/2026-09-10-cv001-deferral-owner-decision.md).
+Existing APIs suffice for correct in-process composition; no stable application
+entry point exposes the complete commissioning answer. Objectives 2 and 7 have
+architecture/test support, not delivered application capability. Further
+application work requires all eleven consumer requirements listed in that
+decision, including ingress/invocation, authentication/authorization, policy
+authority and schema/version/retention, decision-result retention, application/user
+identity, confidentiality, capacity/latency, error presentation,
+deployment/resource ownership, and scope completeness. Further backend abstraction
+requires a demonstrated integrity gap. Causal diagnosis remains premature;
+causal diagnosis, next-test ranking, impact prediction, and planning remain
+unauthorized. No generic backend wrapper may conceal the application prerequisites.
 No successor milestone has been approved.
 Physical-flow occurrence, automatic candidate selection, causal explanation,
 next-test recommendation, impact propagation, desired-state planning, and safety

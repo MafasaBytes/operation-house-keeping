@@ -29,9 +29,19 @@ Lifecycle, currentness, closure, effective-body semantics and result revalidatio
 remain kernel-owned; bounded decision inventory, documented field map, generic
 traversal and explicit limits belong to the application. Unknown or omitted
 scopes are not unaffected. No reusable traversal package is justified without a
-second concrete consumer or demonstrated correctness failure. Causal diagnosis
-remains premature; further progress starts from a concrete application decision
-or demonstrated integrity gap, not another generic kernel abstraction.
+second concrete consumer or demonstrated correctness failure. CV-001 backend
+additions are cancelled; CV-001 application delivery is deferred pending concrete
+application requirements; see the [CV-001 owner decision](../../docs/superpowers/reports/2026-09-10-cv001-deferral-owner-decision.md).
+Existing APIs suffice for correct in-process composition, not a delivered
+commissioning application. Objectives 2 and 7 have architecture/test support only.
+Further application work requires all eleven consumer requirements listed in
+that decision: ingress/invocation, authentication/authorization, policy authority,
+policy schema/version/retention, decision-result retention, application/user
+identity, confidentiality, capacity/latency, error presentation,
+deployment/resource ownership, and scope completeness. Further backend abstraction
+requires a demonstrated integrity gap. Causal diagnosis remains premature;
+causal diagnosis, next-test ranking, impact prediction, and planning remain
+unauthorized. No successor milestone has been approved.
 ADR-0023 remains absent, unallocated, and unreserved.
 
 The MK-001 typed entity/relationship kernel: an append-only ledger of
