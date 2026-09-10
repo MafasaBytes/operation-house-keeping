@@ -21,7 +21,18 @@ is owner accepted. Its CS-001 investigation is closed without implementation
 as commissioning application policy, not deferred architecture; see the
 [CS-001 owner decision](../../docs/superpowers/reports/2026-09-10-cs001-application-policy-owner-decision.md).
 Existing public results suffice; no new kernel or shared runtime contract is
-justified. ADR-0023 remains absent and unallocated.
+justified. DI-001 was investigated and is closed without implementation:
+cancelled as a backend architecture milestone and reclassified as bounded
+application composition; see the [DI-001 owner decision](../../docs/superpowers/reports/2026-09-10-di001-application-composition-owner-decision.md).
+CS-001 and DI-001 both concluded existing public-result composition is sufficient.
+Lifecycle, currentness, closure, effective-body semantics and result revalidation
+remain kernel-owned; bounded decision inventory, documented field map, generic
+traversal and explicit limits belong to the application. Unknown or omitted
+scopes are not unaffected. No reusable traversal package is justified without a
+second concrete consumer or demonstrated correctness failure. Causal diagnosis
+remains premature; further progress starts from a concrete application decision
+or demonstrated integrity gap, not another generic kernel abstraction.
+ADR-0023 remains absent, unallocated, and unreserved.
 
 The MK-001 typed entity/relationship kernel: an append-only ledger of
 explicit model knowledge over canonical `system_identity` anchors, with a

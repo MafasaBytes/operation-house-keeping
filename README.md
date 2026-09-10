@@ -137,7 +137,18 @@ policy, authority, receipt-age threshold/boundary, exact EA coverage requirement
 inputs and disposition; hidden defaults are forbidden. Receipt-age failure is
 `evidence_not_usable_under_policy` with reason `receipt_age_exceeded`, not a
 physical-measurement freshness claim. No new backend contract is justified.
-No successor milestone has been approved. ADR-0023 remains absent and unallocated.
+DI-001 was investigated and is closed without implementation: cancelled as a
+backend architecture milestone and reclassified as bounded application
+composition; see the [DI-001 owner decision](docs/superpowers/reports/2026-09-10-di001-application-composition-owner-decision.md).
+CS-001 and DI-001 both concluded existing public-result composition is sufficient
+for their bounded questions. DI covers explicit model material and a supplied
+decision inventory, not globally complete decision discovery or physical impact;
+omitted or unavailable scopes remain unknown, not unaffected. No reusable
+traversal package is justified without a second concrete consumer or demonstrated
+correctness failure. Causal diagnosis remains premature. Further progress should
+begin from a concrete application decision or demonstrated integrity gap, not
+another generic kernel abstraction. No successor milestone has been approved.
+ADR-0023 remains absent, unallocated, and unreserved.
 
 Physical-flow occurrence, automatic candidate selection, causal explanation,
 next-test recommendation, impact propagation, desired-state planning, and

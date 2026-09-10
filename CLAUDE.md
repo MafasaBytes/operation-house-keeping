@@ -115,7 +115,7 @@ at this checkpoint. Reconsideration requires a new owner-approved proposal
 demonstrating a concrete integrity attack that existing public-result validation
 cannot prevent; convenience or aggregation preference is insufficient.
 ADR-0022 is the latest accepted ADR. No successor milestone has been approved;
-ADR-0023 remains absent and unallocated. The current architectural frontier is
+ADR-0023 remains absent, unallocated, and unreserved. The current architectural frontier is
 the owner-accepted [post-FC objective-gap reconciliation](docs/superpowers/reports/2026-09-10-post-fc001-architecture-and-adr-reconciliation-report.md),
 which supersedes inherited roadmap ordering. CS-001 was investigated and is
 closed without implementation as commissioning application policy, not deferred
@@ -129,6 +129,19 @@ means `evidence_not_usable_under_policy` / `receipt_age_exceeded`; honest
 `multiple_matching_candidates` means `criterion_evaluation_unavailable`, not
 incoherence. Concrete thresholds and authority are application configuration.
 This closure authorizes no successor proposal or milestone.
+DI-001 was investigated and is closed without implementation: cancelled as a
+backend architecture milestone and reclassified as bounded application
+composition; see the [DI-001 owner decision](docs/superpowers/reports/2026-09-10-di001-application-composition-owner-decision.md).
+CS-001 and DI-001 both concluded existing public-result composition is sufficient.
+DI is limited to explicit before/proposed model material and named supplied
+decisions; unknown or omitted scopes are never unaffected. Lifecycle, currentness,
+closure, effective-body semantics and result revalidation remain kernel-owned;
+the application owns its bounded inventory, documented field map, generic
+traversal and explicit limits. No reusable traversal package is justified without
+a second concrete consumer or demonstrated correctness failure. Causal diagnosis
+remains premature. Further progress should begin from a concrete application
+decision or demonstrated integrity gap, not another generic kernel abstraction.
+No successor milestone has been approved.
 Physical-flow occurrence, automatic candidate selection, causal explanation,
 next-test recommendation, impact propagation, desired-state planning, and safety
 or health verdicts remain absent. Accountable occurrence/history still requires
