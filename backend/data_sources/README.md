@@ -166,10 +166,10 @@ accepted records. A catalog entry is never treated as an implementation.
 
 ## Next open question
 
-Per Application Source Profile v0, which required family follows —
-PDF drawing/manual (page-level provenance) or the operational
-API/telemetry source — and how the DS-002 worker-isolation pattern
-transfers to those parsers. To be decided with the project owner.
+The four required source families are complete through DS-004; the earlier
+Profile v0 choice between PDF and operational API ingestion is resolved.
+No successor source milestone has been approved. The current product frontier
+is assessed in the [post-FC reconciliation](../../docs/superpowers/reports/2026-09-10-post-fc001-architecture-and-adr-reconciliation-report.md).
 
 
 ## Operational API semantics (DS-004)
@@ -179,7 +179,7 @@ transfers to those parsers. To be decided with the project owner.
   payloads stay content-addressed, so a repeated response reuses its raw
   record from a new attempt. API record identity is
   `(source_id, item_key, payload_checksum)`; sweep position is ordering
-  evidence only. The future temporal layer joins
+  evidence only. The accepted temporal layer joins
   `attempt.raw_record_id -> observations(raw_record_id)`.
 - **Incremental sweeps**: the runtime persists payload -> envelope ->
   attempt -> extraction before pulling the next item; a failure at

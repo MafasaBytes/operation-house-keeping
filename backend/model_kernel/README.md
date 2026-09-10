@@ -7,21 +7,26 @@ an exact FM effective body; it does not evaluate a criterion or establish
 physical flow, occurrence, causality, safety, or operating health. The direct
 public-result proof rejects satisfied ungoverned B substituting for violated
 governing A, and the satisfied-A twin passes. See the [final acceptance](../../docs/superpowers/reports/2026-09-09-fc001-final-owner-acceptance.md).
-two additive declaration/withdrawal records and their canonical, store, replay,
+FC adds two declaration/withdrawal records and their canonical, store, replay,
 DAG and immutable-index foundation. See [ADR-0022](../../docs/adr/0022-explicit-flow-operating-criterion.md).
-The exact 236-name surface preserves the accepted 227-name prefix and appends
-only the two FC records and nine Slice B definitions. Historical support remains
+The exact 236-name surface preserves the accepted 225-name FM prefix, followed
+by two FC records and nine Slice B definitions. Historical support remains
 structurally admissible; stale IDs, substitution and invalid closure reject.
 FA-001 is cancelled; reconsideration requires a new owner-approved proposal
-demonstrating an integrity attack existing public-result validation cannot prevent.
+demonstrating a concrete integrity attack existing public-result validation
+cannot prevent; convenience or aggregation preference is insufficient.
+ADR-0022 is the latest accepted ADR. No successor milestone has been approved.
+The [post-FC reconciliation](../../docs/superpowers/reports/2026-09-10-post-fc001-architecture-and-adr-reconciliation-report.md)
+records the objective gaps and unapproved investigation recommendation.
 
 The MK-001 typed entity/relationship kernel: an append-only ledger of
 explicit model knowledge over canonical `system_identity` anchors, with a
-containment-derived hierarchy view. The bridge target of:
+containment-derived hierarchy view. Evidence and model knowledge meet in the
+upper model-state composition:
 
 ```text
-data_sources → temporal_state → identity_binding → model_kernel
-                        system_identity ────────→ model_kernel
+data_sources → temporal_state → identity_binding → model_state
+                        system_identity → model_kernel → model_state
 ```
 
 Spec: `docs/superpowers/specs/2026-08-08-mk001-model-kernel-design.md`;
@@ -29,9 +34,10 @@ decisions: `docs/adr/0007-model-kernel-typed-graph-ledger.md`.
 
 Accepted additive kernel decisions now extend through explicit variables,
 constraints, ports, variable-port associations, behavior, state, transition,
-and flow records. Their accepted decisions are ADR-0012 through ADR-0018 in
+flow, measurement-association, and governing-criterion records. The additive
+kernel decisions include ADR-0012 through ADR-0018 and ADR-0021/ADR-0022 in
 `docs/adr/`; ST-002 remains transition-declaration-only and FL-001 remains
-flow-declaration-only.
+flow-declaration-only. EA/alignment and TA are upper read-only compositions.
 
 ## Boundary
 
@@ -200,7 +206,8 @@ runtime model sets use the documented external verification procedure.
 
 No kernel correction path for registrations; registrations and type
 definitions are irrevocable (no withdrawal); a lineage may end with no
-active assertion; disagreement detection exists only for hierarchy types;
+active assertion; generic entity-relationship disagreement detection is limited
+to hierarchy types (BH/ST/transition/FL/FM/FC have their own explicit agreement rules);
 no time-varying structure (`rwd_` never means "stopped being true at T");
 runtime registration↔declaration consistency is procedural; no global
 cross-set anchor uniqueness at runtime; no knowledge-time revision queries;
@@ -272,7 +279,7 @@ verification are authorized for exactly anchors
 `mrv_d7d9b3918eb3f04157fb862164fe1d5fb17b4ef18d627fb89ff9bc429a94506b`,
 and the 122406-byte pre-append candidate disclosure artifact at SHA-256
 `4c29928156ceb2e1947473039bc20d07af4f3ff9e25a1b664b17c3e96ac415b3`.
-Slice D is implemented and adversarially reviewed. The current demo is the
+Slice D is implemented and adversarially reviewed. The historical BH demo is the
 explicit 32-record revision above and adds exactly one VRG, one BRG, and one
 parentless BHD to the explicit 29-record predecessor. It adds no BHW,
 correction, fork, second root, specification, semantics, binding, source, or

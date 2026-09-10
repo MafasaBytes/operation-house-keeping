@@ -8,7 +8,7 @@ contains the binding project guidance.
 
 ## Current status
 
-The accepted implemented milestone sequence through FM-001 is complete.
+The accepted implemented milestone sequence through FC-001 is complete.
 EA-001 is adversarially repaired, full-suite verified, and
 dual-clean-checkout verified. TA-001 Slice A is owner accepted at exact tested
 implementation `76738ac0d098eb59b0fec4f6970aa862528647d9`. Slice B adversarial
@@ -21,6 +21,12 @@ FM-001 is complete and owner accepted at exact tested implementation
 and five read-only Slice B query responsibilities are accepted. There is no
 Slice C or demonstration, and the authoritative model still contains zero
 FMA/FMW records.
+
+FC-001 is complete and owner accepted at exact tested implementation
+`9a993bdc7a9a4f2e2fa665ea2282ebefd59a6082`, adversarially hardened and
+dual-clean-checkout verified. The current model-kernel public surface has
+exactly 236 ordered exports. The authoritative model contains zero FCD/FCW
+records. See the [final owner acceptance](docs/superpowers/reports/2026-09-09-fc001-final-owner-acceptance.md).
 
 The authoritative synthetic demo model contains exactly 36 records at
 `mrv_b8f03e1c03c23efc5c4454d00e43e6b89b8254ab87ce724d7418b8a94288c7ee`.
@@ -87,6 +93,7 @@ sources and disclosures are test artifacts, never engineering truth.
 | 19 | EA-001 | Content-bound operational-evidence selection, assurance, and bounded value-compatibility alignment | [ADR-0019](docs/adr/0019-content-bound-operational-evidence-selection-and-assurance.md) |
 | 20 | TA-001 | Complete, owner accepted, adversarially hardened, and dual-clean-checkout verified | [ADR-0020](docs/adr/0020-evidence-gated-declared-transition-assessment.md) |
 | 21 | FM-001 | Complete and owner accepted: explicit flow-to-measurement declarations and five read-only queries over the exact 225-name surface | [ADR-0021](docs/adr/0021-explicit-flow-to-measurement-association.md) |
+| 22 | FC-001 | Complete and owner accepted: explicit governing VCN designation for an exact FM effective body and selected-model applicability | [ADR-0022](docs/adr/0022-explicit-flow-operating-criterion.md) |
 
 Accepted specifications live in `docs/superpowers/specs/`; accepted decisions
 live in `docs/adr/`; owner gates and verification evidence live in
@@ -107,34 +114,33 @@ source, sensor, signer, clock, engineering conclusion, or physical condition.
 
 ## Architectural frontier
 
-FM-001 is the current completed boundary. Slice A supplies the owner-accepted
-evidence-bearing,
-replayable declaration relating an existing `FlowAnchor`, `VariableAnchor`,
-and participant `PortAnchor` under exact context, orientation, and six pinned
-same-ledger support records. Slice B supplies the five accepted read-only query
-responsibilities through the exact 225-name public surface. There is no Slice
-C or demonstration.
+FC-001 is the current completed boundary; ADR-0022 is the latest accepted ADR.
+FC determines which explicit VCN governs one exact FM effective body and
+whether that designation is applicable under the selected model revision.
+The existing FC + EA/alignment + CN public-result join answers the bounded
+commissioning question for one independently nominated sample and cutoff. It
+rejects substitution of satisfied ungoverned B for violated governing A; the
+satisfied governing-A twin passes. FC supplies applicability, CN evaluation.
 
-The [FA feasibility owner decision](docs/superpowers/reports/2026-09-09-fa001-feasibility-owner-decision.md)
-accepts the proposal and challenger audit for correctly rejecting baseline-only
-FA implementation. FA-001 is deferred, not completed or implemented.
-FC-001 — Explicit Flow Operating Criterion Declaration — has an
-[owner-approved final design](docs/superpowers/reports/2026-09-09-fc001-final-design-owner-approval.md)
-and [ADR-0022](docs/adr/0022-explicit-flow-operating-criterion.md). Only Slice A's
-kernel record/lifecycle foundation is authorized; Slice B is unstarted and
-unauthorized. Valid historical support remains admissible; currentness-based
-applicability belongs to Slice B. After the separately accepted FC direct-join
-proof, cancel FA if FC, existing CN and evidence disclosures supply the complete
-approved answer. Reconsideration requires a new owner-approved proposal proving
-an integrity attack that explicit public-result checks cannot prevent, not API
-convenience or one aggregate return object.
-Optional accountable flow occurrence/history still requires explicit time-window, continuity, and
-authenticity contracts. Configuration identity remains an alternative priority
-if the owner changes product focus. Causal, diagnostic, impact, goal, action,
-planning, and control layers remain deferred until their explicit model and
-evidence prerequisites exist. An FM association would
-establish declared measurement relevance only—not observed flow, occurrence,
-continuity, conservation, balance, causality, correctness, or safety.
+FA-001 is cancelled under the [final owner decision](docs/superpowers/reports/2026-09-09-fc001-final-owner-acceptance.md).
+Reconsideration requires a new owner-approved proposal demonstrating a concrete
+integrity attack that existing public-result validation cannot prevent.
+Convenience or aggregation preference is insufficient.
+
+The [post-FC objective-gap reconciliation](docs/superpowers/reports/2026-09-10-post-fc001-architecture-and-adr-reconciliation-report.md)
+replaces the inherited roadmap ordering as the current frontier assessment.
+It recommends investigating commissioning evidence-sufficiency policy: under
+an explicit age-and-coverage rule, may the workflow use the nominated sample,
+or does it need fresh measurement? Existing public results may suffice once
+the owner supplies policy; no new core implementation is recommended now.
+No successor milestone has been approved. ADR-0023 remains absent and
+unallocated; this recommendation authorizes no design proposal or implementation.
+
+Physical-flow occurrence, automatic candidate selection, causal explanation,
+next-test recommendation, impact propagation, desired-state planning, and
+safety or health verdicts remain absent. Occurrence/history needs explicit
+time-window, continuity, and authenticity semantics; graph traversal, ranking,
+reasoning, and optimization each need an identified consumer and explicit rules.
 
 ## Verification
 

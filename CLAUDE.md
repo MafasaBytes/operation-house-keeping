@@ -32,9 +32,9 @@ boundaries remain binding.
 
 The owner-accepted milestone sequence is DS-001, DS-002, DS-003, DS-004,
 TS-001, IB-001, MK-001, VM-001, VS-001, SN-001, ES-001, CN-001, PT-001,
-VP-001, BH-001, ST-001, ST-002, FL-001, EA-001, TA-001, and FM-001. FL-001,
-EA-001, TA-001, and FM-001 are complete and owner accepted. FM-001's corrected
-design and repaired Slice A are owner accepted at exact tested implementation
+VP-001, BH-001, ST-001, ST-002, FL-001, EA-001, TA-001, FM-001, and FC-001.
+FL-001, EA-001, TA-001, FM-001, and FC-001 are complete and owner accepted.
+FM-001's corrected design and repaired Slice A are owner accepted at exact tested implementation
 `6210d3c250b96f54b764a365cb0a3a988d9bf9f6`; Slice B and the complete FM-001
 milestone are owner accepted at exact tested implementation
 `4d8219d88d3f5f531c1a1cf250b36cb25e001c2f`.
@@ -100,9 +100,9 @@ tested implementation `4d8219d88d3f5f531c1a1cf250b36cb25e001c2f`.
 There is no Slice C or demonstration. The authoritative model retains zero
 FMA/FMW records. The [FA feasibility owner decision](docs/superpowers/reports/2026-09-09-fa001-feasibility-owner-decision.md)
 accepts the proposal and challenger audit because they correctly reject
-baseline-only FA implementation. FA-001 is deferred, not completed or
-implemented. FC-001 — Explicit Flow Operating Criterion Declaration — is
-complete, owner accepted, adversarially hardened, and dual-clean-checkout
+baseline-only FA implementation; its earlier FA deferral is superseded by
+the final FC acceptance and cancellation below. FC-001 — Explicit Flow Operating
+Criterion Declaration — is complete, owner accepted, adversarially hardened, and dual-clean-checkout
 verified at exact tested implementation `9a993bdc7a9a4f2e2fa665ea2282ebefd59a6082`. See
 [ADR-0022](docs/adr/0022-explicit-flow-operating-criterion.md) and the
 [design approval](docs/superpowers/reports/2026-09-09-fc001-final-design-owner-approval.md).
@@ -114,11 +114,20 @@ for violated governing A, and its satisfied-A twin passes. FA-001 is cancelled
 at this checkpoint. Reconsideration requires a new owner-approved proposal
 demonstrating a concrete integrity attack that existing public-result validation
 cannot prevent; convenience or aggregation preference is insufficient.
-Optional accountable flow occurrence/history still requires explicit
-time-window, continuity, and authenticity contracts. Configuration identity remains an alternative priority if
-the owner changes product focus. Causality, diagnosis, impact analysis, goals,
-actions, planning, and control remain deferred. This status assigns none of
-those concerns an implemented capability and authorizes no work on them.
+ADR-0022 is the latest accepted ADR. No successor milestone has been approved;
+ADR-0023 remains absent and unallocated. The current architectural frontier is
+the [post-FC objective-gap reconciliation](docs/superpowers/reports/2026-09-10-post-fc001-architecture-and-adr-reconciliation-report.md),
+which supersedes inherited roadmap ordering. Its recommended design-only
+investigation concerns commissioning evidence-sufficiency policy: whether an
+explicit age-and-coverage rule permits using the nominated sample or calls for
+fresh measurement. Existing public results may suffice once the owner supplies
+policy; no new core implementation is recommended now. This is not authorization
+for a successor proposal or milestone.
+Physical-flow occurrence, automatic candidate selection, causal explanation,
+next-test recommendation, impact propagation, desired-state planning, and safety
+or health verdicts remain absent. Accountable occurrence/history still requires
+explicit time-window, continuity, and authenticity semantics. Goals, actions,
+optimization, configuration timelines, and control remain deferred.
 
 EA-001 is complete and owner accepted. Its accepted lineage includes the Slice
 A lower read seams and integrity repair at

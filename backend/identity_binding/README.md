@@ -12,7 +12,7 @@ system_identity ─────────────────────�
 
 Spec: `docs/superpowers/specs/2026-08-07-ib001-identity-binding-design.md`;
 decisions: `docs/adr/0006-identity-binding-ledger.md`. Anchor value
-contracts live in `backend/system_identity/` (shared with the future
+contracts live in `backend/system_identity/` (shared with the accepted
 kernel).
 
 ## Boundary

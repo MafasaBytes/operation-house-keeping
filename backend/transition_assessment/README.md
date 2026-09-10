@@ -71,7 +71,7 @@ PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest \
 ```
 
 The Slice A completion report records its accepted implementation evidence.
-The uncommitted Slice B completion report records adversarial T01-T74 closure,
+The committed [Slice B completion report](../../docs/superpowers/reports/2026-09-07-ta001-slice-b-completion-report.md) records adversarial T01-T74 closure,
 final full-suite and clean-checkout verification, deterministic reproduction,
-preservation, compilation, dependency, and whitespace evidence for owner
-validation.
+preservation, compilation, dependency, and whitespace evidence accepted in the
+[final owner decision](../../docs/superpowers/reports/2026-09-07-ta001-final-owner-acceptance.md).
