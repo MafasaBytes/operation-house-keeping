@@ -17,7 +17,11 @@ demonstrating a concrete integrity attack existing public-result validation
 cannot prevent; convenience or aggregation preference is insufficient.
 ADR-0022 is the latest accepted ADR. No successor milestone has been approved.
 The [post-FC reconciliation](../../docs/superpowers/reports/2026-09-10-post-fc001-architecture-and-adr-reconciliation-report.md)
-records the objective gaps and unapproved investigation recommendation.
+is owner accepted. Its CS-001 investigation is closed without implementation
+as commissioning application policy, not deferred architecture; see the
+[CS-001 owner decision](../../docs/superpowers/reports/2026-09-10-cs001-application-policy-owner-decision.md).
+Existing public results suffice; no new kernel or shared runtime contract is
+justified. ADR-0023 remains absent and unallocated.
 
 The MK-001 typed entity/relationship kernel: an append-only ledger of
 explicit model knowledge over canonical `system_identity` anchors, with a

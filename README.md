@@ -128,13 +128,16 @@ integrity attack that existing public-result validation cannot prevent.
 Convenience or aggregation preference is insufficient.
 
 The [post-FC objective-gap reconciliation](docs/superpowers/reports/2026-09-10-post-fc001-architecture-and-adr-reconciliation-report.md)
-replaces the inherited roadmap ordering as the current frontier assessment.
-It recommends investigating commissioning evidence-sufficiency policy: under
-an explicit age-and-coverage rule, may the workflow use the nominated sample,
-or does it need fresh measurement? Existing public results may suffice once
-the owner supplies policy; no new core implementation is recommended now.
-No successor milestone has been approved. ADR-0023 remains absent and
-unallocated; this recommendation authorizes no design proposal or implementation.
+is owner accepted and replaces inherited roadmap ordering. Its recommended
+investigation, CS-001, is closed without implementation and reclassified as
+commissioning application policy, not deferred architecture; see the
+[CS-001 owner decision](docs/superpowers/reports/2026-09-10-cs001-application-policy-owner-decision.md).
+Existing public results suffice. The caller explicitly supplies and retains
+policy, authority, receipt-age threshold/boundary, exact EA coverage requirement,
+inputs and disposition; hidden defaults are forbidden. Receipt-age failure is
+`evidence_not_usable_under_policy` with reason `receipt_age_exceeded`, not a
+physical-measurement freshness claim. No new backend contract is justified.
+No successor milestone has been approved. ADR-0023 remains absent and unallocated.
 
 Physical-flow occurrence, automatic candidate selection, causal explanation,
 next-test recommendation, impact propagation, desired-state planning, and

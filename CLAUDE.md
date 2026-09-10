@@ -116,13 +116,19 @@ demonstrating a concrete integrity attack that existing public-result validation
 cannot prevent; convenience or aggregation preference is insufficient.
 ADR-0022 is the latest accepted ADR. No successor milestone has been approved;
 ADR-0023 remains absent and unallocated. The current architectural frontier is
-the [post-FC objective-gap reconciliation](docs/superpowers/reports/2026-09-10-post-fc001-architecture-and-adr-reconciliation-report.md),
-which supersedes inherited roadmap ordering. Its recommended design-only
-investigation concerns commissioning evidence-sufficiency policy: whether an
-explicit age-and-coverage rule permits using the nominated sample or calls for
-fresh measurement. Existing public results may suffice once the owner supplies
-policy; no new core implementation is recommended now. This is not authorization
-for a successor proposal or milestone.
+the owner-accepted [post-FC objective-gap reconciliation](docs/superpowers/reports/2026-09-10-post-fc001-architecture-and-adr-reconciliation-report.md),
+which supersedes inherited roadmap ordering. CS-001 was investigated and is
+closed without implementation as commissioning application policy, not deferred
+architecture; the [CS-001 owner decision](docs/superpowers/reports/2026-09-10-cs001-application-policy-owner-decision.md)
+accepts the challenger verdict and RC-1/RC-2 corrections. Existing public results
+suffice; no new package, shared runtime function, durable contract or ADR is
+justified. Policy/schema/version, authority, receipt-age threshold/boundary,
+exact EA coverage requirement, inputs and disposition are explicitly supplied
+and retained by the caller; hidden defaults are forbidden. Receipt-age failure
+means `evidence_not_usable_under_policy` / `receipt_age_exceeded`; honest
+`multiple_matching_candidates` means `criterion_evaluation_unavailable`, not
+incoherence. Concrete thresholds and authority are application configuration.
+This closure authorizes no successor proposal or milestone.
 Physical-flow occurrence, automatic candidate selection, causal explanation,
 next-test recommendation, impact propagation, desired-state planning, and safety
 or health verdicts remain absent. Accountable occurrence/history still requires
