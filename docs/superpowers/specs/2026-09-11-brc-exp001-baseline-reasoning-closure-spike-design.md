@@ -1297,7 +1297,8 @@ input or proof remains an explicit gate, not an omitted case.
 Additional applicable guards attach to these entries rather than disappearing
 outside the seven basis inputs: all-excluded h/t row → row_all_excluded; denied
 or unknown applicability/availability/calibration/hold → candidate_unavailable;
-required lower refusal/ambiguity/absent BH → unavailable, never H contradiction;
+valid required lower refusal or absent BH → unavailable, never H contradiction;
+hostile duplicate-locator carriage → input_refused under section 18, never unavailable;
 strict fields/unions/indices/numerics/unauthorized costs; trace/step/depth/output
 reserves and fixed non-echo error ordering; scope and granularity disclosure.
 Input attacks need independent intended-attack commitments so stale hashes or
@@ -1386,5 +1387,76 @@ The next owner gate is exact cohort/guard/new-assumption approval and explicit
 release of the A execution stop, subject to every outstanding A admission and
 acceptance condition. After eventual A acceptance, B requires separate premise
 preparation and execution approval. No push, merge or history rewrite is authorized.
+
+## 18. Owner-corrected baseline-specific multiple-match gate
+
+This section supersedes any earlier requirement for an honest producer-generated
+multiple-match parent on the selected baseline path. It does not remove the
+public `multiple_matching_candidates` vocabulary or declare it universally
+unreachable. No Mode B conclusion follows. A future accepted producer path
+making honest multiple matching reachable needs new evidence and its own owner gate.
+
+On baseline `af16e925a2df80f84d5cdf5c1c6e97cf3172fea0`, public
+BindingResolver.declared_property_locators groups assertions by the exact tuple
+`(source_id, adapter_id, subject_identifier, extraction_route, item_key, json_pointer)`.
+It emits one locator per key. ModelStateQueries.variable_state emits one candidate
+per locator (or one explicit-selector candidate); the value-compatibility producer
+preserves that cardinality. Alignment filters by exactly the same six fields.
+Thus at most one producer-generated candidate can exactly match the selected scope.
+Reproduce this invariant independently through public production and a separate
+key-set oracle; do not infer it merely from a test helper or fabricate discovery.
+
+The replacement is an adversarial carried-input control: duplicate a complete
+consumer candidate and its corresponding state row, with internally adjusted
+declared count/selection and fresh lower commitment, so stale-digest detection
+does not mask the intended integrity distinction. Preserve complete hostile input
+bytes and original provenance as hostile content; never call this a produced
+observation or accept its `not_aligned / multiple_matching_candidates /
+multiple_matches` disclosure as an engineering conclusion. Do not modify a
+producer or its deduplication. The nearest valid twin has one exact match from
+the selected producer and passes complete public reconstruction and exact joins.
+
+After all bounded preflight and commitment checks, reconstruct the complete
+owning lower results, then enforce selected-path input coherence before baseline
+assessment or minimax. Require distinct six-field keys in the carried N
+semantic_compatibility.value_compatibility.state.candidates and exact paired
+state_candidate correspondence in value_compatibility.candidates. Check matching
+declared counts/selection under the selected producer path; compare complete
+occurrence, R, cutoff, context, binding/interpretation and governing identities.
+No filesystem/store lookup is allowed in this final validation. Public model
+round-trip alone is insufficient: existing lower validators can represent the
+defensive duplicated shape. The experimental coherence gate supplies the required
+rejection without changing lower contracts or globally banning valid public arms.
+
+For the isolated duplicate with otherwise valid complete lower material, the
+ordered issue list is exactly one refusal: phase `lower_validation`, code
+`join_mismatch`, target `Ref(space=public,root=N,path=[semantic_compatibility,
+value_compatibility,state,candidates])`, lower_reason absent, epistemic level 7 /
+unknown / unavailable. Fixed presentation: `Carried input violates the selected
+producer invariant.` No hostile value is interpolated. Earlier malformed/schema,
+resource, commitment or owning-lower failures retain section 7's ordering and
+codes and must be tested independently, not relabelled as this isolated case.
+Terminal status is `input_refused`, not criterion/baseline unavailable; no
+successful scores, preference or successful trace conclusions may accompany it.
+Raw hostile lower status/reason is retained only in bounded forensic metadata.
+
+E16/E17 retain the lower admission/integrity obligation; E28 retains complete
+provenance/coherence. All 23 A obligations remain, and all 40 frozen negative
+recipes remain unchanged. Register this additional hostile control and its
+positive twin separately; it does not overwrite or silently renumber the 40.
+The remaining honest parents are a complete satisfied governing baseline and
+a complete EA refusal with its exact retained reason and supporting inputs.
+Any new assumptions for these parents require separately versioned candidate
+bytes and owner approval before inclusion. M_A_complete remains pending until
+all admitted parents/twins and the admitted natural guard are counted. Expected
+reconstruction refusals are excluded from that maximum, not from resource tests.
+
+The owner authorizes a documentation-only checkpoint for this correction,
+followed by final preexecution preparation only. Preserve the not-ready report
+byte-for-byte as the multiple-match-discrepancy report. Commit only this synthesis,
+the amended plan, that discrepancy report and the gate-correction report under
+`docs: correct BRC-EXP-001 multiple-match control`. Candidate parents, oracles,
+manifests and the replacement final closure report remain untracked. Neither
+minimax nor Mode B is authorized; 12,000/16,384 caps and all other contracts remain.
 
 END OF BRC-EXP-001 CORRECTED FINAL SYNTHESIS

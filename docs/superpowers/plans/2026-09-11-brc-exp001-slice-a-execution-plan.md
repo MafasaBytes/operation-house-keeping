@@ -318,4 +318,49 @@ package, fixture, ledger, durable identity, ADR-0023, push, merge or history rew
 is authorized during this preparation. The protected 36-record revision, 236
 exports and zero FMA/FMW/FCD/FCW remain fixed. ADR-0023 stays unallocated/unreserved.
 
+## 8. Multiple-match correction and final preexecution continuation
+
+Apply synthesis section 18 before earlier generic refusal/ambiguity instructions.
+The selected public producer's six-field locator deduplication makes honest
+producer-generated multiple matching unreachable on this baseline path. Prove
+that invariant independently. Do not remove public multiple-match vocabulary
+globally or extrapolate a Mode B claim.
+
+Preserve the exact not-ready closure bytes under
+`docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-multiple-match-discrepancy-report.md`
+with SHA-256 `b0cd21dc2e73c471f589618b9e688084599f0146022db95a4c0a2093e172475c`.
+After digest, documentation, link, preservation and whitespace checks, commit
+only this plan, amended synthesis, preserved discrepancy and multiple-match
+gate-correction report. Subject:
+`docs: correct BRC-EXP-001 multiple-match control`.
+
+Then prepare the complete honest satisfied-governing and EA-refusal parents,
+plus an explicitly hostile duplicate-locator input and producer-generated
+unique-match twin. All lower results reconstruct through their owning public
+contracts; a separate pure exact input-coherence check enforces section 18.
+The isolated duplicate yields ordered singleton lower_validation/join_mismatch
+at the exact N state.candidates target, not an unavailable minimax result.
+Its lower reason/status remains hostile content only. A stale digest, earlier
+resource refusal or independently forged count must not mask this control.
+
+Keep all seven approved requests and 40 negative recipes unchanged. Extend
+the independent expected oracle with this extra hostile control and positive
+twin; do not replace the existing 40. Complete static output/trace proofs and
+measure all admitted parents plus the under-limit guard with two independent
+additive counters, seeds 1/7/313, two roots and reversed construction order.
+M_A_support stays 7,680; establish M_A_complete <=12,000 or stop. The 12,355
+guard must refuse before owning reconstruction. No minimax implementation is
+called by preparation or oracle construction. Do not claim registered recipes
+or static output examples are accepted experimental results.
+
+If a remaining honest parent requires a new assumption, expose exact separately
+versioned candidate bytes and stop for approval; do not silently add it to the
+approved cohort. Preserve every existing assumption, manifest, guard and
+rehearsal byte. Parent inputs/manifests, expected oracle/manifests and the new
+final preexecution closure report stay untracked for exact owner approval.
+The final report binds this correction and discrepancy, states ready/not-ready
+honestly and lists the remaining owner gate. Remove disposable preparation tools
+and roots. No public producer/lower contract, production test, ledger, fixture,
+ADR, numerical limit, Mode B, push, merge or history rewrite is authorized.
+
 END OF BRC-EXP-001 SLICE A EXECUTION PLAN
