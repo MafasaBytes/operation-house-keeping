@@ -5,6 +5,12 @@ Codex lead; 2026-09-11. Design only. The accepted challenger verdict is
 and four non-blocking observations. This document replaces the proposal as the
 prospective experiment specification; neither frozen input is edited.
 
+Current authority: the 2026-09-11 experiment-redesign owner decision accepts
+RC-A–RC-C and NB-A–NB-D of the later redesign audit. Section 17 controls the
+current independent slice gates, operational population, resource calibration
+and preparation authority. Earlier checkpoint/receipt statements describe their
+historical tasks, not the current worktree or a renewed execution authorization.
+
 ## 1. Decision, scope, and verified baseline
 
 The corrected two-mode disposable spike is the smallest useful experiment.
@@ -771,7 +777,8 @@ token ≤32, field-name/path token ≤128; full-envelope decoded string token �
 UTF-8 bytes and numeric lexical token ≤128 bytes before any lower parsing. Public
 schemas may be stricter. Experimental Text remains ≤512 even when the general
 parser permits a larger lower token. No public proof is truncated to meet these
-refinements. At-limit and one-over must measure these too.
+refinements. At-limit and one-over component checks must measure these too;
+full-request node boundary evidence uses the natural witnesses in section 17.
 
 Node accounting is additive, with three distinct measured values:
 
@@ -792,8 +799,9 @@ The existing `max_expanded_nodes` field bounds `charged_validation_node_count`.
 If a tool uses `expanded_node_count`, that name is an exact alias for this
 additive value, never replacement-expanded-tree size. Replacement accounting
 is rejected: never subtract the already-counted reference object. The numerical
-limit remains 12,000 pending complete valid-corpus calibration and separate owner
-approval; neither 12,367 nor 12,415 is a newly authorized limit.
+limit remains 12,000. The owner rejects a numerical increase. Section 17 separates
+the diagnostic calibration population from the operational witness cohort;
+neither 12,367, 12,415 nor the 22,845 diagnostic maximum is an authorized limit.
 
 Multiplicity is per typed reference occurrence, not per unique Statement ID.
 Bounded lookup/count caching by exact ID plus exact canonical body bytes is
@@ -1144,5 +1152,239 @@ marker, whitespace check including the new untracked file, and Git status contai
 only the two frozen inputs plus this synthesis. No branch, add, commit, ADR-0023
 allocation, fixture/ledger mutation, push, merge or history operation occurs.
 ADR-0023 remains absent, unallocated and unreserved. Stop after the terminal receipt.
+
+## 17. Accepted experiment redesign and exact preexecution gates
+
+This normative amendment implements the owner-accepted
+[redesign audit](../reports/2026-09-11-brc-exp001-slice-a-experiment-redesign-proposal-challenger-audit.md),
+SHA-256 `e4d7b6b2aea52e949eb322067d4c6660c3268afb415501e9585761725dfb93ea`.
+The [frozen redesign proposal](../proposals/2026-09-11-brc-exp001-slice-a-experiment-redesign-proposal.md)
+remains unchanged at `ec4f818c42ce8e67c10c0d2564ac54fdf4e66fd7ebdc8ec01e30306f18119012`.
+The [correction report](../reports/2026-09-11-brc-exp001-slice-a-experiment-redesign-correction-report.md)
+records old/new document commitments and the exact reconciliation.
+This section supersedes the proposal's unconditional full-universe barrier and
+prospective cap-amendment rule. It changes neither public contracts nor the
+Mode A algorithm, assumption ladder, primary bytes, cost policy or numerical caps.
+
+### 17.1 Independent proof boundaries, not a smaller truth claim by omission
+
+The following partition is exhaustive and unique over E01–E32:
+
+| Class | IDs | Count | Required boundary |
+| --- | --- | ---: | --- |
+| slice_a_required | E01–E17, E26–E28, E30–E32 | 23 | Slice A acceptance, with every applicable guard below |
+| slice_b_required | E18–E21, E23–E25 | 7 | Separately approved and executed Slice B |
+| cross_slice_closeout_required | E22 | 1 | Combined A/B closeout only |
+| resource_refusal_only | E29 | 1 | Separate Slice A resource guard, never semantic-success evidence |
+
+Missing B0/B1/B2/conditional-rule premises and unproved E22 cannot block Slice A
+acceptance. They do block corresponding B and combined claims. A-side wrong-arm,
+field-leakage, import and epistemic guards remain immediate under E27/E32;
+stage separation does not excuse them. Slice B remains unproved, unapproved,
+and dependent on separately versioned complete premises and its own owner gates.
+No successor milestone follows from Slice A, and no Slice C is authorized.
+
+Successful A is bounded compatibility/minimax correctness over explicitly supplied
+H/T/outcome/prediction premises, not derivation or accuracy of those premises.
+Objective 3 receives conditional finite-account filtering, not actual cause;
+objective 4 receives within-supplied-set worst-case discrimination, not global
+best-test selection; objective 7 receives exact carried assumption/computation
+classification, not source authentication. Objectives 1/2 only reuse existing
+synthetic public evidence; 5/6 remain open. All seven dispositions in section 14
+and audit section 11 remain binding. The supplied-versus-publicly-derived premise
+question remains open after A. None of IN-001, CI-001, diagnosis, prediction,
+influence, change impact, planning, control or an application is preselected.
+
+### 17.2 Three preserved corpus roles and exact selection
+
+`diagnostic_calibration_corpus` is the unchanged 250 structurally complete typed
+requests retained in the continuation archive and proposal matrix. It is not
+the population of operationally admissible Slice A requests. All 250 costs,
+contents and commitments remain evidence, including the 22,845 maximum and the
+22,821 complete-known maximum. The archived missing-cell control stays outside
+those maxima but remains an A negative control.
+
+`resource_refusal_corpus` includes all 218 archived requests above 12,000,
+with their identities/costs and intended preflight refusal retained. Refusal
+does not prove a semantic model gap or operational algorithm success.
+`operational_witness_cohort` is the minimal input-support basis selected below,
+plus a separately identified acceptance register: the seven basis requests
+are not a replacement for all applicable A positive/negative oracles. These
+corpus roles overlap; choosing a witness neither deletes the omitted 243 rows
+nor calls every omitted sublimit row invalid. No cost-based cherry-picking of
+unique semantic obligations is allowed.
+
+For the frozen support matrix, seven disjoint necessary groups are E01, E02,
+E04, E05, E07, E08 and E09, with 10/1/2/114/1/1/1 candidate rows. Enumerate all
+2,280 seven-way combinations without filtering by cost. Recompute coverage
+from the exact projection/check/relation predicates in proposal section 4.
+An independent bit-mask set-union dynamic program must reproduce the minimum;
+at the forced 7,680 threshold it minimizes (cardinality, aggregate charge).
+No six-request cover exists. The optimum is seven, maximum 7,680, sum 50,738.
+This establishes input support for 15 columns, not execution of 23 obligations.
+
+All six minimum cohorts remain disclosed. Let
+K={all_other,one_viable,tied,unknown_single,zero_viable}:
+
+| Historical tie | Add to K | Continuity disposition |
+| --- | --- | --- |
+| C1 | closure_base_000000, different_outcomes | Does not nominate the approved primary role or isolated surprise role |
+| C2 | closure_base_000000, surprise | Same selected complete bytes; retain the archival primary alias |
+| C3 | nondeterministic, different_outcomes | Does not nominate the approved primary role or isolated surprise role |
+| C4 | nondeterministic, surprise | Same selected complete bytes; retain the archival primary alias |
+| C5 | primary, different_outcomes | Distinct provenance bytes for the extension, not the isolated surprise role |
+| C6 | primary, surprise | Present the approved primary role explicitly; exact bytes equal C2/C4 |
+
+The three primary-role aliases are literally identical bytes, not inferior
+semantic candidates. The two extension variants differ in 14 Statement bodies,
+not mathematics. There are six case-level ties and two byte-level choices.
+Continuity selects experimental roles fixed by prior approval and the isolated
+surprise control, never filenames, spelling, enumeration, IDs, time or hashes.
+Require equality to the approved primary bytes, not an archival filename match.
+C2/C4/C6 are one exact seven-request byte cohort under this condition, with
+three archival aliases preserved, not three different semantic choices. Naming
+its unchanged approved request primary is display/traceability, not an ID-based
+winner. Do not quotient distinct bytes merely because their scores might agree.
+Within cohorts containing both exact roles and covering the A acceptance register,
+minimize maximum charge, aggregate charge, then new assumption variants. Preserve
+any remaining tie and stop for owner direction. Do not execute all six.
+Canonical case-ID ordering is presentation only.
+
+Primary complete request SHA-256 remains
+`67fe5d164251fdc6d8ba577e90660b0c486ea626af0a1faccac5362481f188c1`
+(94,819 bytes); its exact projection remains
+`4c5e48452ee81a5c65cef2a51dcae8de56262684e7056be429dd6166788241dc`
+(29,153 bytes). Historical approval metadata is not rewritten. Every other
+projection is a candidate version requiring independent exact-byte owner approval.
+Owner approval never promotes levels 3/4 to observed or declared engineering truth.
+
+### 17.3 Complete A acceptance register, including missing controls
+
+The cohort manifest must contain one ordered entry for each of the following
+23 obligations. For each guard record its exact complete parent commitment,
+mutation/construction and independent expected commitment, expected phase/code,
+resource treatment, owner authority and later actual result. Candidate preparation
+may mark an execution-only oracle not_run; it may never mark it passed from a
+positive parent, byte counting or public-only reconstruction. A missing exact
+input or proof remains an explicit gate, not an omitted case.
+
+| ID | Frozen input support and mandatory acceptance oracle |
+| --- | --- |
+| E01 | Exact approved primary; independent all-branch mathematical oracle and forged score/step refusal; retain later exact result externally |
+| E02 | tied; both distinct procedures remain in the full best set; select-first mutation refused |
+| E03 | Primary overlapping permits; no probability, exclusive-partition or outcome-average substitution |
+| E04 | Isolated surprise; explicit unsupported successful branch is unexplained, never impossible/cause proof |
+| E05 | unknown_single at H1/T1/high; unknown remains level 7; also unknown in a contradicted H and required-baseline-unknown precedence |
+| E06 | Archived missing_cell plus exact primary restoration; cell_missing differs from cell_unknown; no imputation |
+| E07 | all_other; explicit successful other is not unavailable input and must retain both H permissions |
+| E08 | one_viable; no_discrimination_needed with absent scores/best, never proven cause |
+| E09 | zero_viable; no_viable_hypotheses with conflicts, no invented fallback or evidence-falsehood claim |
+| E10 | all_other plus no_partition; no positive recommendation when reduction is zero; do not confuse singleton T with a useful discriminator |
+| E11 | tied positive; exact aliased procedure/decoder with renamed IDs/provenance refused semantic_alias; owner paraphrase/granularity admission retained |
+| E12 | Primary unique product; duplicated identical and conflicting triples refused cell_duplicate before reconstruction of a comparison |
+| E13 | indistinguishable positive retained at 7,130; distinct meanings with identical rows disclosed; same canonical H meaning under new ID/provenance refused semantic_alias |
+| E14 | Complete primary and outcome-extension decoders; overlap, gap, duplicate region, unit mismatch, empty vocabulary and outside-domain success refused decoder_invalid/cell_outside_domain |
+| E15 | one_supplied and unique primary positive; empty H/T and duplicate H/T/O identities refused; strict Boolean/integer distinction retained |
+| E16 | Full F/N/E owning reconstruction, exact governed CN/observation and alignment; satisfied governing baseline is baseline_not_violated, not a changed expected H verdict |
+| E17 | Forged nested roots, mixed R/context/cutoff/occurrence/fingerprint and ungoverned substitution refused lower_invalid/join_mismatch; BH/current-record integration below remains required |
+| E26 | Every premise and later calculation/conclusion preserves the seven-level ladder and transitive supplied dependency closure |
+| E27 | A closed arm, no B fields; prior/cost insertion, cause/global-best, unknown-as-false and assumed-as-observed/public relabelling refused at the exact first applicable gate |
+| E28 | Every stage preserves complete lower contents/joins and original provenance/citation IDs; external request substitution refused even after self-hash update |
+| E30 | Seeds 1/7/313, two independent roots and reversed permissible construction order; compare canonical complete requests and later results/steps/classifications, not just scores |
+| E31 | Full RC4: actual validated result/size then freeze; external independent expected request/result commitments; mutate every result class and recompute on every read |
+| E32 | Disposable one-way public imports, production reachability rejection, pure no-I/O/store/network/device/clock/LLM validation; exceptions stay algorithm_failure, never missing semantics |
+
+Additional applicable guards attach to these entries rather than disappearing
+outside the seven basis inputs: all-excluded h/t row → row_all_excluded; denied
+or unknown applicability/availability/calibration/hold → candidate_unavailable;
+required lower refusal/ambiguity/absent BH → unavailable, never H contradiction;
+strict fields/unions/indices/numerics/unauthorized costs; trace/step/depth/output
+reserves and fixed non-echo error ordering; scope and granularity disclosure.
+Input attacks need independent intended-attack commitments so stale hashes or
+earlier resource failures cannot masquerade as the targeted semantic rejection.
+Positive cost-ranking variants remain separately unauthorized and nonblocking.
+
+T19 BH/current-record integration is an A obligation, not B2 or mere resource
+stress. Its proposed bounded witness retains both H, four checks/H and the
+entire 23-record F/N/E/BH proof, but nominates only T2 in a separately versioned
+full request. Equal/different expectations and unavailable BH handling need
+their own exact candidate bytes and rehearsal. Deleting unused T1 predictions
+and justification in this separately scoped request is not a runtime projection
+of the approved primary; that primary never changes. No lower field, evidence
+boundary or owning validator may be removed. If this cannot be fully prepared
+under 12,000, stop the corresponding A acceptance claim for an explicit owner
+scope decision. No unmeasured symbolic 11,567 estimate is execution evidence.
+
+### 17.4 Operational capacity and natural boundary evidence
+
+`M_A_support = 7680` is established for the seven-request support cohort.
+`M_A_complete` is the maximum charged count among all complete, operationally
+admitted input parents in the finally frozen A cohort/acceptance-guard register,
+including a successful under-limit resource guard and complete BH integration
+parents. Expected resource-refused inputs do not enter that maximum. It remains
+pending until all required input parents and guards are frozen and counted;
+neither a seven-input maximum nor future trace/result bytes alone establish it.
+Unprepared valid lower-refusal/satisfied-baseline or integration arms must be
+identified explicitly, with no premature full-acceptance bound claim.
+
+Before any future capacity claim, test coverage/coherence feasibility at 12,000
+independently of request count. A minimum-cardinality cover requiring a larger
+individual request is not proof that a larger sublimit cover cannot suffice.
+Only after feasibility may economical execution be optimized. The owner retains
+12,000 operational and 16,384 safety limits, rejecting an increase. Existing
+carrier failure or speculative future controls justify no amendment.
+
+Replace the artificial exact-12,000 full-request requirement by the greatest
+naturally reachable complete semantically admissible request at or below 12,000,
+and the least naturally reachable structurally complete request above it, in
+the explicitly committed boundary-search population. Distinguish a finite-corpus
+extremum from a schema-wide attainability theorem. Preserve all tied natural
+counts, their contents and any semantic criterion used to nominate a guard.
+Do not add padding, irrelevant fields, strings or meaningless structure to hit
+a target. The historical 7,783 complete-typed requests have unknown predictions;
+they cannot be described as semantically admitted matrices. Record them unchanged
+as diagnostic/unavailability evidence, not silently substituted under-limit success.
+
+The over-limit guard must refuse before any owning reconstruction: raw bytes,
+shallow types/cardinalities/aggregate product, W, reference shape, bounded lookup,
+R, total C=W+R, then reconstruction only if every resource gate passes. Preserve
+section 10's exact fixed typed error and value-free presentation. Record W, R,
+C and zero owning calls. A separate inclusive comparator component guard uses
+12,000 and 12,001 as integer inputs, never padded requests. Retain aggregate
+product, token/byte/depth/reference/trace boundaries and all refusal ordering.
+Natural request witnesses do not replace this numerical comparator proof.
+
+### 17.5 Complete stage commitments, retention and current stop
+
+Each A semantic/guard, resource-refusal and later B/control stage receives its
+entire canonical input and exact public proofs, and reconstructs all owning
+results. A digest or projected scalar cannot replace the proof. An outer report
+binds independently retained request/result commitments, obligation/register
+version, invariant full subobjects and allowed differences. Check exact R,
+membership, context, cutoff, occurrence, governing declaration, fingerprint,
+binding/interpretation and any separately approved population delta. No
+simultaneously necessary evidence may be omitted by splitting stages. B0 must
+never load A bytes, digest or helper; its later gate stays separate.
+
+The current authority permits one documentation-only commit containing the frozen
+redesign proposal, frozen redesign audit, amended synthesis, amended Slice A plan
+and redesign correction report. Subject:
+`docs: redesign BRC-EXP-001 Slice A experiment`. Preserve all older owner-gate
+artifacts. Newly prepared operational-cohort JSON/manifest, resource-guards
+JSON/manifest and redesigned-preexecution rehearsal report stay untracked for
+exact owner approval. Canonical JSON is compact sorted-key UTF-8 with no trailing
+newline. These are non-authoritative experiment review data, not production
+fixtures, executable packages, durable identities or accepted results.
+
+Preparation may use disposable public-reconstruction/counting/commitment tools,
+then remove them. It must not filter H, calculate minimax rankings/preferences,
+produce an accepted result, implement Mode B or begin a successor milestone.
+Input support, structural/semantic inspection and lower-owning reconstruction
+are reported separately from future algorithm, trace/output and result-read
+oracles. No earlier incomplete execution report is amended or relabelled complete.
+The next owner gate is exact cohort/guard/new-assumption approval and explicit
+release of the A execution stop, subject to every outstanding A admission and
+acceptance condition. After eventual A acceptance, B requires separate premise
+preparation and execution approval. No push, merge or history rewrite is authorized.
 
 END OF BRC-EXP-001 CORRECTED FINAL SYNTHESIS

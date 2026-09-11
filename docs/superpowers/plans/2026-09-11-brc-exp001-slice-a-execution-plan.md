@@ -9,10 +9,12 @@ Its sections 3–12 are normative for schemas, classification, admission, algori
 resource ceilings, isolation, canonicalization and acceptance cases; section 15
 governs the Slice A/B stops. No schema or algorithm replacement is introduced here.
 
-Current status: design accepted; pre-execution premise freezing authorized;
-Slice A execution and Slice B unauthorized. The owner has separately authorized
-this plan's documentation commit, not any disposable implementation. Baseline
-is `debcffec5a77ae270bbf8822f82ef1aa7556c5bd`; branch `brc-exp001`.
+Current status: Slice A remains incomplete and stopped. The later owner decision
+accepts redesign audit RC-A–RC-C/NB-A–NB-D and authorizes documentation correction
+and exact cohort/guard preparation only. Section 7 supersedes historical
+preparation/retention statements below for this task; it authorizes no minimax
+execution or Mode B. Baseline remains
+`debcffec5a77ae270bbf8822f82ef1aa7556c5bd`; branch `brc-exp001`.
 
 ## 2. Artifact classes and allowed writes
 
@@ -136,9 +138,10 @@ validator-created copies do not count. Caching exact body counts is allowed only
 with full per-occurrence multiplicity. `expanded_node_count`, if used, means
 exactly this additive total, bounded by existing `max_expanded_nodes`.
 
-The numeric value remains 12,000: calibration, not an arbitrary increase, must
-precede a separately authorized numerical amendment. Accounting correction
-authorizes calibration only, not Slice A algorithm execution or Slice B.
+The numeric value remains 12,000; the owner rejects a cap increase. The historical
+250-request calibration is diagnostic evidence, not the operational validity
+population. Use synthesis section 17 for independent A/B gates, support versus
+complete-acceptance bounds and natural resource witnesses.
 
 Preflight order is: (1) raw bytes; (2) shallow scalar/container cardinalities,
 lexical/depth/duplicate-key/type checks and actual aggregate dimensions;
@@ -182,5 +185,137 @@ Stop with the design documentation committed, three candidate artifacts untracke
 and no experiment implementation, driver/tests, result bytes, BRC world or Slice B.
 Ask the owner to approve the exact assumption bytes and authorize Slice A
 execution. Design acceptance alone and this plan are not that authorization.
+
+## 7. Accepted redesign preparation and remaining execution gates
+
+Authority is the owner-accepted
+[redesign challenger audit](../reports/2026-09-11-brc-exp001-slice-a-experiment-redesign-proposal-challenger-audit.md)
+at `e4d7b6b2aea52e949eb322067d4c6660c3268afb415501e9585761725dfb93ea`,
+implemented normatively in synthesis section 17. The frozen proposal/audit and
+all earlier stop, calibration, assumption and rehearsal bytes remain unchanged.
+Starting checkpoint is `brc-exp001` at
+`d85125a7d5584983de658fc8d7f333fc9f003e9e` with only its seven authorized
+ordinary-untracked owner-gate files. The
+[correction report](../reports/2026-09-11-brc-exp001-slice-a-experiment-redesign-correction-report.md)
+records before/after synthesis and plan digests and each correction/disposition.
+
+The activated A universe is E01–E17/E26–E28/E30–E32 (23), plus separate E29
+resource refusal. B requires E18–E21/E23–E25 (7); combined closeout requires E22.
+Missing B/control premises cannot block A. A closed-arm, negative, BH, trace,
+result-integrity and isolation guards cannot be postponed to B or discarded.
+Successful A supplies only bounded minimax/compatibility correctness over
+explicit assumptions. Objectives 3/4/7 receive the exact narrow contributions
+in synthesis section 14; 1/2 are reused and 5/6 remain open. No architectural
+successor or full supplied-versus-public-derived conclusion is authorized.
+
+### 7.1 Authorized now: correction and exact-byte preparation
+
+1. Verify every frozen digest, tracked baseline and protected inventory before
+   edits. Preserve primary projection 29,153 bytes/SHA
+   `4c5e48452ee81a5c65cef2a51dcae8de56262684e7056be429dd6166788241dc`
+   and complete request 94,819 bytes/SHA
+   `67fe5d164251fdc6d8ba577e90660b0c486ea626af0a1faccac5362481f188c1`.
+2. Recover the exact calibration requests from the unchanged report archive.
+   Rebuild all 250 support predicates and costs independently. Reproduce all
+   2,280 seven-way combinations and an independent set-union DP: seven disjoint
+   groups, optimum maximum 7,680/sum 50,738 and six ties. Preserve all ties and
+   their provenance differences. Nominate only the exact approved primary role
+   plus the isolated surprise role by owner-endorsed continuity. Remaining
+   objectives are maximum charge, aggregate charge and new assumption variants;
+   no incidental ordering may settle a semantic tie. Stop without commit if
+   the rule leaves multiple candidates.
+3. Prepare the seven complete selected requests once each in canonical compact
+   sorted-key UTF-8, no trailing newline. Retain complete H/T/cells/lower proofs,
+   exact independent commitments and explicit per-request assumption versions.
+   Their input-support union covers 15 columns. Map all 23 A obligations through
+   the complete acceptance register in synthesis section 17.3; never call an
+   unexecuted negative oracle passed because its valid parent exists.
+4. Freeze resource guards using the explicitly committed natural-search
+   population. The under-limit request must have known complete predictions and
+   pass structural/semantic inspection and public reconstruction; an unknown-cell
+   parent is not that success. The over-limit request must refuse at the ordered
+   preflight gate with zero owning calls. No padding/meaningless new structure
+   may manufacture 12,000. Preserve natural ties and the historical 7,783 unknown
+   witnesses. Separately pin the inclusive 12,000/12,001 integer comparator
+   and aggregate-product controls as component guards, not complete requests.
+5. Preserve required A positive parents and exact negative mutations/commitments.
+   In particular retain indistinguishable, missing/unknown, one_supplied,
+   no_partition, all-excluded, denied/unknown procedure conditions, unknown in a
+   contradicted H, unavailable lower/BH, satisfied governing baseline, mixed
+   joins, forged objects, prior/epistemic/scope/closed-arm and output-read guards.
+   Complete BH equal/different and unavailable controls may nominate only T2
+   with both H/four checks retained, full unchanged 23-record lower proof and
+   new explicit scope/approval bytes. This is an additional guard, not one of
+   the seven support requests, a primary edit, a smaller lower world or B2.
+   An unprepared required arm stays pending; do not certify M_A_complete or
+   full A acceptance while required input parents remain unfrozen.
+6. Rehearse no-ranking input checks, full owning public reconstruction, exact
+   lower joins and projection preservation. Count W and every per-occurrence R
+   independently with a serialized-token oracle. Repeat at seeds 1/7/313 in
+   two independently created temporary roots, with reversed permissible
+   construction order. Canonical contents, ordering, commitments, classifications,
+   counts, support selection and admission inspections must agree exactly.
+   No unauthenticated projection or filesystem/store/network/device lookup is
+   allowed within validation; decoding a report archive is separate setup.
+7. Report M_A_support=7,680, aggregate basis charge 50,738, all request bytes,
+   guards and commitments. M_A_complete remains pending until every required
+   full input in the acceptance register is frozen and measured; distinguish
+   the measured prepared-subset maximum from that quantity. Trace/output proof
+   and later result commitments cannot be claimed from input sizes. Preserve
+   both caps (12,000/16,384), additive counting and all other limits.
+8. Run focused documentation/status, local links, sections/markers, digest,
+   canonicalization, preservation and working/range whitespace checks. No full
+   repository suite is needed. Remove disposable tools and temporary roots.
+   Commit exactly the five documentation paths below, only after verification
+   and unique selection. Stop with candidate artifacts untracked for owner review.
+
+### 7.2 Exact artifact and commit boundary
+
+One authorized documentation commit, subject
+`docs: redesign BRC-EXP-001 Slice A experiment`, contains only:
+
+- `docs/superpowers/proposals/2026-09-11-brc-exp001-slice-a-experiment-redesign-proposal.md`
+- `docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-experiment-redesign-proposal-challenger-audit.md`
+- `docs/superpowers/specs/2026-09-11-brc-exp001-baseline-reasoning-closure-spike-design.md`
+- this plan;
+- `docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-experiment-redesign-correction-report.md`.
+
+New exact owner-gate files, under `docs/superpowers/reports`, stay untracked:
+
+- `2026-09-11-brc-exp001-slice-a-operational-cohort.json`
+- `2026-09-11-brc-exp001-slice-a-operational-cohort-manifest.json`
+- `2026-09-11-brc-exp001-slice-a-resource-guards.json`
+- `2026-09-11-brc-exp001-slice-a-resource-guards-manifest.json`
+- `2026-09-11-brc-exp001-slice-a-redesigned-preexecution-rehearsal-report.md`.
+
+Preserve the earlier assumption JSON, manifest, preexecution report, continuation
+and carriage reports as untracked historical owner-gate artifacts. Do not commit
+them, execute an experiment or fabricate a result. Manifests are review metadata,
+not alternate Mode A request contracts. Any supplemental control recipe binds a
+complete parent, exact edits and full reconstructed request digest; the future
+validator consumes only the complete canonical request, never a detached patch.
+
+### 7.3 Subsequent gates, not authorized by this preparation
+
+Owner approval must name exact cohort, natural guards, all new assumption
+versions and applicable control commitments before explicitly releasing the A
+execution stop. Only then implement disposable Mode A, complete every applicable
+A oracle, prove trace/step/output bounds before semantic execution, and freeze
+independently validated results with RC4 every-read checks. A failed/unprepared
+guard remains a stop, not architecture evidence. If BH or another accepted arm
+cannot fit, seek an explicit scope decision rather than reducing public proof.
+
+Stop after A for owner acceptance. Only that acceptance can open a separate
+B premise-preparation gate, followed by a separate exact-byte and execution gate.
+B0/B1/B2/one-premise controls require full independent public inputs, complete
+owning reconstruction and exact same-versus-changed coherence commitments. B0
+cannot load A inputs, digest or helper. Missing B evidence restricts combined
+claims without erasing an accepted A conditional calculation. The full 250-row
+diagnostic history and all 218 over-limit refusal roles remain visible.
+
+No minimax, preference, accepted result, Mode B, cap amendment, production/test
+package, fixture, ledger, durable identity, ADR-0023, push, merge or history rewrite
+is authorized during this preparation. The protected 36-record revision, 236
+exports and zero FMA/FMW/FCD/FCW remain fixed. ADR-0023 stays unallocated/unreserved.
 
 END OF BRC-EXP-001 SLICE A EXECUTION PLAN
