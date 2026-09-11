@@ -126,8 +126,37 @@ Additional synthesis ceilings remain binding: four direct citations/refs per
 H/prediction/step; 64 steps; 32 global gaps and refusals; 16 gaps/cell and
 limitations; 16 public path segments, 128-byte field/path tokens; decimal 32,
 cost 3, full decoded string 16,384 and numeric lexical token 128 bytes. Count
-resolved StatementSlot expansion as well as serialized nodes. Product check is
+serialized wire nodes and additive StatementSlot resolution charges:
+`charged_validation_node_count = wire_node_count + resolution_charge_node_count`.
+The wire count retains each reference and every physically repeated public proof
+occurrence. Each typed StatementSlot reference charges its complete resolved
+Statement body per occurrence, without subtracting the reference or discounting
+shared IDs. Ordinary Ref/index selectors do not expand additional proof;
+validator-created copies do not count. Caching exact body counts is allowed only
+with full per-occurrence multiplicity. `expanded_node_count`, if used, means
+exactly this additive total, bounded by existing `max_expanded_nodes`.
+
+The numeric value remains 12,000: calibration, not an arbitrary increase, must
+precede a separately authorized numerical amendment. Accounting correction
+authorizes calibration only, not Slice A algorithm execution or Slice B.
+
+Preflight order is: (1) raw bytes; (2) shallow scalar/container cardinalities,
+lexical/depth/duplicate-key/type checks and actual aggregate dimensions;
+(3) canonical wire-node count and independent canonical-byte commitments;
+(4) bounded reference counts/identifier shapes; (5) bounded carried Statement
+lookup only; (6) deterministic resolution charges; (7) total charged-node limit
+and unchanged trace/output reserves; (8) full lower/experimental reconstruction;
+(9) semantic admission and separately authorized execution. Product check remains
 `n_H * sum(n_O(t)) <= 12`, before cell or nested-result reconstruction.
+
+Apply the exact section-10 synthesis error mapping: `nodes_exceeded` with fixed
+protocol/preflight targets `wire_node_count`, `resolution_charge_node_count` or
+`charged_validation_node_count`; `schema_invalid` with `reference_shape` or
+`reference_resolution` for malformed or unresolved/cyclic references. Phase is
+preflight, level 7/unknown/unavailable, no lower_reason. Fixed presentation
+messages are respectively “Wire node limit exceeded.”, “Resolution charge limit
+exceeded.”, “Charged validation node limit exceeded.”, “Malformed reference.”
+and “Unresolved reference.” No hostile value or payload appears in the error.
 
 Success means bounded supplied-candidate compatibility (objective 3), within-set
 worst-case discrimination (objective 4), and preserved classifications (objective

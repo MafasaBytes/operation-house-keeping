@@ -773,17 +773,78 @@ schemas may be stricter. Experimental Text remains ≤512 even when the general
 parser permits a larger lower token. No public proof is truncated to meet these
 refinements. At-limit and one-over must measure these too.
 
-Preflight ordering is frozen: raw request bytes → streaming lexical limits and
-duplicate-key rejection → expanded JSON depth/nodes and exact built-in types →
-closed outer/nested schema-arm/field counts → actual dimensions and cross-product
-→ unique statement/ref counts and bounded reference DAG → canonical request
-bytes/independent commitments → trace-bound and output-reserve proof → owning
-lower reconstruction. No `model_construct`, `model_copy`, object serializer hook,
-custom mapping/subclass, cycle, executable note or coerced Boolean may bypass it.
-Count depth with root at 1 and each container/value child +1; nodes count each
-object, array, scalar and object key separately, including every repeated lower
-subtree occurrence. Repeated statement references count as their wire objects;
-resolved-body expansion is additionally charged and cannot defeat node limits.
+Node accounting is additive, with three distinct measured values:
+
+- `wire_node_count`: every object, array, scalar and object key in the canonical
+  serialized request, counted once per serialized occurrence. Reference objects
+  remain charged. Required cross-root public material is charged for every
+  physical occurrence. Python identity, validator copies and private aliases do
+  not define this tree. Root depth is 1; each container/value child adds 1.
+- `resolution_charge_node_count`: for each typed `StatementSlot` reference
+  occurrence, charge the complete canonically serialized resolved Statement body.
+  Full owned Statements already contribute to wire count. Ordinary provenance
+  `Ref`, model indices, model-record references and scalar IDs do not recursively
+  expand into additional copied proof. No validator-created reconstruction copy
+  is charged. A reference cannot change its body's bytes or epistemic class.
+- `charged_validation_node_count = wire_node_count + resolution_charge_node_count`.
+
+The existing `max_expanded_nodes` field bounds `charged_validation_node_count`.
+If a tool uses `expanded_node_count`, that name is an exact alias for this
+additive value, never replacement-expanded-tree size. Replacement accounting
+is rejected: never subtract the already-counted reference object. The numerical
+limit remains 12,000 pending complete valid-corpus calibration and separate owner
+approval; neither 12,367 nor 12,415 is a newly authorized limit.
+
+Multiplicity is per typed reference occurrence, not per unique Statement ID.
+Bounded lookup/count caching by exact ID plus exact canonical body bytes is
+allowed, but each occurrence still adds its full charge. No memoization discount
+is authorized. Reject duplicate definitions, malformed/unresolved refs and
+cycles before full reconstruction. Resolving a local reference never calls a
+store, filesystem, network, device, clock or arbitrary expression.
+
+Frozen preflight order, before semantic execution:
+
+1. Enforce raw byte length.
+2. Enforce shallow scalar/container cardinalities, literal Limits, mode/schema
+   arms, exact built-in types, lexical token/depth bounds and duplicate keys.
+   Bound actual H/T/O/cell dimensions and their product before allocating cells.
+3. Count the canonical wire tree; enforce its node ceiling. Check canonical
+   bytes and independent byte commitments without owning-model reconstruction.
+4. Enforce reference counts, exact identifier/path shapes and unique definitions.
+5. Build only the bounded carried Statement lookup needed for resolution charges
+   (at most 24 definitions); do not reconstruct nested lower models here.
+6. Compute deterministic resolution charges; reject malformed/unresolved refs
+   and enforce the resolution-charge ceiling. No copied body expansion is needed.
+7. Enforce the total charged-validation-node ceiling; prove the unchanged
+   generated-trace bound and output reserve before reconstruction.
+8. Only then reconstruct complete owning lower results and experimental models,
+   including all exact public joins and the baseline checks in section 7.
+9. Continue semantic admission and, only when separately authorized, algorithm
+   execution. A failed accounting gate never enters full reconstruction.
+
+All three node ceilings in these gates use the same existing `max_expanded_nodes`
+value; there is no new independently adjustable numerical limit. Wire <= limit
+and resolution charge <= limit are necessary but not sufficient: total <= limit
+is mandatory. No `model_construct`, `model_copy`, serializer hook, custom mapping,
+subclass, cycle, executable note or coerced Boolean bypasses this order.
+
+Fixed typed accounting refusals retain the existing Refusal schema. Each has
+phase `preflight`, epistemic `(7,unknown,unavailable,true,[])`, no `lower_reason`,
+and target `Ref(protocol,preflight,[fixed field below])`. Presentation messages
+are fixed strings outside the wire record, never new schema fields or payloads.
+
+| Condition | Refusal code | Fixed target field | Fixed presentation message |
+| --- | --- | --- | --- |
+| Wire nodes exceed limit | nodes_exceeded | wire_node_count | Wire node limit exceeded. |
+| Resolution charge exceeds limit | nodes_exceeded | resolution_charge_node_count | Resolution charge limit exceeded. |
+| Total charged nodes exceed limit | nodes_exceeded | charged_validation_node_count | Charged validation node limit exceeded. |
+| Malformed reference/definition | schema_invalid | reference_shape | Malformed reference. |
+| Unresolved reference or cycle | schema_invalid | reference_resolution | Unresolved reference. |
+
+These fixed targets distinguish typed errors without adding new RefusalCode
+members. Never interpolate a hostile identifier, node value, exception, path or
+payload fragment into an error. Hostile envelopes retain the bounded existing
+RejectedEnvelopeResult framing and no echoed request.
 
 Compute `n_H * sum(n_O(t) for t in T) ≤12` and each dimension's ceiling before
 allocating cells or surviving sets; declarations of counts are not trusted.
