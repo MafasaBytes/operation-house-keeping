@@ -5,16 +5,21 @@ Codex lead; 2026-09-11. Design only. The accepted challenger verdict is
 and four non-blocking observations. This document replaces the proposal as the
 prospective experiment specification; neither frozen input is edited.
 
-Current status (2026-09-12): Slice A execution is complete and owner accepted in
-the [acceptance record](../reports/2026-09-12-brc-exp001-slice-a-owner-acceptance.md).
-The overall BRC-EXP-001 experiment remains incomplete: Slice B/Mode B is
-unauthorized and unproved. No successor milestone or ADR is authorized.
-Sections 17–19 retain the approved independent gates and resource contracts;
-earlier preparation stops describe historical authority, not current Slice A
-status. Acceptance is limited to the executed synthetic supplied-premise cohort,
-not premise accuracy/derivability or production implementation. Disposable code
-and tests were deleted. The accepted self-contained execution report is retained;
-historical failed reports remain unchanged and retain their original meaning.
+Current status (2026-09-12): Slice A and Slice B/Mode B are owner accepted;
+BRC-EXP-001 is complete as a bounded experiment. See the
+[Slice A acceptance](../reports/2026-09-12-brc-exp001-slice-a-owner-acceptance.md)
+and [final owner acceptance](../reports/2026-09-12-brc-exp001-final-owner-acceptance.md).
+No production capability was added, no successor is authorized, and ADR-0023
+remains absent and unallocated. Sections 17–20 retain their approved contracts;
+earlier gate/pending language describes historical authority, not current status.
+Existing-contract population changed declaration availability without closing
+the conditional-prediction gap. A supplied rule enabled bounded ranking, not
+native derivation or prediction accuracy. Directed influence was not tested.
+Objectives 3/4/7 receive experimental evidence; real diagnosis and next-best-test
+delivery remain incomplete, and objectives 5/6 remain open. Disposable drivers
+and tests were deleted. Self-contained execution reports and historical failed
+reports retain their exact bytes and original meaning. Acceptance authorizes no
+new execution, architecture, package, record type or milestone.
 
 ## 1. Decision, scope, and verified baseline
 
@@ -1468,10 +1473,13 @@ minimax nor Mode B is authorized; 12,000/16,384 caps and all other contracts rem
 ## 19. Owner-approved complete-output resource amendment (2026-09-12)
 
 This section supersedes result-cap ambiguity in sections 7, 10 and 11 only.
-The frozen [complete-output review](../reports/2026-09-11-brc-exp001-slice-a-complete-output-resource-correction-review.md)
+The frozen historical complete-output review
 SHA-256 `cfb4ffd44f1d315d00cfde8f699f6c94647026105ef8c40f5e99077313eccabd`,
 sections 8–9, is owner approved for documentation and disposable resource-policy/
 refusal-template testing only. Slice A remains stopped; no minimax or Mode B.
+The operative amendment is retained below; accepted execution evidence is in the
+[Slice A final report](../reports/2026-09-12-brc-exp001-slice-a-final-execution-report.md).
+The local review stays untracked rather than becoming a new recovery dependency.
 Historical static/preexecution/execution reports remain byte-for-byte evidence of
 what was then proved, not retroactively complete or compliant with this new cap.
 
@@ -1662,5 +1670,111 @@ production import/isolation acceptance or full algorithm execution determinism
 across seeds 1/7/313, two roots and reversed permissible order. Those remain
 mandatory on separately authorized resumption. No successful serialization,
 static count or retained-output round trip is experimental objective closure.
+
+## 20. Owner-approved Mode B result resource amendment (2026-09-12)
+
+This section applies only to disposable ModeBResult and ControlResult envelopes
+and their bounded RejectedEnvelopeResult failures. It does not extend execution
+authority. Slice A's accepted results and section 19 policy remain unchanged.
+The owner approved the exact Mode B package and its synthetic premises at
+SHA-256 `fa1f3b3cbd9e9586a063ae7df10fc75a22298fa80d1971ef363ddf702bbe957e`,
+manifest `3be37d8858b50cba4d02bf9731c0d4eb0da85c35cd3fc0b79193afc7a505f970`.
+The package/rehearsal's older candidate/blocked labels remain historical evidence;
+their bytes are not rewritten. This amendment supersedes only their proposed
+Mode B result-budget status. Expected outputs are not executed findings.
+
+Input charged-node limit remains **12,000**, prepared maximum **11,410**.
+Mode B/control result charged-node limit is **13,735**, safety ceiling **16,384**.
+The exact external policy, canonical compact UTF-8 with sorted keys/no newline, is:
+
+```json
+{"max_result_charged_validation_nodes":13735,"schema":"brc-exp001.mode-b-output-resource-policy/v1"}
+```
+
+Its SHA-256 is `ca302217d59d6ae80645f22db1a7121c2e70b686190daa73c82ab7270af3ca98`.
+This closed experimental policy has exactly those two fields and literal values;
+it is not a production contract or an alternate request arm. Embedded Limits
+remain byte-for-byte unchanged, including max_expanded_nodes=12000. Section 19's
+Slice A external policy is not inherited or mutated. Request/result byte limits
+remain 524,288/786,432, generated-byte allowance 131,072 and fallback reserve
+1,024; depth, cardinality, product, reference and all other limits are unchanged.
+
+Charged validation nodes = canonical wire nodes + deterministic resolution
+charges, exactly as section 10. Charge keys, containers and scalar occurrences;
+charge each normative StatementSlot resolution's complete Statement body without
+replacement subtraction or silent deduplication. The complete result carries its
+request once; charge that occurrence, not an additional copy of its input total.
+Validator-created copies are not additional canonical nodes. Instrument actual
+owning/nested reconstruction work separately; this is not a CPU-work exemption.
+
+The 7,302,016-byte package is a retention/approval bundle, never a runtime request.
+The trusted preparation harness must check its exact size and SHA-256 with a
+bounded streaming read before parsing; a second bounded read must recheck both
+to defeat source replacement. Reject duplicate JSON keys and noncanonical bytes.
+This exact frozen transport-size gate is not a runtime byte-limit amendment.
+Extract a single committed canonical request, verify its bytes/hash independently,
+then apply every runtime gate to that request. Never give the worker the bundle,
+oracle, case ID, filename, or other requests. No string/digest hides decoded
+structure from accounting; no external resolution is allowed during validation.
+
+There are 28 prepared roles and 28 distinct complete expected outputs: 27 active
+and one inactive directed-premise role. Eight B0 public-rule roles, B1/B2 and
+conditional-rule controls, alpha-label/public-note twins, optional-BH-unavailable,
+satisfied-governing, EA-refusal, schema/rule negatives and hostile duplication
+are covered. The conditional-rule output maximum is 198,197 bytes, wire 12,919
+plus resolution 816 = 13,735 charged nodes, depth 18. It includes full carried
+evidence, hypothesis checks, 18 derivation rows, control provenance and disclosure.
+Nothing is omitted to meet the cap. Inactive forms are statically checked without
+activating them. No Mode B execution-disclosure exception is approved: every
+field, including limitations, refusal target and ordered diagnostic, remains
+exact against the independent oracle. Slice A's eleven wording differences do
+not apply to Mode B.
+
+Use section 10's nine-stage input preflight and section 19.1's incremental result
+construction discipline at these mode-specific budgets. Prove the unchanged
+input-specific generated-byte reserve before owning reconstruction; measured
+samples alone do not prove it. If that proof fails, refuse trace_bound_unproven.
+Reserve each bounded token/fragment's escaped bytes, wire nodes and resolution
+charge BEFORE appending it to an uncommitted output buffer. Stream already
+admitted carried material once. Do not first allocate an unbounded child/result
+and count afterward. On overflow discard all partial success and emit a separately
+reserved, bounded, nonrecursive envelope. Result-budget admission must precede
+authoritative result reconstruction. Enforce wire, resolution and total ceilings
+in that order; all must pass. A failed resource gate makes zero owning calls.
+
+Exact accounting refusal matrix (all fields refer to the existing Refusal arm):
+
+| Boundary | Phase / code | Target root | Digest bound |
+| --- | --- | --- | --- |
+| Input preflight | preflight / nodes_exceeded | preflight | Actual rejected input bytes |
+| Incremental construction | retention / output_exceeded | result_construction | Original request bytes |
+| Retained-result admission | preflight / nodes_exceeded | result_validation | Actual rejected result bytes |
+
+Each target is `Ref(protocol,root,[field])`, with field exactly wire_node_count,
+resolution_charge_node_count or charged_validation_node_count. Use existing
+RejectedEnvelopeResult, input_refused status, exact level-7 unknown/unavailable
+synthetic Epi, no lower_reason, request echo, score, successful trace or partial
+field. Only input_sha256 is parameterized from actual boundary bytes; never copy
+an example digest as a failed input's identity. The nine canonical prototypes are
+bound by the amendment report; each is 48 nodes, zero resolution charge, depth 5,
+480–505 bytes, safely within the independent 1,024-byte reserve. No recursive
+attempt to build an oversized refusal is allowed. Presentation text remains fixed
+and payload-free; do not add a message field to the wire schema.
+
+The retained 13,735-node domain output must admit. Primitive tests at 13,735 and
+13,736 are counting tests, not fabricated valid domain outputs. No naturally
+reachable over-limit result is present in this approved corpus; do not add padding
+or claim a primitive fixture is such a result. A test-only reduced budget may
+exercise overflow on the unchanged maximum; it is not an operational cap change.
+
+B0 receives no Mode A predictions. B2 tests existing-contract population, not a
+new semantic contract. The conditional rule supplies its answer at assumed level
+4 and cannot prove native prediction derivation. Directed-premise use remains
+inactive without G2-NEC enabling-rule evidence. No premise establishes real causal
+truth, prediction accuracy, global completeness or a successor milestone.
+At this amendment's preparation checkpoint, dynamic semantic-read mutations,
+actual derivation and twelve-way result-byte determinism remained execution
+obligations; static construction/reconstruction did not close them. The final
+owner acceptance above records their subsequently executed, verified closure.
 
 END OF BRC-EXP-001 CORRECTED FINAL SYNTHESIS

@@ -11,9 +11,11 @@ governs the Slice A/B stops. No schema or algorithm replacement is introduced he
 
 Current status (2026-09-12): Slice A is complete and owner accepted; see the
 [acceptance record](../reports/2026-09-12-brc-exp001-slice-a-owner-acceptance.md).
-The overall experiment remains incomplete. Slice B/Mode B remains unauthorized;
-no successor milestone or ADR is authorized. Earlier preparation/execution stops
-below are historical, not a reversal of this acceptance. Sections 7–9 retain
+Mode B is also owner accepted and the bounded experiment is complete; see the
+[final owner acceptance](../reports/2026-09-12-brc-exp001-final-owner-acceptance.md).
+No production capability or successor is authorized; ADR-0023 remains unallocated.
+Earlier preparation/execution stops below are historical, not current authority.
+Sections 7–9 retain
 their approved contracts. The disposable implementation and tests were deleted;
 acceptance is of bounded synthetic execution, not production implementation.
 Retain the final self-contained execution report, hostile-target correction and
