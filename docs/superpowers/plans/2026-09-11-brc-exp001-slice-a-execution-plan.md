@@ -9,11 +9,17 @@ Its sections 3–12 are normative for schemas, classification, admission, algori
 resource ceilings, isolation, canonicalization and acceptance cases; section 15
 governs the Slice A/B stops. No schema or algorithm replacement is introduced here.
 
-Current status: Slice A remains incomplete and stopped. The later owner decision
-accepts redesign audit RC-A–RC-C/NB-A–NB-D and authorizes documentation correction
-and exact cohort/guard preparation only. Section 7 supersedes historical
-preparation/retention statements below for this task; it authorizes no minimax
-execution or Mode B. Baseline remains
+Current status (2026-09-12): Slice A is complete and owner accepted; see the
+[acceptance record](../reports/2026-09-12-brc-exp001-slice-a-owner-acceptance.md).
+The overall experiment remains incomplete. Slice B/Mode B remains unauthorized;
+no successor milestone or ADR is authorized. Earlier preparation/execution stops
+below are historical, not a reversal of this acceptance. Sections 7–9 retain
+their approved contracts. The disposable implementation and tests were deleted;
+acceptance is of bounded synthetic execution, not production implementation.
+Retain the final self-contained execution report, hostile-target correction and
+acceptance record with the approved synthesis/plan amendments. Standalone
+candidate JSON, backups and unrelated historical owner-gate files remain
+unstaged and unchanged; their clean-up is not authorized here. Baseline remains
 `debcffec5a77ae270bbf8822f82ef1aa7556c5bd`; branch `brc-exp001`.
 
 ## 2. Artifact classes and allowed writes
@@ -120,8 +126,9 @@ do not claim every full-request bound has passed without those bytes.
 The complete literal Limits record from synthesis section 10 is frozen in the
 candidate: 2 H, 2 T, 3 outcomes/T, 12 cells; 4 checks/H; 4 model refs/H; 32
 disposable records; 3 base roots and at most 1 BH; 24 statements; Text 512 UTF-8
-bytes; Label 32 ASCII bytes; derivation depth 4; JSON depth 48; 12,000 expanded
-nodes; request/result 524,288/786,432 bytes; trace reserve 131,072 and framing
+bytes; Label 32 ASCII bytes; derivation depth 4; JSON depth 48; 12,000 input charged
+nodes (13,453 complete-result charged nodes under section 9); request/result
+524,288/786,432 bytes; trace reserve 131,072 and framing
 reserve 1,024 bytes; cost maximum 100 only in an authorized variant.
 
 Additional synthesis ceilings remain binding: four direct citations/refs per
@@ -138,7 +145,7 @@ validator-created copies do not count. Caching exact body counts is allowed only
 with full per-occurrence multiplicity. `expanded_node_count`, if used, means
 exactly this additive total, bounded by existing `max_expanded_nodes`.
 
-The numeric value remains 12,000; the owner rejects a cap increase. The historical
+The input value remains 12,000; the owner rejects an input cap increase. The historical
 250-request calibration is diagnostic evidence, not the operational validity
 population. Use synthesis section 17 for independent A/B gates, support versus
 complete-acceptance bounds and natural resource witnesses.
@@ -362,5 +369,64 @@ The final report binds this correction and discrepancy, states ready/not-ready
 honestly and lists the remaining owner gate. Remove disposable preparation tools
 and roots. No public producer/lower contract, production test, ledger, fixture,
 ADR, numerical limit, Mode B, push, merge or history rewrite is authorized.
+
+## 9. Approved complete-output resource policy and template preparation
+
+Apply synthesis section 19 and the frozen complete-output review sections 8–9
+before earlier undifferentiated result-limit instructions. Review SHA-256:
+`cfb4ffd44f1d315d00cfde8f699f6c94647026105ef8c40f5e99077313eccabd`.
+Input limit remains 12,000, certified maximum 11,567, support maximum 7,680.
+The external closed `brc-exp001.output-resource-policy/v1` has schema and strict
+integer `max_result_charged_validation_nodes: 13453`; it is not a request field.
+Safety stays 16,384; all byte/depth/cardinality/reference limits stay unchanged.
+Both boundaries use wire plus per-occurrence typed StatementSlot resolution.
+Complete result counts include the request exactly once, without re-adding it.
+
+Cover all 61 roles/59 distinct outputs. The earlier 52 static forms omitted
+bh_t2_equal_v1, bh_t2_different_v1, bh_t2_unavailable_v1, indistinguishable,
+maximum_dimensions, missing_cell, no_partition and one_supplied supplemental
+outputs. BH equal overlaps natural-under; unique-match overlaps primary.
+Mandatory BH carriage/check results explain 13,453/12,931; the mandatory subset
+already costs 12,115. Retain old preexecution/execution reports as historical
+evidence; do not retroactively certify them under this later approval.
+
+Prepare only disposable resource policy/refusal templates now. Follow all eight
+incremental construction/read steps in synthesis 19.1: reserve exact nodes,
+resolution, escaped bytes, depth and cardinality before append; reserve fallback
+separately; carry full request once; discard partial success on overflow. Check
+result wire, resolution, total in order against 13,453 before owning reconstruction;
+recheck embedded input against 12,000. Never borrow one boundary's budget.
+
+Use the unchanged closed RejectedEnvelopeResult with explicitly extended resource
+failure eligibility. Construction: retention/output_exceeded, target
+protocol/result_construction/[wire_node_count|resolution_charge_node_count|
+charged_validation_node_count], original request digest. Retained read:
+preflight/nodes_exceeded, protocol/result_validation/[corresponding axis], rejected
+result digest. Both have level 7/unknown/unavailable, synthetic true, sources [],
+no lower_reason, no partial ranking/trace or echoed body; status input_refused.
+Fixed messages outside wire: “Result construction node limit exceeded.” and
+“Retained result node limit exceeded.” Earlier errors retain their precedence.
+
+Test all 59 retained outputs and actual 13,453-node domain maximum. Test primitive
+13,452/13,453/13,454 separately without padding a domain result. The next lower
+retained domain output is 12,931; no approved above-13,453 output exists. Require
+zero owning calls for over-budget candidates, no append beyond budget and a
+nonrecursive <=1,024-byte fixed fallback. Input 11,567 admits; 12,355 preflight
+refuses. Use independent counters, seeds 1/7/313, two roots and reversed order.
+
+Reconcile exactly the eleven role differences enumerated in synthesis 19.2:
+only /result/limitations/0 changes from the static witness sentence to
+“Executed synthetic supplied-premise calculation; not an accepted engineering fact.”
+The change is +20 bytes, zero nodes. Preserve static and runtime commitments and
+all other exact comparisons; no wildcard oracle exceptions.
+
+Retain canonical policy/template bytes and focused red/fixed/counter/reconstruction
+evidence in the 2026-09-12 output-resource-amendment report; verify recovery before
+deleting disposable tools. No commit, production file, premise or oracle change.
+Stop for owner approval of those exact templates and separate execution authority.
+On resumption, dynamic semantic-read/nearest-twin proof, full every-read semantic
+recomputation, conservative generated-byte/trace reserve, owning/peak-work proof,
+isolation and full execution seed/root/order determinism remain mandatory.
+Resource-template replay is not minimax execution or Slice A acceptance.
 
 END OF BRC-EXP-001 SLICE A EXECUTION PLAN

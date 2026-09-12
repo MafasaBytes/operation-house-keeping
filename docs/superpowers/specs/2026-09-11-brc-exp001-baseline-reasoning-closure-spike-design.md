@@ -5,11 +5,16 @@ Codex lead; 2026-09-11. Design only. The accepted challenger verdict is
 and four non-blocking observations. This document replaces the proposal as the
 prospective experiment specification; neither frozen input is edited.
 
-Current authority: the 2026-09-11 experiment-redesign owner decision accepts
-RC-A–RC-C and NB-A–NB-D of the later redesign audit. Section 17 controls the
-current independent slice gates, operational population, resource calibration
-and preparation authority. Earlier checkpoint/receipt statements describe their
-historical tasks, not the current worktree or a renewed execution authorization.
+Current status (2026-09-12): Slice A execution is complete and owner accepted in
+the [acceptance record](../reports/2026-09-12-brc-exp001-slice-a-owner-acceptance.md).
+The overall BRC-EXP-001 experiment remains incomplete: Slice B/Mode B is
+unauthorized and unproved. No successor milestone or ADR is authorized.
+Sections 17–19 retain the approved independent gates and resource contracts;
+earlier preparation stops describe historical authority, not current Slice A
+status. Acceptance is limited to the executed synthetic supplied-premise cohort,
+not premise accuracy/derivability or production implementation. Disposable code
+and tests were deleted. The accepted self-contained execution report is retained;
+historical failed reports remain unchanged and retain their original meaning.
 
 ## 1. Decision, scope, and verified baseline
 
@@ -553,7 +558,7 @@ Ordered execution and admission:
 | `ModeBResult` | `schema: brc-exp001.mode-b.result/v1; mode: B0; algorithm: finite_compatibility_minimax/v1; request: ModeBRequest; derived_hypotheses: list[Hypothesis](0…2); derived_measurements: list[MeasurementCandidate](0…2); result: ResultBody`. Derived H/T statements must have public-derived origin and closure; no invented approver of supplied semantics. Public provenance occupies citation supplier/approver as exact declaration authority reference text, not experiment approval. Missing meanings leave lists empty, with per-query gaps. |
 | `ControlResult` | `schema: brc-exp001.control.result/v1; mode: control; control: matching request control; algorithm: finite_compatibility_minimax/v1; request: ControlRequest; result: ResultBody`. Any complete result has derivation_availability control_only. |
 | `OverallExperimentResult` | Closed union ModeAResult|ModeBResult|ControlResult. All requests/results carry their discriminator. Request present exactly once; its complete bytes are embedded structurally in successful parsed results. |
-| `RejectedEnvelopeResult` | `schema: brc-exp001.rejected/v1; mode: rejected; status: input_refused; refusal: Refusal; input_sha256: Digest; epistemic: Epi(7,unknown,unavailable)`. For hostile/unparseable input only: no echo of unbounded input, no nested request/results reconstruction. The report retains bounded forensic metadata; oversized hostile bytes are not bundled as frozen admitted requests. |
+| `RejectedEnvelopeResult` | `schema: brc-exp001.rejected/v1; mode: rejected; status: input_refused; refusal: Refusal; input_sha256: Digest; epistemic: Epi(7,unknown,unavailable)`. For hostile/unparseable input and section-19 bounded construction/retained-result resource failures: no echo of unbounded input, no nested request/results reconstruction. The report retains bounded forensic metadata; oversized hostile bytes are not bundled as frozen admitted requests. |
 
 Two exact result-schema refinements complete the table. `Triple` has fields
 `hypothesis_id: Label; measurement_id: Label; outcome_id: Label` in that order.
@@ -795,11 +800,12 @@ Node accounting is additive, with three distinct measured values:
   is charged. A reference cannot change its body's bytes or epistemic class.
 - `charged_validation_node_count = wire_node_count + resolution_charge_node_count`.
 
-The existing `max_expanded_nodes` field bounds `charged_validation_node_count`.
+The existing `max_expanded_nodes` field bounds request `charged_validation_node_count`.
 If a tool uses `expanded_node_count`, that name is an exact alias for this
 additive value, never replacement-expanded-tree size. Replacement accounting
 is rejected: never subtract the already-counted reference object. The numerical
-limit remains 12,000. The owner rejects a numerical increase. Section 17 separates
+input limit remains 12,000. The owner rejects an input increase. Section 19 sets
+the separately owner-approved complete-result ceiling to 13,453. Section 17 separates
 the diagnostic calibration population from the operational witness cohort;
 neither 12,367, 12,415 nor the 22,845 diagnostic maximum is an authorized limit.
 
@@ -830,8 +836,8 @@ Frozen preflight order, before semantic execution:
 9. Continue semantic admission and, only when separately authorized, algorithm
    execution. A failed accounting gate never enters full reconstruction.
 
-All three node ceilings in these gates use the same existing `max_expanded_nodes`
-value; there is no new independently adjustable numerical limit. Wire <= limit
+All three input node ceilings in these gates use the same existing `max_expanded_nodes`
+value; the external result policy is specified in section 19. Wire <= limit
 and resolution charge <= limit are necessary but not sufficient: total <= limit
 is mandatory. No `model_construct`, `model_copy`, serializer hook, custom mapping,
 subclass, cycle, executable note or coerced Boolean bypasses this order.
@@ -1458,5 +1464,203 @@ the amended plan, that discrepancy report and the gate-correction report under
 `docs: correct BRC-EXP-001 multiple-match control`. Candidate parents, oracles,
 manifests and the replacement final closure report remain untracked. Neither
 minimax nor Mode B is authorized; 12,000/16,384 caps and all other contracts remain.
+
+## 19. Owner-approved complete-output resource amendment (2026-09-12)
+
+This section supersedes result-cap ambiguity in sections 7, 10 and 11 only.
+The frozen [complete-output review](../reports/2026-09-11-brc-exp001-slice-a-complete-output-resource-correction-review.md)
+SHA-256 `cfb4ffd44f1d315d00cfde8f699f6c94647026105ef8c40f5e99077313eccabd`,
+sections 8–9, is owner approved for documentation and disposable resource-policy/
+refusal-template testing only. Slice A remains stopped; no minimax or Mode B.
+Historical static/preexecution/execution reports remain byte-for-byte evidence of
+what was then proved, not retroactively complete or compliant with this new cap.
+
+Coverage is all 61 required output roles and 59 distinct retained outputs, not
+just the 52 static forms (51 distinct). The eight omitted supplemental outputs
+are bh_t2_equal_v1, bh_t2_different_v1, bh_t2_unavailable_v1, indistinguishable,
+maximum_dimensions, missing_cell, no_partition and one_supplied. Equal overlaps
+the natural-under role; unique-match parent overlaps primary. The extra archival
+natural_over label is an alias, not another required output. Mandatory complete
+BH carriage and check results cause the excess: static maximum 11,047 versus
+BH equal/different 13,453/12,931. The mandatory subset alone costs 12,115
+(request 11,567 + checks 330 + gates 218). No proof may be dropped to fit.
+
+**Separate request/result resource policy, BRC-EXP-001 Slice A only.**
+
+The unchanged request Limits.max_expanded_nodes = 12000 bounds the canonical
+request's charged_validation_node_count. Input M_A_support = 7680 and certified
+M_A_complete = 11567 remain unchanged. No frozen request/assumption/guard bytes
+or request discriminator/version change.
+
+Define an external, owner-bound experimental policy
+brc-exp001.output-resource-policy/v1 with the closed fields:
+schema = "brc-exp001.output-resource-policy/v1";
+max_result_charged_validation_nodes = strict integer literal 13453.
+It is protocol configuration retained with the execution commitments, not
+a request field, package export, durable engineering identity or model record.
+The implementation must not obtain or override this value from untrusted
+request/result data.
+
+For each complete ModeAResult or RejectedEnvelopeResult, result_wire_node_count
+counts the whole canonical output tree, including its once-carried complete
+request when present. result_resolution_charge_node_count sums the complete
+resolved Statement body for every typed StatementSlot reference occurrence
+in that tree. Ordinary Ref and scalar result IDs do not expand into extra
+copied bodies. result_charged_validation_node_count is their sum.
+Every wire occurrence remains charged; no replacement expansion or identity
+deduplication discount is allowed.
+
+Result wire, resolution and total are each checked against the single fixed
+result ceiling 13453, in that order. The embedded request remains independently
+subject to its unchanged 12000 ceiling. No second addition of that request's
+full charged total is made after its wire and resolutions have already been
+counted in the result. max_expanded_nodes is henceforth unambiguously a
+request-field alias, not the result ceiling. Neither ceiling is selected by
+case identity, filename, oracle hash or the eventual preferred measurement.
+
+All other frozen limits remain unchanged, including request bytes 524288,
+result bytes 786432, generated body/trace bytes 131072, envelope reserve 1024,
+JSON depth 48, 64 steps, derivation depth 4, existing H/T/O/cell/statement/
+citation/reference/text/token bounds and safety ceiling 16384.
+
+A full-result capacity refusal is a protocol/resource refusal, not unknown
+prediction, hypothesis incompatibility, missing model semantics or permission
+to emit a partial successful result. Extend the existing RejectedEnvelopeResult
+eligibility explicitly to bounded construction/retained-result resource
+failures; otherwise keep its exact closed fields and input_refused status.
+This extension is required because its former hostile/unparseable-input-only
+description is insufficient for a valid request whose output cannot be built.
+
+During construction, attempted wire/resolution/total overflow produces the
+existing Refusal with phase retention, code output_exceeded, target
+Ref(protocol,result_construction,[wire_node_count |
+resolution_charge_node_count | charged_validation_node_count]), no lower_reason,
+Epi(7,unknown,unavailable,true,[]). Its envelope input_sha256 identifies the
+original canonical request bytes.
+
+During retained-result preflight, wire/resolution/total overflow produces
+phase preflight, code nodes_exceeded, target
+Ref(protocol,result_validation,[the corresponding field above]), no lower_reason,
+and the same unknown Epi. Its envelope input_sha256 identifies the rejected
+canonical result bytes. The target root and external receipt identify the
+boundary unambiguously. Owning reconstruction and semantic recomputation
+counts are zero for this result-preflight refusal.
+
+Both fixed failure envelopes use schema brc-exp001.rejected/v1, mode rejected,
+status input_refused, their typed refusal, the boundary-input digest, and
+Epi(7,unknown,unavailable,true,[]). No successful ranking, partial trace or
+echoed request/result is included. Presentation messages are fixed:
+"Result construction node limit exceeded." and
+"Retained result node limit exceeded." No hostile values or exception text.
+Existing byte/depth/token/cardinality and malformed-reference refusal codes
+and precedence remain in force; this amendment does not weaken earlier gates.
+
+Static oracle witnesses remain immutable. In actual execution context only,
+limitations[0] uses exactly:
+"Executed synthetic supplied-premise calculation; not an accepted engineering fact."
+The second limitation and every other frozen expected field remain exact.
+No generic ignored metadata, wildcard field or semantic mismatch is allowed.
+Bind actual full result bytes independently; do not relabel static digests
+as runtime commitments.
+
+This policy authorizes no execution, Mode B, new premise population, cap
+escalation or objective closure. A required future input/output that cannot
+satisfy it stops for owner review. Successful byte/schema counts are not
+algorithm acceptance.
+
+### 19.1 Incremental construction and retained-result admission
+
+
+The approved amendment must be implemented with an allocation-aware writer, not a check
+after building an arbitrarily large Python result:
+
+1. Finish unchanged bounded request admission. Retain exact input byte commitment,
+   wire/resolution counts and immutable validated inputs. Check the existing
+   schema-based generated-byte reserve proof; if unproved, refuse
+   trace_bound_unproven. Do not replace that proof with this measured corpus maximum.
+2. Preflight the required result envelope and mandatory row counts using bounded
+   input dimensions. Reserve fixed fallback bytes separately. Node counting is
+   structural, not inferred from an expected oracle result or case label.
+3. Before allocating/appending every key, container, scalar, reference or bounded
+   result-row fragment, reserve its exact incremental wire charge, typed resolution
+   charge, UTF-8/escaped byte requirement, depth and relevant cardinality. Count
+   container framing/keys once. Reject a fragment before allocation if it would
+   cross a bound. Never create an unbounded child and only then measure it.
+4. Stream the complete request into its output slot exactly once; include its
+   existing wire and per-use resolution charges. Count generated rows once;
+   matrix/gap indices must not duplicate full bodies. Full fields are retained;
+   no truncation, dropping trace rows or encoding a tree as one scalar is allowed.
+5. If construction overflows, discard the uncommitted candidate and emit only
+   the reserved fixed refusal. No partial ranking is published. The fallback
+   itself is counted/serialized and externally committed. A fallback reserve is
+   not headroom added to a successful output's 13453 limit.
+6. Before freezing, independently check actual complete output bytes/nodes/depth,
+   strict union fields, indices/order, provenance and dependency closure, and
+   every computed value. Freeze/serialize canonically and bind the exact digest.
+7. On every read, check bounded raw bytes, token/depth/shape/cardinality, count wire,
+   bounded definition lookup/reference shape and resolution, then total result
+   charge and independent commitments **before** owning lower reconstruction.
+   Independently recheck embedded input <=12000; never borrow the result budget.
+   Only then perform the full public and experimental reconstruction and
+   once-per-read semantic recomputation/byte comparison.
+8. Bound repeated work: no retries/reconstruction loops keyed by hostile data;
+   at most one logical lower-validation pipeline and one result recomputation
+   per read, with every owning/nested call counted. Measure internal repeats
+   and peak simultaneously live structures; compare reconstructed output by a
+   bounded stream rather than unbounded additional copies. Immutable reuse is
+   permitted only where the validated exact body is genuinely reused; it cannot
+   exempt a required owning public boundary or alter per-occurrence node charges.
+
+All operations remain constrained by the original finite schemas and public
+contracts. Public reconstruction's internal repeated validations are explicit
+work telemetry, not free CPU or a new node formula. The new builder/read guards,
+complete conservative byte proof and work instrumentation remain future
+implementation requirements, not completed findings of this design review.
+
+Natural boundary evidence:
+
+| Boundary | Retained complete domain result |
+| --- | --- |
+| Old 12000 result gate: greatest observed <= limit | maximum_dimensions, 11055 charged |
+| Old gate: least observed > limit | BH different, 12931 charged |
+| Approved 13453 gate: at limit | BH equal / natural-under role, 13453 charged |
+| Approved gate: greatest observed strictly below | BH different, 12931 charged |
+| Candidate gate: least observed above | **Absent from the approved frozen output corpus** |
+
+These are finite-corpus extrema, not schema-wide reachability theorems.
+No complete approved 13454-node output is retained or invented.
+Test the strict integer counting/reservation primitive separately at 13452,
+13453 and 13454 (accept, accept, refuse), including Boolean rejection and
+zero new allocations/owning calls on refusal. This review checked the integer
+threshold relation and Boolean rejection only; writer allocation hooks still
+need execution tests.
+Do not label padded JSON, duplicate trace rows or meaningless extra fields as
+a valid domain boundary twin. If a natural above-limit domain case later becomes
+required, expose its premises and obtain the appropriate separate approval.
+
+The input guards remain independent: 11567 admits through input inspection/public
+reconstruction, 12355 refuses before owning calls. Do not confuse these input
+counts with the result boundary pair.
+
+
+### 19.2 Exact disclosure reconciliation and remaining work
+
+The eleven role comparisons with a permitted +20-byte/zero-node change are:
+cohort/all_other, cohort/one_viable, cohort/primary, cohort/surprise, cohort/tied,
+cohort/unknown_single, cohort/zero_viable, negative/39,
+parent/ea_payload_unavailable, parent/producer_unique_match and
+parent/satisfied_governing_inclusive_boundary_v1. Only `/result/limitations/0`
+changes from `Static expected-output witness only; not executed or accepted.`
+to the exact runtime string above. Preserve both independent commitments; all
+other fields, including the second limitation, must compare exactly. The other
+41 static forms remain byte-identical. This is not a fuzzy oracle comparison.
+
+Policy/template tests do not close dynamic semantic-read mutation/branch/nearest-
+twin tests, once-per-read full experimental-result recomputation, conservative
+schema-based generated-byte/trace reservation, owning-work/peak-memory proofs,
+production import/isolation acceptance or full algorithm execution determinism
+across seeds 1/7/313, two roots and reversed permissible order. Those remain
+mandatory on separately authorized resumption. No successful serialization,
+static count or retained-output round trip is experimental objective closure.
 
 END OF BRC-EXP-001 CORRECTED FINAL SYNTHESIS
