@@ -176,6 +176,37 @@ records the accepted EA-001 architecture.
 records the owner-accepted TA-001 design. TA-001 is complete, owner accepted,
 adversarially hardened, and dual-clean-checkout verified.
 
+## Source-agnostic boundary — owner clarification, 2026-09-14
+
+The [prospective physical-model validation investigation](docs/superpowers/proposals/2026-09-14-prospective-model-validation-feasibility.md)
+is closed without acquisition; its [owner closeout](docs/superpowers/reports/2026-09-14-prospective-model-validation-closeout.md)
+supersedes its historical next-action recommendation. It is not a pending backend
+dependency. The backend remains source-agnostic. Physical equipment, Moonraker
+access and independent empirical measurements are not architectural prerequisites.
+Backend correctness concerns explicit semantics, reference integrity, lifecycle,
+provenance, inference rules and computation under declared assumptions. Synthetic
+fixtures, mathematical checks, adversarial tests and replay validate these
+properties within their tested scope; they do not establish empirical adequacy
+of particular equations, parameter bounds or hypotheses for particular equipment.
+Source authenticity, calibration and empirical accuracy are distinct from content
+integrity and deterministic reconstruction. The backend may carry evidence and
+disclose limitations without certifying it as physically true. A specific adapter
+or demonstration must not determine general hypothesis, prediction, influence or
+change-impact semantics. Accepted experimental findings and their limits remain
+unchanged; no production capability or new experiment is authorized.
+
+Future empirical validation requires a separate explicit application/domain request
+identifying a concrete application or predictive claim. Another backend milestone's
+use of observations, predictions or reasoning does not reopen this investigation.
+Measurements, if later authorized, must follow that particular model's variables,
+uncertainty, applicability and evaluation criteria, not a universal list. IN-001
+and CI-001 remain available architectural options; neither is authorized here.
+
+The next architectural question is: “Given a complete explicitly supplied
+hypothetical system model, which missing semantics or reasoning operations still
+prevent the backend from answering the original objectives?” This names a question,
+not an authorized successor proposal or a predetermined architectural answer.
+
 ## Current Phase
 
 Start with the backend. Do not build the 3D interface, conversational interface,

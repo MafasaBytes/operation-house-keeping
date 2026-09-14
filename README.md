@@ -161,6 +161,31 @@ premature; causal diagnosis, next-test ranking, impact prediction, and planning
 remain unauthorized. No successor milestone has been approved.
 ADR-0023 remains absent, unallocated, and unreserved.
 
+The [prospective physical-model validation investigation](docs/superpowers/proposals/2026-09-14-prospective-model-validation-feasibility.md)
+is closed without acquisition under the [owner closeout](docs/superpowers/reports/2026-09-14-prospective-model-validation-closeout.md).
+Its historical equipment-confirmation recommendation is not a pending backend
+dependency. The backend remains source-agnostic: equipment, Moonraker access and
+independently collected measurements are not prerequisites for architecture work.
+Backend correctness concerns explicit semantics, reference integrity, lifecycle,
+provenance, inference rules and computation under declared assumptions; synthetic,
+mathematical, adversarial and replay evidence validates those properties within
+its tested scope, not physical truth. Accepted experimental findings remain valid
+within their original scope; no production capability was added.
+
+Empirical adequacy of particular equations, bounds and hypotheses belongs to a
+separately authorized application/domain activity for a concrete predictive claim.
+Source authenticity, calibration and empirical accuracy remain distinct from
+content integrity and deterministic reconstruction. A specific adapter or demo
+does not determine general hypothesis, prediction, influence or change-impact
+semantics. Future empirical work requires an explicit application-specific request;
+using observations or reasoning in a backend milestone does not reopen it.
+IN-001 and CI-001 remain available architectural options, neither authorized here.
+
+The next architectural question, without a successor proposal or predetermined
+answer, is: “Given a complete explicitly supplied hypothetical system model,
+which missing semantics or reasoning operations still prevent the backend from
+answering the original objectives?”
+
 Physical-flow occurrence, automatic candidate selection, causal explanation,
 next-test recommendation, impact propagation, desired-state planning, and
 safety or health verdicts remain absent. Occurrence/history needs explicit
