@@ -39,6 +39,9 @@ class DecisionReview:
     review_bytes: bytes
     trace_bytes: bytes
     resource_counts_bytes: bytes
+    # S6 can check retained complete ancestor outputs without recomputing them
+    # a second time or hiding that extra work from the approved charge budget.
+    prior_reviews: tuple = ()
 
     @property
     def reevaluation(self):
@@ -276,6 +279,8 @@ manifest and derive this value from the actual maintained build.
             raise _prior_refusal(e) from e
         admitted.append((a, node, local))
     previous, before_world = None, None
+    completed = []
+    prefix_resolved = prefix_refs = prefix_charges = prefix_lookups = prefix_corners = prefix_prior_bytes = 0
     for a, node, local in admitted:
         world = {"request": a.request_input.raw, "snapshot": a.snapshot_input.raw}
         paths = [] if before_world is None else _changed_paths(before_world, world, limits["changed_paths"])
@@ -301,10 +306,23 @@ manifest and derive this value from the actual maintained build.
         trace_wire = _serialize(trace, min(local["output_trace_bytes"], limits["output_trace_bytes"]))
         if node is not None and (review_wire != node.review_wire or trace_wire != node.trace_wire):
             raise _prior_refusal()
+        qi, si = a.request_input, a.snapshot_input
+        indexes = _admission_lookup_plan(a.request, si.raw)
+        prefix_resolved += len(qi.canonical_bytes) + len(si.canonical_bytes)
+        prefix_refs += qi.counts.reference_occurrences + si.counts.reference_occurrences
+        prefix_lookups += indexes
+        prefix_charges += qi.counts.nodes + si.counts.nodes + qi.counts.reference_occurrences + si.counts.reference_occurrences + indexes + _validator_rows(si.raw)
+        prefix_corners += result.projection.corner_evaluations
+        prefix_counts = {"worlds_reconstructed": len(completed) + 1, "prior_wire_bytes": prefix_prior_bytes,
+            "resolved_input_bytes": prefix_resolved, "input_reference_occurrences": prefix_refs,
+            "input_resolution_charges": prefix_charges, "admission_index_lookups": prefix_lookups,
+            "corner_evaluations": prefix_corners, "decision_rows": 22, "trace_rows": 30, "changed_paths": len(paths)}
+        completed.append(DecisionReview(result, review_wire, trace_wire, canonical_json_bytes(prefix_counts), tuple(completed)))
+        prefix_prior_bytes += len(qi.canonical_bytes) + len(si.canonical_bytes) + len(review_wire) + len(trace_wire)
         previous, before_world = current, world
     counts = {"worlds_reconstructed": len(parsed), "prior_wire_bytes": prior_bytes,
               "resolved_input_bytes": resolved, "input_reference_occurrences": refs,
               "input_resolution_charges": charges, "admission_index_lookups": lookups,
               "corner_evaluations": corner_total,
               "decision_rows": 22, "trace_rows": 30, "changed_paths": len(paths)}
-    return DecisionReview(result, review_wire, trace_wire, canonical_json_bytes(counts))
+    return DecisionReview(result, review_wire, trace_wire, canonical_json_bytes(counts), tuple(completed[:-1]))
