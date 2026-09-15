@@ -2,12 +2,15 @@
 
 ## 1. Plan status and frozen authority
 
-Current delivery status (2026-09-15): the owner has
-[accepted S1 and authorized S2 only](../reports/2026-09-15-bounded-decision-workflow-s1-owner-acceptance.md).
+Current delivery status (2026-09-15): S1 remains
+[accepted](../reports/2026-09-15-bounded-decision-workflow-s1-owner-acceptance.md);
+the owner has [accepted S2 and authorized S3 only](../reports/2026-09-15-bounded-decision-workflow-s2-owner-acceptance.md).
 The prepared resource policy, dependency lock and persistent environment were
-approved separately. S3–S7 remain unauthorized. Historical preparation/gate
+approved separately. S4–S7 remain unauthorized. Historical preparation/gate
 statements below describe the plan's original issuance, not a renewed blocker.
-S2 raw projection is now [implemented and verified, pending owner acceptance](../reports/2026-09-15-bounded-decision-workflow-s2-raw-projection-completion-report.md).
+The [S2 completion evidence](../reports/2026-09-15-bounded-decision-workflow-s2-raw-projection-completion-report.md)
+remains frozen; its historical acceptance-pending statement is superseded by the
+owner-acceptance record, not edited in place.
 
 This is implementation preparation, not implementation authorization. The maintained
 target remains the local command:
