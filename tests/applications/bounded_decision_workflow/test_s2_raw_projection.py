@@ -321,6 +321,12 @@ def test_float_schema_precedes_snapshot_commitment(world, package):
     expect_diagnostic(lambda: run(world, package), package, "REQUEST_SCHEMA_INVALID")
 
 
+def test_float_schema_precedes_requested_limit_profile_failure(world, package):
+    world["premises"]["coordinates"]["beta"]["value"]["lower"] = 0.2
+    world["requested_limits"] = dict(workflow.BUILD_LIMITS, corner_evaluations=129)
+    expect_diagnostic(lambda: run(world, package), package, "REQUEST_SCHEMA_INVALID")
+
+
 def test_immutable_caps_and_corner_preflight_before_arithmetic(world, package, monkeypatch):
     with pytest.raises(TypeError): workflow.BUILD_LIMITS["corner_evaluations"] = 1000
     world["requested_limits"] = dict(workflow.BUILD_LIMITS, corner_evaluations=7)

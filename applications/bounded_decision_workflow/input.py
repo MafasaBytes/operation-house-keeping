@@ -262,8 +262,8 @@ def parse_request_wire(wire: bytes) -> tuple[WorkflowRequest, ParsedInput]:
         raise refusal(
             "REQUEST_SCHEMA_INVALID", stage="lexical_schema",
             target="request", retry="correct_input") from error
-    _validate_requested_limits(request)
     validate_projection_lexical(request)
+    _validate_requested_limits(request)
     parsed = ParsedInput(
         kind="request", raw=value, canonical_bytes=canonical,
         sha256=hashlib.sha256(canonical).hexdigest(), counts=counts)
