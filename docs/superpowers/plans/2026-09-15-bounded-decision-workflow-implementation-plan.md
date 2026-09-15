@@ -20,6 +20,10 @@ at `17095402b4aea11f526d430c6ee8e568ce180f48` and owner accepted.
 S4 is limited to fixed 22-decision dependencies, prior recomputation, and
 changed/equal-after-reevaluation distinctions. No full application release,
 filesystem publisher/verifier, CLI or replay delivery is authorized by S4.
+S4 is [blocked at the frozen-contract audit](../reports/2026-09-15-bounded-decision-workflow-s4-decision-review-discrepancy-report.md):
+comparison expectations say no prior, and the frozen dependency map lacks complete
+input/closure semantics. A related prior-refusal command fixture also omits its
+prior argument. No S4 implementation or semantic fixture amendment has occurred.
 
 This is implementation preparation, not implementation authorization. The maintained
 target remains the local command:
