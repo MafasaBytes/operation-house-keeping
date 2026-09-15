@@ -11,6 +11,10 @@ statements below describe the plan's original issuance, not a renewed blocker.
 The [S2 completion evidence](../reports/2026-09-15-bounded-decision-workflow-s2-raw-projection-completion-report.md)
 remains frozen; its historical acceptance-pending statement is superseded by the
 owner-acceptance record, not edited in place.
+S3 target and policy is [blocked before implementation by frozen fixture contradictions](../reports/2026-09-15-bounded-decision-workflow-s3-target-and-policy-blocker-report.md).
+The accepted S1/S2 validation and frozen expectations have not been weakened or
+silently amended. The report consolidates the four affected case entries for
+owner correction approval; S3 is not complete.
 
 This is implementation preparation, not implementation authorization. The maintained
 target remains the local command:
