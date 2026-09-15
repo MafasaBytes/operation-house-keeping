@@ -2,6 +2,13 @@
 
 ## 1. Plan status and frozen authority
 
+Current gate: [S6 owner accepted; S7 separately authorized](../reports/2026-09-15-bounded-decision-workflow-s6-owner-acceptance.md).
+S7 is the release gate defined in §9: clean source/lock identity, ext4/XFS recovery,
+deterministic semantics and exact scope inspection. Complete the corresponding
+clean-environment, end-to-end, measurement and documentation checks. Final
+application acceptance remains a separate owner decision. Earlier statements
+that S7 was unauthorized are historical and superseded by this authorization.
+
 Current gate: [S6 complete; owner acceptance pending](../reports/2026-09-15-bounded-decision-workflow-s6-resource-and-cli-completion-report.md)
 at tested implementation `c37c24ee50667121d6b2dc4739aa3b7d12825c96`:
 682 affected checks passed, including the approved terminal/incomplete-presentation
