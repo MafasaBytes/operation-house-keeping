@@ -287,3 +287,14 @@ def test_command_concurrent_creators_preserve_one_winner(tmp_path, inputs):
         if result.returncode: failure(result, "OUTPUT_COLLISION", 5)
         else: success(result)
     success(run("verify", "--bundle", dest))
+
+
+@pytest.mark.parametrize("dimension,limit,code", [("prior_bundle_files", 6, "INPUT_RESOURCE_LIMIT_EXCEEDED"),
+    ("aggregate_prior_bundle_bytes", 1024, "INPUT_WIRE_LIMIT_EXCEEDED")])
+def test_prior_corpus_limit_refuses_before_reconstruction(tmp_path, inputs, dimension, limit, code):
+    request, snapshot = inputs; prior = tmp_path / "prior"
+    success(run("evaluate", "--request", request, "--snapshot", snapshot, "--output-dir", prior))
+    value = json.loads(request.read_bytes()); value["requested_limits"] = dict(BUILD_LIMITS, **{dimension: limit})
+    request.write_bytes(canonical_json_bytes(value))
+    failure(run("evaluate", "--request", request, "--snapshot", snapshot, "--output-dir", tmp_path / "bad", "--compare-to", prior), code, 4)
+    assert not (tmp_path / "bad").exists()

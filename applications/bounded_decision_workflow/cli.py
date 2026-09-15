@@ -108,8 +108,9 @@ def _retained_node(review, prior, result, trace):
             "result_sha256": _hash(result), "trace_sha256": _hash(trace)}
 
 
-def _checked_bundle(path, build_wire=None):
-    inspection = verify_bundle(path)
+def _checked_bundle(path, build_wire=None, prior_limits=None):
+    inspection = (verify_bundle(path) if prior_limits is None else retention._verify_bundle(path,
+        total_limit=prior_limits["aggregate_prior_bundle_bytes"], file_limit=prior_limits["prior_bundle_files"]))
     if inspection.diagnostic: raise WorkflowInputError(inspection.diagnostic)
     if build_wire is not None:
         if inspection.bundle_kind != "complete" or inspection.captured["build.json"] != build_wire:
@@ -177,7 +178,7 @@ def execute(args, *, fault=None):
         scan(request_wire, limits); scan(snapshot_wire, limits)
         prior = None
         if args.compare_to:
-            inspected = _checked_bundle(args.compare_to)
+            inspected = _checked_bundle(args.compare_to, prior_limits=limits)
             if inspected.bundle_kind != "complete" or inspected.captured["build.json"] != build_wire:
                 raise _problem("PRIOR_INCOMPATIBLE")
             if sum(map(len, inspected.captured.values())) > limits["aggregate_prior_bundle_bytes"]:

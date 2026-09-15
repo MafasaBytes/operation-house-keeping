@@ -17,7 +17,7 @@ import stat
 import sys
 from types import MappingProxyType
 
-from applications.bounded_decision_workflow.errors import WorkflowDiagnostic, WorkflowInputError
+from applications.bounded_decision_workflow.errors import WorkflowDiagnostic, WorkflowInputError, refusal
 from applications.bounded_decision_workflow.input import BUILD_LIMITS, canonical_json_bytes, _count, _pairs
 
 COMPLETE_FILES = ("request.json", "snapshot.json", "resolved-input.json", "result.json", "trace.json", "build.json")
@@ -320,6 +320,12 @@ def _publish_bundle(output_dir, files, *, bundle_kind="complete", operation="eva
 
 def verify_bundle(path, *, fault=None):
     """Fixed-name byte/inventory verification only. Never repairs or recomputes."""
+    return _verify_bundle(path, fault=fault, total_limit=BUILD_LIMITS["retention_bundle_bytes"])
+
+
+def _verify_bundle(path, *, fault=None, total_limit, file_limit=None):
+    if type(total_limit) is not int or not 0 < total_limit <= BUILD_LIMITS["retention_bundle_bytes"]:
+        raise _error("INPUT_WIRE_LIMIT_EXCEEDED")
     absolute, parts = _parts(path)
     with _directory(absolute, parts) as directory:
         _filesystem(directory)
@@ -330,17 +336,20 @@ def verify_bundle(path, *, fault=None):
         with os.scandir(directory) as iterator:
             for item in iterator:
                 entries.add(item.name)
+                if file_limit is not None and len(entries) > file_limit:
+                    raise refusal("INPUT_RESOURCE_LIMIT_EXCEEDED", stage="wire_resource",
+                                  target="prior_bundle_files", retry="reduce_input", exit_code=4)
                 if len(entries) > 2 * len(KNOWN_FILES):
                     raise _error("MANIFEST_INVALID")
         for name in sorted(entries & KNOWN_FILES):
             try:
-                captured_file = _read_at(directory, name, _cap(name), fault)
+                captured_file = _read_at(directory, name, min(_cap(name), total_limit - total), fault)
             except FileNotFoundError:
                 # A vanished entry is not a complete bundle; do not retry/open
                 # a replacement, and do not present a partial successful result.
                 continue
             total += len(captured_file.data)
-            if total > BUILD_LIMITS["retention_bundle_bytes"]: raise _error("INPUT_WIRE_LIMIT_EXCEEDED")
+            if total > total_limit: raise _error("INPUT_WIRE_LIMIT_EXCEEDED")
             captured[name] = captured_file.data
         valid, kind = False, None
         if "manifest.json" in captured:
