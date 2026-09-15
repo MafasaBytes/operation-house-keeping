@@ -14,6 +14,7 @@ from applications.bounded_decision_workflow import build, retention
 from applications.bounded_decision_workflow.input import canonical_json_bytes, effective_limits, parse_request_wire
 from applications.bounded_decision_workflow.preflight import scan
 from applications.bounded_decision_workflow.projection import _serialize, _output_refusal
+from applications.bounded_decision_workflow.errors import refusal
 
 
 def _problem(code):
@@ -54,6 +55,14 @@ def _hash(data): return hashlib.sha256(data).hexdigest()
 def _json(wire, limits=BUILD_LIMITS):
     scan(wire, limits)
     return json.loads(wire)
+
+
+def _resolved_bytes(value, limit):
+    try:
+        return _serialize(value, limit)
+    except WorkflowInputError as e:
+        raise refusal("RESOLVED_INPUT_LIMIT_EXCEEDED", stage="wire_resource",
+                      target="resolved_input_bytes", retry="reduce_input", exit_code=4) from e
 
 
 def _output(review, build_id):
@@ -186,12 +195,12 @@ def execute(args, *, fault=None):
             except (KeyError, TypeError, ValueError, AttributeError) as e:
                 raise _problem("PRIOR_INCOMPATIBLE") from e
         resolved = {"request": _json(request_wire), "snapshot": _json(snapshot_wire), "prior": prior}
-        resolved_wire = _serialize(resolved, limits["resolved_input_bytes"])
+        resolved_wire = _resolved_bytes(resolved, limits["resolved_input_bytes"])
         scan(resolved_wire, limits)
         review, result, trace = _compute(request_wire, snapshot_wire, prior, build_id)
     limits = effective_limits(review.policy.projection.admission.request)
     payload = {"request.json": request_wire, "snapshot.json": snapshot_wire,
-               "resolved-input.json": _serialize(resolved, limits["resolved_input_bytes"]),
+               "resolved-input.json": _resolved_bytes(resolved, limits["resolved_input_bytes"]),
                "result.json": result, "trace.json": trace, "build.json": build_wire}
     # S5 enforces immutable ceilings; optional tighter bundle budget is checked here.
     if sum(map(len, payload.values())) > limits["retention_bundle_bytes"]: raise _output_refusal()

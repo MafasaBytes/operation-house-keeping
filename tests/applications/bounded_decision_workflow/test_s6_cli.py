@@ -14,6 +14,7 @@ from tests.applications.bounded_decision_workflow.test_s1_input_public_admission
 from tests.applications.bounded_decision_workflow.test_s4_fixture_correction import variant
 from applications.bounded_decision_workflow.input import canonical_json_bytes
 from applications.bounded_decision_workflow import BUILD_LIMITS
+from tests.applications.bounded_decision_workflow.test_s2_raw_projection import recommit
 
 ROOT = Path(__file__).parents[3]
 
@@ -185,3 +186,104 @@ def test_malformed_but_hash_consistent_prior_is_not_internal_error(tmp_path, inp
     (prior / "result.json").write_bytes(canonical_json_bytes(value)); rehash(prior, "result.json")
     success(run("verify", "--bundle", prior))
     failure(run("evaluate", "--request", request, "--snapshot", snapshot, "--output-dir", tmp_path / "bad", "--compare-to", prior), "PRIOR_INCOMPATIBLE", 3)
+
+
+@pytest.mark.parametrize("name", ["OBS-3-decimal-reconstruction", "OBS-3-decimal-stale-commitment", "OBS-3-wrong-context", "NUM-1-oversized"])
+def test_command_retains_accepted_admission_precedence(tmp_path, inputs, name):
+    package = json.loads(PACKAGE_PATH.read_bytes()); v = variant(package, name)
+    request, snapshot = inputs
+    request.write_bytes(object_bytes(package, v["input"]["request_ref"]))
+    snapshot.write_bytes(object_bytes(package, v["input"].get("snapshot_ref", BASE_SNAPSHOT)))
+    if name == "OBS-3-wrong-context":
+        value = json.loads(request.read_bytes())
+        value["current_condition_question"]["assertion_context"]["view"] = "as_designed"
+        request.write_bytes(canonical_json_bytes(value))
+    if name == "NUM-1-oversized":
+        value = json.loads(request.read_bytes())
+        support = value["premises"]["coordinates"]["alpha"]["value"]
+        for endpoint in ("lower", "upper"):
+            support[endpoint] = {"numerator": 10 ** 128, "denominator": 1}
+        request.write_bytes(recommit(value))
+    d = v["expected"]["stderr_line"]
+    actual = failure(run("evaluate", "--request", request, "--snapshot", snapshot, "--output-dir", tmp_path / "bad"), d["code"], d["exit_code"])
+    assert actual == d
+
+
+@pytest.mark.parametrize("dimension,value,code", [
+    ("corner_evaluations", 7, "INPUT_RESOURCE_LIMIT_EXCEEDED"),
+    ("decision_rows", 21, "INPUT_RESOURCE_LIMIT_EXCEEDED"),
+    ("output_trace_rows", 29, "OUTPUT_LIMIT_EXCEEDED"),
+    ("output_result_bytes", 1024, "OUTPUT_LIMIT_EXCEEDED"),
+    ("output_trace_bytes", 1024, "OUTPUT_LIMIT_EXCEEDED"),
+    ("retention_bundle_bytes", 1024, "OUTPUT_LIMIT_EXCEEDED"),
+    ("resolved_input_bytes", 100000, "RESOLVED_INPUT_LIMIT_EXCEEDED"),
+])
+def test_command_incremental_limits_and_no_partial_result(tmp_path, inputs, dimension, value, code):
+    request, snapshot = inputs
+    data = json.loads(request.read_bytes()); data["requested_limits"] = dict(BUILD_LIMITS, **{dimension: value})
+    request.write_bytes(canonical_json_bytes(data))
+    dest = tmp_path / "limited"
+    failure(run("evaluate", "--request", request, "--snapshot", snapshot, "--output-dir", dest), code, 4)
+    assert not dest.exists()
+
+
+def test_equal_tighter_and_relaxed_requested_limits(tmp_path, inputs):
+    request, snapshot = inputs; data = json.loads(request.read_bytes())
+    for label, limits in [("equal", dict(BUILD_LIMITS)), ("tighter", dict(BUILD_LIMITS, corner_evaluations=8, output_trace_rows=30))]:
+        data["requested_limits"] = limits; request.write_bytes(canonical_json_bytes(data))
+        success(run("evaluate", "--request", request, "--snapshot", snapshot, "--output-dir", tmp_path / label))
+    data["requested_limits"]["corner_evaluations"] = 129
+    request.write_bytes(canonical_json_bytes(data))
+    # Accepted S1 service diagnostic, not the stale preparation alias.
+    failure(run("evaluate", "--request", request, "--snapshot", snapshot, "--output-dir", tmp_path / "relaxed"), "REQUESTED_LIMIT_RELAXATION", 3)
+
+
+@pytest.mark.parametrize("stage,code,status", [("internal", "INTERNAL_ERROR", 7),
+    ("directory_fsync", "RETENTION_DIR_FSYNC_FAILED", 6), ("parent_fsync", "RETENTION_PARENT_FSYNC_FAILED", 6)])
+def test_real_entrypoint_with_trusted_fault_bootstrap(tmp_path, inputs, stage, code, status):
+    request, snapshot = inputs; output = tmp_path / "fault"
+    # No production CLI flag or environment hook. Test-only bootstrap runs the
+    # real module entry point in a fresh process with a trusted callable seam.
+    bootstrap = '''import runpy,sys
+from applications.bounded_decision_workflow import cli
+original=cli.execute
+def fault(event,name):
+    if event == sys.argv[1]: raise OSError("injected")
+def execute(args, **kwargs):
+    if sys.argv[1] == "internal": raise RuntimeError("private detail must not leak")
+    return original(args,fault=fault)
+cli.execute=execute
+sys.argv=["applications.bounded_decision_workflow"]+sys.argv[2:]
+runpy.run_module("applications.bounded_decision_workflow",run_name="__main__")
+'''
+    # Keep the chosen stage outside argv after the bootstrap resets it.
+    bootstrap = bootstrap.replace('original=cli.execute', 'original=cli.execute\nstage=sys.argv[1]').replace('sys.argv[1] ==', 'stage ==').replace('event == sys.argv[1]', 'event == stage')
+    process = subprocess.run([sys.executable, "-c", bootstrap, stage, "evaluate", "--request", str(request),
+        "--snapshot", str(snapshot), "--output-dir", str(output)], cwd=ROOT,
+        env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1"), capture_output=True, timeout=30)
+    actual = failure(process, code, status)
+    assert b"private detail" not in process.stderr
+    if stage != "internal":
+        assert actual["bundle_state"] == "complete_visible_durability_unknown"
+        success(run("verify", "--bundle", output))
+
+
+def test_command_concurrent_creators_preserve_one_winner(tmp_path, inputs):
+    request, snapshot = inputs; dest = tmp_path / "race"
+    argv = [sys.executable, "-m", "applications.bounded_decision_workflow", "evaluate", "--request", str(request),
+            "--snapshot", str(snapshot), "--output-dir", str(dest)]
+    children = [subprocess.Popen(argv, cwd=ROOT, env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1"),
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE) for _ in range(2)]
+    results = []
+    try:
+        for child in children:
+            stdout, stderr = child.communicate(timeout=30)
+            results.append(subprocess.CompletedProcess(argv, child.returncode, stdout, stderr))
+    finally:
+        for child in children:
+            if child.poll() is None: child.kill(); child.communicate()
+    assert sorted(r.returncode for r in results) == [0, 5]
+    for result in results:
+        if result.returncode: failure(result, "OUTPUT_COLLISION", 5)
+        else: success(result)
+    success(run("verify", "--bundle", dest))
