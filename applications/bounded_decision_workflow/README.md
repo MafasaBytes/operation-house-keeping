@@ -1,4 +1,4 @@
-# Local bounded decision workflow (S6; release gate pending)
+# Local bounded decision workflow (final owner acceptance pending)
 
 Use the approved Linux CPython 3.13 environment and a local ext4/XFS runtime
 location. The source checkout may remain on WSL DrvFS; input and result files
@@ -61,11 +61,44 @@ path for retry. `verify` checks bytes, not semantics or source authenticity. `re
 requires the same committed application/backend source witnesses, CPython version
 and locked dependencies, then reconstructs and recomputes. A clean executable scope
 is required; unrelated untracked evidence is not a dirty executable. No installation
-or checkout is performed by the application. Full clean-build recreation and final
-release acceptance remain S7, not claimed by this S6 invocation documentation.
+or checkout is performed by the application. The maintained S7 release checks cover
+clean-build recreation and recovery; final application acceptance is a separate
+owner decision, not an automatic consequence of running these checks.
 
 The version-only lock here specifies the already approved set; it is not a command
 to install packages. Provisioning retains the separate hash-verified artifacts and
 installation lock. A build identifier is a reproducibility witness, not executable
 authentication. Public evidence can be carried without authenticating unavailable
 raw source bytes. Physical accuracy, causal truth and global planning are not claimed.
+
+## Release verification and recovery
+
+The approved environment can be reproduced in a separate Linux CPython 3.13 venv
+using only the retained wheels and provisioning `requirements-hashed.txt`, with
+`--no-index --no-deps --only-binary=:all: --require-hashes`. The version-only lock
+in this directory does not replace that artifact-hash check. Never repurpose the
+persistent environment or an existing result directory for release tests.
+
+From a clean local clone at the exact selected commit, run the application test
+directory and affected decimal-parser, state-classification architecture and
+semantic-compatibility isolation tests with the fresh interpreter. Disable bytecode
+and pytest's cache provider, and select a new `--basetemp` under the verified ext4
+test workspace. Set `BDW_UNSUPPORTED_FILE` to an existing read-only fixture on a
+verified unsupported mount when exercising that platform rejection. This is a test
+setting only; the production command accepts no filesystem-policy overrides.
+
+`tests/applications/bounded_decision_workflow/test_s7_release.py` exercises two
+independent local clones, seeds 1/7/313 and normal/reversed mapping construction,
+with actual evaluate/verify/replay commands. It compares complete semantic bytes,
+retains per-command elapsed times and file sizes, and permits only enumerated
+manifest run-metadata differences. It also recovers the accepted S6 archive with
+its matching historical build and rejects replay under a different build.
+
+The complete canonical baseline input, output, trace and manifest can be recovered
+from the accepted [S6 report](../../docs/superpowers/reports/2026-09-15-bounded-decision-workflow-s6-resource-and-cli-completion-report.md).
+Its explicit digest and exact-build requirements apply. Extract only to a new
+exclusive destination; incomplete bytes are not trusted merely because they can be
+read. Verification checks integrity; replay additionally reconstructs/recomputes.
+Original objectives are answered only within the nominated synthetic hypotheses,
+actions, hard bounds and policy. The workflow does not select measurements or
+generate alternatives, and does not establish actual physical effects.

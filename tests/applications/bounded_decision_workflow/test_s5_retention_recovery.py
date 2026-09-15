@@ -6,6 +6,7 @@ import multiprocessing
 import os
 from pathlib import Path
 import signal
+import subprocess
 
 import pytest
 
@@ -101,8 +102,15 @@ def test_real_hostile_paths_and_valid_twin(tmp_path, attack, code):
 
 
 def test_actual_drvfs_refused_and_ext4_accepted(tmp_path):
-    # Read-only checkout check: no fixture or source modification.
-    expect(lambda: workflow.capture_file(PACKAGE_PATH, kind="request"), "FILESYSTEM_UNSUPPORTED")
+    # A clean S7 checkout may itself be on ext4. Nominate a read-only file on an
+    # actual unsupported mount; never infer filesystem type from checkout role.
+    nominated = os.environ.get("BDW_UNSUPPORTED_FILE")
+    probe = Path(nominated) if nominated else PACKAGE_PATH
+    kind = subprocess.check_output(['findmnt', '-T', str(probe), '-n', '-o', 'FSTYPE'], text=True).strip()
+    if kind in {'ext4', 'xfs'}:
+        if nominated: pytest.fail('BDW_UNSUPPORTED_FILE must be on an unsupported filesystem')
+        pytest.skip('nominate BDW_UNSUPPORTED_FILE to exercise a real unsupported mount')
+    expect(lambda: workflow.capture_file(probe, kind="request"), "FILESYSTEM_UNSUPPORTED")
     good = tmp_path / "small.json"; good.write_bytes(b"{}")
     assert workflow.capture_file(good, kind="request").data == b"{}"
 
