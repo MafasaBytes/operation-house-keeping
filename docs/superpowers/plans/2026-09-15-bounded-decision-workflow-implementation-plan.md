@@ -2,6 +2,12 @@
 
 ## 1. Plan status and frozen authority
 
+Current delivery status (2026-09-15): the owner has
+[accepted S1 and authorized S2 only](../reports/2026-09-15-bounded-decision-workflow-s1-owner-acceptance.md).
+The prepared resource policy, dependency lock and persistent environment were
+approved separately. S3–S7 remain unauthorized. Historical preparation/gate
+statements below describe the plan's original issuance, not a renewed blocker.
+
 This is implementation preparation, not implementation authorization. The maintained
 target remains the local command:
 
