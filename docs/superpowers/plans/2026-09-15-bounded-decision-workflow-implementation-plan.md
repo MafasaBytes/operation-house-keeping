@@ -6,6 +6,8 @@ Current owner gate: [S4 accepted; S5 separately authorized](../reports/2026-09-1
 S5 covers safe descriptor-relative paths, exclusive manifest-last publication,
 verification and fault/recovery checks only. S6–S7 remain unauthorized. Historical
 authorization statements below are superseded by this current gate, not rewritten.
+The [S5 recipe corrections](../reports/2026-09-15-bounded-decision-workflow-s5-retention-fixture-correction-report.md)
+preserve original evidence and close stage-specific diagnostics and manifest-attack reachability.
 
 Current delivery status (2026-09-15): S1 remains
 [accepted](../reports/2026-09-15-bounded-decision-workflow-s1-owner-acceptance.md);
@@ -53,10 +55,11 @@ matches
 
 The corrected [candidate package](../reports/2026-09-15-bounded-decision-workflow-candidate-package.json)
 is canonical compact JSON with SHA-256
-89ba39623a72326d876740d624af501b467179c608ae89ce9e40f66806ec0d4e.
+355b169df2805fa09eaba8865eea1a89e02071cc56c302a078677789fad616bf.
 Its [manifest](../reports/2026-09-15-bounded-decision-workflow-candidate-manifest.json)
 has SHA-256
-e0a94c429d69dff69d7b00351dac52ba125e858683f41c0f585c0aafbabd10fc. The preceding correction is retained under
+6f1c6103cbc834e089c839f6e3a4503e0a6d91408dccb70972f40a628784fb57. The S4 accepted package is preserved under
+`pre-s5-retention-correction` names. The preceding correction is retained under
 `pre-s4-complete-sweep` names. The pre-S4 package/manifest are retained under
 `pre-s4-review-correction` names, including all 11 specification reds. The pre-S3 package/manifest are retained under
 `pre-s3-policy-correction` names; their exact commitments and mechanical remapping
