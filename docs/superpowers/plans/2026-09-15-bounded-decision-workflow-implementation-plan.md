@@ -2,6 +2,14 @@
 
 ## 1. Plan status and frozen authority
 
+Current gate: [both S6 policy resolutions owner approved](../reports/2026-09-15-bounded-decision-workflow-s6-policy-owner-approval.md).
+The linked addendum governs design §§3.1/9.3/10.2/11.2 and plan §§5–6:
+512-byte non-tightenable terminal refusal envelope (including LF), unchanged
+caller success/retention limits, bounded INTERNAL_ERROR/unknown fallback;
+incomplete CLI verification has no inventory, while the existing S5 API retains
+bounded inspection. No new numeric ceiling or channel. Resume S6 only; S7 remains
+unauthorized. Prior blocked-status statements below are historical, not current.
+
 Current gate: [S5 accepted; S6 separately authorized](../reports/2026-09-15-bounded-decision-workflow-s5-owner-acceptance.md).
 S6 is resource/CLI delivery and replay recomputation. S7 remains unauthorized.
 S6 is [partially implemented but blocked on two presentation-policy decisions](../reports/2026-09-15-bounded-decision-workflow-s6-resource-and-cli-completion-report.md):
