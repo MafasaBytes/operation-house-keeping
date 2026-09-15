@@ -2,6 +2,11 @@
 
 ## 1. Plan status and frozen authority
 
+Current owner gate: [S4 accepted; S5 separately authorized](../reports/2026-09-15-bounded-decision-workflow-s4-owner-acceptance.md).
+S5 covers safe descriptor-relative paths, exclusive manifest-last publication,
+verification and fault/recovery checks only. S6–S7 remain unauthorized. Historical
+authorization statements below are superseded by this current gate, not rewritten.
+
 Current delivery status (2026-09-15): S1 remains
 [accepted](../reports/2026-09-15-bounded-decision-workflow-s1-owner-acceptance.md);
 S2 remains [accepted](../reports/2026-09-15-bounded-decision-workflow-s2-owner-acceptance.md).
