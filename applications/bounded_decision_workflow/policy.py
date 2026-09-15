@@ -100,8 +100,12 @@ No caller-created admission/result object is accepted; no expected result is rea
 All premise structure is checked before any projection arithmetic.
 """
     admission = admit_request_and_snapshot(request_wire, snapshot_wire)
+    return _assess_admitted(admission)
+
+
+def _assess_admitted(admission, *, limits=None):
     request = admission.request
-    limits = effective_limits(request)
+    limits = effective_limits(request) if limits is None else limits
     validate_profile_structure(request)
     validate_policy_structure(request)
     supports = projection_supports(request, limits)

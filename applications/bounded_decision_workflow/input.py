@@ -208,20 +208,33 @@ def enforce_snapshot_limits(parsed: ParsedInput, limits: dict[str, int]):
     _enforce_effective(parsed.counts, "snapshot", limits)
     snapshot = parsed.raw
     cardinalities = (
-        (len(snapshot.get("conditions", ())), "conditions_per_snapshot"),
-        (len(snapshot.get("constraint_evaluations", ())),
+        (len(_snapshot_collection(snapshot, "conditions")), "conditions_per_snapshot"),
+        (len(_snapshot_collection(snapshot, "constraint_evaluations")),
          "constraint_evaluations_per_snapshot"),
-        (len(snapshot.get("state", {}).get("material", {}).get("records", ())),
+        (len(_snapshot_collection(snapshot, "state", "material", "records")),
          "model_records_per_snapshot"),
     )
-    for evaluation in snapshot.get("constraint_evaluations", ()):
-        cardinalities += ((len(evaluation.get("candidates", ())),
+    for evaluation in _snapshot_collection(snapshot, "constraint_evaluations"):
+        cardinalities += ((len(_snapshot_collection(evaluation, "candidates")),
                            "candidates_per_evaluation"),)
     for actual, dimension in cardinalities:
         if actual > limits[dimension]:
             raise refusal(
                 "INPUT_RESOURCE_LIMIT_EXCEEDED", stage="wire_resource",
                 target=dimension, retry="reduce_input", exit_code=4)
+
+
+def _snapshot_collection(value, *path):
+    """Count actual rows without repairing material before public validation.
+
+    Malformed shapes remain untouched in parsed.raw. Their nodes have already
+    been charged by the generic JSON counter; only public reconstruction admits.
+    """
+    for key in path:
+        if not isinstance(value, dict):
+            return ()
+        value = value.get(key)
+    return value if isinstance(value, list) else ()
 
 
 def _enforce_effective(

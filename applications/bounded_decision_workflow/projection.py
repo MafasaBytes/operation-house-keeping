@@ -97,8 +97,8 @@ def project_request_and_snapshot(request_wire: bytes, snapshot_wire: bytes) -> R
     return _project_admitted(admission, limits, supports)
 
 
-def _project_admitted(admission, limits, supports):
-    """Internal S2 core, called only after S1 and all consuming profile checks."""
+def _prepare_projection(admission, limits, supports):
+    """Exact work plan without evaluating corners; shared with S4 preflight."""
     request = admission.request
     p = request.premises
     digits = limits["exact_rational_digits_per_integer"]
@@ -135,6 +135,14 @@ def _project_admitted(admission, limits, supports):
                       target="corner_evaluations", retry="reduce_input", exit_code=4)
     if len(plans) > limits["output_trace_rows"]:
         raise _output_refusal()
+    return plans, endpoints, names, total
+
+
+def _project_admitted(admission, limits, supports):
+    """Internal S2 core, called only after S1 and all consuming profile checks."""
+    plans, endpoints, names, total = _prepare_projection(admission, limits, supports)
+    p = admission.request.premises
+    digits = limits["exact_rational_digits_per_integer"]
 
     rows, traces = [], []
     for hypothesis_id, action, status, frontier, premise_ids in plans:

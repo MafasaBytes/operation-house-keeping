@@ -65,6 +65,11 @@ def admit_request_and_snapshot(
         request_wire: bytes, snapshot_wire: bytes) -> AdmissionReview:
     request, request_input = parse_request_wire(request_wire)
     snapshot_input = parse_snapshot_wire(snapshot_wire)
+    return _admit_parsed(request, request_input, snapshot_input)
+
+
+def _admit_parsed(request, request_input, snapshot_input):
+    """Internal composition seam; S4 preflights the complete comparison first."""
     limits = effective_limits(request)
     enforce_snapshot_limits(snapshot_input, limits)
 

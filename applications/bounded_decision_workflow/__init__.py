@@ -1,7 +1,7 @@
 """Bounded supplied-alternative decision workflow.
 
 Slices S1–S3 expose strict public admission, raw projection and supplied policy.
-Decision review, retention, replay and CLI delivery remain pending.
+S4 adds named-decision review. Retention, replay and CLI delivery remain pending.
 """
 
 from applications.bounded_decision_workflow.admission import (
@@ -12,6 +12,9 @@ from applications.bounded_decision_workflow.admission import (
     canonical_example_pair,
 )
 from applications.bounded_decision_workflow.contracts import WorkflowRequest
+from applications.bounded_decision_workflow.decision_review import (
+    DecisionReview, PriorDecisionInput, review_request_and_snapshot,
+)
 from applications.bounded_decision_workflow.policy import PolicyReview, assess_request_and_snapshot
 from applications.bounded_decision_workflow.projection import (
     RawProjectionReview, project_request_and_snapshot,
@@ -46,4 +49,7 @@ __all__ = [
     "project_request_and_snapshot",
     "PolicyReview",
     "assess_request_and_snapshot",
+    "DecisionReview",
+    "PriorDecisionInput",
+    "review_request_and_snapshot",
 ]
