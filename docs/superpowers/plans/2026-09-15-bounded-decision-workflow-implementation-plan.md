@@ -2,6 +2,10 @@
 
 ## 1. Plan status and frozen authority
 
+Current gate: [S5 accepted; S6 separately authorized](../reports/2026-09-15-bounded-decision-workflow-s5-owner-acceptance.md).
+S6 is resource/CLI delivery and replay recomputation. S7 remains unauthorized.
+The following dated implementation/acceptance statements remain historical evidence.
+
 Current owner gate: [S4 accepted; S5 separately authorized](../reports/2026-09-15-bounded-decision-workflow-s4-owner-acceptance.md).
 S5 [retention/recovery is implemented and awaits owner acceptance](../reports/2026-09-15-bounded-decision-workflow-s5-retention-and-recovery-completion-report.md)
 at tested HEAD `702a4cbd143950e4fc2e6d724760e0a2723301f2`: 597 affected tests passed.
