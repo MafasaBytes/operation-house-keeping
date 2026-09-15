@@ -3,6 +3,9 @@
 ## 1. Plan status and frozen authority
 
 Current owner gate: [S4 accepted; S5 separately authorized](../reports/2026-09-15-bounded-decision-workflow-s4-owner-acceptance.md).
+S5 [retention/recovery is implemented and awaits owner acceptance](../reports/2026-09-15-bounded-decision-workflow-s5-retention-and-recovery-completion-report.md)
+at tested HEAD `702a4cbd143950e4fc2e6d724760e0a2723301f2`: 597 affected tests passed.
+S6–S7 remain unauthorized; no complete command/replay/release delivery is claimed.
 S5 covers safe descriptor-relative paths, exclusive manifest-last publication,
 verification and fault/recovery checks only. S6–S7 remain unauthorized. Historical
 authorization statements below are superseded by this current gate, not rewritten.
