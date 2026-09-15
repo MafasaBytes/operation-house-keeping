@@ -40,6 +40,20 @@ Failures write empty stdout and one bounded JSON stderr diagnostic: exit 2 usage
 6 retention/durability sequence; 7 unexpected internal failure. Input refusals do
 not promise a retained refusal bundle. They never retain partial semantic results.
 
+The terminal failure line has a fixed build-owned allowance of 512 UTF-8 bytes
+including its LF, independent of caller-tightened successful-output limits. Those
+caller limits remain unchanged. A malformed or over-envelope diagnostic becomes
+the fixed `INTERNAL_ERROR`, exit 7, `bundle_state="unknown"` fallback; no arbitrary
+exception contents are printed. A broken stderr sink returns 7 without recursive
+reporting; receipt of a complete line requires a writable channel.
+
+For incomplete bundles, `verify` emits only its fixed exit-3 stderr diagnostic,
+not a file inventory; stdout is empty. `bundle_state="absent"` means no new output
+bundle, not that the inspected directory is absent. Missing manifest produces
+`BUNDLE_INCOMPLETE`; invalid manifest produces `MANIFEST_INVALID`. The existing
+public `verify_bundle` API still exposes bounded captured recognized files with
+explicit incomplete status for local inspection. It never promotes partial data.
+
 Six canonical payload files and a final manifest constitute a completed result.
 Manifest-last completion is not whole-directory atomic visibility or proof of
 power-loss durability. Incomplete bundles remain visible and require a new output

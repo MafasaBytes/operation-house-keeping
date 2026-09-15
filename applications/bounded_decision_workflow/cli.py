@@ -15,6 +15,7 @@ from applications.bounded_decision_workflow.input import canonical_json_bytes, e
 from applications.bounded_decision_workflow.preflight import scan
 from applications.bounded_decision_workflow.projection import _serialize, _output_refusal
 from applications.bounded_decision_workflow.errors import refusal
+from applications.bounded_decision_workflow.terminal import emit_failure
 
 
 def _problem(code):
@@ -251,6 +252,4 @@ def main(argv=None, *, fault=None):
         d = e.diagnostic
     except Exception:
         d = _problem("INTERNAL_ERROR").diagnostic
-    sys.stderr.buffer.write(canonical_json_bytes(asdict(d)) + b"\n")
-    sys.stderr.buffer.flush()
-    return d.exit_code
+    return emit_failure(d, sys.stderr.buffer)
