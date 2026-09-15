@@ -4,9 +4,10 @@
 
 Current delivery status (2026-09-15): S1 remains
 [accepted](../reports/2026-09-15-bounded-decision-workflow-s1-owner-acceptance.md);
-the owner has [accepted S2 and authorized S3 only](../reports/2026-09-15-bounded-decision-workflow-s2-owner-acceptance.md).
+S2 remains [accepted](../reports/2026-09-15-bounded-decision-workflow-s2-owner-acceptance.md).
+The owner has [accepted S3 and separately authorized S4 only](../reports/2026-09-15-bounded-decision-workflow-s3-owner-acceptance.md).
 The prepared resource policy, dependency lock and persistent environment were
-approved separately. S4–S7 remain unauthorized. Historical preparation/gate
+approved separately. S5–S7 remain unauthorized. Historical preparation/gate
 statements below describe the plan's original issuance, not a renewed blocker.
 The [S2 completion evidence](../reports/2026-09-15-bounded-decision-workflow-s2-raw-projection-completion-report.md)
 remains frozen; its historical acceptance-pending statement is superseded by the
@@ -15,8 +16,10 @@ The owner authorized the four S3 [fixture corrections](../reports/2026-09-15-bou
 and resumption of S3. The historical blocker report remains unchanged. Admission
 precedence and policy semantics remain unchanged. S3 target and policy is now
 [implemented and verified](../reports/2026-09-15-bounded-decision-workflow-s3-target-and-policy-completion-report.md)
-at `17095402b4aea11f526d430c6ee8e568ce180f48`; owner acceptance is pending.
-This does not authorize S4–S7 or constitute a completed application release.
+at `17095402b4aea11f526d430c6ee8e568ce180f48` and owner accepted.
+S4 is limited to fixed 22-decision dependencies, prior recomputation, and
+changed/equal-after-reevaluation distinctions. No full application release,
+filesystem publisher/verifier, CLI or replay delivery is authorized by S4.
 
 This is implementation preparation, not implementation authorization. The maintained
 target remains the local command:
