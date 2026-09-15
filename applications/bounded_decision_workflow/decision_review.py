@@ -73,14 +73,20 @@ def _bounded(value, limit, target):
 
 
 def _changed_paths(before, proposed, limit):
-    """Exact leaf/frontier JSON-pointer differences, including receipt provenance."""
+    """Request leaf/frontier differences; public snapshot is an opaque input.
+
+    This application's snapshot dependency is the whole public serialization,
+    not each nested backend record. All its bytes still count and reconstruct.
+    """
     paths = []
     pending = [(before, proposed, "")]
     while pending:
         a, b, path = pending.pop()
         if type(a) is type(b) and a == b:
             continue
-        if type(a) is type(b) is dict:
+        if path == "/snapshot":
+            paths.append(path)
+        elif type(a) is type(b) is dict:
             for k in sorted(set(a) | set(b), reverse=True):
                 child = path + "/" + k.replace("~", "~0").replace("/", "~1")
                 if k not in a or k not in b:
@@ -180,6 +186,23 @@ def _validator_rows(snapshot):
                   for e in _snapshot_collection(snapshot, "constraint_evaluations")))
 
 
+def _admission_lookup_plan(request, snapshot):
+    """Four selection lookups, plus semantic candidate when observation exists.
+
+    Count the admitted S1 path before reconstruction; malformed paths reserve the
+    longer path and are still rejected by S1, never admitted by this counter.
+    Iteration here does not resolve or authenticate public evidence.
+    """
+    binding = request.observed_input_binding
+    for i, evaluation in enumerate(_snapshot_collection(snapshot, "constraint_evaluations")):
+        if i != binding.constraint_evaluation_index:
+            continue
+        for j, candidate in enumerate(_snapshot_collection(evaluation, "candidates")):
+            if j == binding.semantic_candidate_index and isinstance(candidate, dict):
+                return 4 if candidate.get("verdict") == "not_evaluated" else 5
+    return 5
+
+
 def review_request_and_snapshot(request_wire: bytes, snapshot_wire: bytes, *,
                                 build_identity: str, prior: PriorDecisionInput | None = None) -> DecisionReview:
     """Recompute complete captured worlds; never trust a 'verified' success flag.
@@ -196,21 +219,23 @@ manifest and derive this value from the actual maintained build.
     _bounded(22, limits["decision_rows"], "decision_rows")
     # Charge a world before retaining another parsed ancestor. Duplicated worlds
     # still cost their full reconstruction; references cannot hide work.
-    resolved = refs = charges = 0
-    def charge(qi, si):
-        nonlocal resolved, refs, charges
+    resolved = refs = charges = lookups = 0
+    def charge(q, qi, si):
+        nonlocal resolved, refs, charges, lookups
         _enforce_effective(qi.counts, "request", limits)
         enforce_snapshot_limits(si, limits)
         _bounded(_premise_declarations(qi.raw), limits["application_premise_declarations"],
                  "application_premise_declarations")
         resolved += qi.counts.canonical_bytes + si.counts.canonical_bytes
         refs += qi.counts.reference_occurrences + si.counts.reference_occurrences
+        indexes = _admission_lookup_plan(q, si.raw)
+        lookups += indexes
         charges += (qi.counts.nodes + si.counts.nodes + qi.counts.reference_occurrences
-                    + si.counts.reference_occurrences + 3 + _validator_rows(si.raw))
+                    + si.counts.reference_occurrences + indexes + _validator_rows(si.raw))
         _bounded(resolved, limits["resolved_input_bytes"], "resolved_input_bytes")
         _bounded(refs, limits["input_reference_occurrences"], "input_reference_occurrences")
         _bounded(charges, limits["input_resolution_charges"], "input_resolution_charges")
-    charge(request_input, snapshot_input)
+    charge(request, request_input, snapshot_input)
     chain, seen, prior_bytes = [], set(), 0
     node = prior
     while node is not None:
@@ -232,7 +257,7 @@ manifest and derive this value from the actual maintained build.
         except WorkflowInputError as e:
             if e.diagnostic.exit_code == 4: raise
             raise _prior_refusal(e) from e
-        charge(qi, si)
+        charge(q, qi, si)
         chain.append((q, qi, si, node))
         node = node.prior
     parsed = list(reversed(chain))
@@ -279,6 +304,7 @@ manifest and derive this value from the actual maintained build.
         previous, before_world = current, world
     counts = {"worlds_reconstructed": len(parsed), "prior_wire_bytes": prior_bytes,
               "resolved_input_bytes": resolved, "input_reference_occurrences": refs,
-              "input_resolution_charges": charges, "corner_evaluations": corner_total,
+              "input_resolution_charges": charges, "admission_index_lookups": lookups,
+              "corner_evaluations": corner_total,
               "decision_rows": 22, "trace_rows": 30, "changed_paths": len(paths)}
     return DecisionReview(result, review_wire, trace_wire, canonical_json_bytes(counts))

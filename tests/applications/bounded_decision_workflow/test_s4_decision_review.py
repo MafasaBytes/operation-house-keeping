@@ -183,15 +183,11 @@ def test_unavailable_public_twin_requires_full_snapshot_dependency(package):
     baseline = object_value(package, BASE_SNAPSHOT)
     unavailable = object_value(package, UNAVAILABLE_SNAPSHOT)
     assert baseline["state"] == unavailable["state"]
-    # The complete public twin changes more than 64 leaf paths: end-to-end
-    # comparison must refuse, not silently discard changes or raise the cap.
-    with pytest.raises(workflow.WorkflowInputError) as exc:
-        call(package, UNAVAILABLE_REQUEST, UNAVAILABLE_SNAPSHOT, capture(package))
-    assert exc.value.diagnostic.target == "changed_paths"
-    result = call(package, UNAVAILABLE_REQUEST, UNAVAILABLE_SNAPSHOT)
-    # Isolate the dependency kernel only after both public inputs were admitted.
-    rows = decision_review._review_rows(decision_review._support_and_decisions(result.policy),
-        decision_review._support_and_decisions(call(package).policy))
+    result = call(package, UNAVAILABLE_REQUEST, UNAVAILABLE_SNAPSHOT, capture(package))
+    # Public snapshot identity is an opaque application input, not 65+ backend
+    # record edits. Complete bytes remain admitted, retained and charged.
+    assert "/snapshot" in result.reevaluation["changed_paths"]
+    rows = result.reevaluation["decision_rows"]
     assert all(r["reevaluation"] == "required" for r in rows)
     assert rows[0]["value"] is None
     assert result.policy.projection.admission.current_condition.disposition == "unavailable"
@@ -267,21 +263,21 @@ def test_counts_independent_and_no_reference_deduplication(package):
     c = result.resource_counts
     assert c["resolved_input_bytes"] == 2 * (len(prior.request_wire) + len(prior.snapshot_wire))
     assert c["input_reference_occurrences"] == 2 * refs
-    assert c["input_resolution_charges"] == 2 * (nodes(q) + nodes(s) + refs + 3 + validators)
+    assert c["input_resolution_charges"] == 2 * (nodes(q) + nodes(s) + refs + 5 + validators)
     assert c["prior_wire_bytes"] == sum(map(len, (prior.request_wire, prior.snapshot_wire, prior.review_wire, prior.trace_wire)))
     assert c["corner_evaluations"] == 16 and c["trace_rows"] == 30
 
 
 @pytest.mark.parametrize("limit,cap", [
     ("decision_rows", 22), ("output_trace_rows", 30), ("corner_evaluations", 16),
-    ("input_reference_occurrences", 1382), ("input_resolution_charges", 7920),
+    ("input_reference_occurrences", 1382), ("input_resolution_charges", 7924),
 ])
 def test_exact_aggregate_boundary_and_one_under_refusal(package, limit, cap):
     world = object_value(package, BASE_REQUEST)
     prior = capture(package)
     world["requested_limits"] = dict(workflow.BUILD_LIMITS, **{limit: cap})
     # Replacing baseline null limits with the complete 26-entry map adds 26
-    # nodes to 7,894 charges. Resource metadata isn't a decision dependency.
+    # nodes to 7,898 charges. Resource metadata isn't a decision dependency.
     result = run(world, package, prior)
     assert required(result) == set()
     world["requested_limits"][limit] = cap - 1
@@ -393,8 +389,24 @@ def test_malformed_public_collections_still_reach_authoritative_refusal(package,
 ])
 def test_remaining_frozen_service_results_without_claiming_command_execution(package, name):
     v = variant(package, name)
-    result = call(package, v["input"]["request_ref"], v["input"]["snapshot_ref"])
+    prior = capture(package) if "--compare-to" in v["input"]["argv"] else None
+    result = call(package, v["input"]["request_ref"], v["input"]["snapshot_ref"], prior)
     expected = object_value(package, v["expected"]["result_ref"])
     assert result.reevaluation["decision_rows"] == expected["reevaluation"]["decision_rows"]
     assert result.policy.projection.raw_projections == expected["raw_projections"]
     assert result.policy.selection == expected["selection"]
+
+
+@pytest.mark.parametrize("request_id,snapshot,expected", [(BASE_REQUEST, BASE_SNAPSHOT, 5),
+                                                       (UNAVAILABLE_REQUEST, UNAVAILABLE_SNAPSHOT, 4)])
+def test_admission_index_lookup_charge_matches_actual_operations(package, monkeypatch, request_id, snapshot, expected):
+    from applications.bounded_decision_workflow import admission
+    original = admission._at
+    calls = []
+    def counted(*args):
+        calls.append(args[1])
+        return original(*args)
+    monkeypatch.setattr(admission, "_at", counted)
+    result = call(package, request_id, snapshot)
+    assert len(calls) == expected
+    assert result.resource_counts["admission_index_lookups"] == expected
