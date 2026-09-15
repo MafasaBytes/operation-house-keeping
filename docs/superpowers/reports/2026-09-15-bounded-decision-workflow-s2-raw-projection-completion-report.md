@@ -24,9 +24,11 @@ The owner acceptance was recorded separately in
 | --- | --- |
 | `e5168a5e3d6fd14745fe9a2bb57649baabd5f21d` | Separate S1 owner acceptance and plan status; S2 starting HEAD. |
 | `1ab7e4a382f502d9cda48291e69268bc9203e14e` | Maintained S2 code, readonly limit mapping, and additive public-surface assertion. |
-| `27f6a2011c1f02aef9d771e6e19e98583730643f` | Independent S2 tests; exact final tested implementation/test HEAD. |
+| `27f6a2011c1f02aef9d771e6e19e98583730643f` | Independent S2 tests; initial tested implementation/test HEAD. |
+| `c7e4955ae12bdc12312c6e5ae59a3dd90d19a027` | Initial completion record; followed by the final two-fault precedence check below. |
+| `aa454b53063c1e6a88f4fe398dbd787873241d0e` | Numeric schema-order repair and regression; exact final tested implementation/test HEAD. |
 
-This report and its plan-status link are subsequent administrative changes only.
+The final report update after `aa454b5` is administrative only.
 Each staged scope was inspected; no unrelated artifact was staged.
 
 ## 2. Governing contracts and preserved evidence
@@ -101,7 +103,7 @@ separate layers within the unchanged aggregate policy.
 ## 4. Acceptance coverage and independent expected reasoning
 
 The maintained [S2 tests](../../../tests/applications/bounded_decision_workflow/test_s2_raw_projection.py)
-contain 93 collected cases. Package mutations are materialized only in test memory;
+contain 94 collected cases. Package mutations are materialized only in test memory;
 their enclosing premise hashes are recomputed, preserving original valid twins.
 The prose reversed-interval recipe is concretized as beta lower `3/10`, upper
 `1/10` (not a no-op reversal of the baseline singleton).
@@ -137,16 +139,18 @@ This confirms the recorded results without running the full production suite.
 
 The first S2 run passed 91 tests; added corner-trace, digit-boundary and
 observational-claim checks brought that to **93 passed in 48.41s**. At exact HEAD
-`27f6a2011c1f02aef9d771e6e19e98583730643f`, final verification passed
+`27f6a2011c1f02aef9d771e6e19e98583730643f`, initial verification passed
 **187 tests in 56.70s**: 20 S1, 93 S2, and 74 affected decimal/architecture/import-
-isolation tests. The earlier 213-test selection was not needlessly repeated after
+isolation tests. The final schema-order regression described below was then added
+and the same focused selection rerun at `aa454b5`: **188 passed in 54.74s**
+(20 S1, 94 S2, 74 affected). The earlier 213-test selection was not repeated after
 S2; backend bytes were unchanged.
 
 Final command from the checkout (use a new, nonexisting ext4 test basename for
 any later rerun):
 
 ```text
-PYTHONDONTWRITEBYTECODE=1 /home/mafasa/operation-house-keeping-runtime/bounded-decision-workflow/environments/cp313-bdw001/bin/python -m pytest -o addopts='' -p no:cacheprovider tests/applications/bounded_decision_workflow tests/constraint_evaluation/test_decimal_parser.py tests/state_classification/test_architecture.py tests/semantic_compatibility/test_isolation.py --basetemp=/home/mafasa/operation-house-keeping-runtime/bounded-decision-workflow/test-workspaces/s2-final-20260915a -q
+PYTHONDONTWRITEBYTECODE=1 /home/mafasa/operation-house-keeping-runtime/bounded-decision-workflow/environments/cp313-bdw001/bin/python -m pytest -o addopts='' -p no:cacheprovider tests/applications/bounded_decision_workflow tests/constraint_evaluation/test_decimal_parser.py tests/state_classification/test_architecture.py tests/semantic_compatibility/test_isolation.py --basetemp=/home/mafasa/operation-house-keeping-runtime/bounded-decision-workflow/test-workspaces/s2-final-20260915b -q
 ```
 
 Independent recursive counters (root depth one, maps/lists/scalars as nodes, keys
@@ -181,11 +185,22 @@ its bounded byte buffer. A refusal returns only the existing typed diagnostic,
 not partially successful rows. S6 still owns complete command-level, aggregate
 input/output, resolution-accounting and release resource verification.
 
-No red test execution or semantic contradiction occurred in S2. Code inspection
+One ordinary implementation-order defect was reproduced before closeout: beta
+lower `0.2` combined with requested `corner_evaluations=129` returned the inherited
+profile-limit diagnostic `REQUESTED_LIMIT_RELAXATION`, concealing the earlier
+`REQUEST_SCHEMA_INVALID` numeric shape failure. The new regression failed once
+at the initial implementation. Moving the new S2 shape check ahead of the existing
+limit-profile check produced **2 targeted passes in 2.29s** (including the nearest
+float/bad-snapshot ordering control). The committed regression retains the red
+input; no expectation or approved precedence was weakened. Public reconstruction,
+snapshot commitment and decimal defense ordering are unchanged.
+
+Code inspection
 found that S1's exported build-limit table was a mutable dictionary despite the
 immutable-policy intent; S2 wraps the exact unchanged values in a readonly mapping.
 Its mutation-refusal regression passes. No premise, oracle, numerical ceiling or
-backend contract was changed to fit the implementation.
+backend contract was changed to fit the implementation. No unresolved S2 defect
+or necessary new premise remains.
 
 ## 6. Environment, preservation and remaining gates
 
@@ -194,7 +209,8 @@ Tests used the approved isolated CPython 3.13.11 environment under
 `findmnt` reconfirmed ext4 on `/dev/sdc`; `namei` confirmed the private owned
 workspace and test parent contain no symlink components. Test writes were limited
 to new `test-workspaces/s2-s1-acceptance-20260915a` and
-`test-workspaces/s2-final-20260915a` roots. S2 projection itself performs no I/O.
+`test-workspaces/s2-final-20260915a` and `test-workspaces/s2-final-20260915b`
+roots. S2 projection itself performs no I/O.
 
 The provisioner passed before and after verification, reproducing environment
 identity `693e458fefc4866bf83ce52c3b163995e0e6eb3cfe6389b73b748321bae0d27a`
