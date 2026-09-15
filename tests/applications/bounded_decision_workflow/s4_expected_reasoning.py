@@ -58,7 +58,7 @@ def corrected_rows(request, result, *, prior_request=None, prior_result=None, ch
     olddeps = inventory(prior_request, prior_result) if prior_result is not None else deps
     # Only existing frozen comparison recipes: explicit policy-root propagation,
     # independently specified, not inferred by comparing output equality.
-    required = ({"selection"} if change == "cost" else
+    required = (set(deps) if change == "snapshot" else {"selection"} if change == "cost" else
                 {k for k in deps if k.startswith(("target:", "feasibility:"))} | {"selection"}
                 if change == "target" else set())
     rows = []

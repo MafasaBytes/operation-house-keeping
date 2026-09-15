@@ -22,7 +22,8 @@ changed/equal-after-reevaluation distinctions. No full application release,
 filesystem publisher/verifier, CLI or replay delivery is authorized by S4.
 The owner authorized [bounded S4 expectation/dependency corrections](../reports/2026-09-15-bounded-decision-workflow-s4-review-fixture-correction-report.md)
 and resumption of S4. The historical discrepancy report remains unchanged. S4 is
-not accepted; S5–S7 remain unauthorized.
+not accepted; S5–S7 remain unauthorized. The [complete-recipe sweep correction](../reports/2026-09-15-bounded-decision-workflow-s4-complete-sweep-correction-report.md)
+also repairs the two unavailable-with-prior expectations without changing inputs.
 
 This is implementation preparation, not implementation authorization. The maintained
 target remains the local command:
@@ -44,10 +45,11 @@ matches
 
 The corrected [candidate package](../reports/2026-09-15-bounded-decision-workflow-candidate-package.json)
 is canonical compact JSON with SHA-256
-6af90f315b7f1c407a30e57d526d609c650dfbd10bb2489c87087a6f596a8a63.
+89ba39623a72326d876740d624af501b467179c608ae89ce9e40f66806ec0d4e.
 Its [manifest](../reports/2026-09-15-bounded-decision-workflow-candidate-manifest.json)
 has SHA-256
-75382b7098b9ab98382f104da7cb201dacb357cee67cfb9c9ca81f8f2202c460. The pre-S4 package/manifest are retained under
+e0a94c429d69dff69d7b00351dac52ba125e858683f41c0f585c0aafbabd10fc. The preceding correction is retained under
+`pre-s4-complete-sweep` names. The pre-S4 package/manifest are retained under
 `pre-s4-review-correction` names, including all 11 specification reds. The pre-S3 package/manifest are retained under
 `pre-s3-policy-correction` names; their exact commitments and mechanical remapping
 are recorded in the correction report and package. The original package and manifest remain retained under the

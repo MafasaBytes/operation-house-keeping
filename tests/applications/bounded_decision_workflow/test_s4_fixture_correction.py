@@ -73,3 +73,26 @@ def test_independent_review_counts_and_no_prior_control(name, required, changed,
     no = variant(p, "REV-1-omitted-prior")
     assert "--compare-to" not in no["input"]["argv"]
     assert object_value(p, no["expected"]["result_ref"])["reevaluation"]["disposition"] == "not_applicable_no_prior"
+
+
+def test_every_supplied_prior_has_comparison_expectations_and_preserved_sweep_history():
+    _, p = packages()
+    historical = PACKAGE_PATH.with_name("2026-09-15-bounded-decision-workflow-candidate-package-pre-s4-complete-sweep.json")
+    raw = historical.read_bytes()
+    assert hashlib.sha256(raw).hexdigest() == "6af90f315b7f1c407a30e57d526d609c650dfbd10bb2489c87087a6f596a8a63"
+    old = json.loads(raw)
+    for k, entry in old["objects"].items(): assert p["objects"][k] == entry
+    for c in p["s4_complete_sweep_correction"]["object_changes"]:
+        before, after = object_value(old, c["old_result"]), object_value(p, c["new_result"])
+        assert before["reevaluation"]["disposition"] == "not_applicable_no_prior"
+        assert all(r["reevaluation"] == "required" and r["value_changed"] for r in after["reevaluation"]["decision_rows"])
+        del before["reevaluation"]; del after["reevaluation"]
+        assert before == after
+        before, after = object_value(old, c["old_trace"]), object_value(p, c["new_trace"])
+        del before["decision_rows"]; del after["decision_rows"]
+        assert before == after
+    for case in p["acceptance_cases"]:
+        for v in case["variants"]:
+            if "result_ref" in v["expected"] and "request_ref" in v["input"]:
+                expected = "compared" if "--compare-to" in v["input"]["argv"] else "not_applicable_no_prior"
+                assert object_value(p, v["expected"]["result_ref"])["reevaluation"]["disposition"] == expected
