@@ -123,7 +123,7 @@ def _body(premise, expected, *, gate=False):
         raise reject_profile()
 
 
-def validate_profile(request, limits):
+def validate_profile_structure(request):
     """Validate S2 premises only. Policy semantics belong to S3.
 
     Exact application edition 1 is implicit in this fixed profile. Unknown bodies
@@ -186,7 +186,10 @@ def validate_profile(request, limits):
     for premise in p.timing.values():
         _body(premise, {"status": True, "when": "before_step"}, gate=True)
 
+
+def projection_supports(request, limits):
     supports = {}
+    p = request.premises
     for key, premise in sorted(p.coordinates.items()):
         if premise.value is None:
             supports[key] = None
@@ -200,3 +203,8 @@ def validate_profile(request, limits):
             raise _malformed()
         supports[key] = (lo, hi) if premise.availability == "present" else None
     return supports
+
+
+def validate_profile(request, limits):
+    validate_profile_structure(request)
+    return projection_supports(request, limits)

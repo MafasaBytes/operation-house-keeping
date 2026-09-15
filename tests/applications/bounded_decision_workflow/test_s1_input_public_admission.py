@@ -71,6 +71,7 @@ def test_s1_public_surface_is_narrow_and_has_eleven_request_fields():
         "admit_request_and_snapshot", "canonical_example_pair",
         "parse_request_wire", "parse_snapshot_wire",
         "RawProjectionReview", "project_request_and_snapshot",
+        "PolicyReview", "assess_request_and_snapshot",
     ]
     assert tuple(workflow.WorkflowRequest.model_fields) == (
         "actor_assertion", "application_identity",

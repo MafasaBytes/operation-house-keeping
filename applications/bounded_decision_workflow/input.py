@@ -11,6 +11,7 @@ from pydantic import ValidationError
 from applications.bounded_decision_workflow.contracts import WorkflowRequest
 from applications.bounded_decision_workflow.errors import refusal
 from applications.bounded_decision_workflow.projection_profile import validate_projection_lexical
+from applications.bounded_decision_workflow.policy_profile import validate_policy_lexical
 
 
 BUILD_LIMITS = MappingProxyType({
@@ -263,6 +264,7 @@ def parse_request_wire(wire: bytes) -> tuple[WorkflowRequest, ParsedInput]:
             "REQUEST_SCHEMA_INVALID", stage="lexical_schema",
             target="request", retry="correct_input") from error
     validate_projection_lexical(request)
+    validate_policy_lexical(request)
     _validate_requested_limits(request)
     parsed = ParsedInput(
         kind="request", raw=value, canonical_bytes=canonical,

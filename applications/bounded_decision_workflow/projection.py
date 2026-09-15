@@ -94,6 +94,12 @@ def project_request_and_snapshot(request_wire: bytes, snapshot_wire: bytes) -> R
     request = admission.request
     limits = effective_limits(request)
     supports = validate_profile(request, limits)
+    return _project_admitted(admission, limits, supports)
+
+
+def _project_admitted(admission, limits, supports):
+    """Internal S2 core, called only after S1 and all consuming profile checks."""
+    request = admission.request
     p = request.premises
     digits = limits["exact_rational_digits_per_integer"]
     observed = admission.observed_value
