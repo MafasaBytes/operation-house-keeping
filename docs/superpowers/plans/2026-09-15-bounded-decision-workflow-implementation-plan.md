@@ -11,10 +11,9 @@ statements below describe the plan's original issuance, not a renewed blocker.
 The [S2 completion evidence](../reports/2026-09-15-bounded-decision-workflow-s2-raw-projection-completion-report.md)
 remains frozen; its historical acceptance-pending statement is superseded by the
 owner-acceptance record, not edited in place.
-S3 target and policy is [blocked before implementation by frozen fixture contradictions](../reports/2026-09-15-bounded-decision-workflow-s3-target-and-policy-blocker-report.md).
-The accepted S1/S2 validation and frozen expectations have not been weakened or
-silently amended. The report consolidates the four affected case entries for
-owner correction approval; S3 is not complete.
+The owner authorized the four S3 [fixture corrections](../reports/2026-09-15-bounded-decision-workflow-s3-policy-fixture-correction-report.md)
+and resumption of S3. The historical blocker report remains unchanged. Admission
+precedence and policy semantics remain unchanged; S3 acceptance is still pending.
 
 This is implementation preparation, not implementation authorization. The maintained
 target remains the local command:
@@ -36,10 +35,12 @@ matches
 
 The corrected [candidate package](../reports/2026-09-15-bounded-decision-workflow-candidate-package.json)
 is canonical compact JSON with SHA-256
-199d82590048b610f9aa9e96de1620f9015884e727459e88d156d6052ed20ad4.
+df9766b51dea3339b9b2096ab3a96ea75ff01b130b6eb913da86d337c5d7cb1e.
 Its [manifest](../reports/2026-09-15-bounded-decision-workflow-candidate-manifest.json)
 has SHA-256
-5305aef821a19c01c74223ce9a1d483518b41d8c946ead4dd8aeea064b9b3b4a. The original package and manifest remain retained under the
+9b9effe6809bb49ad2f0a7cd1096eeef688ef17dee1a87f44b0832af1e478de9. The pre-S3 package/manifest are retained under
+`pre-s3-policy-correction` names; their exact commitments and mechanical remapping
+are recorded in the correction report and package. The original package and manifest remain retained under the
 `pre-obs3-decimal-correction` historical names. The correction separates a
 commitment mismatch from a hostile snapshot that reaches authoritative public
 reconstruction; it does not change application semantics.
