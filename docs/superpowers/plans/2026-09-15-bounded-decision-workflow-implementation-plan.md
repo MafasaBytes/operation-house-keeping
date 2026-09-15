@@ -24,6 +24,9 @@ The owner authorized [bounded S4 expectation/dependency corrections](../reports/
 and resumption of S4. The historical discrepancy report remains unchanged. S4 is
 not accepted; S5–S7 remain unauthorized. The [complete-recipe sweep correction](../reports/2026-09-15-bounded-decision-workflow-s4-complete-sweep-correction-report.md)
 also repairs the two unavailable-with-prior expectations without changing inputs.
+S4 decision review is now [implemented and verified](../reports/2026-09-15-bounded-decision-workflow-s4-decision-review-completion-report.md)
+at `49ab8778882007886ce95646e2e8fa6d0b0cd28d` and awaits owner acceptance.
+This does not authorize S5–S7 or claim command/retention/replay delivery.
 
 This is implementation preparation, not implementation authorization. The maintained
 target remains the local command:
