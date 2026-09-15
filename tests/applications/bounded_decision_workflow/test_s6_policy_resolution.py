@@ -93,6 +93,18 @@ def test_catalogue_exact_canonical_bytes():
         assert diagnostic_line(WorkflowDiagnostic(**d)) == (encode(d), d['exit_code'])
 
 
+def test_real_broken_stderr_pipe_returns_seven():
+    read_fd, write_fd = os.pipe()
+    os.close(read_fd)
+    try:
+        p = subprocess.run([sys.executable, '-m', 'applications.bounded_decision_workflow', 'evaluate'],
+            cwd=ROOT, env=dict(os.environ, PYTHONDONTWRITEBYTECODE='1'),
+            stdout=subprocess.PIPE, stderr=write_fd, timeout=30)
+    finally:
+        os.close(write_fd)
+    assert p.returncode == 7 and p.stdout == b''
+
+
 def test_tight_budget_admission_precedence_and_valid_twin(tmp_path, inputs):
     request, snapshot = inputs; original = json.loads(request.read_bytes())
     expected = next(d for d in json.loads(PACKAGE_PATH.read_bytes())['diagnostic_catalogue']
