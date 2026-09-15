@@ -13,7 +13,10 @@ remains frozen; its historical acceptance-pending statement is superseded by the
 owner-acceptance record, not edited in place.
 The owner authorized the four S3 [fixture corrections](../reports/2026-09-15-bounded-decision-workflow-s3-policy-fixture-correction-report.md)
 and resumption of S3. The historical blocker report remains unchanged. Admission
-precedence and policy semantics remain unchanged; S3 acceptance is still pending.
+precedence and policy semantics remain unchanged. S3 target and policy is now
+[implemented and verified](../reports/2026-09-15-bounded-decision-workflow-s3-target-and-policy-completion-report.md)
+at `17095402b4aea11f526d430c6ee8e568ce180f48`; owner acceptance is pending.
+This does not authorize S4–S7 or constitute a completed application release.
 
 This is implementation preparation, not implementation authorization. The maintained
 target remains the local command:

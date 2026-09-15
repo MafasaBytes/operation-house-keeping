@@ -43,7 +43,7 @@ For the other three cases the only changed request field is
 | POL-5-missing-cost | `9623eb6a4f1ddb91c6e7ea0803d02ef636a9a2eb01dc014b762f384dfe481e57` | `4f34efe5e1cf8c9304fe52670d509aaa207c82aa433a58745358a11d3529922f` → `2143d8f81410824058bb7891332e4bbccd391e81727ca71e4e003cde95fb5969` |
 
 Only `/commitments_and_limits/request_sha256` changes in the three expected result
-objects. Their remappings, respectively, are:
+objects. The complete object remapping is:
 
 - `1ba217a6adf2643fb2ae38b6938eb4e68c178e06b34450e3b3a60b74310485e8` → `750254e5ec702d105205d3664296cbace8bcab08687939e0adcaddf175eb64de`.
 - `820533f297d485f5de8566dccf760b39c304ed4384d1cc2b125a38c37b96ae50` → `9117ba98078763367da0bc9c7ab18fc0fcc1f61f3150fbaa833f96b863af3ba4`.
