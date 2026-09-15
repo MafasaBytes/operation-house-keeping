@@ -80,7 +80,8 @@ def test_s1_public_surface_is_narrow_and_has_eleven_request_fields():
         "current_condition_question", "observed_input_binding", "premises",
         "request_id", "requested_limits", "schema_version",
         "snapshot_commitment", "target_policy", "workflow_profile")
-    assert not (ROOT / "applications/bounded_decision_workflow/__main__.py").exists()
+    # S1's request/export boundary is unchanged; S6 now owns the command entry.
+    assert (ROOT / "applications/bounded_decision_workflow/__main__.py").is_file()
 
 
 def test_obs_1_public_result_is_admitted_and_exactly_reserializes(package):
