@@ -60,11 +60,11 @@ admission predicate or diagnostic precedence changed. The package now has 69
 variants and 38 recoverable objects. Its corrected commitments are:
 
 - candidate package:
-  `1b345ff23afd743ac06de083e5c02399f70c53849c8f97e06afabd94efbff5cb`;
+  `199d82590048b610f9aa9e96de1620f9015884e727459e88d156d6052ed20ad4`;
 - candidate manifest:
-  `9df57ccda68ad9aa1029f66e3cc3654ef6e35b21b5984bc32ae669482e153605`;
+  `5305aef821a19c01c74223ce9a1d483518b41d8c946ead4dd8aeea064b9b3b4a`;
 - mechanically amended implementation plan:
-  `dda6c5c86bccf6f6c41182038875013b199552f7677266638132770a4481133f`.
+  `ad18829d4d4f11c277ae1dd511cffd75be1e0777e71a694be1f2bd7550d66937`.
 
 The plan amendment also corrects the nonsemantic count typo from ten to the
 explicitly enumerated eleven request fields and describes the nine OBS-3 variants.
@@ -106,7 +106,11 @@ mutations intended to reach reconstruction now have matching enclosing
 commitments. The stale pair contains exactly its intended earlier fault. OBS-2
 producer recipes each name one unavailable cause, require the public facade chain
 and retain the accepted baseline as nearest valid twin; they do not carry stale
-serialized commitments. The OBS-4 conversion mutant remains a known unsupported
+serialized commitments. The `OBS-2-nonnumeric` recipe now explicitly supersedes
+the baseline non-nullable value specification with a nullable numeric
+specification: without that single producer premise, null correctly stops earlier
+at `value_shape_not_satisfied` instead of the intended `numeric_value_absent`.
+The OBS-4 conversion mutant remains a known unsupported
 profile field with the frozen `PROFILE_UNSUPPORTED` result; the interpreted-unit
 twin remains a public reconstruction/admission success. No additional semantic
 contradiction was found.

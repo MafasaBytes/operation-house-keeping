@@ -22,10 +22,10 @@ matches
 
 The corrected [candidate package](../reports/2026-09-15-bounded-decision-workflow-candidate-package.json)
 is canonical compact JSON with SHA-256
-1b345ff23afd743ac06de083e5c02399f70c53849c8f97e06afabd94efbff5cb.
+199d82590048b610f9aa9e96de1620f9015884e727459e88d156d6052ed20ad4.
 Its [manifest](../reports/2026-09-15-bounded-decision-workflow-candidate-manifest.json)
 has SHA-256
-9df57ccda68ad9aa1029f66e3cc3654ef6e35b21b5984bc32ae669482e153605. The original package and manifest remain retained under the
+5305aef821a19c01c74223ce9a1d483518b41d8c946ead4dd8aeea064b9b3b4a. The original package and manifest remain retained under the
 `pre-obs3-decimal-correction` historical names. The correction separates a
 commitment mismatch from a hostile snapshot that reaches authoritative public
 reconstruction; it does not change application semantics.
