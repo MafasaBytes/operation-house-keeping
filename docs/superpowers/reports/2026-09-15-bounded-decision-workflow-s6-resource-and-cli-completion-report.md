@@ -1,220 +1,224 @@
-# Bounded decision workflow S6 — resource/CLI status and consolidated discrepancies
+# Bounded decision workflow S6 — resource and CLI completion
 
-## Status: blocked, not complete or accepted
+## Outcome and authority
 
-S5 is accepted. S6 has maintained implementation and real subprocess evidence, but
-two conflicting presentation requirements need owner adjudication before S6 can
-be completed. This is the single consolidated discrepancy/completion-status record,
-not a claim of final application delivery. S7 remains unauthorized.
-
-## Verified authority and commits
+S6 is complete in its authorized scope and awaits owner acceptance. S7 remains
+unauthorized; this is not final application/release acceptance.
 
 Started on `brc-exp001` at administrative HEAD
-`e38d7d73d6922257b73d62cbb30d89ee8bcfadaa`. S4 acceptance is
-`f4f9748f560d878b01e83dc071be781a309099d9`. Verified the S5 tested implementation
-`702a4cbd143950e4fc2e6d724760e0a2723301f2`; only report/plan documentation followed it.
-The unchanged [S5 completion report](2026-09-15-bounded-decision-workflow-s5-retention-and-recovery-completion-report.md)
-has SHA-256 `a2d8307c8d8fcaf9a5a7a313d8534bae6d55684f136d742f42e358d0aa5dcc90`.
+`3f2f698154dc31469fff3abd12bd2b4bb747fd68`. Verified the previous focused tested
+HEAD `94ec124345a18f07f53503572e5cf98740600634` and the prior report digest
+`50b80f1d793c7a2bc182c6f24a8b0fe9a13e833f5fdebcee0ebe2b7fe1003f6f`.
+That report is preserved byte-for-byte as the
+[incomplete checkpoint](2026-09-15-bounded-decision-workflow-s6-resource-and-cli-incomplete-checkpoint.md).
+Its earlier partial verification is not being relabelled as a complete run.
 
-The governing [design](../specs/2026-09-15-bounded-decision-workflow-corrected-delivery-design.md),
-complete [plan](../plans/2026-09-15-bounded-decision-workflow-implementation-plan.md),
-S5 [correction record](2026-09-15-bounded-decision-workflow-s5-retention-fixture-correction-report.md)
-and completion report were read. The design remains
-`54b8b9dcd34d7bd31056f24d4fe82a9eab7e0cc5a5e1e383401dd3498de426ab`.
+The [policy approval/addendum](2026-09-15-bounded-decision-workflow-s6-policy-owner-approval.md)
+records both owner resolutions, exactly as the [approved proposal](../proposals/2026-09-15-bounded-decision-workflow-s6-policy-resolution.md)
+SHA-256 `a7d260571e6eca40ba9764a08735b088e0bb85fd571d2339ab0e4d9c1e63cd7a`.
+It reconciles [design](../specs/2026-09-15-bounded-decision-workflow-corrected-delivery-design.md)
+§§3.1/9.3/10.2/11.2 and [plan](../plans/2026-09-15-bounded-decision-workflow-implementation-plan.md)
+§§5–6 without rewriting the frozen design
+(`54b8b9dcd34d7bd31056f24d4fe82a9eab7e0cc5a5e1e383401dd3498de426ab`).
 
-| Commit | Scope |
+| Commit | Exact scope |
 | --- | --- |
-| `0b1d9011f95699910140e5b147060200c724cce0` | Separate documentation-only [S5 acceptance](2026-09-15-bounded-decision-workflow-s5-owner-acceptance.md), separately authorizing S6. |
-| `dec65d68afdfb263e69d347dd2d0e33ebd1baef1` | Initial S6 command/resource/build implementation, version lock, red-first tests. |
-| `61d216855e4d15d983d42781fb787fcda330fc88` | Ordinary presentation-budget and malformed-prior repairs; exact synthetic examples and invocation documentation. |
-| `5814f22411f09f26a26cb6c10fb47bc08f09a315` | Correct resolved-input resource diagnostic and two test recipe/bootstrap defects. |
-| `da68c64059b005e16c33374bee8941d548b4ad50` | Bounded prior-bundle reads/file counts; explicit policy-conflict witnesses. Full affected-run implementation HEAD. |
+| `52b3a4db12202dfc4d7a7758dbf59bea37af7d42` | Separate documentation-only policy approval, frozen proposal, historical report and plan addendum. |
+| `4420bb254fb95567bd4a62b4ce95140cabd960ef` | Red-first P1/P2 conformance tests. |
+| `512fc52220e6a2e36fb0f42d7bbc5b55b040631d` | Bounded terminal encoder/emitter, CLI composition and invocation documentation. |
+| `07fcf1d95cd8c04412ffde63d4b40dcd76847824` | Additional real broken-stderr-pipe regression test. |
+| `c37c24ee50667121d6b2dc4739aa3b7d12825c96` | Raw stderr emission repair and application scope documentation; exact final tested implementation/test HEAD. |
 
-Final focused tested HEAD: `94ec124345a18f07f53503572e5cf98740600634`.
-This changes only S1's historical no-entrypoint test assertion relative to the
-full-run HEAD; application/backend source is identical. The administrative commit
-containing this report/plan status follows it and is not a new tested build. Obtain
-its exact ID with `git log -1 --format=%H --` followed by this report's path.
+The administrative commit containing this updated report and plan status follows
+the final tested HEAD and changes no application/test source. Obtain its full ID
+with `git log -1 --format=%H -- docs/superpowers/reports/2026-09-15-bounded-decision-workflow-s6-resource-and-cli-completion-report.md`.
+It is not a newly tested executable build. Exact-build replay of the archived run
+requires the tested commit, not merely a later documentation-only HEAD.
 
-S5 acceptance confirmed the recorded 597-test selection, red/fixed evidence,
-archive recovery and real concurrency/interruption coverage. It reran 139 S5/S4
-filesystem/correction/recovery tests, passing in 13.31s, against a fresh test root.
-Manifest-last completeness remains distinct from whole-directory atomic visibility
-and power-loss durability; no accepted limitation was removed.
+## Implemented boundary
 
-## Implemented S6 boundary and actual evidence
-
-The plan's S6 scope is immutable resource policy, incremental counters, the
+S6 supplies immutable resource enforcement, incremental accounting, the maintained
 `evaluate`/`verify`/`replay` module command, exact diagnostics and real subprocess
-coverage. [Invocation documentation](../../../applications/bounded_decision_workflow/README.md)
-and complete canonical [request](../../../applications/bounded_decision_workflow/examples/request.json)/
-[public snapshot](../../../applications/bounded_decision_workflow/examples/snapshot.json)
-are now maintained. Their digests remain the prepared baseline commitments
-`24635e493d371a5e05f9b61e729457fde7397ddfb0f31bc3dbb7f14ebe19c125` and
-`782332fd8dd350d6852f57d0497c2c152a031caf08ee2dfc2cb040cdde8f326f`.
+coverage. S1–S5 admission, raw projection, target/feasibility/cost policy, 22-decision
+review and no-overwrite retention remain authoritative and unchanged in this pass.
 
-- `evaluate` captures ext4 input bytes, lexically preflights them before allocating
-  their object graphs, calls accepted S1–S4 admission/projection/policy/review, and
-  publishes through S5. Current condition, admitted observation, assumed effects,
-  raw predictions, target, feasibility, selection and 22 review decisions remain
-  separate. Real subprocesses cover baseline, unavailable, uncertainty, ties,
-  missing cost, no-feasible, stale/public reconstruction refusal, resource refusal,
-  collision, permission failure and prior target/cost comparisons.
-- `verify` retains S5 byte-integrity meaning; it does not establish semantic truth.
-  Its incomplete-result presentation is one of the unresolved contracts below.
-- `replay` checks the actual build witness, reconstructs and recomputes all selected
-  and prior worlds, and checks complete semantic bytes before new-path publication.
-  Rehashed forged results do not pass replay. Rehashed source/lock/Python build
-  substitutions remain byte-verifiable but refuse replay. A stored successful
-  hash comparison is never used as the computational oracle.
-- S4 exposes already recomputed ancestor views to S6, avoiding a second uncharged
-  evaluation of every prior. S5's public signatures/default ceilings remain intact;
-  application-local adapters enforce tighter aggregate prior/file and retained-bundle
-  limits, including manifest bytes, before successful publication.
-- Build identity records committed application material, public-module hashes,
-  CPython/dependency/lock identities and policy commitment. It is a witness, not
-  executable authentication. The version-only lock exactly matches the approved
-  raw lock digest `7c87f0d7a3f12c271311cc0c33e59025e0161c37f16336901a0764b4330c0817`;
-  installation remains tied to separately retained hash-verified artifacts.
+- [Terminal encoding](../../../applications/bounded_decision_workflow/terminal.py)
+  reserves at most 512 UTF-8 bytes including LF. Caller success and retention limits
+  are unchanged; a one-byte successful-receipt budget still refuses before output
+  creation. Original typed admission errors retain precedence under one-byte
+  diagnostic/presentation budgets.
+- Fields are type/token/length checked before encoding; each character is encoded
+  separately and space is checked before appending. Escapes, controls, accented
+  and four-byte characters are charged by encoded bytes, not Python character
+  count. The body also remains below the approved 1,024-byte ceiling.
+- Malformed, unencodable or over-envelope diagnostics use the literal 174-byte
+  `INTERNAL_ERROR`/`unknown` fallback, exit 7. No recursive serialization,
+  exception-text expansion, partial success, filesystem inspection or new refusal
+  publication occurs during fallback. Failed/short writes or failed flush return
+  7 without a second write. Complete-line delivery requires a writable channel.
+- [CLI](../../../applications/bounded_decision_workflow/cli.py) terminal failure
+  writes below CPython's buffered stderr layer. This prevents a failed flush being
+  retried at shutdown and replacing the required exit 7 with exit 120.
+- Incomplete CLI verification emits only the exact existing exit-3 diagnostic,
+  empty stdout, and no inventory: missing manifest is `BUNDLE_INCOMPLETE`;
+  invalid manifest is `MANIFEST_INVALID`. Here `absent` means no new output
+  bundle. The unchanged S5 API still returns bounded recognized-file captures
+  with explicit incomplete status. Unknown files are not read for contents.
+- Replay verifies the bundle and exact build, reconstructs public content,
+  recomputes selected and prior worlds, and compares full semantic result/trace
+  bytes before publishing to a new destination. Self-consistent forged hashes
+  do not substitute for recomputation.
+- The existing command example retains the admitted current condition, assumed
+  effects, eight raw rows, eight target rows, four feasibility decisions,
+  selection and 22 review decisions separately. Target-only changes leave raw
+  predictions unchanged while 13 downstream decisions reevaluate; cost-only
+  changes leave physics unchanged and reevaluate selection alone.
 
-The frozen candidate expectations remain independent mathematical/policy evidence.
-Prepared output hashes are not misreported as emitted runtime hashes: the actual
-result adds the design-required build/count/admission detail; actual trace rows
-retain the effect operands and corner derivation. Nine result sections and the three
-trace top-level fields remain as designed. Exact runtime identity and replay tests
-compare retained actual bytes, not those preparation-only anticipated digests.
+The [invocation documentation](../../../applications/bounded_decision_workflow/README.md)
+and complete [request](../../../applications/bounded_decision_workflow/examples/request.json)/
+[snapshot](../../../applications/bounded_decision_workflow/examples/snapshot.json)
+remain maintained. The complete actual baseline output and all replay material are
+recoverable below. There is no new CLI flag, backend API, dependency, numeric cap,
+field or inventory channel. The approved fallback state is the only new diagnostic
+state variant.
 
-## Consolidated blocking findings
+## Red/fixed and final verification
 
-### S6-P1 — refusal envelope versus caller-tightened budgets
+| Run | Evidence |
+| --- | --- |
+| Initial new conformance tests, before implementation | **23 failed, 4 passed in 73.70s**. Missing encoder, unhandled/short sink writes and unbounded diagnostic emission; red code retained in `4420bb2`. |
+| Initial fix at `512fc52` | **27 passed in 74.10s**. Independent encoding twins and real commands passed. |
+| Additional actual broken stderr pipe | **1 failed in 7.26s**: interpreter shutdown returned 120 instead of 7. Red test retained in `07fcf1d`; no new semantic premise was needed. |
+| Targeted repair at `c37c24e` | **1 passed in 6.19s**; actual module process returned 7 and empty stdout. |
+| Final complete affected selection at `c37c24ee50667121d6b2dc4739aa3b7d12825c96` | **682 passed in 577.41s**, no failures or skips reported. |
 
-Design §§3.1/10.2 and the accepted request contract allow every limit dimension to
-be tightened. `RequestedLimits` accepts positive integer 1 for both
-`output_stdout_stderr_bytes` and `output_diagnostic_bytes`; actual public application
-parsing confirms this, with unchanged valid model/evidence premises. Design §11.2
-simultaneously requires a complete JSON diagnostic line on every nonzero exit.
+The final selection contains 597 existing S1–S5/affected checks and 85 S6 checks:
+40 original command tests, 14 lexical/census checks, 28 new policy checks and three
+retained historical conflict witnesses. Thus 679 functional checks plus three
+historical witnesses passed. The witnesses do not independently establish resolution;
+the new conformance assertions implement the approved P1/P2 acceptance obligations.
 
-Independent canonical arithmetic: the existing `OUTPUT_LIMIT_EXCEEDED` diagnostic
-is **200 bytes**, or **201 bytes including its required newline**. Even the smallest
-frozen catalogue diagnostic is 157 bytes before newline. No complete required
-diagnostic can fit an admitted one-byte budget. The current error path emits the
-complete diagnostic under the immutable build envelope, exceeding the caller's
-one-byte limit. That is a disclosed provisional behavior, not an approved exception.
-The first witness reaches output-budget refusal; the second uses the existing stale
-snapshot control after accepting a one-byte diagnostic budget.
+Coverage includes exact exits 0 and 2–7; valid unavailable/no-feasible/tied results;
+stale commitment versus public reconstruction refusal; exact receipt length and
+one-byte-under refusal; one-byte diagnostic budgets and valid twins; all 42 frozen
+catalogue encodings; exact 512/513-byte serializer boundaries; malicious fields,
+invalid Unicode, encoding failure, short/write/flush failures; actual broken pipe;
+fallback before and after publication; incomplete/invalid/complete bundle distinctions;
+bounded API inspection; unsafe/oversized files; actual concurrent creators;
+directory/parent-fsync faults; prior reconstruction; and rehashed result/source/
+Python/lock replay attacks. Unit fault injections are identified in the tests and
+are not claimed as real device or power-loss faults.
 
-**Owner decision required:** explicitly define whether failure diagnostics use a
-non-tightenable build-owned control envelope, or define minimum admissible
-presentation/diagnostic budgets and the envelope used to reject smaller requests.
-Silently truncating JSON, suppressing the required line, or claiming the one-byte
-budget was honored would violate the other commitments. No cap was raised and no
-schema minimum/exception was invented here.
+The full selection also rechecks resource boundaries, independent graph census,
+reference/resolution accounting, rational arithmetic, target/cost policy, dependency
+review, public backend isolation, canonical package recovery and existing S5
+interruption/no-overwrite tests. The preparation-only RES-2 diagnostic alias remains
+historical: accepted S1's exact `REQUESTED_LIMIT_RELAXATION` is exercised, not
+silently replaced by its stale recipe spelling. Frozen candidate expectations and
+admission order were not edited.
 
-### S6-P2 — incomplete inspection versus the frozen failure shape/channel
+Reproduction command, from the tested checkout with a fresh, never-used ext4 child:
 
-Design §9.3 requires `verify --bundle` to report recognized fixed files and safely
-bounded digests for incomplete bundles. Section 11.2 requires empty stdout on
-failure and one fixed diagnostic on stderr. The frozen seven-field diagnostic
-shape has no inspection field; the shared stdout/stderr ceiling is 512 bytes.
+```text
+PYTHONDONTWRITEBYTECODE=1 /home/mafasa/operation-house-keeping-runtime/bounded-decision-workflow/environments/cp313-bdw001/bin/python -m pytest -o addopts='' -p no:cacheprovider tests/applications/bounded_decision_workflow tests/constraint_evaluation/test_decimal_parser.py tests/state_classification/test_architecture.py tests/semantic_compatibility/test_isolation.py -q --basetemp=<new-isolated-ext4-directory>
+```
 
-The retained witness removes only the manifest from an isolated six-payload bundle.
-The S5 API captures all six files without changing them. The actual command returns
-only `BUNDLE_INCOMPLETE` (212 bytes including newline). Adding a straightforward
-complete filename-to-SHA-256 inventory produces **728 bytes**, exceeding 512 and
-changing the frozen diagnostic shape. The current command therefore does not deliver
-the required incomplete inventory, even though it correctly refuses promotion.
+Do not reuse an existing basetemp: pytest may remove it. Actual test evidence remains
+under `test-workspaces/s6-resolved-gDqaVY/{red,green,final}` in the approved workspace.
+No full unrelated production suite or S7 clean-checkout reproduction was run.
 
-**Owner decision required:** define an approved bounded inspection representation
-and channel (including any partial/aggregate summary rule), or explicitly narrow
-CLI incomplete reporting and leave detailed inspection to the S5 API. Any altered
-diagnostic shape, channel rule or ceiling requires approval; none is selected here.
-No service, backend extension or new dependency is needed to answer this decision.
+## Actual resources and evidence recovery
 
-These are the complete independently confirmed semantic/policy conflicts from this
-sweep. [Three executable witnesses](../../../tests/applications/bounded_decision_workflow/test_s6_policy_conflicts.py)
-retain both sides of the contradictions. Their passing assertions demonstrate the
-conflicts; they are **not passing S6 acceptance tests**.
+A separate standard-library census read the completed final-run artifacts, checked
+manifest file sizes/digests, and counted JSON nodes/depth without calling the runtime
+counter. It found 35 current-tested-commit, digest-consistent six-payload file sets.
+These include deliberate rehashed adversaries and post-publication fault fixtures;
+byte consistency is not semantic acceptance.
 
-## Ordinary repairs and preparation drift (not architectural gaps)
+| Material | Maximum bytes | Nodes | Depth |
+| --- | ---: | ---: | ---: |
+| Request | 17,227 | 576 | 8 |
+| Snapshot | 84,979 | 2,679 | 15 |
+| Full retained resolved input | 224,672 | 7,692 | 17 |
+| Result | 13,688 | 668 | 8 |
+| Trace | 12,652 | 832 | 7 |
+| Build | 3,871 | 51 | 3 |
+| Manifest | 1,091 | 30 | 4 |
+| Complete file set | 356,420 | — | — |
 
-The two initial subprocess tests failed because `__main__` did not exist (6.18s),
-then passed after implementation (16.79s). Twenty command-branch tests passed in
-163.57s. Fourteen independent lexical/census tests passed in 4.19s, including all
-68 recovered candidate objects and hostile/escaped Unicode and resource twins.
+Unchanged ceilings include request 32,768, snapshot 131,072, resolved 262,144,
+result/trace 16,384 each, result nodes 1,024, input nodes 8,192/depth 32,
+retention 393,216, references 2,048, resolution charges 8,192, corners 128,
+decisions 22 and trace rows 64. Wire, reconstructed semantic material and retained
+wrapper bytes are not interchangeable counts. Retained S4 counter maxima include
+1,382 references, 7,898 charges, 16 corners, 22 decisions and 30 trace rows; their
+independent accounting twins are in the passing S4 selection. The S4-reported
+resolved semantic count (maximum 202,875) is not the 224,672-byte outer retained
+resolved file; S6 separately bounds that full serialization.
 
-Two further red-first checks failed in 19.18s: a caller-tightened successful-receipt
-limit was checked too late, and a malformed rehashed prior became `INTERNAL_ERROR`.
-They were repaired and both passed in 18.06s. This repaired successful-receipt
-publication timing, but did not resolve S6-P1's failure-envelope policy.
+Serializer tests actually reached a 512-byte line and rejected 513; fallback is
+174 bytes. Frozen ordinary catalogue lines are 158–249 bytes including LF.
+No caller budget or hard ceiling was raised to obtain these results. Optional
+refusal bundles are not emitted by the CLI; emergency terminal permission does not
+authorize bypassing retention limits.
 
-An expanded run found five ordinary failures (11 passed): two test recipes had not
-applied their declared context/129-digit mutations, a resolved-input serializer
-reported an output-stage resource error, and two fault bootstraps failed to accept
-the entrypoint's keyword argument. All were repaired without altering model,
-admission, numerical, policy or dependency semantics. The subsequent full run also
-exposed S1's historical assertion that no command entrypoint exists; S6 authorization
-uniquely supersedes that assertion while retaining the exact S1 public input/export
-checks. Original red code and results remain recoverable from preceding commits.
+The complete baseline bundle is retained at
+`test-workspaces/s6-resolved-gDqaVY/final/test_baseline_command_and_exac0/baseline`.
+The following archive also recovers it without depending on the test directory.
+Decode base64, decompress zlib, verify the resulting JSON bytes' SHA-256
+`336b1ffed263df47067238b233fa564d354b9552e3ab404e9748bf9424739a30`, then parse the JSON map.
+Its values are exact UTF-8 file contents (not base64). Encode each value to UTF-8;
+the map must have exactly the seven fixed filenames. Verify the table below and
+the recovered manifest before use. Recovery was performed in memory and matched
+every original byte; no existing bundle was overwritten. Writing a recovery copy
+requires a new exclusive ext4 destination and manifest-last publication, never
+promotion of existing incomplete data.
 
-There is nonblocking preparation drift: RES-2-raise's frozen recipe calls the error
-`REQUEST_LIMIT_RELAXATION`, whereas accepted S1 emits `REQUESTED_LIMIT_RELAXATION`
-with its existing dimension-specific target and profile-stage precedence. S6 keeps
-S1 authoritative. Candidate/oracle bytes were not silently rewritten; this spelling/
-envelope reconciliation is mechanical follow-up, not permission to reorder validation.
-The broad RES-1 recipe is not proof that every hard cap admits a complete semantic
-world; lexical/counter twins and successful tightened-limit command cases are
-reported separately from complete workflow acceptance.
+| File | SHA-256 |
+| --- | --- |
+| `build.json` | `7bd8cb7906f82f16b18ca28a5356b815f365cbe97c760a222eca56818786126d` |
+| `manifest.json` | `c34bd04dc258bbbb4e1a43d0131f8c5f3bf50e5d913edd38ef18b6696340345a` |
+| `request.json` | `24635e493d371a5e05f9b61e729457fde7397ddfb0f31bc3dbb7f14ebe19c125` |
+| `resolved-input.json` | `6c936c1d0e35a5ab25d683748a928f910f8a3014b7ee905ac853d255d7e9f263` |
+| `result.json` | `c5acbecf553797bd205d12892d486701630167b54c091e1fc55db138fdd36d2d` |
+| `snapshot.json` | `782332fd8dd350d6852f57d0497c2c152a031caf08ee2dfc2cb040cdde8f326f` |
+| `trace.json` | `3801a433cf38516072bf532eb34f1ff6068167b0e68f755bee8d2cb7f4ec0e1a` |
 
-The complete affected selection at `da68c64059b005e16c33374bee8941d548b4ad50`
-returned **653 passed, one failed in 517.25s**. The only failure was the obsolete
-S1 no-entrypoint assertion; 650 functional tests and three conflict witnesses
-passed. The assertion correction preserves all S1 admission/export requirements.
-At `94ec124345a18f07f53503572e5cf98740600634`, the focused recheck passed all
-five tests in 29.33s: the corrected assertion, baseline evaluate/verify/replay,
-and the three conflict witnesses. There was no second full-suite run; unchanged
-application source and the exact test-only delta are recorded rather than claiming
-a full green run that did not occur. All observed ordinary failures have fixed
-checks; the two owner-policy conflicts remain unresolved.
+Byte recovery is not empirical authentication, semantic admission or S7 clean-build
+recreation. The archived build identifies the exact tested commit and dependency
+lock; source and environment remain separate prerequisites for replay.
 
-The full selection was the application test directory plus
-`tests/constraint_evaluation/test_decimal_parser.py`,
-`tests/state_classification/test_architecture.py` and
-`tests/semantic_compatibility/test_isolation.py`, using
-`PYTHONDONTWRITEBYTECODE=1`, the approved interpreter, `-o addopts=''`,
-`-p no:cacheprovider`, and a fresh `--basetemp` beneath the test root below.
-Final focused verification selects S1's public-surface test, S6's real baseline/
-replay test and the three conflict witnesses. No unrelated full production suite
-or S7 clean-checkout reproduction was run.
+```base64
+eNrtvVlzG0mWLvhXaHqa6ZaUvoR7RGhsHrK6SsYyu2NddivtPnSlLMxXMkoggMRCiZbG/z7Hwz1WgFiIIAlIrry3mggEfD27f+f4n+/kupzoj/9ezqbvPr378/d3Yj6flEqsytm0WJo7MV2Vqrg3iyU8+P3dp9/foY/4I/r93fvBq7P1QplieSsI4/Bev6XlL0VRTstVUXycP1St5DlSGCOusCKSpkLnKUEGpSnKJFJJIglWuRHwfw2zRNE0TWWa5llmtdCEyeEAlr/I2XqqjS60UaUbbPFttvhqJ7Nvv/zvv/361//vbx/vdNVzgpmBbo3gWCqUW5xaaDMjTImUa5PlwoocupTKpolJsJBWYkkok5znUvJjeh7OGiaBM6YVpnmeYCIyIYVNBclUnmhMtUgJJqkxRGmm85zSJBMmo0nOcqKZsMf1fSfKadt3JnIG/esEZ1YRnGQZdq3qlORIU615oqhUKfSrckVtkirKFbGWpzZnXLJj+hb6rly6R3XniVbaIGxMDg1LjWxqEmQNU5lGMGHMUcaJxLDDhMiUCqlzyZNcYAXTx+aoRfcUXc/a5DTXhCYqkYiSjKfU5jjJeY6pSNI0IRbRHGGZMJKmFvYmZ0wxlmAtKCL0mI7VpKy7JYTlCVJIyFxkTGKaciWynCOBpBaWm1wxA0SYY2RyCVRmYZQpS5hKCey5Pqrb2XS1EGq1bHcaZoIzhSTQObZcUYZzQzKTpJbkWjCNgAqIcrxkOE4V0Ju0TOkc6D1R5pjOmycLc1+ab/UQeG5wnmQUuJdnhGdA8jC5DOuES2qMopgQk6caE84zpbmSaULTjFlKDU+kOmYIZrGYLZrJpxnJSQoMBQ3BBhhDKcEGKBuTJCdcAcVpDVLFIKZQymHlGQHOoCnV0vHfUT1/F3fziVn+sjB/rM1yVYlRv/8Jp8wkOdU0xYJBZxYIGhtgtoSlVpuUwuy1lchSEEPQt4QtS4yEZYORsmeNYjkV8+XtrDMMWAyYvtUwZ8qQ5hkjlqUaJXmqCGwJEYhiJSzKQOZoEAtKIiBbDWLQUsKPkjfldL5eNfyepIxJWGLojeQGBC2BLdAwQZ2mjiGxzuE/ZBPYeWa5zZHERqewVKnmx4n3+QzeemiIH/M8T5myVlUyBjGKEqJyq6jJGLBEBhQuMgnSRie5tAlIOQUvWIwTyRk/vudivpjZcmLqEWCgI8QxQghrnDDJOMg5o3iqOKgWhIlRVigrTQo0AuRnOEMpEolBCdf4OCE/Xxg7KW9um4UH4QIyHcQXiHMOLM+UzGEZQNOoNEkprEeKJNCiEJzkGWWE0JRowTOZgkDgxy38YvZvo1YdMZ9bUB5AZkmGc4wFTimsrkgSAb1bwzVRCmELfAjaFFQ91e4zjJGkjGiTZM/rfbgBRlJqqaIolYaCEMikzKwAnlMpLENi3WJbEFCKKwaMgKHjPKEUJHPODQjJY0bhOL9cmDszBfk7mamvnu9UlloE5EwtyFmSYooxTFWBdGM5IiAPMMdg1FjMYYVA/QgniqQbhEIZPnIEK+i8swk0SRNQ69C2IEBVLE1kluQ5aH2FpQXe11QCd+cGpDLoP54B1RuVZwS4lOMsP6bzlVnclVMxaWhfJRnoUZlnCdXEUKAFzSwDXYSA9oHsaWaZUKBrkTPsUC5ALIDdB6ODjZJAfo/QeaXBi8BdpTfbpP72oXr+IfD7Pa4Gqs3cwOCmqjRLb3f+4+Gm2g4viD8SVJur0+lsJVZGf1g9zM0yGLNZ+BYMNVCktrwJP6Ph+Vyor+KmnIbn/KM3CeaT9c1NmPNHXr/7oCt7OTSB6cek9/yDmi1M+DLhzZcrUB2efcC09rOCEUKXH8x32Fu34n60yUdcdxVeKKfLuWeCMJ3kI/Fr2KzLQ+HIsrXMR6LOG7Br1ezurvRDh9cVSYxhiPMUg3jnkmgFEicXsMVO0TsLO/fitXT6yu2R9x3aHf7YIbt6gycl9FETQ2cWgoEUzzNFiWBg33GU5inYDgwxsC9A7crU5AQ+ZgiYnoPcTwVYQQo7JQjehSfz+VpCu8XdTK8nfe9Fwr7DAjrragnmVTldFeZeTNbV2DYMe/BYMmORICkHQ4YKCkY2qD2cGhDGxgqwNUAZiIzCKmpJc8swZhkHYQSjQ9KbXLu7dMx313Iag4lzMLHAJcoT1zNIWWMpA6UCNhzHGvSPNATMT00FaHSZgIwDYS9MwhKjUK9HmL+ZFF/NYmomm/YkmEVAGlaAVMkRSlKegSbNkSHINadAn8HOwqrDNhjLwOaTlmRMgOYznJo063W1dCxYqIkA/8CGrd5cTgwqkjEDIkmhBMbNuAXHAHFiwbBmYDJrgQV1UiMHW48q+JqDBrGw8eBZiv09bk4SdIMFZ4SAEwoKW6aC0ywDe1zBgpFEYk5QkiHCMTgtHLzC3EomQYvCsgDha891wMy3FS/+OaTyqpP/+kf4Hl7t+tTUyQqMfRtLdQt+d8/nBtYAayLIhlr41mqveuP2YT5b3RoQMmJSANdPZsv1whSzKVD1yswrZnp89/4dOPSlrU1V7/F7aVtqp0VWwYiWOgPDLEfcZgTEAHitCrxUwSh4guA3WsrBsAADXqXg0hBYNCXA0MdZCktDuHdfJCgNYKqv5dTzN0gLWJCVp3U38CCv2whE+OwEIvxJsxS75egIrpOH5dZ3YKx3egSjiaN+l6cb8r7L5WxyD5rHG8lbekYY+KrfNQcfBhw4jQwFZhKSMNCmNAX3MCcgXTCyGbioYLWm4FYj0KoZA53LmAbBB+xAm67Xk61dUliTfo8KGpFgnTJwh3JYbIKYE9w50Qk4zqAVoDueSpYolGODLfjJGnxb8CM1BeMurO/QDen0CXZImg/29GQXxfXpeNlsmyQw7WBHaQYKDWS0sjRjGNQGkV5o0cRiC2YIEAxMEhmeWefEGLCToNPUOqlpMMiWR9fjbG4WLWMHOe1pe7GeFndmJbRYCT8ctTDO8CjEqlivgnkAouQDyj9g9hvBnyj5xMhHnhKw1v4ToU8ItVzyAAx853v5vkoOkxFN5M6r6Noe+nNID2Ps+XD5x1likFVdRg3BSbWaLQoQ5GYRlr55OBHSTKrewdwBGRjcg2L2bWoW3v5bg4B0i+K2At60YrI0lQ2wmM+WXowGS/dq+TD10vRquXYmCbCumICxO4UtvzdXPtjht6IbBe0I0T+PM2N3hVpdL2q9WEDbsJ9TXVZ9VWvTLsKymNkOYWUfUPobQZ+oo6X/8fOvl801sgJa8r9s5PMEFIN6UCCy/eScjqr++OSbrwi+VnRgjUzEAkjaa9d29f/64fq/f/NTqr4RU3UL2xOmD88Kseef72AmYbQgMotKZBYSRumNcMdOzSLAU/MdHjoe75hN/U7hiwM67bfQGl69Psx3Z27DqPzw/AuLWaWEq4FpT0d3Rjj967nDc3Bh/Jir72e3Xz/UW778gLuvhUHX9FtRs1+SpvM/1qIis1q3dnuGJqqNWi/My3S+nparQZ/a3CwMmFhmsizXy13duh8f3GVY19/f/YYGQk3A/mtHXd29Wa5l1YJnwQENON7J9/zzomwGRmO1pSBCzF25rPTIv9rzDFlOXPNLBQzh5xVsrNbs8ux2L8pJeDvM0CxhGME2XZbep4NWFzOg8yvwDRfVCl9psyxvpv9PRwjBfK/Aeb2CvS0XzsSbPFwB9wtwXpa3gcpgUWbTyvxrZb73T9PcIDCkFZgMYLESLHKTpCJnoEhZAuYDYQmhItVgvaSZi5w6J14rJAUY18GYazfS2WRmXrq9g61opEczWCee13dz/7Zz9uCj6Qvtdrcr6VzUa1C0jTS27ftq4dw+1Fv5v//7f/3tw5DMHbsGJgw/LRryGb4bnL5qp1+De8BeuGDyEamhCmgmS1MuFOWcZchiCR5+CkSk0jRjKcoSkoCbKAWYohq76BMl4JYxjMxZkk9PPu+infrFAqyMtdvN3fQzvty/bOKhOXjOYDIqnFKFMIX/qhM2qZDADCU4xZRZnVNhQQIlIkN5kmmJ0jyj4PzLsyQerwH3EM4WnbiDbl5Cgz4+fqnGuChhr4aGGDwu8J5/IaTRakFvbIdw5AVTZW6xppICiQERUgbiKpMCg6/JwRcV4KQqRnHCFNIKnicmFZXPkzMieYaMOjeq/MeHZls6VPmvZrvq94S3o4y1rqdSV5bN7+/+9sF98aUKglfkMlWm/fbvzbfQa8fy9t+756vyDkzz5okXWP2OPz/V8eedHX9+umOY9X99APoB3080KwuP5u5EYuldqM3BgS3pW902yOunBnm9c5DXewZZLmeTY4d4/dQQP+8Y4/sDVtS/dsDSboz6eWvt+6sX/UvlygIzAvteuAxhoKKY1BpRldoskXnGU25QQmSKLDIoo9YdaguTOCyLoEYbrsFeyoVhIkvF+cmQdl/6qg1smml9/lWNApoM7wbvHxaxMN+NWjfDWxc2TGpd3Dr/7NHv/GwBXrxY1drk18umAYszKkmqDWZJJgkoFWUrrylPrZIkR8pBYFjOLTzUOTEkdecIGoHxg7PEnB8N/DrcfDPV85kLiDRWqw+pwHaE1ZnMvrkAm3tZm+nMHQeDnAjTmQK1LMJnghwNOPtlp5W0ns8Pbq+iKjGZ34rLJiRHI0wYMEmYUUamhrFcGsPAj+JgGJMkTbHBGSeIZ0YTirDVGKQO0lZRsGDO0CDxm/JixIT3ElMBZFRt+nFUhQNVSbO6cKKSRhGZWSKtQ34ClTCaaaSNlpYQkluOwNGy4MabjCBQZS4ehNNUKmFSZkxyfkTl92Q0mmLDrd8kqcNoaLOhioRuBCjJy6ahBOVGZpUG00LlCKOMo8Thu1CKNedUGG65TBNpwYUitIJzE6HgT4OlPEMaCpvyYoIpeSG5lDx6ovKmf7CfvOd20WY0VtwQojkB9ceBuKhSaSKoFTwxFHMGmlDRJDHgitOUMkzThKREMmXgo7LnRmB+R/rU5YAnN9PmDNbtYjOy9sSw8Z+C8LazhQl0Um28d+0uea8RzxHimGmlE5WK1IESE0wVIZY6Q1oz0FQ5gc1PhMMME5oT+B+BHUiTBBzRee315z17DT5CrViaAbavHLTp1xcea6O54jmlTBCkQW9kiXbYXJ7nXAllEocWdRBESahMcEYYOFIczBLnRCUY8zPc9Ou9m+5d3mdtemU4TGYSVrK35Rcu5pmSWOZCoJxnwiQmTxKwTW2SuNwroa0GCkGMp5mWYG/IhBAp05whCq6zlvkZOjj9zekThEcSrzsAoe34PG9aiG9Ff2r1bsLH1WJtApbC+cfV54pGQoNtYP5SvZQ8oYhTCVRBCLgeCJGUJalBYHKCtGBAHAliYEuCvyJtDs6wMJgagTJtzjOG0t2ZQTi+/qpc1q9fF16F3EEvDb7FBkTDbfVKFUFzW94NxFkxLSxsoYOiWG8FuSicEuulW//CfL+FPx1YqSaa90/0f729/xDDC6PAw/5vHaDN2bFr9bUIa7lnAFXwtw1LB7r9+8WbsCpjDExWTYTlKTaUWZunnKLUAtVqUHKUYiSZQ8MnmRUqVSSzGQFLB6SgTfG5UfDft5iwPflTOTjqVkxvKhzdvxqAjo8etqGfxl9vna5bj2tsBB/ovjt3MvDYnEpctJojucP5s9wlF0uuSZYarFKdMMIQSgRCgouEJOD0IJEnTFoBb2mcK1B03KozJIXPL0wKW4jgwi1eZTlNUoE5NSyx4MRQIRySm4NXk0mjEXivTCotcsSoQVkiMubIQSh3lJDKMySC61OIYMvWb+H/R//gwo0ZTnnKdUpTzKUUKWJphgSx4POAScOMorlVShmHeE4UBVMHc9h/+FVGE5GcIbCg2pJBsOyPdWvX/ob/39/Qf1Z8/h+3Prj2H7YK1P7H//Ub+vDr/+2n1KBp/UZMJoWGaZVT5SyGxQp2AeyZJgoH+wNjXTZEEkYD413cickHYW05NTVyugHih0Nnoev185jQKs2n/ny3nqzKBq/tT60dQS191HZwIF4nFPZOwy+ZPnUmU51lhDMQUWCnUMxN5sphUPDNE4wQmOEZcZkshOcYa4mkoqDLFKGZMfzsom0bOIWnRFS1tQPEwiVvJLg/xuWiuXBpoiQHKyKjmQZbA2MlqUwyk0iJhAHRYzKLrcqzDFvwq9Pc5Rqd4UZ2t+ZpAEKnteZ98D8mD03Kwcae94Arlx0rFxpcYU1y8CBAsRhWYdYcJA3hDOU0wUaSVICuoUbnIoMvLJPaaA18nZwj9w5BRU/zb5X1tJ7PZ4v+Kc0lA/Ot4OAYZlzZ1OXyJTJDxCIsWEIIS3JrSJpmgmCLRW4ltwyMCY1Nzi1srtLnZy2EDRpuZbuorbK/FQto1r9fq/IqbOZy1l1ix8osoP0mebbO1qqNhI0TuuVtlY80FR6f1EUaNdKgCbv+WWPSLpl+eCJFJlxCB8Is4czyhDrjElOWaptbluYuqRmeVBWttM0SkAwkBwuA50KeHWrktwO8zW+3ZvrEWclvl+85JjZTYIGlWMoMm9RI8BcNMViCIFfw/xNhjKScEgRehUngG6oyC75EYhNQDGe4odfP3dDHTqp2N3lSiaX5AJtiJuAD+HRb/xIMqioV4dqerieTQ7JkQ6bycB9GKZu0EosbUxeuqI8FlqsL11kkY1nOU5QbQq2iqXbV+xjFLq2DWpNgTJDNGVikJgfTNGc5rB2mFhxdyo09kES7ObX1Ar4U6HW52jy9AZKrszS6/LKEBRE+mRjWY1G2qYHbYPY798z3ux/2gR6fhtOP0gF9fBoKP0oH5HEHkH2UHtjjo48dWgOcEFhqsa6Tci8WLmFA9qg0l1kqCEep0sBgTOgE7EUHm9EsERT+J88TRa1OMyZIbgQTuU5TQ86O1Tq7M+S4ZjSLmVwD80Gzi8IZfyDjddEeqPkyJl4zbHx54aEZ5mqXUG3yjFGbyZQLkyegagjWUibODlCEpAinllkGXoCmGMw58PQFkIdm57bb9QYNt7p3BBlCdtUh5JfeCSL4eJOmsFVjvzcPfwD2psCiGQVjnRBLhABFqXOZUyy1NTlYGUqTTGHN8zSlGdVIApsrLhOe5vBIiHPb8M6G9Xc8oFlAfrv6VX7Za2+uGWf17fquqHSvuJtNb4qbtViAm2+Mrv3DVRnKtnniKlwcuV3fRsMU4Ps5UKV3+Soz7NIxVAoszQyLPEEZMSpzMFxBBKeMKlf5CCwwngigFvD8BKOpZEamimUsp4lMzk4T1HvyYiBcisdNNaE0OCQn1d7aUgXKl7WZL8qqm+C2BIemW90mlryJJW9iyZtY8iaWvIklb2LJm1jyJpa8iSVvYsmbWPImlryJJW9iyZtY8iaWvIklb2LJm1jyJpa8iSVvYsmbWPImlryJJW9iyZtY8iaWvIklb2LJm1jyJpa8iSVvYsmbWPImlryJJW9iyZtY8iaWvIklb2LJm1jyJpa8iSVvYsmbWPImlryJJW9iyZtY8iaWvIklb2LJm1jyJpa8iSVvYsmbWPImlryJJW9iyZtY8iaWvIklb2LJm1jyJpa8iSVvDi5503E3Dq7YAmQwXzvH5k6slAeDVH8FZEmbuKecwhQ3JpQ7uZtPzMoM3lnO1gvVWKynF0vx7TXZz7CSNUjNfK/PXGD11ysTqKv8dDebTRfiq1l8CgxduvTlr6bmriroU8yqMh5+iq4sUFFRRbVRv7/7BVhwPVn94t3IX1xXa2D2X3qFGx7baiBhrbWYu6bDHJtxdCbSZlFXndUZ1qGmiIfp2jKMou62yc/fuZxyz79zXM7Aoa+7kl+6BNtQ6tZiL29XAshXPvLPQZ3VoM5qLsKdZ/pKTf5scr0CbvQ7toSfLGHeurdUdcOeig6cKn4/BsXtnip+qanieps3O2/c6QNEY71U9W+qyl1i8VApquWyBuN2v/IUXIKAXjfxoPDpvl9F5vd3Wai7tTCT9txaGhD9fk7tDBuIZhlqOQSt8lgbtGF+IMYX4AFVTYX4VFPjChba2UYh5eaQYkcg73WpVsPlHqxti0YFdb5yudmdLW3y90/nmk6rQUysV9BOC1u+qQnn7itCGEZxNyts+b2ps9MYISsX7ut+c2egpSBsxHQNGrbX2eMo4zf3/tghEEwzGm/e9DqsC5s1rNDaeG7sV+1grhbmpnR/h5F+6VbRGhxhvUU5sbeoIvZKxcMePev5DmobVFeV/wYBh4pZi0pCDE3CIwSFlxRg/+umvoqaFggLYwRiqbRgkcP/4zxLLKIoNcid0bNUpShnIidpnlArlTFVfRyHg9epTUN0u2q2GXBTz6VD9UMC9b9xRYtWfSma/YYJiNBGim4JkNfaGpYBzG5Tl/RwjXapueLqitm6fx8vOMrlfCIeqlO76pf/bLipK8XcdsIby7lQNdHczT4EA8NP2RVsC6046fr4/pWF0KuJkD5d96lOLW6KRORc5xnKEikzmyaJ1sSSNLOG54nCqdLudCNLwD00Solc5FQabjUzTCUpl1uprkNs/SGNQm0n1yhy9ThbUM8diJZJ3cgmpfipKWB5N16cdlcxBKTkrS4Sh9LDrqpHnlPCEMk1rGQmqMozrnkK7naGUmRzBYsridbSCpFRmgBvK0l94pKEDdE2EUmeKYsxgReB8/OMWMEtgV/mWWqZSROXFyMlSRC31Dg0KDNc8iwVGfH2jtvZJEsRxWmSw/4SlaepTSSjTHHYXSsZbDbWhKcoc+m5KdLKSJlrlVilEQiatqFxSOSmyDjLqbWKMM1ozgnOQLwpkXFsaMLdsJSEdeJYaMvyDF5hlsKcE5it0szDkJYwIlg/k0mb5BjTTOQIpyTnuUyIMVQywQQ8VYob+N9cpZSRFBEDS68415jRLDAV0GCqFUlUlsG6SIu5O0JFMBpJc8kYTlJJQchyRDX8UhBkJTHCcCaZyRMh/NRGE96uoZQilsFLQlAsOMwjhXXJYE0SgUVmSC6RNlQxklMOM08s0JpJuCDuYYoCh8AaubJ6WmZMc6AhoDqgEqGkS5cEQhQoJVnKlM4x50JpmBzVUidIpPADCz9gTUNJmlFmYFtheS0RsG04ZTiDlQV6shKjDGaDECESqQT6NEwgV8tEAG0xTUJywPIOCBITCbstEE2JNcYoioGMYf2NVQa+gj3PrOQiJQwWHCgDAUGyhFGjdSJU2xAQKNAGzoBBEDIUqFUho6yGDUiYxMwaZGGVMuFWLFNcU5YB22DuCImZpiHYkBSn2EiMLbY6T7ABzgWWgcUUIkkozxyvGuyqf2EN3E2FlsIihSTWJm8aUrA6FqYOghvnqbAqxwkQVWowMrA2GphDZxT+gnUTCCccWIPjNNdEZMCnWWhoXiTcZTdj6xhJZVy5tNdUawozzYFyJNPwOXNFhBJ4T1qUSy1SmprcNZSIpiEGSyETrJSimc0kQ8odvzIYgQTmt5lbe4ZVzlQGo0sw8BK31mCe5EQAlfgIey0pGwd+cQ/iAAmKYE1TQoBhYS9gTSxlDpYM8sdtLcEuPduCHMTQFzAQ1wxEFLHW8jrgUh/st8WB+6aE7mrBTrUwGNR6YpZm1dMMato5p298odndHH7ey4h8hq+4AS5y7ay2NOKUF/eNbLfQ+xHlNibclEeuuroPhSO7rlx3BI0npkuwCZol2Ozy/faxH/CzV3cwBiTRDLs+ESpFG1LuHqM3+WK7DDh56wy44FiDwTCeKxlit94gaPel3s5qv5ujxu9lPbkbX4vb/c6U98EW8mi1oh9+2EJnuGskNcNvmeix3vb76lysGxy/FRPrKnM3VuVitb8/tK+/x8NI0ZeigOn+RMtySex3Z+4kSNTbcl6b5uV0i9OwnJcFFangiGQYbFKwCsFEzZ1dpVNluQW1kktsXF070JQW9AKG73KFLQK9mikwjXc6AiQfOAKwfC6iDW/Kh5rFOmoiPPQJo2d4tLAlcPKiemDQ30FUuPmbVw/3RA3wI2mATYKK4v+MGe8I2Q/eiQDvGFxdloEbCe5XZefnGabCObUowxqDK5hh8CwS8HQSkVmWihwcI5eB8nKyvx/W6a994RyGA2M8fEuIZzSt5xrKDHj+HPwz8E5ZlmfIEkQzcFwVtSqFlnGqMiQTkVNX6wZJBD5Z6vA9VGvGRNOQSxy3MBhDqMhYLhVmWQruNThx0K6lPJfOH8tk4qJRKsU5Ae/RRaWozkzWNqRwkkhwwK3hMHYsmMg0+LAcIcGUSjVnREhFtNJUUKNcdMIKzhi4dhTezZqGRqEO15BFGus85Yxjg1MrwdUEN1iC32pgapglFCdpgjJl8xy6MRimCUuITArjhdXY7r+W4L9i6mIxXEguFEZEVe6qqw6G0syFsEjGqMk0RhoeQJsEBgh+d6oI4wl2c33NY+7eKciL2g1Nnfr9Uqt59RUPaKJt8KPYBg31RJPgXJjrCP0/ivIaX//31jbcOxVAbMXEfDd3oe74JrqikdDVT4RsMJt7muthPXptb/XhN6KR9eVRXvarILQ3frYbE9KzFg/sov+b3e03sVTrb1QL5lB7n1vNNk3fIYSxuaaFXK+Koeiuvq+rWhYVTshr7v4XmxPb+sON3+2eXHUs3yJmamhnmFrV0mF7XZ/mVqfsDik7VQ/NQWj1edXZXLdstyKAiadrx3kbS9Y5HwZZ09Kkr6A/GLJYrYS6bbP9q49haAGr0KJGjD44Et5MCyimDaGDWlNfYeNvXIeNTa0JVVZy5iqzWQw2n3JnZALsULA3DW4Z6t647Py6GhmMFXyaCnuFBm/84QHdVdrG4LVJVU3MPXkoaphs/7vmafGtBEUNlNeJDNWvOex4sKjcabLvo+hC0zrcuKzviAwLO58tl47aa6ngl8VBvlcdxHr4cgUSvmOv3c2Ahhx4O1xeqDw0TrX7WY0krG0GFjDnRIPZbjlY8dbZ55Qk4GOkeR7ODuvfVLpqy+l6o5+ScMpRFeCBUYPh5EvElYulA1MHnff8Xe4xUMtsIEAq7Hqx7+iko/XXjeEOf35oTOcPCIWDzioqt3rY5KWuGA1NYAQejzTSVbRIGTEKc2NFYimC/zLlD87brah/ZrkyiiHMGegx8OdobhPDGHgvmMMeeNdnLh4mMwEC+Naor8v1nVcrtwJchk8GbBeOBFIy5UqZNMOJMYlKlBbwN0k1UxZ8NpuZ1DLhXLoU3iYJ7C+4lDW1OU9mtgaeHQwwrO55xj0rN8VORK02KtHmxGdrFFVemvhW9A0NcK7BukhzLgUHgpdYAtUDm4LHySnBWW1EtEbhLorqMGFXhIW+vk7KCtV163JJOpzZyzfpPQY34qasjbWv09m3aZAIm6tkQJitfMetRefUqoPpLgfgMJoS/DFL2Kt7mMtvxsxhl5fdnA+vHf9dG0kJag5uJ2ZqlsuimcQnnObJR+RjMMvZZP1U8ZTDPVaPKO/4TCvQFy2Oydmuzlc7Q7Kvh/aK21dfjlz0speeAY7aBrH7PwFtdfVrncl8wnWpz4Dl9aN64WLfY8J5bEs4D4ZfZDmlmUWcUyUzynSmUObcFJxwRAjnihIpESYExD1WORYUxJBkEhGBElB/Xu1CQ4JgxIgyWlnQ0oIbRSnILIMzw7Vx1RspMoJolCia0cSVbTAcJJyiDCeYqKYhw6xiNhVKYaQcpIlpahMuFEhBnmaE5S7iaAyT0kqasFxKLjQXjKSJVcTjo0opCo6xsDB+TFNkQddAc5pJqzKS41wx6DMVGeg+qaQGGes0OVWCSAIzgZ+wpqGcgtZUIpdIKPDzsLTMUp2B2w4WgMoyWuGXEpwIrrkLkml4lsIUieIKnm+PwsHnglipJQXdZ7CDOIEuVigVNss4kgS70gA5467IWJ5qmmbaWpWTLMXEEKkpUxsokhaUW/NM797qVrRUFByS8b90uae5jLv2fdrG19O2+V60qQdMOS0OVcoXwLrHEFSIcPyMsaYDozrjMPouaC8MmB4f1WmrojwL6OtjQpu5Jg3rgp1+J7plOSJnRs58nTlPSpjzgwJrp/GOvlwSX/YSPoK6PIlX3//cWcFdzt9qX4xpjnXcV/PduWcutF2VY5gtQrDhp96JbuD32DMD7zT7yg/By+k+6r5UxYC3RLbr/Mxl0Xlv43chHl8HmuBJN9e/++aOGLjPoR4gJSKMIsIoXg1GsQ3Lb5abWP5l4SXFSbGNp2C1u/OdD89W9kiCDWvwJDtxo/dzhQ+Pk9H4l+uruusrF6Q9IItxtNSiJ3Nnm0PQQzNnN46xD82cHSO78QACOSH5Zis88YIZ6EwAmG/LPWPk0/2Q3LNJHafkrcW045h2HNOOY9pxTDt+m7TjxxbzNU5mcMSKRaxYxIpFrFjEikWsWMSKRaxYxIpFrFjEikWsWMSKRURKxIpFrFjkzMiZESsWsWIRKxaxYhePFXPk4A8tfTL83ChYFtXGunvnoduAPfddYE/352OAe7oohF7jHYkZz1/j+Ws8f43nr/H89c3KPg+0xp8Xee9CpTs+uCt8rirteTWY1hbUlVOhoiqO0pz3DYFYY+zeLiBWUPT9ob7E/R+92kVb3JrXrW3Us4z6J38no8U6Yb+wrptwsL6l040BVuTVM3qEW4L+tVk+4rv/AL6OdrdRgSfvW7ncAH8zyXJZXWL4sMMzqd+NhwLxUODJQ4ENSE/Ex0R8TMTHRHxMxMdEfEzEx0R8TMTHRFM44mMiPiaewkd8TMTHRHxM5MyIj4n4mIiPifiY/TvRE8K1L9dAKioH6d4snGqoKR2ambQC3EM0Ws0bDF53obipD5L8OxHaEaEdEdoRoR0R2vF20I7uMYG4F+VEdICK7XnZ+xps4QV5z5148sT64KDYRsjtryD+r+poxAFRM2NBtUBvjbU5v31YuqtzinIKmrU6V3oiuvaqQJZdNX1Gk8xDKEkIWPZ37nQEiQ9N/rGGZWhCRwMoRACsFhXphD6HP3gexWy0s9ve2Hg9knEk45aMve3fVDIMLkEoZejdgv4iuLfuG+gZ9G1nTjTWRFYjlE6HK3V/fwzNXu5px9kQ8mjG25PQvtFJ+XEMdNxpDTy+f2ZVnjqsVHn+y6XTIcOv6tq2arJuph0+3ZvBSXKGag3VqesjzWT2zS9gSMHQ7bGEA4b6ow53GN7CQXdcRddU+wHCKu+EP57lqFcDtehe6KrN94C+ga3TpVr18kF06NTVFAKyKKerw0o1tu8P9gy+KOSefx3EylvBe08f/zgAYTf2q3YwV33+rLYGdEMFgOrFSf/cW7x1YeazxWrM4q1vUfLydRHAfdk8By3r0LhmgE+umLVozyYD8x4pKB43pf9YMYAnpX+H6g+tsflsbLef3+Hmw+GCY2g+/LPhpq4UuwBT4NVEyC6bY7R44ZDqOsQ2ttWx22Qge/7VWjpGgmMkOEaCYyQ4RoLfLMnvhBrZW9LG1XTzPoixKrj2rzfZA0QIEOjtFvpz0bn9EbTglf1V/LeN/fTbIcZ3MAYkMbwC/jSkn78yIDjW1QlyBBWNDLA5gKZ+RtzRJbHfgejFcW4MOuZqh8NQUo+VbjgDKE3ICXgiZvKiKmDzKor9BHgml5tE4f+jCP9NgoqS/4wZ7wixP8odeC8i9uN9hPE+wle7j/AVMw3bA5AXtRt8NwdJrebVVzybibbBj2IbNNQTTYJzYa4j9P8oqmJ8/d9b2/qipSB6n1l2c09ze65vGrrvW4pyrmZfzTTIfhWE9sbPdsNBetbigV30f7O7/SaMGkqDBnOokWHttbt13/XNoRtrWsj1qhiK7up7PzwYUKhj9WXji82Jbf3hxu92Ty5c8dW/9ype1RVLEcVSRD9gKSJYP4I1F9zVISIG/DOZIA5uSgZmiAzLuFmKyFidw7eISnfKjQj4cxnJVWLhTw1eWixFtDXkGasQ/ThViDj6GOsQ7aP58y1BtB8PtROU/5dYgiiWIIoliGIJoljo5McrQTSKxHjFEkQHYHtjCaLImRdfguhM+fKoEkSH8OrZua7nVn3odEK4lOpDb7QJP9HFXBW7DXARETQRQROvBprYBto3y03Q/nLPPW8HRTSews/uTmw+PC3Z4wY2bMCTrMON3s8VJzxO6uJfrq/qrq9cXPaAdMXRMnaeTJJtjjwPTZHdOLQ+4vqjk9MYDyCQE7JstoIRL5iBzgRu+abcM0qa2g/JPZvUcUqCWswvjvnFMb845hfH/OK3yS9ur3QcKQU4IsMiMiwiwyIyLCLDIjIsIsMiMiwiwyIyLCLDIjIsIsMi/iQiwyIyLHJm5MyIDIvIsIgMi8iwC0OGtZfo+UT3uVGwLKqNbPdOP7fBeO67MJ7uz8eA8nQxB73GO3IynrbG09Z42hpPW+Np65tVcx5ojT8v8jqFSnd8cDfzXFXa82owrS0YK6dC/d1bzeneEHY1Ehk8CbsKir4/1Je41qNXl2iLM/O6dYt6llH/nO9kbFgn2BfWdRP81bd0upG/irx6Rk//nsK2Ys0Bx+11jLuNBey8he0yw/rNJMulmgEdPuxwSup341FAPAp48ihgA8AT0TARDRPRMBENE9EwEQ0T0TARDRPRMNEEjmiYiIaJZ+4RDRPRMBENEzkzomEiGiaiYSIaZrgJPdFbe3ANgKJyi+7NwimEmr6hmUkrtj0go9W3wcx1t4Kb+tjIvxOBHBHIEYEcEcgRgRxvB+ToHgqIe1FORAeW2J6Ova+hFV6Q95yIJ8+nDw6FbQTa/gri/6qOQRwQKzMWVAv01tiY89uHpbsEpyinoFSrU6QnYmqvClvZVa9nNMk8BI6EMGV/507Hi/iA5B9rWIYmYDQAPgR4alGRTuhz+IPnUcxGO7vtjY3XIxlHMm7J2Jv9TZXC4A2EMoXeI+gvgnvrvgGaQd925kRjTWQ1Hul0cFL398fQ7OWecZwNIY9mcz0J5BudlB/HwMKd1kDlPvZOG5p5t4Ge+9J8C+cH7o9PHnlT1d+rw1Dmu1HrDku6T40wt+ulmLSRoi0pCstVJ0WhA8+r1dPgjrvZ1BS3RkxWtyBgZrNwLx1MQ03Wy615ESNM0YMWVv2qcjAq5aOw/EsvIChn+qG4WczW8zpG6w6by+7xSvPANWO+B1SPqz4ERFZOh/Eo5Uy+Pf/qudYtdEm26YW6YEk5nQ4r5IWv0zYgtmlDNm8l7VtbGaR5MX98v3WueN9c5Z5/B82V7J5rNu5cMfL8FChlVc43KKQiid6GL0xIPBIV4WwbZlXBGei8wZl0G626nJRTA7I3HAx4dyBwiBeuDlJWOpiCY4BO5P61q4BKcyvuS4e57W24vL0/mLiPZ2RtluXNtJFVPtPKLXAL6FiCWiuE+mNdehhJoWYwvFUPRDhEr9dhMbeYWzTSOGGpin2OAsz/swHMNzt7VRtJk4erIBeXVxXO+Wq6vgPKUFcmIJ4+bsXRz8UCGiznYrrqnTS49XBrGyqxthjNJ4se3xnhTo9GLHr8FqViXxtL/6SOx3v+BQI6bo/GL0z9U+/RgadIA+kxVnR8aM82EtgZYs+vBex+PZDClUApgkApTAO5fjwiiaWi1qcdpYP1xIaj1ErFemBX9UqM7vu8hOJ8phIaJ6bdV0IHdHm6Jza63qtjTMur1W25dCW66wKh+1XeJnMHT+QwEfz+UDnw5YWMiJ1i4FC3dqsIKKy4KycPO/l/RzBnJ7Mf7AXsYPbWQbiICMc4iZKu587Mr/pbvLcU/WjHoEOae8JbGykd8sRQyl5SPFXvRFJ8JimOc5B+JqR4oMEezzd+1vONnZsPy36yHAoB1pFFUBXCHdnmbaOG2yKFwQQ7Ji56gDnxpddvx7oRk0kxs52RLE8JDo2jY4+yy8eRpUd1OQ73vbQrUP22eviUL9Cf1WhYqqFM8RcFHCxSKDq8UoTHEZ5wPOgF05twf+fAZLyjkW6cfeC/jgJMq489xjvg2D3i0xFwo50Fbouvu6OMuZk6HGtRJ66vClgQaexsYQq1Xs2sjRJ1X5fjyJ7j4jnj8cMxXY5A0C92dFKpjcAqILuO1yBjgWi3a5BDg7pHKJCq3WfaoltDvK/pIJyuOF7NGQZqqwp09E7Z4qnaS5zYDMK9sHquWtTwUGNdlVdoc2irz/WVzF28Sfh0bwZ1ETIU+nsJqboLr7TddHiZ2mNnxtMHmVbnztPxFPYSeXqUTJQz4umdmNWDjr6exqz+GjGr4yQcvR5m9X3EMUcc8zaaOKOrxLdetf7qBvSb3yY+SuLg2d8mfuh5Wrzq/ryIc4xk1Eic5yE8x/dU3pw+R8lxPnv6PBQXE4XnWRHnKHnzPzxxxosM4kUGZ32RQSTeLvGeXnojEu9IxHuA2Rpv9ooFoWJBqFgQKhaEesOCUP4EaksiOgsJ4w1ybkdG+raaBd2XUDe/3OeUb6SX119vy0/fzF1vctrdxSZ6Ib5ViPLmJz6j/fmIk8dT8SrOaZwtYFBiUt5MGxPIXf3gS1z6Yqjv3r/zhSA/ugqR7z69qxT63V25cj9ZQu+6mJTwMRz3ynU50aGUY6jYlUqdKZnmoH9AOWEuHV2DtgMxymUGDEg5U9LkIPVA7oDZaJRgPMNZCsKe8HA/TtXufDYp1UOTNqa/faief/DPP4Zil5X+rcvU6rtyuWzIBuyG2VdfroI1t6tAu2J1u2xqUyycpdgC/JahhgLwq6fvxeybe0ZIVZp2vnbbXmURKNO598O9wnPceae+daGAbhc31Qs0T/LqDNclqX0rF0CfD/7CINQtfe5bqL/CIBSo+5mr/mnq4VD3i2+zxUQvKzJ0Z6hrfw3OJ+yL2rbbJG7AFLtx5OO7luupnrSdExDciasIEa6GqEY9XxhYyx7wquqX9O46Kua9xQuVJYYLzZMe9rX6UX0XUFjuzilwZy+2v7llx8AgemrPfAqfn4FzIcobWJeqYWfK3VSn5P7nft2r2qjazCuZQEn/+RQsQv9jW1bGf4bz9pU78b2AWbgrEZq1ZXwv3RCUZLsJJ/TShRhurE011Nl65RrRpbiZzpYu4tGSEUnaFzyXt1+CObH5bTXZjZ+CcTTz/8csFk0LDHe695T6ROM9Mq4oo0eUbl2XoWZLqGfVZxVKUp49zS4NMS/MyoklB53pkzsFKxy7XakXr98+GF9gAnVqyxX+yiDvSyUcLJ4kp6DjsGAGMZtLMFLBygRDDiyLlDqlbCWyFEsFlpO7KMd5ADhXmHjTqem303DqDGV3dxFodIY0zxixLNUIdLoiCjMCphFWYF9kxhANhrKSKEFKg7ULypTbfkGfhtcOuFXsPyuPMIjSu7krcuRvde4W0KuB203uCjiNoB0DOuluPjEh/6apR+bVFfjIxl8S89cP1//9W3NQ3t5s0+/izohpfcF0dQtWe9+hAMlQsbLHVVfXFjWXfxVtBlCvOFMVI5i7zIg74IU7aNzCjvYuwulKu2U/MOB04/pu3njWLrThaKpzVXV1zzV0LifVPVqdowW/jHWJGic0F4vSCcU1vKuai6qre4qcPgvlnDtjCo/fN35w3Sk4w2o9qW7WbvYERJtbpGbAS08R1ohle893fQVGa7YJv/P91yqUULgifGLquE7/d5+f+bvrrb+78dfKGQ+43/Krz/t/9qW79D5K0NgDrXmwcqv2GwpxeDOd3ZVTURXcruo3Vane4XOCwsV+7qIpH30q78JuJmgrLdc9PHFtmeXKKIbAvgZTGgQCzW1iGMt0gjlJWPY615Y983ovX9Xbx2U8DbfXuMymk4du6e/ObfZbr3DprdN6Guq+VkiO7k3xYbAt+S93EfHtw3wGDLosl/UX18XnZsbttVZVMfWpruqfDy4ZcBdBhFFNZt9qBN1uMqG8RgTWB4lbg18dRN7e9uqJd1YMFkY/7GLFt5o9GXn25MjZX//Ue3/9c2/+04x//fKzT0aefUJGY/yfYfbXbzn7txd7n3+e6ft4Yy/M8OdmlKG+sqkXAvjXn51ndTrFppdU/dIlc4KnNPVHN5Xv15wcNn52FV90dYAKYVdVec3euIKpM3gaIm3ttcbTmQ/FDED4XVfIW7Bhko1BtGU6sGifQNp/CsJwOI/aJP70G6ozCJyr8+lvH0T/wd+HD/7x4dfBZ1EbYf2nk/mtGD7r3jI6+E6a1fB1F2QU9QWs7eMbAY8Hz2qKN8OXJ+Lb4MkS6K+qePmCm/bnj2VhPIfuPh9Ld5+HdPf5B6W77tP/+gA71Lij/W8WIGpmHaBC/dVv1dJcMvW+rpp8DvVeH0u910Pqvf4pqLdcziabFPo0Wf9WLUyUvC8pea9PFL3bqPlzJO9RpPYPxQpnLsavo/H7Qxq/rxxjeA7dReM3Gr+XS73R+I3G76Vq/Gj8RuP352YFf4PTruBvu/P1Td7v+wHjFw1n99Egz53Z52fM7PMLz6wLPHnuvK6fMa/ri9ix6+ds2fXZ79n1M7js+iK47PoZXHb98lw2zsyunzGz6wugxevnbNnZclkH2rePzbbEanYZVz3QYO+bBZhd5TSMdMDmZ0rYvWX6vG+ZPo+/TOMYhwPJcwmLfb1vsa9fdLGf54G+3xCF58/810eS9dkt/fHe0ftNyX6W+9S5pnzLDqnZclXzSfj7c/OhC2ffIuu3yLUt3LeNTvb64jtooTOfl3VQhzhx37G7tn0xuyucVz4pq2qqXl2D81jere8Kt3CHuJSkvUPe5f3XSLGQhF6x/ZOO5ZctMPYnZzW8q/5sphYuM67vv3smTnzQylGpEMe1ujfh4UVGev0SQ92HwR17UU9p9foZrR6Ym3JCo19c4m0NMeyk3u7M2/qfsVK22nd88sZ4d5M0GSN/VilMoC7rqjDmu0sDDMXX1qGwipiXn+5ms+lCfDWLTyG9t3TlQL6ah1APpIryFbPq7hc/xSovs4r1VeG339/94lOrfvHBtV9cV2ttFr/0Cmc9tlfI1LlBYu6artPZ63F0s1qaqiRVZx/6F9H4LGhbhlHU3bq06pEuTjmz5Qze5euu5Jett+g0eUjdW+hbuh48He/Gnc69MN0+utfa9BPu6wzGCoDsk8TWK+BGE25sX5VLmLfuLVXdsKeiA6eK3498Vc+WqeKXmiqut3lLSnit2A8QjU2WevhNVR1dLB6qkgfLZVXSYPDV0RXTK5uwI9elmcz8oUtnhp+AgF2FKFdhqq3W3taVqucHYryX/9ZNaNySfNhUtdtOFCDvdalWw+UerG1dtWlqwdpbudT1Qcb/v76MwjUbNRDjdSnxupR4XcoPdF1Kv3BPt5Z+vH44Xj/8ttcPx8p+sbJfrOwXK/vFyn5vVtmvXwCkVz22MSV070bYIGu9abGemKVZ9TSDmsLMPuKBLxQigHWRmGf6ipUymLsToY4xs9rSiFNe/H92XCnQO3/oXB/bVEpqgWvv+/59dwRtgvP+qw22jf1cr5PpkEQz7PpUqhShOOEgoO8M7Nql3lPHPzjWs8WIruRk5tahLsPWSTz321ntt6kr731vLgu+8enk7nemvA+2UHUvlC764YctdIa7RtKWEsyP9bbDfAeQx1sxse4648aqXKz294f29fd4GCm2lTh/nmW5JPa7M6549vK2nNemeTnddrnvvCyoSAVHJMNgk4JVCCZq7uwqnSrLLaiVXGIDti4CTWlBL2D4LlfYItCrmQLT+Lj7FmD5XEQb3pQPNYt11ER4+FjphjM8WtgSOHlRPbB5hch+KjyTa0eiBvhRNMAmQUXxf8aMd4TsB+9EgHcMri7LwI0E96uy8/MMU+GcWpRhjcEVzDB4Fgl4OonILEtFDo4RA03wcrK/H9bpr73DnBwa4+FbQjyjaT3XUGbA8+fgn4F3yrI8Q5YgmoHjqqhVKbSMU5UhmYickhRWVCLwycBhV5hqzZhoGnJFHS0MxhAqMpZLhVmWgnsNThy0aynPpfPHMpm4aJRKcU7Ae3RRKaozk7UNKZwkEhxwaziMHQsmMg0+LEdIMKVSzRkRUhGtNBXUKBedsIIzBq4dhXezpqFRqMM1ZJHGOk8549jg1EpwNcENluC3GpgaZgnFSZqgTNk8h24MhmnCEiKTwnhhNbb7ryX4r5i6WAwXkguFEVGVu0pTqlCauRAWyRg1mcZIwwNok8AAwe9OFWE8wW6ur3nM3TsFeVG7wXdzkNRqXn3FA5poG/wotkFDPdEkOBfmOkL/j6K8xtf/vbWFb6oczSB6ffHh4gl0Rb9QsQDXezqQg9ub62E9em1v9eE3opEgVGZfzTTIfhWE9sbPdmNCetbigV30f7O7/SaWat0VJtObYA61pd1rtikGiRWba1rI9aoYiu7q+/rSEF/U3Wvu/hebE9v6w43f7Z5cwEDXarKGIIepdepW79vr+jS3OmV3FeanoYZ783nVrwa/9cqy7pJ1zodB1rQ06UvpD4YsViuhbpvzYf8xDC1gFVrUiNEHR8KbaTksfKM5lbvKEzb+xnXY2NSaUGUlZzITxmKw+ZQ7IxNgh4K9aXDLUPfGVfUvrCgnFf87n2ZV33vSfeMPD4t1WRjD11y9+0Xhnjw01170v2ueFu4WHndJRScyVL+27CHbQx9FF5rW4cZle8NAqNS/XJbVhaJ+2/yyLEwFbm8uAgxfrkDCd+y1uxnQkKsk75VQWxy+2c9qJGFtM7CAOScazHbLwYq3zj6nJAEfI83zcHZY/6bSVVtO1xv9lIRTjgr5X1QXK/i8m3Lh7rcwQec9f5d7DNQyGwiQ6lqEYt/RSUfrr9tKD+vph8Z0/oBQOOisonKrh01e6orR0ARG4PFII3OMcMqIUZgbKxJLEfyXKXLWdfrnzpOZrZfFcIBhdc8z7lm5KXYiarVRiTYnPluj6MvzLyHoGYW7KKrDhF0RFvr6OikrVNety0zqcGbXiOs/BjfipqyNta/T2beQ2LVllQwIs5XvuLXonFp1MN3lABxGU4I/Zgl7dQ9z+c2YedFJ3cGNdvx3bSQlqDm4nZipWS6LZhKfcJonH9FjfRPPunNO+kyP1SPKOz7TCvRFi2Nytqvz1c6Q7OuhveL2Ndcf1Tj8TYjdYeCobRC7/xPQVle/Bs+rMqz6rTsVke/591xYXj+qJ70Zekw4j20J58HwiyynNLOIc6pkRpnOFMqcm4ITjgjhXFEiJcKEgLjHKseCghiSTCIiUALqz6tdaEgQjBhRRisLWlpwoygFmWVwZrg2CVacIiOIRomiGQXJD6Keg4RTlOEEE9U0ZJhVzKZCKYyUgzQxTW3ChQIpyNOMsNxFHI1hUlpJE5ZLyYXmgpE0sYp4fFQpRcExFhbGj2mKLOgaaE4zaVVGcpwrBn2mIgPdJ5XUIGOdJqdKEElgJvAT1jSUU9CaSuQSCQV+HpaWWaozcNvBAlBZRiv8UoITwTV3QTINz1KYIlFcwfPtUTj4XBArtaSg+wx2ECfQxQqlwmYZR5JgGDTOGU8SjPJU0zTT1qqcZCkmhkhNmdpAkbSg3JpnQDqtgFGCyG9ES0XBZXufccM9zc2Fm3fUrKdt871oUw+YclocqpQvgHWPIagQ4fgZY00HRnXGYfRd0F4YMD0+qtOmSz7vDm8fetzINWlYF+z0O1BuDc4rcmbkzFea86SEOT8od8dl7R19uSS+7CV8BHV5Eq++/7mzgrucv9W+GNMc67iv5rtzz1xou6qqEIpV/OQ70Q38Hntm4J3muQsD1tHb7qPuS1UMeEtku87PXBad9zZ+F+LxdaAJnmxeGOSf74iB+xzqAVIiwigijOLVYBTbsPxmuYnlXzaX5J4Q23gKVrs73/nwbGWPJNiwBk+yEzd6P1f48DgZjX+5vqq7vnJB2gOyGEdLLXoyd7Y5BD00c3bjGPvQzNkxshsPIJATkm+2whMvmIHOBID5ttwzRj7dD8k9m9RxSt5aTDuOaccx7TimHce047dJO+7UvRwnMzhixSJWLGLFIlYsYsUiVixixSJWLGLFIlYsYsUiVixixSIiJWLFIlYscmbkzIgVi1ixiBWLWLGLx4o5cvCHlj4Zfm4ULItqY92989BtwJ77LrCn+/MxwD1dFEKv8Y7EjOev8fw1nr/G89d4/vpmZZ8HWuPPi7x3odIdH9wVPleV9rwaTGsL6sqpUFEVR2nO+4ZArDF2bxcQKyj6/lBf4v6PXu2iLW7N69Y26llG/ZO/k9FinbBfWNdNOFjf0unGACvy6hk9wi1B/9osH/HdfwBfR7vbqMCT961cboC/mWS5rC4xfNjhmdTvxkOBeCjw5KHABqQn4mMiPibiYyI+JuJjIj4m4mMiPibiY6IpHPExER8TT+EjPibiYyI+JnJmxMdEfEzEx0R8zP6d6Anh2pdrIBWVg3RvFk411JQOzUxaAe4hGq3mDQavu1Dc1AdJ/p0I7YjQjgjtiNCOCO14O2hH95hA3ItyIjpAxfa87H0NtvCCvOdOPHlifXBQbCPk9lcQ/1d1NOKAqJmxoFqgt8banN8+LN3VOUU5Bc1anSs9EV17VSDLrpo+o0nmIZQkBCz7O3c6gsSHJv9YwzI0oaMBFCIAVouKdEKfwx88j2I22tltb2y8Hsk4knFLxt72byoZBpcglDL0bkF/Edxb9w30DPq2MycaayKrEUqnw5W6vz+GZi/3tONsCHk04+1JaN/opPw4BjrutAYe3z+zKk8dVqo8/+XS6ZDhV3VtWzVZN9MOn+7N4CQ5Q7WG6tT1kWYy++YXMKRg6PZYwgFD/VGHOwxv4aA7rqJrqv0AYZV3wh/PctSrgVp0L3TV5ntA38DW6VKtevkgOnTqagoBWZTT1WGlGtv3B3sGXxRyz78OYuWt4L2nj38cgLAb+1U7mKs+f1ZbA7qhAkD14qR/7i3eujDz2WI1ZvHWtyh5+boI4L5snoOWdWhcM8AnV8xatGeTgXmPFBSPm9J/rBjAk9K/Q/WH1th8Nrbbz+9w8+FwwTE0H/7ZcFNXil2AKfBqImSXzTFavHBIdR1iG9vq2G0ykD3/ai0dI8ExEhwjwTESHCPBb5bkd0KN7C1p42q6eR/EWBVc+9eb7AEiBAj0dgv9uejc/gha8Mr+Kv7bxn767RDjOxgDkhheAX8a0s9fGRAc6+oEOYKKRgbYHEBTPyPu6JLY70D04jg3Bh1ztcNhKKnHSjecAZQm5AQ8ETN5URWweRXFfgI8k8tNovD/UYT/JkFFyX/GjHeE2B/lDrwXEfvxPsJ4H+Gr3Uf4ipmG7QHIi9oNvpuDpFbz6iuezUTb4EexDRrqiSbBuTDXEfp/FFUxvv7vrW190VIQvc8su7mnuT3XNw3d9y1FOVezr2YaZL8KQnvjZ7vhID1r8cAu+r/Z3X4TRg2lQYM51Miw9trduu/65tCNNS3kelUMRXf1vR8eDCjUsfqy8cXmxLb+cON3uycXrvjq33sVr+qKpYhiKaIfsBQRrB/Bmgvu6hARA/6ZTBAHNyUDM0SGZdwsRWSszuFbRKU75UYE/LmM5Cqx8KcGLy2WItoa8oxViH6cKkQcfYx1iPbR/PmWINqPh9oJyv9LLEEUSxDFEkSxBFEsdPLjlSAaRWK8YgmiA7C9sQRR5MyLL0F0pnx5VAmiQ3j17FzXc6s+dDohXEr1oTfahJ/oYq6K3Qa4iAiaiKCJVwNNbAPtm+UmaH+55563gyIaT+Fndyc2H56W7HEDGzbgSdbhRu/nihMeJ3XxL9dXdddXLi57QLriaBk7TybJNkeeh6bIbhxaH3H90clpjAcQyAlZNlvBiBfMQGcCt3xT7hklTe2H5J5N6jglQS3mF8f84phfHPOLY37x2+QXt1c6jpQCHJFhERkWkWERGRaRYREZFpFhERkWkWERGRaRYREZFpFhEX8SkWERGRY5M3JmRIZFZFhEhkVk2IUhw9pL9Hyi+9woWBbVRrZ7p5/bYDz3XRhP9+djQHm6mINe4x05GU9b42lrPG2Np63xtPXNqjkPtMafF3mdQqU7Pribea4q7Xk1mNYWjJVTof7ureZ0bwi7GokMnoRdBUXfH+pLXOvRq0u0xZl53bpFPcuof853MjasE+wL67oJ/upbOt3IX0VePaOnf09hW7HmgOP2OsbdxgJ23sJ2mWH9ZpLlUs2ADh92OCX1u/EoIB4FPHkUsAHgiWiYiIaJaJiIholomIiGiWiYiIaJaJhoAkc0TETDxDP3iIaJaJiIhomcGdEwEQ0T0TARDTPchJ7orT24BkBRuUX3ZuEUQk3f0MykFdsekNHq22DmulvBTX1s5N+JQI4I5IhAjgjkiECOtwNydA8FxL0oJ6IDS2xPx97X0AovyHtOxJPn0weHwjYCbX8F8X9VxyAOiJUZC6oFemtszPntw9JdglOUU1Cq1SnSEzG1V4Wt7KrXM5pkHgJHQpiyv3On40V8QPKPNSxDEzAaAB8CPLWoSCf0OfzB8yhmo53d9sbG65GMIxm3ZOzN/qZKYfAGQplC7xH0F8G9dd8AzaBvO3OisSayGo90Ojip+/tjaPZyzzjOhpBHs7meBPKNTsqPY2DhTmugch97pw3NvNtAz31pvoXzA/fHJ4+8qerv1WEo892odYcl3adGmNv1UkzaSNGWFIXlqpOi0IHn1eppcMfdbGqKWyMmq1sQMLNZuJcOpqEm6+XWvIgRpuhBC6t+VTkYlfJRWP6lFxCUM/1Q3Cxm63kdo3WHzWX3eKV54Jox3wOqx1UfAiIrp8N4lHIm355/9VzrFrok2/RCXbCknE6HFfLC12kbENu0IZu3kvatrQzSvJg/vt86V7xvrnLPv4PmSnbPNRt3rhh5fgqUsirnGxRSkURvwxcmJB6JinC2DbOq4Ax03uBMuo1WXU7KqQHZGw4GvDsQOMQLVwcpKx1MwTFAJ3L/2lVApbkV96XD3PY2XN7eH0zcxzOyNsvyZtrIKp9p5Ra4BXQsQa0VQv2xLj2MpFAzGN6qByIcotfrsJhbzC0aaZywVMU+RwHm/9kA5pudvaqNpMnDVZCLy6sK53w1Xd8BZagrExBPH7fi6OdiAQ2WczFd9U4a3Hq4tQ2VWFuM5pNFj++McKdHIxY9fotSsa+NpX9Sx+M9/wIBHbdH4xem/qn36MBTpIH0GCs6PrRnGwnsDLHn1wJ2vx5I4UqgFEGgFKaBXD8ekcRSUevTjtLBemLDUWqlYj2wq3olRvd9XkJxPlMJjRPT7iuhA7o83RMbXe/VMabl1eq2XLoS3XWB0P0qb5O5gydymAh+f6gc+PJCRsROMXCoW7tVBBRW3JWTh538vyOYs5PZD/YCdjB76yBcRIRjnERJ13Nn5lf9Ld5bin60Y9AhzT3hrY2UDnliKGUvKZ6qdyIpPpMUxzlIPxNSPNBgj+cbP+v5xs7Nh2U/WQ6FAOvIIqgK4Y5s87ZRw22RwmCCHRMXPcCc+NLrt2PdiMmkmNnOSJanBIfG0bFH2eXjyNKjuhyH+17aFah+Wz18yhfoz2o0LNVQpviLAg4WKRQdXinC4whPOB70gulNuL9zYDLe0Ug3zj7wX0cBptXHHuMdcOwe8ekIuNHOArfF191RxtxMHY61qBPXVwUsiDR2tjCFWq9m1kaJuq/LcWTPcfGc8fjhmC5HIOgXOzqp1EZgFZBdx2uQsUC02zXIoUHdIxRI1e4zbdGtId7XdBBOVxyv5gwDtVUFOnqnbPFU7SVObAbhXlg9Vy1qeKixrsortDm01ef6SuYu3iR8ujeDuggZCv29hFTdhVfabjq8TO2xM+Ppg0yrc+fpeAp7iTw9SibKGfH0TszqQUdfT2NWf42Y1XESjl4Ps/o+4pgjjnkbTZzRVeJbr1p/dQP6zW8THyVx8OxvEz/0PC1edX9exDlGMmokzvMQnuN7Km9On6PkOJ89fR6Ki4nC86yIc5S8+R+eOONFBvEig7O+yCASb5d4Ty+9EYl3JOI9wGyNN3vFglCxIFQsCBULQr1hQSh/ArUlEZ2FhPEGObcjI31bzYLuS6ibX+5zyjfSy+uvt+Wnb+auNznt7mITvRDfKkR58xOf0f58xMnjqXgV5zTOFjAoMSlvpo0J5K5+8CUuK6Tbu/fvXIlJ89HVh3z36d2flZb327yYfauXvnlWH0+HrWjQjeHGEQeOWxaVMv2X82l94VgvYcNNMJ6WqryqQthVVa6gBdu15UwHT8PI22tiprMCVPNsMTjU3Lyd1N+woptjki3Tgd37dF18/iTQ1nnUJck+/YbqE9m7cmk+/e2D6D/4+/DBPz78Ovjsy3kuh08n81sxfNa9tWHwnTSr4etqdgcmsx62fCPg8eDZ7cN8Bnbw0gxfnohvgydgF86rCgIvuGl/+utH2ksoqtKnU11VKx2UBHZlm4MBOpl9q8+7wSGY3ZVTUVVRrYpyVPl74TPlzW27Iey31VTtnJ/vbe8xXJnSKVG/MEI/1NVsjqW7z8fS3ech3X3+Qemu+/S/PsAOwZ/LWqZ0vlmAqJl1HL/6q9+qpblk6iUjUy8ZnXqvj6Xe6yH1Xv8U1FsuZ5NNCn2arH+rFiZK3peUvNcnit5t1Pw5kvcoUvuHYoUzF+PX0fj9IY3fZGS6S8anu2j8RuP3cqk3Gr/R+L1UjR+N32j8/tys4Cvi7gr+tjtf34z0vh8wftFwdjkFKp7Dr9rK7s+Y2ednzOzzC8/sxl8rbwItPWte18+Y1/VF7Nj1c7bs+uz37PoZXHZ9EVx2/Qwuu355LhtnZtfPmNn1BdDi9XO27Gy5zBqxLL1xtI/NtsRqdhlXnZYH3yzcnfDTMNIBm58pYfeW6fO+Zfo8/jKNYxwOJM8lLPb1vsW+ftHFfp4H+n5DFJ4/818fSdZnt/THe0fvNyX7We5T59qnLTukZstVzSfh78/Nh2I+g0H5Jd8i67fItS3ct41O9vriO2ihM5+XdVBdsvVs2cKIfcfuGqzF7K5wXvmkrKpTeHUNzmN5t74r3MId4lKS9k4uh6NW/RuAK7Z/0rEMtyf/29RX9Ta4qaYdX2TMb5RfHY9Y80Oz4RYVh0lD/oKRqp7YznfUbDE1i7qnxlvvgt7eh/++DJZy7yFrC6lr18Af+LhvYMWnq9I05SvdszqCUi7r2YJL0qWVYUPwTWOF1EGhPgF2g0DbiLAT9BkEe7pBno3gThvUGZzwPBVO2NzHzzv2EZ/NPpIn9/HzWPv4ud7Hz2eyj+7ThlbZok3ak5HDd/36wrn3eqxdv653/fqsdr1vZGySQRtGPWLPL53V/RaNz/NdMvh8mfTwpFh4Jq2gA0gF7yCV3jsvRSoJGUu7X//M2v2c9/HzWPsYtfsRgv5Vdn23oB9n16N2v6hNf/8SPP+za3f3VZUX1UuVlvrbB58tde+yh989/v8ABMN4
+```
 
-A read-only census of 39 integrity-consistent S6 test bundles (including controlled
-rehashed adversarial examples, not all semantically accepted evidence) found byte
-maxima: request 17,227; snapshot 84,979; resolved input 224,672; result 13,688;
-trace 12,652; build 3,751; complete bundle 356,300. Those remain within the unchanged
-build ceilings. These are execution-corpus measurements, not a final release/resource
-acceptance claim and not evidence that caller-tightened refusal budgets are honored.
-Complete final policy conformance must be rechecked after the owner decisions.
+## Preservation and remaining gate
 
-## Environment, preservation and gates
-
-All command inputs/results/corruption/interruption fixtures were confined to fresh
-children of `/home/mafasa/operation-house-keeping-runtime/bounded-decision-workflow/test-workspaces/s6-cli-NJ312t`.
-The approved interpreter is CPython 3.13.11 in `environments/cp313-bdw001`.
-`findmnt` outside the sandbox confirmed `/dev/sdc`, ext4, rw. Provisioning verified
-environment `693e458fefc4866bf83ce52c3b163995e0e6eb3cfe6389b73b748321bae0d27a`
-and all ten artifacts, set commitment
+The actual writable mount was rechecked as `/dev/sdc`, ext4, owned runtime
+test-workspaces mode 0700. CPython 3.13.11 and the persistent isolated environment
+were used throughout. Provisioning verification passed before and after:
+environment `693e458fefc4866bf83ce52c3b163995e0e6eb3cfe6389b73b748321bae0d27a`,
+ten retained artifacts, set
 `26e6a7b92ba5167a660a5227d128e4649387d862db7bb73496ad540492a7fba1`.
-No installation, mount change, repository relocation, WSL restart or power-loss test.
+No installation or dependency change. Existing runtime inputs/results were not
+test destinations; failure/corruption probes used only isolated test children.
 
-The 899-file starting digest inventory preserves all 63 unrelated untracked
-artifacts. Existing runtime inputs/results and dependencies were not test
-destinations. Candidate package/manifest, historical copies, design/review,
-accepted reports, backend contracts and authoritative ledgers remain unchanged.
-Only scoped application/test and status/report paths were staged. Local links,
-digests, example canonicalization, whitespace and exact commit scope were checked.
+The baseline digest inventory covered 912 pre-existing files. Only the authorized
+application documentation/CLI and plan/status/report paths changed; backend,
+ledgers, frozen package/manifest/design/reviews and all 63 unrelated untracked
+artifacts remain intact. Candidate/manifest commitments remain
+`355b169df2805fa09eaba8865eea1a89e02071cc56c302a078677789fad616bf` /
+`6f1c6103cbc834e089c839f6e3a4503e0a6d91408dccb70972f40a628784fb57`.
+Historical report recovery, local links, whitespace and staged-scope checks apply
+before and after the documentation-only completion commit.
 
-The owner gate is **resolve S6-P1 and S6-P2, then resume/complete S6 verification**,
-not accept S6 now. S7 clean-checkout reproduction, full release measurements and
-final application acceptance remain unauthorized. No empirical accuracy, physical
-execution, causal truth, generated alternatives or global planning is claimed.
+No unresolved defect remains in the executed S6 scope. Manifest-last completeness
+is not whole-directory atomic visibility or power-loss durability. No physical
+acquisition, backend extension, generated alternatives, causal truth, empirical
+accuracy or multi-step/global planning is claimed. IN-001 and CI-001 remain open
+and unselected.
+
+Owner gate: **accept S6**. S7 clean-build recovery, final release measurements,
+release-scope inspection and final application acceptance remain unauthorized.
 
 END OF BOUNDED DECISION WORKFLOW S6 RESOURCE AND CLI COMPLETION REPORT

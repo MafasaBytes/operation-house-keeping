@@ -2,6 +2,13 @@
 
 ## 1. Plan status and frozen authority
 
+Current gate: [S6 complete; owner acceptance pending](../reports/2026-09-15-bounded-decision-workflow-s6-resource-and-cli-completion-report.md)
+at tested implementation `c37c24ee50667121d6b2dc4739aa3b7d12825c96`:
+682 affected checks passed, including the approved terminal/incomplete-presentation
+policy conformance and real command/recomputing-replay checks. The earlier
+[incomplete checkpoint](../reports/2026-09-15-bounded-decision-workflow-s6-resource-and-cli-incomplete-checkpoint.md)
+is preserved unchanged. S7 remains unauthorized; no final release is accepted.
+
 Current gate: [both S6 policy resolutions owner approved](../reports/2026-09-15-bounded-decision-workflow-s6-policy-owner-approval.md).
 The linked addendum governs design §§3.1/9.3/10.2/11.2 and plan §§5–6:
 512-byte non-tightenable terminal refusal envelope (including LF), unchanged
