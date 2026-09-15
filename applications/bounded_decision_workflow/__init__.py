@@ -1,7 +1,8 @@
 """Bounded supplied-alternative decision workflow.
 
 Slices S1–S3 expose strict public admission, raw projection and supplied policy.
-S4 adds named-decision review. Retention, replay and CLI delivery remain pending.
+S4 adds named-decision review; S5 adds byte retention and integrity verification.
+Replay computation, CLI integration and release acceptance remain pending.
 """
 
 from applications.bounded_decision_workflow.admission import (
@@ -30,6 +31,9 @@ from applications.bounded_decision_workflow.input import (
     parse_request_wire,
     parse_snapshot_wire,
 )
+from applications.bounded_decision_workflow.retention import (
+    BundleInspection, CapturedFile, capture_file, publish_bundle, verify_bundle,
+)
 
 __all__ = [
     "AdmissionReview",
@@ -52,4 +56,5 @@ __all__ = [
     "DecisionReview",
     "PriorDecisionInput",
     "review_request_and_snapshot",
+    "BundleInspection", "CapturedFile", "capture_file", "publish_bundle", "verify_bundle",
 ]
