@@ -104,6 +104,98 @@ def test_obs_2_public_unavailability_never_receives_a_fallback(package):
     assert review.observed_value.unavailable_reason == "observation_absent"
 
 
+def test_obs_2_remaining_unavailable_forms_are_publicly_produced(
+        package, tmp_path):
+    from backend.constraint_evaluation import ConstraintEvaluationQueries
+    from backend.source_interpretation import (
+        InterpretationResolver, InterpretationStore)
+    from backend.state_classification import StateClassificationQueries
+    from tests.behavior_evaluation.helpers import (
+        E1, PROP_TARGET, PROP_TEMP, VAR_A, VAR_B, model_store,
+        semantic_queries)
+    from tests.constraint_evaluation.helpers import craft_value
+    from tests.model_state.helpers import (
+        entity_declaration, observed_stack, prop_assertion, var_declaration)
+    from tests.state_classification.helpers import (
+        AS_OF, AS_OPERATED, STATE_A, condition_records, condition_sources,
+        state_model)
+    from tests.model_kernel.st001_slice_a_helpers import (
+        pins, state_declaration, state_registration)
+
+    baseline_request = object_value(package, BASE_REQUEST)
+
+    def classify_at(root, *, model=None, temporal=None, bindings=None,
+                    interpretations=None):
+        model = model or state_model(root)[0]
+        semantic = semantic_queries(
+            root, model=model, temporal=temporal,
+            binding_records=bindings, interpretations=interpretations)
+        facade = StateClassificationQueries(ConstraintEvaluationQueries(semantic))
+        return facade.state_classification(
+            STATE_A, context=AS_OPERATED, as_of=AS_OF,
+            condition_sources=condition_sources())
+
+    cases = []
+
+    unattached_root = tmp_path / "unattached"
+    unattached_bindings = (
+        entity_declaration(E1, "Demo entity"),
+        var_declaration(VAR_A, E1, "Variable A"),
+        var_declaration(VAR_B, E1, "Variable B"),
+        prop_assertion(VAR_A, PROP_TEMP),
+        prop_assertion(VAR_B, PROP_TEMP),
+        prop_assertion(VAR_B, PROP_TARGET),
+    )
+    cases.append((
+        "observation_not_attached",
+        classify_at(unattached_root, bindings=unattached_bindings)))
+
+    inconsistent_root = tmp_path / "inconsistent"
+    inconsistent_temporal = observed_stack(inconsistent_root)
+    craft_value(
+        inconsistent_temporal, value_json="NaN", json_type="number")
+    cases.append((
+        "evidence_not_assessable",
+        classify_at(inconsistent_root, temporal=inconsistent_temporal)))
+
+    null_root = tmp_path / "null"
+    null_temporal = observed_stack(null_root)
+    craft_value(null_temporal, value_json="null", json_type="null")
+    constraints, declarations = condition_records()
+    registration = state_registration(
+        subject=E1, constraints=(
+            "con_" + "a" * 32, "con_" + "b" * 32), second_owner=E1)
+    declaration = state_declaration(
+        registration, context=AS_OPERATED,
+        condition_pins=pins(declarations=declarations))
+    nullable_model = model_store(
+        null_root, specification_overrides={VAR_A: {"nullable": True}},
+        extra_records=(*constraints, registration, declaration))
+    cases.append((
+        "numeric_value_absent",
+        classify_at(
+            null_root, model=nullable_model, temporal=null_temporal)))
+
+    semantic_root = tmp_path / "semantic"
+    empty = InterpretationResolver(InterpretationStore(
+        semantic_root / "empty-interpretations").load())
+    cases.append((
+        "declared_semantics_not_compatible",
+        classify_at(semantic_root, interpretations=empty)))
+
+    for expected_reason, result in cases:
+        assert result.constraint_evaluations[0].candidates[
+            0].not_evaluated_reason == expected_reason
+        snapshot = canonical_json_bytes(result.model_dump(mode="json"))
+        request = copy.deepcopy(baseline_request)
+        request["snapshot_commitment"] = hashlib.sha256(snapshot).hexdigest()
+        review = workflow.admit_request_and_snapshot(
+            canonical_json_bytes(request), snapshot)
+        assert review.observed_value.status == "unavailable"
+        assert review.observed_value.unavailable_reason == expected_reason
+        assert review.observed_value.canonical_decimal is None
+
+
 @pytest.mark.parametrize(
     ("variant_id", "expected"),
     [
