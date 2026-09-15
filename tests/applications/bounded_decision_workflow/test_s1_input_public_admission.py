@@ -343,7 +343,7 @@ def test_build_owned_and_caller_tightened_s1_limits(package):
 
 def test_corrected_package_objects_and_s1_valid_twins_are_recoverable(package):
     assert package["measured_preparation_corpus"]["runtime_corpus_variants"] == 69
-    assert len(package["objects"]) == 44
+    assert len(package["objects"]) == 66
     for reference in package["objects"]:
         object_bytes(package, reference)
     for case in package["acceptance_cases"]:

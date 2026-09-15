@@ -20,10 +20,9 @@ at `17095402b4aea11f526d430c6ee8e568ce180f48` and owner accepted.
 S4 is limited to fixed 22-decision dependencies, prior recomputation, and
 changed/equal-after-reevaluation distinctions. No full application release,
 filesystem publisher/verifier, CLI or replay delivery is authorized by S4.
-S4 is [blocked at the frozen-contract audit](../reports/2026-09-15-bounded-decision-workflow-s4-decision-review-discrepancy-report.md):
-comparison expectations say no prior, and the frozen dependency map lacks complete
-input/closure semantics. A related prior-refusal command fixture also omits its
-prior argument. No S4 implementation or semantic fixture amendment has occurred.
+The owner authorized [bounded S4 expectation/dependency corrections](../reports/2026-09-15-bounded-decision-workflow-s4-review-fixture-correction-report.md)
+and resumption of S4. The historical discrepancy report remains unchanged. S4 is
+not accepted; S5–S7 remain unauthorized.
 
 This is implementation preparation, not implementation authorization. The maintained
 target remains the local command:
@@ -45,10 +44,11 @@ matches
 
 The corrected [candidate package](../reports/2026-09-15-bounded-decision-workflow-candidate-package.json)
 is canonical compact JSON with SHA-256
-df9766b51dea3339b9b2096ab3a96ea75ff01b130b6eb913da86d337c5d7cb1e.
+6af90f315b7f1c407a30e57d526d609c650dfbd10bb2489c87087a6f596a8a63.
 Its [manifest](../reports/2026-09-15-bounded-decision-workflow-candidate-manifest.json)
 has SHA-256
-9b9effe6809bb49ad2f0a7cd1096eeef688ef17dee1a87f44b0832af1e478de9. The pre-S3 package/manifest are retained under
+75382b7098b9ab98382f104da7cb201dacb357cee67cfb9c9ca81f8f2202c460. The pre-S4 package/manifest are retained under
+`pre-s4-review-correction` names, including all 11 specification reds. The pre-S3 package/manifest are retained under
 `pre-s3-policy-correction` names; their exact commitments and mechanical remapping
 are recorded in the correction report and package. The original package and manifest remain retained under the
 `pre-obs3-decimal-correction` historical names. The correction separates a
