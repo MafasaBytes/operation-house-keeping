@@ -311,8 +311,14 @@ def test_injected_final_file_is_not_overwritten(tmp_path, files):
 def test_symlink_parent_and_unsupported_output_parent(tmp_path, files):
     link = tmp_path / "link"; link.symlink_to(tmp_path)
     expect(lambda: workflow.publish_bundle(link / "bad", files), "PATH_COMPONENT_UNSAFE")
-    # Preflight rejects the real checkout mount before any directory creation.
-    output = PACKAGE_PATH.parent / "must-not-create-s5-test-output"
+    # The checkout can be ext4. Never infer an unsupported output parent from it
+    # or risk creating a failed-probe bundle among source/evidence files.
+    parent = os.environ.get('BDW_UNSUPPORTED_OUTPUT_PARENT')
+    if parent is None:
+        pytest.skip('nominate an isolated BDW_UNSUPPORTED_OUTPUT_PARENT')
+    kind = subprocess.check_output(['findmnt', '-T', parent, '-n', '-o', 'FSTYPE'], text=True).strip()
+    assert kind not in {'ext4', 'xfs'}, 'output probe must use an actual unsupported mount'
+    output = Path(parent) / "must-not-create-s5-test-output"
     assert not output.exists()
     expect(lambda: workflow.publish_bundle(output, files), "FILESYSTEM_UNSUPPORTED")
     assert not output.exists()

@@ -85,7 +85,10 @@ semantic-compatibility isolation tests with the fresh interpreter. Disable bytec
 and pytest's cache provider, and select a new `--basetemp` under the verified ext4
 test workspace. Set `BDW_UNSUPPORTED_FILE` to an existing read-only fixture on a
 verified unsupported mount when exercising that platform rejection. This is a test
-setting only; the production command accepts no filesystem-policy overrides.
+setting only; also nominate a new isolated directory on that unsupported mount as
+`BDW_UNSUPPORTED_OUTPUT_PARENT` for the output-parent refusal probe. The probe must
+not use an existing source/evidence directory as its attempted output location.
+The production command accepts no filesystem-policy overrides.
 
 `tests/applications/bounded_decision_workflow/test_s7_release.py` exercises two
 independent local clones, seeds 1/7/313 and normal/reversed mapping construction,
