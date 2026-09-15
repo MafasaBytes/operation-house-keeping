@@ -4,6 +4,10 @@
 
 Current gate: [S5 accepted; S6 separately authorized](../reports/2026-09-15-bounded-decision-workflow-s5-owner-acceptance.md).
 S6 is resource/CLI delivery and replay recomputation. S7 remains unauthorized.
+S6 is [partially implemented but blocked on two presentation-policy decisions](../reports/2026-09-15-bounded-decision-workflow-s6-resource-and-cli-completion-report.md):
+the refusal envelope under caller-tightened budgets, and incomplete-bundle inspection
+under the fixed failure channel/shape. S6 is not complete or accepted; no policy
+exception, new output channel or resource-cap amendment has been authorized.
 The following dated implementation/acceptance statements remain historical evidence.
 
 Current owner gate: [S4 accepted; S5 separately authorized](../reports/2026-09-15-bounded-decision-workflow-s4-owner-acceptance.md).
