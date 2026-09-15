@@ -264,6 +264,14 @@ def publish_bundle(output_dir, files, *, bundle_kind="complete", operation="eval
     S6 owns final result/build assembly and replay. Fault hooks are trusted test
     code, not serialized requests. No failed operation deletes its evidence.
     """
+    return _publish_bundle(output_dir, files, bundle_kind=bundle_kind, operation=operation, fault=fault,
+                           bundle_limit=BUILD_LIMITS["retention_bundle_bytes"])
+
+
+def _publish_bundle(output_dir, files, *, bundle_kind="complete", operation="evaluate", fault=None, bundle_limit):
+    # S6 composition may tighten this dimension, never relax the S5 ceiling.
+    if type(bundle_limit) is not int or not 0 < bundle_limit <= BUILD_LIMITS["retention_bundle_bytes"]:
+        raise _error("OUTPUT_LIMIT_EXCEEDED")
     absolute, parts = _parts(output_dir)
     if re.fullmatch(r"[a-z0-9][a-z0-9._-]{0,127}", parts[-1]) is None:
         raise _error("OUTPUT_BASENAME_INVALID")
@@ -281,7 +289,7 @@ def publish_bundle(output_dir, files, *, bundle_kind="complete", operation="eval
                     "run_metadata": {"created_at_utc": datetime.now(UTC).isoformat(), "filesystem": filesystem}}
         manifest_wire = canonical_json_bytes(manifest)
         _json(manifest_wire, "manifest.json")
-        if sum(len(b) for b in payloads.values()) + len(manifest_wire) > BUILD_LIMITS["retention_bundle_bytes"]:
+        if sum(len(b) for b in payloads.values()) + len(manifest_wire) > bundle_limit:
             raise _error("OUTPUT_LIMIT_EXCEEDED")
         try:
             _event(fault, "directory_create", parts[-1])

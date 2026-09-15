@@ -46,7 +46,7 @@ def identity():
         def digest(path):
             with (ROOT / path).open("rb") as stream: return hashlib.file_digest(stream, "sha256").hexdigest()
         sources = git("ls-files", "applications").splitlines()
-        result = {"git_commit": commit, "application_semantic_version": "bdw001.1",
+        result = {"git_commit": commit, "application_semantic_version": "0.1.0",
             "schema_version": "bdw001.1", "workflow_profile": "hypothetical_enclosure_one_step.v1",
             "build_policy_id": "bdw-build-policy.v1", "implementation_id": "bdw.application.v1",
             "application_source_sha256": {p: digest(p) for p in sources},

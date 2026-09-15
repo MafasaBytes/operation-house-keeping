@@ -9,6 +9,7 @@ import re
 from applications.bounded_decision_workflow.errors import WorkflowDiagnostic, WorkflowInputError
 from applications.bounded_decision_workflow.input import BUILD_LIMITS
 
+_NUMBER = re.compile(r"-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?")
 
 def diagnostic(code, *, status=3):
     retry = "reduce_input" if status == 4 else "correct_input"
@@ -77,7 +78,7 @@ def scan(wire, limits=BUILD_LIMITS):
                 pos += 1
         for literal in ("true", "false", "null"):
             if text.startswith(literal, pos): pos += len(literal); scalars += 1; return
-        match = re.match(r"-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?", text[pos:])
+        match = _NUMBER.match(text, pos)
         if match is None: raise diagnostic("JSON_SYNTAX_INVALID")
         pos += len(match[0]); scalars += 1
 

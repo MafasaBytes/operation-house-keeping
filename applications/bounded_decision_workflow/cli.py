@@ -63,6 +63,7 @@ def _output(review, build_id):
     t0 = None if obs.canonical_decimal is None else Fraction(obs.canonical_decimal)
     result = {
         "current_condition": dict(asdict(a.current_condition), as_of=a.request.current_condition_question.as_of.isoformat(),
+                                  declared_state_label=a.request.current_condition_question.declared_state_label,
                                   meaning="classification_at_exact_cutoff_not_projected_state"),
         "observed_value_admission": dict(asdict(obs), disposition=obs.status, source="public_candidate_only",
             admitted_T0=None if t0 is None else {"numerator": t0.numerator, "denominator": t0.denominator}),
@@ -122,6 +123,15 @@ def _compute(request_wire, snapshot_wire, prior, build_id):
 
 
 def _recover(inspection, build_id):
+    try:
+        return _recover_valid_shape(inspection, build_id)
+    except WorkflowInputError:
+        raise
+    except (KeyError, TypeError, ValueError, AttributeError) as e:
+        raise _problem("REPLAY_SEMANTIC_MISMATCH") from e
+
+
+def _recover_valid_shape(inspection, build_id):
     files = inspection.captured
     resolved = _json(files["resolved-input.json"])
     if type(resolved) is not dict or set(resolved) != {"request", "snapshot", "prior"}:
@@ -158,17 +168,23 @@ def execute(args, *, fault=None):
         scan(request_wire, limits); scan(snapshot_wire, limits)
         prior = None
         if args.compare_to:
-            inspected = _checked_bundle(args.compare_to, build_wire)
+            inspected = _checked_bundle(args.compare_to)
+            if inspected.bundle_kind != "complete" or inspected.captured["build.json"] != build_wire:
+                raise _problem("PRIOR_INCOMPATIBLE")
             if sum(map(len, inspected.captured.values())) > limits["aggregate_prior_bundle_bytes"]:
                 raise retention._error("INPUT_WIRE_LIMIT_EXCEEDED")
             # Do not run the prior separately: S4 recomputes the complete chain once.
-            old = _json(inspected.captured["resolved-input.json"], limits)
-            if set(old) != {"request", "snapshot", "prior"}: raise _problem("PRIOR_INCOMPATIBLE")
-            if canonical_json_bytes(old["request"]) != inspected.captured["request.json"] or canonical_json_bytes(old["snapshot"]) != inspected.captured["snapshot.json"]:
-                raise _problem("PRIOR_INCOMPATIBLE")
-            # S4 intermediate trace is reconstructed from exact retained request
-            # and final rows below; its public recomputation remains authoritative.
-            prior = _prior_from_final(inspected, old, build_id)
+            try:
+                old = _json(inspected.captured["resolved-input.json"], limits)
+                if set(old) != {"request", "snapshot", "prior"}: raise _problem("PRIOR_INCOMPATIBLE")
+                if canonical_json_bytes(old["request"]) != inspected.captured["request.json"] or canonical_json_bytes(old["snapshot"]) != inspected.captured["snapshot.json"]:
+                    raise _problem("PRIOR_INCOMPATIBLE")
+                # Reconstruction is a decoding adapter, not an admitted prior.
+                prior = _prior_from_final(inspected, old, build_id)
+            except WorkflowInputError:
+                raise
+            except (KeyError, TypeError, ValueError, AttributeError) as e:
+                raise _problem("PRIOR_INCOMPATIBLE") from e
         resolved = {"request": _json(request_wire), "snapshot": _json(snapshot_wire), "prior": prior}
         resolved_wire = _serialize(resolved, limits["resolved_input_bytes"])
         scan(resolved_wire, limits)
@@ -179,9 +195,13 @@ def execute(args, *, fault=None):
                "result.json": result, "trace.json": trace, "build.json": build_wire}
     # S5 enforces immutable ceilings; optional tighter bundle budget is checked here.
     if sum(map(len, payload.values())) > limits["retention_bundle_bytes"]: raise _output_refusal()
-    published = publish_bundle(args.output_dir, payload, operation=args.operation, fault=fault)
-    return {"operation": args.operation, "bundle_commitment": published.manifest_sha256,
-            "result_commitment": _hash(result), "semantic_disposition": review.policy.selection["disposition"]}
+    receipt = {"operation": args.operation, "bundle_commitment": "0" * 64,
+               "result_commitment": _hash(result), "semantic_disposition": review.policy.selection["disposition"]}
+    if len(canonical_json_bytes(receipt)) + 1 > limits["output_stdout_stderr_bytes"]: raise _output_refusal()
+    published = retention._publish_bundle(args.output_dir, payload, operation=args.operation, fault=fault,
+                                          bundle_limit=limits["retention_bundle_bytes"])
+    receipt["bundle_commitment"] = published.manifest_sha256
+    return receipt
 
 
 def _prior_from_final(inspection, old, build_id):
