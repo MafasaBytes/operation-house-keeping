@@ -252,4 +252,7 @@ def main(argv=None, *, fault=None):
         d = e.diagnostic
     except Exception:
         d = _problem("INTERNAL_ERROR").diagnostic
-    return emit_failure(d, sys.stderr.buffer)
+    # Write below BufferedWriter: after EPIPE its pending buffer would otherwise
+    # be retried by CPython shutdown, replacing our exit 7 with exit 120.
+    stream = sys.stderr.buffer
+    return emit_failure(d, getattr(stream, 'raw', stream))

@@ -2,7 +2,8 @@
 
 Slices S1–S3 expose strict public admission, raw projection and supplied policy.
 S4 adds named-decision review; S5 adds byte retention and integrity verification.
-Replay computation, CLI integration and release acceptance remain pending.
+S6 composes the local command and recomputing replay. Release acceptance remains
+the separately gated S7 responsibility.
 """
 
 from applications.bounded_decision_workflow.admission import (
