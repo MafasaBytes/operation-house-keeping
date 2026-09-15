@@ -4,14 +4,16 @@ from dataclasses import dataclass
 import hashlib
 import json
 from typing import Any, Literal
+from types import MappingProxyType
 
 from pydantic import ValidationError
 
 from applications.bounded_decision_workflow.contracts import WorkflowRequest
 from applications.bounded_decision_workflow.errors import refusal
+from applications.bounded_decision_workflow.projection_profile import validate_projection_lexical
 
 
-BUILD_LIMITS = {
+BUILD_LIMITS = MappingProxyType({
     "aggregate_prior_bundle_bytes": 262144,
     "application_premise_declarations": 32,
     "candidates_per_evaluation": 4,
@@ -38,7 +40,7 @@ BUILD_LIMITS = {
     "resolved_input_bytes": 262144,
     "retention_bundle_bytes": 393216,
     "snapshot_wire_bytes": 131072,
-}
+})
 
 _REFERENCE_FIELDS = {
     "record_ids", "supersedes", "via_assertion_ids",
@@ -261,6 +263,7 @@ def parse_request_wire(wire: bytes) -> tuple[WorkflowRequest, ParsedInput]:
             "REQUEST_SCHEMA_INVALID", stage="lexical_schema",
             target="request", retry="correct_input") from error
     _validate_requested_limits(request)
+    validate_projection_lexical(request)
     parsed = ParsedInput(
         kind="request", raw=value, canonical_bytes=canonical,
         sha256=hashlib.sha256(canonical).hexdigest(), counts=counts)

@@ -1,8 +1,7 @@
 """Bounded supplied-alternative decision workflow.
 
-Slice S1 exposes strict request/snapshot decoding and public observation
-admission only. Projection, policy, retention, replay, and CLI delivery are not
-part of this surface yet.
+Slices S1/S2 expose strict public admission and raw projection under supplied
+assumptions. Policy, review, retention, replay and CLI delivery remain pending.
 """
 
 from applications.bounded_decision_workflow.admission import (
@@ -13,6 +12,9 @@ from applications.bounded_decision_workflow.admission import (
     canonical_example_pair,
 )
 from applications.bounded_decision_workflow.contracts import WorkflowRequest
+from applications.bounded_decision_workflow.projection import (
+    RawProjectionReview, project_request_and_snapshot,
+)
 from applications.bounded_decision_workflow.errors import (
     WorkflowDiagnostic,
     WorkflowInputError,
@@ -39,4 +41,6 @@ __all__ = [
     "canonical_example_pair",
     "parse_request_wire",
     "parse_snapshot_wire",
+    "RawProjectionReview",
+    "project_request_and_snapshot",
 ]
