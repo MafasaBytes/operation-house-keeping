@@ -2,6 +2,29 @@
 
 ## 1. Plan status and frozen authority
 
+Current gate: [additional S7 full-repository release verification complete; final application acceptance pending](../reports/2026-09-16-bounded-decision-workflow-s7-final-release-verification.md).
+At exact candidate `64f4389b6d93484339afa29cbb7f7f21f6ef2758`, the full base-environment
+suite collected 4,684 tests: 4,648 passed, 35 optional CAD/PDF tests skipped, and
+one loopback-fixture setup error caused by sandbox socket restrictions. That same
+case passed in the permitted isolated rerun; no product repair was needed. The
+original full-run result remains explicit. The original completion report is
+preserved byte-for-byte, and its missing ending marker is appended in the current
+copy. The owner separately authorized this verification and the documentation-only
+release checkpoint commit; final application acceptance is not authorized.
+The prior 696-pass evidence and clean-build/replay/recovery/determinism evidence
+remain historical and unchanged. Earlier readiness/scope statements below do not
+discharge the owner's additional full-suite instruction. No successor is selected.
+
+Current gate: [S7 verification complete; final application acceptance pending](../reports/2026-09-16-bounded-decision-workflow-s7-release-completion-report.md).
+Tested commit `64f4389b6d93484339afa29cbb7f7f21f6ef2758`: 696 checks passed with
+no failures or skips in a fresh offline-provisioned CPython 3.13.11 environment and
+clean ext4 checkout. This includes the 684 required application/public-contract
+checks and 12 FL-001 reproduction checks closing the earlier temporary-root
+failures. Two clean roots, twelve deterministic constructions, exact-build replay,
+accepted S6 archive recovery and measured release evidence are complete. Final
+application acceptance remains the owner's separate decision; no successor or
+backend extension is authorized. Earlier gate statements below are historical.
+
 Current gate: [S6 owner accepted; S7 separately authorized](../reports/2026-09-15-bounded-decision-workflow-s6-owner-acceptance.md).
 S7 is the release gate defined in §9: clean source/lock identity, ext4/XFS recovery,
 deterministic semantics and exact scope inspection. Complete the corresponding
