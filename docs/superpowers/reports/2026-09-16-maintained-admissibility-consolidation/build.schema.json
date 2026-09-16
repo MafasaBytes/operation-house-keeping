@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:bdw:governed-executable-build:v1",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "governed-executable-build.v1"
+    },
+    "git_commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "implementation_id": {
+      "const": "bdw.governed-application.v1"
+    },
+    "inner_schema": {
+      "const": "bdw001.1"
+    },
+    "workflow_profile": {
+      "const": "hypothetical_enclosure_one_step.v1"
+    },
+    "build_policy_id": {
+      "const": "bdw.governed-resource-policy.v1"
+    },
+    "application_source_sha256": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^(applications|backend)/[A-Za-z0-9_./-]+$"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      },
+      "minProperties": 1
+    },
+    "backend_source_inventory_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "public_module_sha256": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^(applications|backend)/[A-Za-z0-9_./-]+$"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      },
+      "minProperties": 1
+    },
+    "python": {
+      "type": "object",
+      "properties": {
+        "implementation": {
+          "const": "CPython"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^3\\.13\\.[0-9]+$"
+        }
+      },
+      "required": [
+        "implementation",
+        "version"
+      ],
+      "additionalProperties": false
+    },
+    "dependencies": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256
+      },
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256
+      }
+    },
+    "dependency_lock_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "contract_source_sha256": {
+      "type": "object",
+      "minProperties": 6,
+      "maxProperties": 6,
+      "propertyNames": {
+        "type": "string",
+        "maxLength": 256
+      },
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      }
+    },
+    "policy_file_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "limit_policy_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "required": [
+    "schema",
+    "git_commit",
+    "implementation_id",
+    "inner_schema",
+    "workflow_profile",
+    "build_policy_id",
+    "application_source_sha256",
+    "backend_source_inventory_sha256",
+    "public_module_sha256",
+    "python",
+    "dependencies",
+    "dependency_lock_sha256",
+    "contract_source_sha256",
+    "policy_file_sha256",
+    "limit_policy_sha256"
+  ],
+  "additionalProperties": false,
+  "normative_constraints": [
+    "Canonical bytes without LF, no self hash, <=8192 bytes. Pure schema validity is not executable identity.",
+    "application_source_sha256 exact sorted git ls-files applications inventory; no missing or additional files. public_module_sha256 exact five PUBLIC paths from pinned original build.py.",
+    "backend_source_inventory_sha256 = SHA256(canonical sorted path-to-actual-SHA256 map for all git ls-files backend). Reconstruct inventory from the exact clean checkout; no arbitrary supplied root trusted.",
+    "contract_source_sha256 exact six paths specified in CONTRACT-AND-PLAN.md. policy_file_sha256 hashes unchanged approved policy.json file; limit_policy_sha256 hashes canonical policy.json limits map.",
+    "Dependencies exactly every name/version in unchanged application requirements.lock; compare actual installed versions and exact lock digest. CPython exact patch version retained.",
+    "All path keys repository-relative, unique, no traversal/symlink substitution; map values recomputed from local bytes; dirty/untracked executable trees refuse. Existing source trust exclusions remain.",
+    "git_commit and actual source checks both required; commit label alone is insufficient. Historical replay requires byte-equal local and recorded build.",
+    "Prepared synthetic build objects must not validate as this executable build or establish passing identity."
+  ]
+}

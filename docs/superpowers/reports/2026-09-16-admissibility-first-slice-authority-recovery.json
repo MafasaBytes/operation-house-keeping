@@ -1,0 +1,579 @@
+{
+  "schema": "admissibility-slice-authority-recovery.v1",
+  "parent": "8f0dc6a2bc9990c042301ed6d9df50bf8eeb5574",
+  "direct_files": [
+    "docs/superpowers/specs/2026-09-16-maintained-admissibility-enforcement-shared-reference-corrected-design.md",
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-amendment/AMENDMENT.md",
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-amendment/policy.json",
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-amendment/schemas.json",
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-consolidation/CONTRACT-AND-PLAN.md",
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-consolidation/build.schema.json"
+  ],
+  "index": {
+    "applications/bounded_decision_workflow/build.py": {
+      "sha256": "8e939d234c4b0328673f91496913a47742f03901b45277f5dc955c5541da3023",
+      "bytes": 3345,
+      "recovery": "committed-parent"
+    },
+    "applications/bounded_decision_workflow/cli.py": {
+      "sha256": "225940c0ab9a85b1376ca8960a0bdaf6e9c5ec1e910e9be41f39d7545c7248ad",
+      "bytes": 14586,
+      "recovery": "committed-parent"
+    },
+    "applications/bounded_decision_workflow/requirements.lock": {
+      "sha256": "7c87f0d7a3f12c271311cc0c33e59025e0161c37f16336901a0764b4330c0817",
+      "bytes": 191,
+      "recovery": "committed-parent"
+    },
+    "applications/bounded_decision_workflow/retention.py": {
+      "sha256": "3474dd7f16a2a4e574b84998fcc1bf049d3bf329e8dc74268656ec982bc06189",
+      "bytes": 20186,
+      "recovery": "committed-parent"
+    },
+    "applications/bounded_decision_workflow/terminal.py": {
+      "sha256": "1c48277b9843d2e3d68d5f58c00afafac38f5ac52702e5f09a3bc0e098f60cbb",
+      "bytes": 3469,
+      "recovery": "committed-parent"
+    },
+    "docs/superpowers/plans/2026-09-16-maintained-admissibility-enforcement-implementation-plan.md": {
+      "sha256": "c5263ab6cd70a5977644c54378fe72e669ff3834ad28ecfd487ea7928723546e",
+      "bytes": 8509,
+      "recovery": "existing-embedded"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-amendment/AMENDMENT.md": {
+      "sha256": "7a529dc39c07adcd63d6309e7a1d6648f1b6a64be8192df1f2d5351f2787dd56",
+      "bytes": 23202,
+      "recovery": "direct"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-amendment/MANIFEST.json": {
+      "sha256": "a8aa26646afd570a661776254e3c0ced094146455dbe7745b6dbac0eaaa89c76",
+      "bytes": 3449,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-amendment/check.py": {
+      "sha256": "07386e885a7855dc237ceebffacfe7707eb59de520ccdcb06c3a2d391df70f39",
+      "bytes": 5341,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-amendment/comparison-witnesses.json": {
+      "sha256": "dbd0adb5cf791ded8ea8a4680176101c3ab511ddc77a3821d4b368adfb27eb9b",
+      "bytes": 3359,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-amendment/four-pair-witnesses.json": {
+      "sha256": "8ef38c5fc9005707913421cf0c34d90e3bf7a4e29d90d997f3f62743f5f86f97",
+      "bytes": 7061,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-amendment/governing-recovery.json": {
+      "sha256": "392b164fc657594f8be8cf7df7b9ecc3229b0a98e8aa398ff9c4646f9bafc981",
+      "bytes": 126151,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-amendment/measurements.json": {
+      "sha256": "f46f08cee3214634492a9112e96b6e633f8b986b44f7729b4e0a42af80a42dc2",
+      "bytes": 23256,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-amendment/objects-recovery.json": {
+      "sha256": "2263bd00c90d967bd86f29ec5514c22e77c48ecbed866b8125f189dcce9c3771",
+      "bytes": 250864,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-amendment/outputs/D1-X.json": {
+      "sha256": "be2ba2fd31430fd62e16660840c70673cde48ddb0fcc2343557b366285498fbd",
+      "bytes": 51422,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-amendment/outputs/D2-X.json": {
+      "sha256": "f5b89ee3d8472061735582fb0ed264a1f10270e95c89b3db59a2a0492fbda922",
+      "bytes": 74045,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-amendment/outputs/J1.json": {
+      "sha256": "58b61f2822556040ca3d4dd7ea45a84f065adf1d917f4e84a0d31b9153e049a1",
+      "bytes": 74996,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-amendment/outputs/W0.json": {
+      "sha256": "706e3bc0d57460177382ae3ceeddb75b867a7eb52f2747a4d7481ec31c8e6e32",
+      "bytes": 74992,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-amendment/outputs/four-0.json": {
+      "sha256": "2261f864843a38e9ff91366bdaa436c79c5e6a70b134cba2ec52ebc870fd4b02",
+      "bytes": 74666,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-amendment/outputs/four-1.json": {
+      "sha256": "d0b6f5ac64f42618a06305fbe800ff6c688e06d138da8dd82d99b2447c541925",
+      "bytes": 74994,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-amendment/outputs/four-2.json": {
+      "sha256": "815cf14f7cb36b4b617d2d430d0c43348678fbf2a5c12b1358f7a47cf82443e4",
+      "bytes": 74992,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-amendment/outputs/four-3.json": {
+      "sha256": "8c721ed5e442f3d37e5201a59c4592f2eb3252c52e911ac7d6efcd0113b8c687",
+      "bytes": 74666,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-amendment/outputs/unavailable.json": {
+      "sha256": "bbeb9224d7c212ef4e54cf35e61a619a35aeab6d452c5ca3375c288f767853a7",
+      "bytes": 66388,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-amendment/physical-witnesses.json": {
+      "sha256": "86b16feed07c0e903e424628491bdf26435fda229eb4f35feb0ad82120b958e3",
+      "bytes": 4086,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-amendment/policy.json": {
+      "sha256": "5ae1abf84ad474020d11de6e1eb22e58aef96fddf8d942caca2eb98ace6b17d2",
+      "bytes": 1318,
+      "recovery": "direct"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-amendment/prepare.py": {
+      "sha256": "27a5c153c5b0ae47d429a03535bcfc9986ef23fd5d9c51e668357b1ba5e74424",
+      "bytes": 28972,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-amendment/schema.py": {
+      "sha256": "a34811bb73e4e0244d6c05557d47515b806931be66e0ca274e93b425bec019d2",
+      "bytes": 13943,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-amendment/schemas.json": {
+      "sha256": "2485ccc25ac50379886a1a6a8819441991555d2ff8c36a0c2cca8032f2259069",
+      "bytes": 60655,
+      "recovery": "direct"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-amendment/witness-index.json": {
+      "sha256": "3cacbbc7df90aa1369422300db6cd538ef8a6f5583f366eacca3592b5869e751",
+      "bytes": 20040,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-consolidation/CONTRACT-AND-PLAN.md": {
+      "sha256": "90949e1e3340dec1e7130163fa4f024f87bd04f400bc901097cae6c054a2515b",
+      "bytes": 21939,
+      "recovery": "direct"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-consolidation/MANIFEST.json": {
+      "sha256": "56b53c7bdc02c6687e1eb50942e5ecc3080407758872b1bc0c56d6b1743ae075",
+      "bytes": 5829,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-consolidation/READINESS.md": {
+      "sha256": "d3a920f45b43af6e53629c51b27c84fb7749133ec15d8e10b3463d12feb47521",
+      "bytes": 6420,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-consolidation/accounting.json": {
+      "sha256": "a1aa5e73abe9275e01830369e0da7170cc8ce0e5585474311f996aca905a3478",
+      "bytes": 21972,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-consolidation/build.schema.json": {
+      "sha256": "f4f931a5912b4a7bf7ec321af67713fbbc235fa0319b85804178f16a8f874dc6",
+      "bytes": 4429,
+      "recovery": "direct"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-contract-feasibility-decision.md": {
+      "sha256": "1fa58e7b70b2b0f5372aa1182499def1ddd82650fc779fbab458228dc783c343",
+      "bytes": 25754,
+      "recovery": "existing-embedded"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-enforcement-shared-reference-confirmation.md": {
+      "sha256": "1a10a7962ca658dbedc26f9e2164fe5118e6f43dbf18de45caeafebd744c5bd5",
+      "bytes": 12457,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation-closure/CONTRACT.md": {
+      "sha256": "20be46ae4667b7c00d361d9f8be900620016f60c23a0c79ec8021c42018ef2a0",
+      "bytes": 15786,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation-closure/IMPLEMENTATION-PLAN.md": {
+      "sha256": "efa5f3fa42f33ba50cb43db811b0cee98f5593163c38a652e0a8e1784052f1bc",
+      "bytes": 2784,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation-closure/MANIFEST.json": {
+      "sha256": "2c016f2fc97cd1e60543ec7d23d1b520c64ac8314e45d2b8d6abb54fd625f8c3",
+      "bytes": 6127,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation-closure/PRESERVATION.md": {
+      "sha256": "6522ec0e8ca8955762d7971983603d44205574c3dcdac0194a2de83e4462f370",
+      "bytes": 1728,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation-closure/READINESS.md": {
+      "sha256": "82f7e36a05ec9b1c545adc553baf6ab0cf7ccceb8931d3cc5fddf81afe614805",
+      "bytes": 6863,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation-closure/accounting.json": {
+      "sha256": "e74e5e87f4ba53cadcf64fd98a5be0ad959d7de78021c9d636af93551b1f5b4a",
+      "bytes": 1492,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation-closure/boundary-obligations.json": {
+      "sha256": "8783bde10b06367beae1cb418791f751a11b15474bd224968724bb95af864c8d",
+      "bytes": 3716,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation-closure/cases.json": {
+      "sha256": "8a2aa850d43279af2e4b54fa0740ccfe47311772d9516cfc99a57a1e36d8836a",
+      "bytes": 58202,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation-closure/check_static.py": {
+      "sha256": "298300e553db7335d35e380df58bf5fb5e9884299672348204355e426bddc17e",
+      "bytes": 4866,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation-closure/exact-schemas-01.json": {
+      "sha256": "7031bc21eca1209e79858d9400967bcf5d10a7709005dd558ecfabcf4e208f56",
+      "bytes": 423327,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation-closure/exact-schemas-02.json": {
+      "sha256": "0940488c6d252b0420b0e1293a675ddcd08b51760a9d58e81c547ca97909d77f",
+      "bytes": 382550,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation-closure/exact-schemas-03.json": {
+      "sha256": "3b6e76dbfcfbc76a2aa91bc0949f412530b9dd42c51cfae46c26132ab195e744",
+      "bytes": 67978,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation-closure/exact-schemas-04.json": {
+      "sha256": "e36e1666aa964d1cf86d4842a740898b890f3d6e7dae5abc80cba3b42cfe067f",
+      "bytes": 4022,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation-closure/exact-schemas-05.json": {
+      "sha256": "0c3d36d1d8feb7ec19583e5cd1db3a1b89e9e210d68d4df776cfe13cf5e2ed5d",
+      "bytes": 107838,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation-closure/expected-01.json": {
+      "sha256": "c804f68e44c5d508f8abcaa54a19ee48d5029265c7f17008dd5062aa7854c92f",
+      "bytes": 373648,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation-closure/expected-02.json": {
+      "sha256": "f80c089b3e7e43a38c37753bde4306858fee66aa698d29cfe61926f3cb6885c3",
+      "bytes": 337366,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation-closure/expected-03.json": {
+      "sha256": "c833d9daa9fe7c8d472dd9735f33429880fbce525d4e7983ba25d2774a785c7d",
+      "bytes": 59740,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation-closure/expected-04.json": {
+      "sha256": "c5018e2a4ea644baf41d6bf9778ee053734f2884e39fe106c994bd6fb0b666fb",
+      "bytes": 3562,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation-closure/expected-05.json": {
+      "sha256": "dc3f794bc3406f88ea63efdc1a5bcf75150297519ce079deb5d974b4c64cbdf3",
+      "bytes": 95179,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation-closure/frozen-recovery.json": {
+      "sha256": "0219fcad6b62a45a3e4525266afebd24828076e8e25c618fb7ebde0eeecdf07a",
+      "bytes": 659,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation-closure/general-schema-status.json": {
+      "sha256": "3f7c36094d9a662961f2e623d54b16143c57878e2aa97f54ec4dbb59699b4b90",
+      "bytes": 923,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation-closure/measurements.json": {
+      "sha256": "9c70fb9312ad30d3c76655d009f2d725c19d8c957991a66f6886e71c182a5520",
+      "bytes": 38577,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation-closure/new-envelope-schemas.json": {
+      "sha256": "fb210a268adba36ead54b506600e72200cac3afb5c458bce51c9b87350acf57b",
+      "bytes": 8363,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation-closure/prepare.py": {
+      "sha256": "01057937e22bc27b5c3f88c3532498d2f9f55240b52c7c1fc52fb10c83a0fc47",
+      "bytes": 11643,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation-closure/recovery-part-01.json": {
+      "sha256": "cf9ab184321349bdec2f9e1d20db42467622fb586ae7e48dc4f39ced7d52c673",
+      "bytes": 100117,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation-closure/recovery-part-02.json": {
+      "sha256": "0662ed18a95451d1f65e9a0dd38fe1e05461f541f79b8d3cb07b2b50f41a042b",
+      "bytes": 100117,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation-closure/recovery-part-03.json": {
+      "sha256": "eb71835cdf5005e887126bbf0991093315fcfaab1ae8da8d95ecba2e96459fa7",
+      "bytes": 100117,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation-closure/recovery-part-04.json": {
+      "sha256": "fa7fa0a4fe8ae0d47d23944399b25416c91e9f727991674681af737c54ca2270",
+      "bytes": 100117,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation-closure/recovery-part-05.json": {
+      "sha256": "f684e4b5adeb8cf36c08b14ccc680d6113ad73572fdae0134f9ac0131ab71e65",
+      "bytes": 100117,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation-closure/recovery-part-06.json": {
+      "sha256": "a687f22031a1896ac4179845365d8102f4b67b0c27976b899f166fccec9d8c12",
+      "bytes": 100117,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation-closure/recovery-part-07.json": {
+      "sha256": "f776bef68e0054a5e6f52906a71c9ceae67e2aba53f5a56afb69d07ae6da5f0f",
+      "bytes": 100117,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation-closure/recovery-part-08.json": {
+      "sha256": "64f516cc1bff3b47e58c921288d60f0d3c05bbfbeb3692cd2437a416b1ee851e",
+      "bytes": 100117,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation-closure/recovery-part-09.json": {
+      "sha256": "7616942dc5e6582fb12b76379fa1141abd3e8bf6135b9169f37700cbd8960ec6",
+      "bytes": 100117,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation-closure/recovery-part-10.json": {
+      "sha256": "02df45f32efbc2be09134ef3628743e8c18407383844f7cd1cfcd3cf8bde9564",
+      "bytes": 82509,
+      "recovery": "archive"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation/MANIFEST.json": {
+      "sha256": "5ace40c53349ca8ca72c055daf769d9ab5f12359a7b151e46b30a341762a5a53",
+      "bytes": 6514,
+      "recovery": "existing-embedded"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation/READINESS.md": {
+      "sha256": "2041397f5b8d7ca4674e000f788e31b55803cfc71b6ea403caf36b6e733b7fb1",
+      "bytes": 7494,
+      "recovery": "existing-embedded"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation/accounting.json": {
+      "sha256": "b613cd824a0a9ed551d05cd6ee672a53d9abb107281f4d64df761a98462b62ef",
+      "bytes": 6484,
+      "recovery": "existing-embedded"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation/approval-and-recovery.json": {
+      "sha256": "3bda98d4ba9bbe974a7221f43de380f28bc1cc646fa1e0b6293cc8a3a15d4541",
+      "bytes": 213324,
+      "recovery": "existing-embedded"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation/cases.json": {
+      "sha256": "e686072db0648910e470d23970ba8f82669ecbd587935c1dea292d97895d1eef",
+      "bytes": 46623,
+      "recovery": "existing-embedded"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation/check_recovery.py": {
+      "sha256": "ed1038eec8e159ee221e822031b8d2afcd56f02d1343f098e79887057e4b2039",
+      "bytes": 3961,
+      "recovery": "existing-embedded"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation/compatibility.json": {
+      "sha256": "5090cbee5727de0ebc3c0b67c34a61b018ce8d4fa580daf36276a0a10527f637",
+      "bytes": 814,
+      "recovery": "existing-embedded"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation/expected/results-01.json": {
+      "sha256": "c804f68e44c5d508f8abcaa54a19ee48d5029265c7f17008dd5062aa7854c92f",
+      "bytes": 373648,
+      "recovery": "existing-embedded"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation/expected/results-02.json": {
+      "sha256": "6fd5b1192e8dd7b49a45cde11cf3e02938bf2f4830b4be580bbaacdbbd44d1cc",
+      "bytes": 393786,
+      "recovery": "existing-embedded"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation/expected/results-03.json": {
+      "sha256": "4524b558251a55f40ac3e977a9e6d2a3575df84069422980ba11e5b9c2ad3e43",
+      "bytes": 59689,
+      "recovery": "existing-embedded"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation/expected/results-04.json": {
+      "sha256": "f00e03111a427cbdfe1412c73ccff3b270be7f04fa14e90e69e7853ff39eb8d3",
+      "bytes": 3471,
+      "recovery": "existing-embedded"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation/expected/results-05.json": {
+      "sha256": "61bd78e24c5a81e1fe52da2a74389a8ee0fb8edba473ffc6140cf8cd451a46ad",
+      "bytes": 95128,
+      "recovery": "existing-embedded"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation/graph-contract-witnesses.json": {
+      "sha256": "78499b0b13c595a558b3e62e7539884527ac1fafd26403397110c0798d9055fa",
+      "bytes": 1603,
+      "recovery": "existing-embedded"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation/measurements.json": {
+      "sha256": "53da78aa4ae6db0ab39efbe92a9471948aaa36599c5c1d3d65c99aed7a969c32",
+      "bytes": 34991,
+      "recovery": "existing-embedded"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation/objects.json": {
+      "sha256": "6a6b4b6cd2cd30bdaf13b80c2b000db9a3a16ece75c9bfeefd0d22ab4553937d",
+      "bytes": 31934,
+      "recovery": "existing-embedded"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation/objects/shard-01.json": {
+      "sha256": "af64626411ae11d6fbeeec399bc3bab6d428211a90078b50c8e9196072bf3816",
+      "bytes": 146033,
+      "recovery": "existing-embedded"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation/objects/shard-02.json": {
+      "sha256": "5fb4048ec021d01f24ba4b32f13f1c82db99fc5a02f9bc8adcbcd9ef8212826f",
+      "bytes": 144274,
+      "recovery": "existing-embedded"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation/objects/shard-03.json": {
+      "sha256": "adca6ae4c4a22f6f8b0b34a80715273a4e912fa24e92a6a42bc6f2f690f0aec8",
+      "bytes": 128241,
+      "recovery": "existing-embedded"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation/objects/shard-04.json": {
+      "sha256": "09627254fcabc053a405de75bc034219c6921afd546be472cf1809115b8b55e4",
+      "bytes": 137501,
+      "recovery": "existing-embedded"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation/objects/shard-05.json": {
+      "sha256": "71ba3da349e7a60bd6e12146926319ed85284b8b19e8d51eef2ad6674dcf90d3",
+      "bytes": 147336,
+      "recovery": "existing-embedded"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation/objects/shard-06.json": {
+      "sha256": "de11e715261a045f9e54982f08270ccc6670850ff83556dd428c1a6cdb10fd56",
+      "bytes": 148466,
+      "recovery": "existing-embedded"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation/objects/shard-07.json": {
+      "sha256": "a7d5dd4ea32f36a02615d808bc2e81515eb548338dbad1d665d21b93b58d03d1",
+      "bytes": 147488,
+      "recovery": "existing-embedded"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation/objects/shard-08.json": {
+      "sha256": "d1da426cb165ce55254e972be9215d6dbee05c43b1e6c16f841f34d3064a85b5",
+      "bytes": 150889,
+      "recovery": "existing-embedded"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation/preparation-build-token.json": {
+      "sha256": "8cb1b0c21c4e6af5ab6af3cd46eb95c2d418c393e942acee0c2d0df83be97392",
+      "bytes": 283,
+      "recovery": "existing-embedded"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation/prepare_corpus.py": {
+      "sha256": "b89cd2cb3047826b032da445cfdabb85eb625357d3d293e3ecb4ca8ddafab0da",
+      "bytes": 39320,
+      "recovery": "existing-embedded"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation/retention-inventory.json": {
+      "sha256": "a7c403fde3a4a6cdca39ce731b9d4cee80c6725e9f2f6baa8661014c81cb6d40",
+      "bytes": 25078,
+      "recovery": "existing-embedded"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation/schemas/envelopes.json": {
+      "sha256": "fb210a268adba36ead54b506600e72200cac3afb5c458bce51c9b87350acf57b",
+      "bytes": 8363,
+      "recovery": "existing-embedded"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation/schemas/prepared-results-01.json": {
+      "sha256": "5f3c655508e441f118ef24fc2457e1ffdf20af53dc0b8a9556c48d9a31008690",
+      "bytes": 198057,
+      "recovery": "existing-embedded"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation/schemas/prepared-results-02.json": {
+      "sha256": "9d3203799e0d77b1994265d3e385e9c872b9f7ae3efa11932e9df095b1e313f5",
+      "bytes": 206815,
+      "recovery": "existing-embedded"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation/schemas/prepared-results-03.json": {
+      "sha256": "b8587a46a946b4e6e6111f75f86ec6749814cd8619a25a87c38bf5b38d7ffe16",
+      "bytes": 29945,
+      "recovery": "existing-embedded"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation/schemas/prepared-results-04.json": {
+      "sha256": "1d3fc64db56d99aec1737a9156eb2bdc80115848d20d565f07b29edaa7ca1d13",
+      "bytes": 611,
+      "recovery": "existing-embedded"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation/schemas/prepared-results-05.json": {
+      "sha256": "2244f75bd7464252acd6a51c377fc6172c97b1b750369d60951ef9a69c6ebaf6",
+      "bytes": 50026,
+      "recovery": "existing-embedded"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation/schemas/result-and-trace.json": {
+      "sha256": "b15942470cbcd18229644eb03061f97ad29b636755129155360a1e0f3470e064",
+      "bytes": 39080,
+      "recovery": "existing-embedded"
+    },
+    "docs/superpowers/reports/2026-09-16-maintained-admissibility-preparation/unresolved.json": {
+      "sha256": "c15d8ed2304bba3ef534f4eea2741492745f397c568bc8ca4f53ea2255b4a1ef",
+      "bytes": 2533,
+      "recovery": "existing-embedded"
+    },
+    "docs/superpowers/specs/2026-09-16-maintained-admissibility-enforcement-shared-reference-corrected-design.md": {
+      "sha256": "fc8a8e644213f02694927c4f43f5a25d69c2dad2379b42342fc14e7e657e5268",
+      "bytes": 47782,
+      "recovery": "direct"
+    }
+  },
+  "archive_sha256": "d4e962dacb0c7018f70b03983560835e77fe2f4e5028400cb991a034208fe4dd",
+  "parts": [
+    "2026-09-16-admissibility-authority-part-01.json",
+    "2026-09-16-admissibility-authority-part-02.json",
+    "2026-09-16-admissibility-authority-part-03.json",
+    "2026-09-16-admissibility-authority-part-04.json",
+    "2026-09-16-admissibility-authority-part-05.json",
+    "2026-09-16-admissibility-authority-part-06.json",
+    "2026-09-16-admissibility-authority-part-07.json",
+    "2026-09-16-admissibility-authority-part-08.json",
+    "2026-09-16-admissibility-authority-part-09.json",
+    "2026-09-16-admissibility-authority-part-10.json",
+    "2026-09-16-admissibility-authority-part-11.json",
+    "2026-09-16-admissibility-authority-part-12.json",
+    "2026-09-16-admissibility-authority-part-13.json",
+    "2026-09-16-admissibility-authority-part-14.json",
+    "2026-09-16-admissibility-authority-part-15.json",
+    "2026-09-16-admissibility-authority-part-16.json",
+    "2026-09-16-admissibility-authority-part-17.json",
+    "2026-09-16-admissibility-authority-part-18.json",
+    "2026-09-16-admissibility-authority-part-19.json",
+    "2026-09-16-admissibility-authority-part-20.json",
+    "2026-09-16-admissibility-authority-part-21.json",
+    "2026-09-16-admissibility-authority-part-22.json",
+    "2026-09-16-admissibility-authority-part-23.json",
+    "2026-09-16-admissibility-authority-part-24.json",
+    "2026-09-16-admissibility-authority-part-25.json",
+    "2026-09-16-admissibility-authority-part-26.json",
+    "2026-09-16-admissibility-authority-part-27.json",
+    "2026-09-16-admissibility-authority-part-28.json",
+    "2026-09-16-admissibility-authority-part-29.json",
+    "2026-09-16-admissibility-authority-part-30.json",
+    "2026-09-16-admissibility-authority-part-31.json",
+    "2026-09-16-admissibility-authority-part-32.json",
+    "2026-09-16-admissibility-authority-part-33.json",
+    "2026-09-16-admissibility-authority-part-34.json",
+    "2026-09-16-admissibility-authority-part-35.json",
+    "2026-09-16-admissibility-authority-part-36.json"
+  ],
+  "instructions": "Concatenate decoded parts; verify archive SHA256; gzip-decode file map. Reuse closure frozen-recovery parts and amendment governing-recovery for existing-embedded. Direct files and parent git blobs supply others. Verify every indexed byte length/hash; never execute archived source."
+}
