@@ -72,19 +72,53 @@ or checkout is performed by the application. The maintained S7 release checks co
 clean-build recreation and recovery. Final application acceptance is recorded in
 the owner decision linked above, with its explicit scope and limitations.
 
-The version-only lock here specifies the already approved set; it is not a command
-to install packages. Provisioning retains the separate hash-verified artifacts and
-installation lock. A build identifier is a reproducibility witness, not executable
+The [version-only lock](requirements.lock) specifies the already approved set;
+the retained [hashed installation lock](../../docs/superpowers/reports/2026-09-15-bounded-decision-workflow-requirements-hashed.txt)
+pins the same ten versions and their approved wheel bytes. The interpreter and
+wheels remain external prerequisites, not files supplied by Git. A build identifier
+is a reproducibility witness, not executable
 authentication. Public evidence can be carried without authenticating unavailable
 raw source bytes. Physical accuracy, causal truth and global planning are not claimed.
 
 ## Release verification and recovery
 
-The approved environment can be reproduced in a separate Linux CPython 3.13 venv
-using only the retained wheels and provisioning `requirements-hashed.txt`, with
-`--no-index --no-deps --only-binary=:all: --require-hashes`. The version-only lock
-in this directory does not replace that artifact-hash check. Never repurpose the
-persistent environment or an existing result directory for release tests.
+Provide Linux CPython **3.13.11**, the ten approved wheels matching the retained
+hash lock, and an existing isolated installer with the recorded `pip==25.3`.
+The [environment report](../../docs/superpowers/reports/2026-09-15-bounded-decision-workflow-persistent-environment-report.md)
+records interpreter identity, wheel tags/hashes and the observed platform. Its
+account/group, UID, absolute paths, interpreter location and device assignment
+identify the historical host; they are not installation requirements. Select your
+own private paths and compatible interpreter/wheels. Exact historical replay
+still requires the recorded build/environment witnesses; a different platform is
+not established as equivalent by these instructions.
+
+From this retention checkout, substitute caller-selected absolute paths below.
+The environment destination must be new. Use a verified local ext4/XFS workspace,
+with private ownership/permissions and no symlink components; source may reside on
+DrvFS, but runtime inputs/results may not. This installs offline into a separate
+venv without acquiring artifacts or modifying the existing installer:
+
+```bash
+BDW_PYTHON=/absolute/path/to/approved/python3.13
+BDW_INSTALLER=/absolute/path/to/existing/isolated/installer/bin/python
+BDW_WHEELS=/absolute/path/to/approved/wheelhouse
+BDW_ENV=/absolute/supported-filesystem/new-environment
+BDW_HASH_LOCK="$PWD/docs/superpowers/reports/2026-09-15-bounded-decision-workflow-requirements-hashed.txt"
+"$BDW_PYTHON" -m venv --without-pip "$BDW_ENV"
+"$BDW_INSTALLER" -m pip --python "$BDW_ENV/bin/python" install \
+  --no-index --no-cache-dir --no-deps --only-binary=:all: --require-hashes \
+  --find-links "$BDW_WHEELS" -r "$BDW_HASH_LOCK"
+```
+
+Use the new environment's interpreter for the example commands above, with new
+input filenames and output directories on the supported filesystem. Historical
+replay must run from a separate clean checkout at
+`64f4389b6d93484339afa29cbb7f7f21f6ef2758`; the retained lock is available in this
+later documentation checkout and may be referenced by its absolute path. Never
+repurpose the persistent environment or an existing result directory. Observed
+verification is CPython 3.13.11 on ext4; XFS, other platforms, reboot and power-loss
+behavior remain unverified. Manifest-last completion is not a crash-durability
+guarantee.
 
 From a clean local clone at the exact selected commit, run the application test
 directory and affected decimal-parser, state-classification architecture and
@@ -112,3 +146,30 @@ read. Verification checks integrity; replay additionally reconstructs/recomputes
 Original objectives are answered only within the nominated synthetic hypotheses,
 actions, hard bounds and policy. The workflow does not select measurements or
 generate alternatives, and does not establish actual physical effects.
+
+## Authority and historical evidence navigation
+
+The retained [corrected delivery design](../../docs/superpowers/specs/2026-09-15-bounded-decision-workflow-corrected-delivery-design.md),
+[delivery review](../../docs/superpowers/reports/2026-09-15-bounded-decision-workflow-delivery-independent-review.md)
+and [implementation readiness report](../../docs/superpowers/reports/2026-09-15-bounded-decision-workflow-implementation-readiness-report.md)
+complete the governing authority chain. The review's rejection is historical and
+was resolved by the corrected design and subsequent S1–S7 acceptance.
+
+The historical one-step proof [package](../../docs/superpowers/reports/2026-09-15-one-step-intervention-projection-candidate-package.json)
+and [manifest](../../docs/superpowers/reports/2026-09-15-one-step-intervention-projection-candidate-manifest.json)
+are reproduction inputs for that accepted experiment, not maintained runtime
+inputs. For the 27 exact archive-recoverable duplicates, use each artifact's
+`exact_recovery_locations` in the committed [inventory](../../docs/superpowers/reports/2026-09-16-bounded-decision-workflow-post-delivery-inventory.json):
+the path before ` :: ` identifies the committed report, followed by its archive
+fence and member locator. Decode as specified by that report and verify the
+inventory's byte size and SHA-256; do not execute archived source to recover data.
+Those duplicate standalone files are not required in a fresh checkout.
+
+The [publication-readiness investigation](../../docs/superpowers/reports/2026-09-16-bounded-decision-workflow-publication-readiness.md)
+records isolated installation/command evidence and classifies the other 30
+unmatched files as external historical context in §7. Full review of that context
+still requires its original bytes; no cleanup is implied. Historical links and
+status statements inside frozen reports remain unchanged. The later
+[owner retention approval](../../docs/superpowers/reports/2026-09-16-bounded-decision-workflow-retention-approval.md)
+authorizes the exact additions and metadata disclosure; integration and push
+remain separate owner gates.
