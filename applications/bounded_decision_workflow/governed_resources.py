@@ -53,6 +53,7 @@ class Budget:
         self.logical={k:0 for k in caps}
         self.actual={k:0 for k in caps}
         self.extra={k:0 for k in caps}
+        self.minimum={}
         self.physical={'cache_hits':0}
         self.operations={}
         self.world=None
@@ -73,7 +74,8 @@ class Budget:
         if k not in self.caps or type(delta) is not int or delta<0:
             raise ValueError('invalid internal reservation')
         before=self.logical[k]+self.extra[k];after=before+delta
-        if after>self.caps[k]:
+        reserved=max(self.logical[k]+(0 if extra else delta),self.minimum.get(k,0))+self.extra[k]+(delta if extra else 0)
+        if reserved>self.caps[k]:
             self._event(k,delta,before,before,scope,'refused')
             code='GRAPH_REFERENCE_LIMIT_EXCEEDED' if k=='supplied_references' else 'INPUT_RESOURCE_LIMIT_EXCEEDED'
             raise problem(code,resource=True,target=k)
@@ -81,6 +83,15 @@ class Budget:
         (self.extra if extra else self.logical)[k]+=delta
         self.actual[k]+=delta
         self._event(k,delta,before,after,scope,'completed')
+
+    def require_floor(self,minimum):
+        """Trusted deterministic schedule floor; never offsets positive excess."""
+        for k,v in minimum.items():
+            if k not in self.caps or type(v) is not int or v<0:raise ValueError('invalid internal floor')
+            if max(v,self.logical[k])+self.extra[k]>self.caps[k]:
+                self._event(k,v,self.logical[k]+self.extra[k],self.logical[k]+self.extra[k],'required_schedule','refused')
+                raise problem('INPUT_RESOURCE_LIMIT_EXCEEDED',resource=True,target=k)
+        self.minimum.update({k:max(v,self.minimum.get(k,0)) for k,v in minimum.items()})
 
     def depth(self,n):
         if n>self.caps['active_depth']:
@@ -100,7 +111,8 @@ class Budget:
     def operation(self,name):
         # Fixed internal inventory; never accepts an input-supplied operation name.
         if name not in ('decode_object','public_reconstruction','profile_validation','membership',
-                        'envelope_validation','graph_validation'):
+                        'envelope_validation','graph_validation','projection_plan','policy_assessment',
+                        'row_review','output_construction'):
             raise ValueError('unknown internal operation')
         counts=self.operations.setdefault(name,{'started':0,'completed':0,'failed':0})
         def emit(outcome):

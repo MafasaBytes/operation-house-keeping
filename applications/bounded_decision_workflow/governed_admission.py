@@ -139,12 +139,26 @@ def assess(invocation_wire,objects,*,expected_authority_pin,limits=None,observer
     # Supplied I occurrences count even when a duplicate copy was captured.
     for _ in edges(I,iv):budget.work('supplied_references',1,scope='invocation')
     store.items[ir['sha256']]=(I,invocation_wire,iv,_nodes(iv))
+    result,_=_assess_context(store,iv,ir,expected_authority_pin,budget)
+    return result
+
+
+def _assess_context(store,iv,ir,expected_authority_pin,budget,*,nominated_pairs=None):
+    """Owning validation reused by the in-memory kernel; never accepts permission.
+
+    A nominated template is validated in that world's mandatory reconstruction.
+    The kernel validates all worlds before any numerical dispatch.
+    """
+    invocation_wire=store.items[ir['sha256']][1]
+    budget.world=ir['sha256']
     sc=store.get(iv['scenario'],S)[2];decl=store.get(sc['declaration'],D)[2]
     current_q=store.get(sc['request'],Q);current_b=store.get(sc['snapshot'],B)
     template_q=store.get(decl['template_request'],Q);template_b=store.get(decl['template_snapshot'],B)
     # Q/B public integrity and all present malformed support win over epistemic unknown.
     pairs=[(current_q,current_b)]
-    if (current_q[1],current_b[1])!=(template_q[1],template_b[1]):pairs.append((template_q,template_b))
+    if ((current_q[1],current_b[1])!=(template_q[1],template_b[1]) and
+        (H(template_q[1]),H(template_b[1])) not in (nominated_pairs or set())):pairs.append((template_q,template_b))
+    current_admission=None
     for qi,bi in pairs:
         q,qp=parse_request_wire(qi[1]);bp=parse_snapshot_wire(bi[1]);lower=effective_limits(q)
         # Preserve every lower per-call cap. Only the separate application aggregate
@@ -155,7 +169,8 @@ def assess(invocation_wire,objects,*,expected_authority_pin,limits=None,observer
             budget.work(dimension,delta,scope='public_reconstruction')
         if charges>lower['input_resolution_charges']:raise problem('INPUT_RESOURCE_LIMIT_EXCEEDED',resource=True,target='input_resolution_charges')
         with budget.operation('public_reconstruction'):
-            admission._admit_parsed(q,qp,bp)
+            admitted=admission._admit_parsed(q,qp,bp)
+            if current_admission is None:current_admission=admitted
         with budget.operation('profile_validation'):
             supports=validate_profile(q,lower);validate_policy_structure(q);policy_values(q,lower)
         if any(pair is not None and pair[0]!=pair[1] for pair in supports.values()):raise problem('GOVERNED_PROFILE_UNSUPPORTED',profile=True)
@@ -205,4 +220,4 @@ def assess(invocation_wire,objects,*,expected_authority_pin,limits=None,observer
         permit=disposition=='admissible'
     sem=C({'scope':'pure_nomination_not_workflow','invocation':H(invocation_wire),'evaluation_permitted':permit,
            'disposition':disposition,'reason':reason,'world_sha256':H(w),'fixed_sha256':H(f),'logical':budget.logical})
-    return GateAssessment(permit,disposition,reason,w,f,sem,budget.summary())
+    return GateAssessment(permit,disposition,reason,w,f,sem,budget.summary()),current_admission
