@@ -2,6 +2,16 @@
 
 ## 1. Plan status and frozen authority
 
+Current gate (2026-09-16): [S1–S7 and the complete bounded-decision-workflow application are owner accepted](../reports/2026-09-16-bounded-decision-workflow-final-owner-acceptance.md)
+at tested implementation `64f4389b6d93484339afa29cbb7f7f21f6ef2758`, following
+verification of release checkpoint `70b6079c46423f9fda72eaa44868398b970108b2`.
+Acceptance covers the approved local supplied-alternative workflow and reuses
+the recorded full-suite, command, clean-build, replay, recovery, determinism and
+27-row evidence. Observed platform evidence is locked CPython 3.13.11 on ext4;
+XFS, reboot and power-loss durability remain unverified. IN-001 and CI-001 remain
+open and unselected; no successor is authorized. All gate, pending-acceptance and
+authorization statements below are historical and superseded by this owner decision.
+
 Current gate: [additional S7 full-repository release verification complete; final application acceptance pending](../reports/2026-09-16-bounded-decision-workflow-s7-final-release-verification.md).
 At exact candidate `64f4389b6d93484339afa29cbb7f7f21f6ef2758`, the full base-environment
 suite collected 4,684 tests: 4,648 passed, 35 optional CAD/PDF tests skipped, and

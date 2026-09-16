@@ -1,4 +1,11 @@
-# Local bounded decision workflow (final owner acceptance pending)
+# Local bounded decision workflow (S1–S7 owner accepted)
+
+The owner [accepted S1–S7](../../docs/superpowers/reports/2026-09-16-bounded-decision-workflow-final-owner-acceptance.md)
+at tested implementation `64f4389b6d93484339afa29cbb7f7f21f6ef2758`.
+Observed platform evidence is locked CPython 3.13.11 on ext4; XFS, reboot and
+power-loss durability remain unverified. Reproduce the accepted build and its
+retained replays from that exact implementation commit and locked environment;
+later documentation commits are administrative, not newly tested build identities.
 
 Use the approved Linux CPython 3.13 environment and a local ext4/XFS runtime
 location. The source checkout may remain on WSL DrvFS; input and result files
@@ -62,8 +69,8 @@ requires the same committed application/backend source witnesses, CPython versio
 and locked dependencies, then reconstructs and recomputes. A clean executable scope
 is required; unrelated untracked evidence is not a dirty executable. No installation
 or checkout is performed by the application. The maintained S7 release checks cover
-clean-build recreation and recovery; final application acceptance is a separate
-owner decision, not an automatic consequence of running these checks.
+clean-build recreation and recovery. Final application acceptance is recorded in
+the owner decision linked above, with its explicit scope and limitations.
 
 The version-only lock here specifies the already approved set; it is not a command
 to install packages. Provisioning retains the separate hash-verified artifacts and
