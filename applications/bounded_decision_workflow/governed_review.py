@@ -222,6 +222,11 @@ def evaluate(invocation_wire,objects,*,expected_authority_pin,prior_files=None,l
         pin=expected_authority_pin if x is worlds[-1] else next(w.closure['expected_authority_pin'] for w in carried.worlds if w.closure['invocation']==ir)
         g,a=gate._assess_context(store,x,ir,pin,budget,nominated_pairs=known)
         admitted.append((x,g,a,store.get(x['scenario'],S)[2]))
+    z['world_witnesses']=[{'recipe':'approved-W-F.v1','request':sc['request'],
+                          'world_sha256':H(g.world_key),'fixed_sha256':H(g.fixed_key)} for x,g,a,sc in admitted]
+    completed_closure=bounded_json(z,budget.caps['resolved_container_bytes'],'resolved_container_bytes')
+    if len(completed_closure)!=len(zw):raise RuntimeError('witness binding changed reserved byte count')
+    zw=completed_closure
     budget.work('retention_bytes',budget.caps['retention_bytes'],scope='output_reservation')
     for x,g,a,sc in admitted:
         local=effective_limits(a.request)

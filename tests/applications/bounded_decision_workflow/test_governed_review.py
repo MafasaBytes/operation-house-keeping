@@ -220,3 +220,19 @@ def test_existing_changed_path_guard_precedes_projection(monkeypatch):
     monkeypatch.setattr(policy,'_assess_admitted',lambda *a,**kw:pytest.fail('changed-path refusal must precede numerical work'))
     with pytest.raises(WorkflowInputError) as e:g.evaluate(C(iv),o,expected_authority_pin=ar['sha256'],prior_files=prior)
     assert e.value.diagnostic.target=='changed_paths'
+
+
+def test_public_integrity_precedes_world_representation():
+    i,o,p=fixture();iv=json.loads(i);db={H(b):(k,json.loads(b)) for k,b in o}
+    s=db[iv['scenario']['sha256']][1];a=db[iv['selection']['sha256']][1]
+    q=db[s['request']['sha256']][1];b=db[s['snapshot']['sha256']][1]
+    b['execution']='forged'
+    q['snapshot_commitment']=H(C(b))
+    q['current_condition_question']['as_of']='2026-08-07T20:30:00-00:00'
+    s['snapshot']={'kind':'public-snapshot','sha256':H(C(b))};s['request']={'kind':'bdw001.1','sha256':H(C(q))}
+    sr={'kind':'governed-scenario.v1','sha256':H(C(s))};a['scenario']=sr
+    ar={'kind':'local-authority-selection.v1','sha256':H(C(a))}
+    iv.update(scenario=sr,selection=ar,build_identity=H(BUILD))
+    o += [('bdw001.1',C(q)),('public-snapshot',C(b)),(sr['kind'],C(s)),(ar['kind'],C(a))]
+    with pytest.raises(WorkflowInputError) as e:g.evaluate(C(iv),o,expected_authority_pin=ar['sha256'])
+    assert e.value.diagnostic.code=='PUBLIC_RECONSTRUCTION_REFUSED'

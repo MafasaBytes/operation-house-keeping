@@ -54,8 +54,10 @@ def make_closure(iv_wire,entries,pin,build_wire,prior,caps):
     for world in worlds:
         qref=body(world['scenario'])['request'];q=body(qref)
         parse_request_wire(C(q))
-        w,f=_keys(q)
-        witnesses.append({'recipe':'approved-W-F.v1','request':qref,'world_sha256':H(w),'fixed_sha256':H(f)})
+        # Fixed-width sizing only. Owning public reconstruction must precede
+        # representation/membership diagnostics. The kernel replaces these
+        # hashes with validated gate witnesses before returning any closure.
+        witnesses.append({'recipe':'approved-W-F.v1','request':qref,'world_sha256':'0'*64,'fixed_sha256':'0'*64})
     z={'schema':'governed-closure.v2','invocation':{'kind':I,'sha256':H(iv_wire)},'expected_authority_pin':pin,'objects':table,'world_witnesses':witnesses}
     if _nodes(z)>caps['resolved_container_nodes']:raise problem('INPUT_RESOURCE_LIMIT_EXCEEDED',resource=True,target='resolved_container_nodes')
     wire=bounded_json(z,caps['resolved_container_bytes'],'resolved_container_bytes')
