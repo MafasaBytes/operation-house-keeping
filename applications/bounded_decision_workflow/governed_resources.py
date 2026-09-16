@@ -112,7 +112,7 @@ class Budget:
         # Fixed internal inventory; never accepts an input-supplied operation name.
         if name not in ('decode_object','public_reconstruction','profile_validation','membership',
                         'envelope_validation','graph_validation','projection_plan','policy_assessment',
-                        'row_review','output_construction'):
+                        'row_review','output_construction','dependency_preflight'):
             raise ValueError('unknown internal operation')
         counts=self.operations.setdefault(name,{'started':0,'completed':0,'failed':0})
         def emit(outcome):

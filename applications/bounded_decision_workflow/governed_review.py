@@ -8,7 +8,7 @@ from .governed_contracts import I,S,D,A,T,Q,B,validate,decode,edges
 from .governed_resources import Budget,problem,bounded_json
 from .errors import refusal
 from .input import canonical_json_bytes as C,effective_limits
-from .decision_review import _support_and_decisions
+from .decision_review import _support_and_decisions,_changed_paths
 from .projection_profile import ACTIONS,validate_profile
 from .governed_closure import validate_carried,Carried,shape,schemas
 from .governed_context import make_closure,accounting
@@ -227,6 +227,19 @@ def evaluate(invocation_wire,objects,*,expected_authority_pin,prior_files=None,l
         local=effective_limits(a.request)
         if 23+(8 if g.evaluation_permitted else 0)>min(budget.caps['trace_rows'],local['output_trace_rows']):
             raise problem('OUTPUT_LIMIT_EXCEEDED',resource=True,target='trace_rows')
+    # Preserve the existing changed-frontier cap, even though v2 exposes the
+    # dependency rows rather than a new changed-path output field. This extra
+    # scan is charged positively; a cache saving cannot pay for it.
+    root_limit=effective_limits(admitted[-1][2].request)['changed_paths']
+    for before,after in zip(admitted,admitted[1:]):
+        old=before[2];new=after[2];budget.world=H(C(after[0]))
+        left={'request':old.request_input.raw,'snapshot':old.snapshot_input.raw}
+        right={'request':new.request_input.raw,'snapshot':new.snapshot_input.raw}
+        budget.work('context_nodes',gate._nodes(left)+gate._nodes(right),scope='changed_paths',extra=True)
+        budget.work('context_bytes',len(old.request_input.canonical_bytes)+len(old.snapshot_input.canonical_bytes)+
+                    len(new.request_input.canonical_bytes)+len(new.snapshot_input.canonical_bytes),scope='changed_paths',extra=True)
+        with budget.operation('dependency_preflight'):
+            _changed_paths(left,right,min(root_limit,effective_limits(new.request)['changed_paths']))
     previous=None;completed=[];corners=0
     for index,(x,g,a,sc) in enumerate(admitted):
         budget.world=H(C(x));p=None

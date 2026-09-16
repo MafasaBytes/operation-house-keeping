@@ -203,3 +203,20 @@ def test_supplied_root_copy_cannot_hide_reference_occurrences():
     o.append(('governed-invocation.v1',i))
     with pytest.raises(WorkflowInputError) as e:g.evaluate(i,o,expected_authority_pin=p)
     assert e.value.diagnostic.code=='GRAPH_REFERENCE_LIMIT_EXCEEDED'
+
+
+def test_existing_changed_path_guard_precedes_projection(monkeypatch):
+    from applications.bounded_decision_workflow.input import BUILD_LIMITS
+    from applications.bounded_decision_workflow import policy
+    prior=carry(run());i,o,p=fixture('X-denied');iv=json.loads(i)
+    db={H(b):(k,json.loads(b)) for k,b in o}
+    sc=db[iv['scenario']['sha256']][1];a=db[iv['selection']['sha256']][1];q=db[sc['request']['sha256']][1]
+    q['requested_limits']=dict(BUILD_LIMITS,changed_paths=1)
+    sc['request']={'kind':'bdw001.1','sha256':H(C(q))}
+    sr={'kind':'governed-scenario.v1','sha256':H(C(sc))};a['scenario']=sr
+    ar={'kind':'local-authority-selection.v1','sha256':H(C(a))}
+    iv.update(scenario=sr,selection=ar,build_identity=H(BUILD),comparison={'kind':'prior-bundle-manifest','sha256':H(prior['manifest.json'])})
+    o += [('bdw001.1',C(q)),(sr['kind'],C(sc)),(ar['kind'],C(a))]
+    monkeypatch.setattr(policy,'_assess_admitted',lambda *a,**kw:pytest.fail('changed-path refusal must precede numerical work'))
+    with pytest.raises(WorkflowInputError) as e:g.evaluate(C(iv),o,expected_authority_pin=ar['sha256'],prior_files=prior)
+    assert e.value.diagnostic.target=='changed_paths'
