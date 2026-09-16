@@ -190,6 +190,13 @@ def evaluate(invocation_wire,objects,*,expected_authority_pin,prior_files=None,l
     elif prior_files is not None:raise problem('HISTORY_INCOMPATIBLE')
     # Capture current objects under accepted admission's guards before assembly.
     current=gate._Captured(objects,budget)
+    if H(invocation_wire) in current.items:
+        # The separately supplied root is another capture occurrence even if its
+        # immutable bytes were also supplied in the object list. Reuse parsing,
+        # not the reference/capture allowance for that extra occurrence.
+        budget.work('context_nodes',1,scope='root_capture_record',extra=True)
+        budget.work('capture_bytes',len(invocation_wire),scope='root_capture')
+        for _ in edges(I,iv):budget.work('supplied_references',1,scope='root_capture')
     entries=[(v[0],v[1]) for v in current.items.values()]
     z,zw,worlds=make_closure(invocation_wire,entries,expected_authority_pin,bw,carried,budget.caps)
     logical=accounting(z,zw,worlds,carried,budget.caps)

@@ -195,3 +195,11 @@ def test_required_floor_cannot_be_offset_by_cache_savings():
     b.require_floor({'context_nodes':10})
     with pytest.raises(WorkflowInputError):b.work('context_nodes',1,scope='extra-copy',extra=True)
     assert b.extra['context_nodes']==0
+
+
+def test_supplied_root_copy_cannot_hide_reference_occurrences():
+    from .governed_fixtures import reference_boundary
+    i,o,p=reference_boundary(128);iv=json.loads(i);iv['build_identity']=H(BUILD);i=C(iv)
+    o.append(('governed-invocation.v1',i))
+    with pytest.raises(WorkflowInputError) as e:g.evaluate(i,o,expected_authority_pin=p)
+    assert e.value.diagnostic.code=='GRAPH_REFERENCE_LIMIT_EXCEEDED'
