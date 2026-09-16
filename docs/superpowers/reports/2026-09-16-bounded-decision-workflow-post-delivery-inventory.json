@@ -1,0 +1,2048 @@
+{
+  "artifacts": [
+    {
+      "path": "docs/superpowers/proposals/2026-09-12-conditional-prediction-codex-lead-investigation.md",
+      "bytes": 49518,
+      "sha256": "a43f843d93729881e9254d0ddb060444e06f95e1ad29a6aef1c288234e24e97c",
+      "exact_recovery_locations": [
+        "docs/superpowers/reports/2026-09-13-conditional-prediction-comparative-proof-completion-report.md :: fence[0] base64-zlib (base64+zlib)/docs/superpowers/reports/2026-09-13-conditional-prediction-comparative-proof-final-execution-report.md/base64 :: fence[0] base64-zlib (base64+zlib)/docs/superpowers/proposals/2026-09-12-conditional-prediction-codex-lead-investigation.md/base64"
+      ],
+      "classification": "exact_recoverable_duplicate",
+      "complete_bytes_recoverable_from_committed_archive": true,
+      "recoverability_note": "Exact recovered UTF-8/base64 bytes matched the inventory SHA-256 and size.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "Conditional predictions: representation and justification investigation; original dated preparation/review/execution context retained, not current delivery status."
+    },
+    {
+      "path": "docs/superpowers/proposals/2026-09-14-model-derived-prediction-codex-lead-investigation.md",
+      "bytes": 48666,
+      "sha256": "8eead66545db04d9ca2f2a1837461619802bfa31a7a94b7405320a54a1103348",
+      "exact_recovery_locations": [
+        "docs/superpowers/reports/2026-09-14-model-derived-prediction-final-execution-report.md :: fence[1] text (base64+zlib)/entries[0]/content/objects/8eead66545db04d9ca2f2a1837461619802bfa31a7a94b7405320a54a1103348/content",
+        "docs/superpowers/reports/2026-09-14-model-derived-prediction-final-execution-report.md :: fence[1] text (base64+zlib)/entries[101]/content/objects/8eead66545db04d9ca2f2a1837461619802bfa31a7a94b7405320a54a1103348/content"
+      ],
+      "classification": "exact_recoverable_duplicate",
+      "complete_bytes_recoverable_from_committed_archive": true,
+      "recoverability_note": "Exact recovered UTF-8/base64 bytes matched the inventory SHA-256 and size.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "Model-derived conditional predictions: design-only investigation; original dated preparation/review/execution context retained, not current delivery status."
+    },
+    {
+      "path": "docs/superpowers/proposals/2026-09-15-bounded-decision-workflow-delivery-proposal.md",
+      "bytes": 32252,
+      "sha256": "f48065f53f35a302d9cd1c4f3d66872bf367f0625da44bc499b3be97381b808f",
+      "exact_recovery_locations": [],
+      "classification": "superseded_historically_meaningful",
+      "complete_bytes_recoverable_from_committed_archive": false,
+      "recoverability_note": "No exact copy found in the inspected committed tree, decoded archives or path history. Complete committed recovery is unestablished; related evidence/digest references are not full-file retention. External backups were not inspected.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "Bounded supplied-alternative decision workflow delivery proposal; original dated preparation/review/execution context retained, not current delivery status."
+    },
+    {
+      "path": "docs/superpowers/proposals/2026-09-15-one-step-intervention-projection-proof-design.md",
+      "bytes": 33415,
+      "sha256": "1857703f8c76fbbcdb99b5dca2b62a7e49237ca64ee8807aff496effcdd78599",
+      "exact_recovery_locations": [],
+      "classification": "superseded_historically_meaningful",
+      "complete_bytes_recoverable_from_committed_archive": false,
+      "recoverability_note": "No exact copy found in the inspected committed tree, decoded archives or path history. Complete committed recovery is unestablished; related evidence/digest references are not full-file retention. External backups were not inspected.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "Bounded dependency-review versus one-step intervention-projection proof design; original dated preparation/review/execution context retained, not current delivery status."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-candidate-assumptions-manifest.json",
+      "bytes": 23490,
+      "sha256": "296f0c8d78e6a248b7b647867f5a69a0de69190a5ee02198349c1c1269769c4d",
+      "exact_recovery_locations": [
+        "docs/superpowers/reports/2026-09-12-brc-exp001-slice-a-final-execution-report.md :: fence[1] brc-exp001-zlib-base64 (base64+zlib)/frozen_source_artifacts/2026-09-11-brc-exp001-slice-a-candidate-assumptions-manifest.json/canonical_utf8"
+      ],
+      "classification": "exact_recoverable_duplicate",
+      "complete_bytes_recoverable_from_committed_archive": true,
+      "recoverability_note": "Exact recovered UTF-8/base64 bytes matched the inventory SHA-256 and size.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "brc exp001 slice a candidate assumptions manifest; frozen experiment inputs, commitments or static expectations, not a runtime application input."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-candidate-assumptions.json",
+      "bytes": 29153,
+      "sha256": "4c5e48452ee81a5c65cef2a51dcae8de56262684e7056be429dd6166788241dc",
+      "exact_recovery_locations": [
+        "docs/superpowers/reports/2026-09-12-brc-exp001-mode-b-final-execution-report.md :: fence[0] brc-mode-b-final-execution-archive (base64+zlib)/canonical_objects/4c5e48452ee81a5c65cef2a51dcae8de56262684e7056be429dd6166788241dc (UTF-8)",
+        "docs/superpowers/reports/2026-09-12-brc-exp001-slice-a-final-execution-report.md :: fence[1] brc-exp001-zlib-base64 (base64+zlib)/frozen_source_artifacts/2026-09-11-brc-exp001-slice-a-candidate-assumptions.json/canonical_utf8"
+      ],
+      "classification": "exact_recoverable_duplicate",
+      "complete_bytes_recoverable_from_committed_archive": true,
+      "recoverability_note": "Exact recovered UTF-8/base64 bytes matched the inventory SHA-256 and size.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "brc exp001 slice a candidate assumptions; frozen experiment inputs, commitments or static expectations, not a runtime application input."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-complete-output-resource-correction-review.md",
+      "bytes": 82378,
+      "sha256": "cfb4ffd44f1d315d00cfde8f699f6c94647026105ef8c40f5e99077313eccabd",
+      "exact_recovery_locations": [],
+      "classification": "superseded_historically_meaningful",
+      "complete_bytes_recoverable_from_committed_archive": false,
+      "recoverability_note": "No exact copy found in the inspected committed tree, decoded archives or path history. Complete committed recovery is unestablished; related evidence/digest references are not full-file retention. External backups were not inspected.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "BRC-EXP-001 complete-output resource correction review; original dated preparation/review/execution context retained, not current delivery status."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-expected-oracle-manifest-pre-hostile-target-correction.json",
+      "bytes": 1152,
+      "sha256": "a36e0a01011ec0a45a7cf8c8ba871e6748dd9b2cddbe1bb0a81ac15ef71cb491",
+      "exact_recovery_locations": [],
+      "classification": "superseded_historically_meaningful",
+      "complete_bytes_recoverable_from_committed_archive": false,
+      "recoverability_note": "No exact copy found in the inspected committed tree, decoded archives or path history. Complete committed recovery is unestablished; related evidence/digest references are not full-file retention. External backups were not inspected.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "brc exp001 slice a expected oracle manifest pre hostile target correction; pre-correction bytes retained for historical witness/oracle lineage."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-expected-oracle-manifest-pre-unknown-single-correction.json",
+      "bytes": 1140,
+      "sha256": "e9c006d041c1e4c165037763ecf9524e52644a80c839d4a82f4c0902e6c85ea8",
+      "exact_recovery_locations": [],
+      "classification": "superseded_historically_meaningful",
+      "complete_bytes_recoverable_from_committed_archive": false,
+      "recoverability_note": "No exact copy found in the inspected committed tree, decoded archives or path history. Complete committed recovery is unestablished; related evidence/digest references are not full-file retention. External backups were not inspected.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "brc exp001 slice a expected oracle manifest pre unknown single correction; pre-correction bytes retained for historical witness/oracle lineage."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-expected-oracle-manifest.json",
+      "bytes": 1152,
+      "sha256": "667729a211644eb9251d3578e4ac2d23cb3ef08276b7c84fce3a3212cc0126b6",
+      "exact_recovery_locations": [
+        "docs/superpowers/reports/2026-09-12-brc-exp001-slice-a-final-execution-report.md :: fence[1] brc-exp001-zlib-base64 (base64+zlib)/frozen_source_artifacts/2026-09-11-brc-exp001-slice-a-expected-oracle-manifest.json/canonical_utf8"
+      ],
+      "classification": "exact_recoverable_duplicate",
+      "complete_bytes_recoverable_from_committed_archive": true,
+      "recoverability_note": "Exact recovered UTF-8/base64 bytes matched the inventory SHA-256 and size.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "brc exp001 slice a expected oracle manifest; frozen experiment inputs, commitments or static expectations, not a runtime application input."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-expected-oracle-pre-hostile-target-correction.json",
+      "bytes": 61107,
+      "sha256": "72879f6f339607ca5cbb08b45a6d5289e552d2c428f99106656c1975c155e229",
+      "exact_recovery_locations": [],
+      "classification": "superseded_historically_meaningful",
+      "complete_bytes_recoverable_from_committed_archive": false,
+      "recoverability_note": "No exact copy found in the inspected committed tree, decoded archives or path history. Complete committed recovery is unestablished; related evidence/digest references are not full-file retention. External backups were not inspected.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "brc exp001 slice a expected oracle pre hostile target correction; pre-correction bytes retained for historical witness/oracle lineage."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-expected-oracle-pre-unknown-single-correction.json",
+      "bytes": 61107,
+      "sha256": "a4edd09080cc19e3357b1db4030aa4b5a81487e5e08b3e2df66d6e385c0ddc19",
+      "exact_recovery_locations": [],
+      "classification": "superseded_historically_meaningful",
+      "complete_bytes_recoverable_from_committed_archive": false,
+      "recoverability_note": "No exact copy found in the inspected committed tree, decoded archives or path history. Complete committed recovery is unestablished; related evidence/digest references are not full-file retention. External backups were not inspected.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "brc exp001 slice a expected oracle pre unknown single correction; pre-correction bytes retained for historical witness/oracle lineage."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-expected-oracle.json",
+      "bytes": 61223,
+      "sha256": "baa2c43868829764b77d06ac5b84956f43dfe60761d8065a56a22ce7475e07fc",
+      "exact_recovery_locations": [
+        "docs/superpowers/reports/2026-09-12-brc-exp001-slice-a-final-execution-report.md :: fence[1] brc-exp001-zlib-base64 (base64+zlib)/frozen_source_artifacts/2026-09-11-brc-exp001-slice-a-expected-oracle.json/canonical_utf8"
+      ],
+      "classification": "exact_recoverable_duplicate",
+      "complete_bytes_recoverable_from_committed_archive": true,
+      "recoverability_note": "Exact recovered UTF-8/base64 bytes matched the inventory SHA-256 and size.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "brc exp001 slice a expected oracle; frozen experiment inputs, commitments or static expectations, not a runtime application input."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-final-preexecution-closure-report.md",
+      "bytes": 23844,
+      "sha256": "e9d1c01ae86566d81b56ffb94bdb807d47ce0a6a58e9ad33f1791a31a94f4bc6",
+      "exact_recovery_locations": [],
+      "classification": "superseded_historically_meaningful",
+      "complete_bytes_recoverable_from_committed_archive": false,
+      "recoverability_note": "No exact copy found in the inspected committed tree, decoded archives or path history. Complete committed recovery is unestablished; related evidence/digest references are not full-file retention. External backups were not inspected.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "BRC-EXP-001 Slice A final static preexecution closure; original dated preparation/review/execution context retained, not current delivery status."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-operational-cohort-manifest.json",
+      "bytes": 1399105,
+      "sha256": "e1be77be0bb5c9229d5a073e8adafd6b1448487f590b04ffedebbf8ff4cb4f8a",
+      "exact_recovery_locations": [
+        "docs/superpowers/reports/2026-09-12-brc-exp001-slice-a-final-execution-report.md :: fence[1] brc-exp001-zlib-base64 (base64+zlib)/frozen_source_artifacts/2026-09-11-brc-exp001-slice-a-operational-cohort-manifest.json/canonical_utf8"
+      ],
+      "classification": "exact_recoverable_duplicate",
+      "complete_bytes_recoverable_from_committed_archive": true,
+      "recoverability_note": "Exact recovered UTF-8/base64 bytes matched the inventory SHA-256 and size.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "brc exp001 slice a operational cohort manifest; frozen experiment inputs, commitments or static expectations, not a runtime application input."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-operational-cohort.json",
+      "bytes": 669382,
+      "sha256": "2db52219a67285f67169413e12d9d016bff067c18da2e835f6ded65ba0567866",
+      "exact_recovery_locations": [
+        "docs/superpowers/reports/2026-09-12-brc-exp001-slice-a-final-execution-report.md :: fence[1] brc-exp001-zlib-base64 (base64+zlib)/frozen_source_artifacts/2026-09-11-brc-exp001-slice-a-operational-cohort.json/canonical_utf8"
+      ],
+      "classification": "exact_recoverable_duplicate",
+      "complete_bytes_recoverable_from_committed_archive": true,
+      "recoverability_note": "Exact recovered UTF-8/base64 bytes matched the inventory SHA-256 and size.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "brc exp001 slice a operational cohort; frozen experiment inputs, commitments or static expectations, not a runtime application input."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-pending-parent-inputs-manifest.json",
+      "bytes": 21952,
+      "sha256": "7cd656d5254b0495467eb4d5f8662b7343cafd70eb4ac5b638f8a2f3fc8e86fb",
+      "exact_recovery_locations": [
+        "docs/superpowers/reports/2026-09-12-brc-exp001-slice-a-final-execution-report.md :: fence[1] brc-exp001-zlib-base64 (base64+zlib)/frozen_source_artifacts/2026-09-11-brc-exp001-slice-a-pending-parent-inputs-manifest.json/canonical_utf8"
+      ],
+      "classification": "exact_recoverable_duplicate",
+      "complete_bytes_recoverable_from_committed_archive": true,
+      "recoverability_note": "Exact recovered UTF-8/base64 bytes matched the inventory SHA-256 and size.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "brc exp001 slice a pending parent inputs manifest; frozen experiment inputs, commitments or static expectations, not a runtime application input."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-pending-parent-inputs.json",
+      "bytes": 389405,
+      "sha256": "7778cbeba984c76b870d26f7721a10850813937950b8f7519de81fb509dff5b6",
+      "exact_recovery_locations": [
+        "docs/superpowers/reports/2026-09-12-brc-exp001-slice-a-final-execution-report.md :: fence[1] brc-exp001-zlib-base64 (base64+zlib)/frozen_source_artifacts/2026-09-11-brc-exp001-slice-a-pending-parent-inputs.json/canonical_utf8"
+      ],
+      "classification": "exact_recoverable_duplicate",
+      "complete_bytes_recoverable_from_committed_archive": true,
+      "recoverability_note": "Exact recovered UTF-8/base64 bytes matched the inventory SHA-256 and size.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "brc exp001 slice a pending parent inputs; frozen experiment inputs, commitments or static expectations, not a runtime application input."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-preexecution-rehearsal-report.md",
+      "bytes": 17708,
+      "sha256": "8e34bbc84ae404c0789e62801abe025c6a6820f33747b3c5a38dfbc56cf193f1",
+      "exact_recovery_locations": [],
+      "classification": "superseded_historically_meaningful",
+      "complete_bytes_recoverable_from_committed_archive": false,
+      "recoverability_note": "No exact copy found in the inspected committed tree, decoded archives or path history. Complete committed recovery is unestablished; related evidence/digest references are not full-file retention. External backups were not inspected.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "BRC-EXP-001 Slice A Preexecution Rehearsal Report; original dated preparation/review/execution context retained, not current delivery status."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-redesigned-execution-report.md",
+      "bytes": 1172567,
+      "sha256": "dd1d587480e092228a18c6d59c3a23e36ec6bb42ffc6f16292d6586ee4526f0a",
+      "exact_recovery_locations": [],
+      "classification": "superseded_historically_meaningful",
+      "complete_bytes_recoverable_from_committed_archive": false,
+      "recoverability_note": "No exact copy found in the inspected committed tree, decoded archives or path history. Complete committed recovery is unestablished; related evidence/digest references are not full-file retention. External backups were not inspected.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "BRC-EXP-001 Slice A redesigned execution — retained resource stop; original dated preparation/review/execution context retained, not current delivery status."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-redesigned-preexecution-rehearsal-report.md",
+      "bytes": 28764,
+      "sha256": "7cec799a730584d315242db964c669629b1914826dcba36f88746267da02ad45",
+      "exact_recovery_locations": [],
+      "classification": "superseded_historically_meaningful",
+      "complete_bytes_recoverable_from_committed_archive": false,
+      "recoverability_note": "No exact copy found in the inspected committed tree, decoded archives or path history. Complete committed recovery is unestablished; related evidence/digest references are not full-file retention. External backups were not inspected.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "BRC-EXP-001 Slice A redesigned preexecution rehearsal report; original dated preparation/review/execution context retained, not current delivery status."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-request-carriage-redesign-investigation-report.md",
+      "bytes": 251720,
+      "sha256": "393fcc985173f55794bda9808e01b9691c9c4b45c5a37fd02584c57309e76403",
+      "exact_recovery_locations": [],
+      "classification": "superseded_historically_meaningful",
+      "complete_bytes_recoverable_from_committed_archive": false,
+      "recoverability_note": "No exact copy found in the inspected committed tree, decoded archives or path history. Complete committed recovery is unestablished; related evidence/digest references are not full-file retention. External backups were not inspected.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "BRC-EXP-001 Slice A request-carriage redesign investigation; original dated preparation/review/execution context retained, not current delivery status."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-resource-calibration-continuation-report.md",
+      "bytes": 152923,
+      "sha256": "2f1b0b24f6a6929c80b0566bef7232ebed1fc2fa786f2990264ba9478273cfc0",
+      "exact_recovery_locations": [],
+      "classification": "superseded_historically_meaningful",
+      "complete_bytes_recoverable_from_committed_archive": false,
+      "recoverability_note": "No exact copy found in the inspected committed tree, decoded archives or path history. Complete committed recovery is unestablished; related evidence/digest references are not full-file retention. External backups were not inspected.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "BRC-EXP-001 Slice A resource-calibration continuation; original dated preparation/review/execution context retained, not current delivery status."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-resource-guards-manifest.json",
+      "bytes": 93619,
+      "sha256": "c401e5aa04c79dd49c980b4c4508794deaad55a94f167f86db955cd00c294f1c",
+      "exact_recovery_locations": [
+        "docs/superpowers/reports/2026-09-12-brc-exp001-slice-a-final-execution-report.md :: fence[1] brc-exp001-zlib-base64 (base64+zlib)/frozen_source_artifacts/2026-09-11-brc-exp001-slice-a-resource-guards-manifest.json/canonical_utf8"
+      ],
+      "classification": "exact_recoverable_duplicate",
+      "complete_bytes_recoverable_from_committed_archive": true,
+      "recoverability_note": "Exact recovered UTF-8/base64 bytes matched the inventory SHA-256 and size.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "brc exp001 slice a resource guards manifest; frozen experiment inputs, commitments or static expectations, not a runtime application input."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-resource-guards.json",
+      "bytes": 368740,
+      "sha256": "f55198cb8a57378d51765f7eb5932b9137666bcefe9f5da9caa2b12c5134ea15",
+      "exact_recovery_locations": [
+        "docs/superpowers/reports/2026-09-12-brc-exp001-slice-a-final-execution-report.md :: fence[1] brc-exp001-zlib-base64 (base64+zlib)/frozen_source_artifacts/2026-09-11-brc-exp001-slice-a-resource-guards.json/canonical_utf8"
+      ],
+      "classification": "exact_recoverable_duplicate",
+      "complete_bytes_recoverable_from_committed_archive": true,
+      "recoverability_note": "Exact recovered UTF-8/base64 bytes matched the inventory SHA-256 and size.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "brc exp001 slice a resource guards; frozen experiment inputs, commitments or static expectations, not a runtime application input."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-satisfied-governing-premise-discrepancy-report.md",
+      "bytes": 14505,
+      "sha256": "f3eabf5b7c6b567cc017e1eeb58f78476745e18cc52a101abf98b330f129af23",
+      "exact_recovery_locations": [],
+      "classification": "superseded_historically_meaningful",
+      "complete_bytes_recoverable_from_committed_archive": false,
+      "recoverability_note": "No exact copy found in the inspected committed tree, decoded archives or path history. Complete committed recovery is unestablished; related evidence/digest references are not full-file retention. External backups were not inspected.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "BRC-EXP-001 Slice A corrected final preexecution closure; original dated preparation/review/execution context retained, not current delivery status."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-static-output-proof-discrepancy-report.md",
+      "bytes": 18183,
+      "sha256": "bc12ee9b8e0127f4348798cff9fda456800d15c5cf54f8c7cc68f850494c0010",
+      "exact_recovery_locations": [],
+      "classification": "superseded_historically_meaningful",
+      "complete_bytes_recoverable_from_committed_archive": false,
+      "recoverability_note": "No exact copy found in the inspected committed tree, decoded archives or path history. Complete committed recovery is unestablished; related evidence/digest references are not full-file retention. External backups were not inspected.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "BRC-EXP-001 Slice A final bounded preexecution attempt; original dated preparation/review/execution context retained, not current delivery status."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-static-output-proof-manifest-pre-hostile-target-correction.json",
+      "bytes": 1607,
+      "sha256": "0e11a26ec80c67785f70e2cf66c2272fce7b3abbd7b59b52158393d861a24fff",
+      "exact_recovery_locations": [],
+      "classification": "superseded_historically_meaningful",
+      "complete_bytes_recoverable_from_committed_archive": false,
+      "recoverability_note": "No exact copy found in the inspected committed tree, decoded archives or path history. Complete committed recovery is unestablished; related evidence/digest references are not full-file retention. External backups were not inspected.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "brc exp001 slice a static output proof manifest pre hostile target correction; pre-correction bytes retained for historical witness/oracle lineage."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-static-output-proof-manifest-pre-unknown-single-correction.json",
+      "bytes": 1541,
+      "sha256": "bdea12cd675e53574f63ed03626b5a0ece4b61f16309cbde252e1d5222b54f18",
+      "exact_recovery_locations": [],
+      "classification": "superseded_historically_meaningful",
+      "complete_bytes_recoverable_from_committed_archive": false,
+      "recoverability_note": "No exact copy found in the inspected committed tree, decoded archives or path history. Complete committed recovery is unestablished; related evidence/digest references are not full-file retention. External backups were not inspected.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "brc exp001 slice a static output proof manifest pre unknown single correction; pre-correction bytes retained for historical witness/oracle lineage."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-static-output-proof-manifest.json",
+      "bytes": 1607,
+      "sha256": "c6dcc5d850ca16a55e9cbdbe569840fa5e40cb0361d9af7f9e19ee6b3fbd5cd0",
+      "exact_recovery_locations": [
+        "docs/superpowers/reports/2026-09-12-brc-exp001-slice-a-final-execution-report.md :: fence[1] brc-exp001-zlib-base64 (base64+zlib)/frozen_source_artifacts/2026-09-11-brc-exp001-slice-a-static-output-proof-manifest.json/canonical_utf8"
+      ],
+      "classification": "exact_recoverable_duplicate",
+      "complete_bytes_recoverable_from_committed_archive": true,
+      "recoverability_note": "Exact recovered UTF-8/base64 bytes matched the inventory SHA-256 and size.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "brc exp001 slice a static output proof manifest; frozen experiment inputs, commitments or static expectations, not a runtime application input."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-static-output-proof-pre-hostile-target-correction.json",
+      "bytes": 271359,
+      "sha256": "42b2cef9e52c6f3b8705e2257a1870f48e9fa36d5f27018d209a2c75e5f8a97b",
+      "exact_recovery_locations": [],
+      "classification": "superseded_historically_meaningful",
+      "complete_bytes_recoverable_from_committed_archive": false,
+      "recoverability_note": "No exact copy found in the inspected committed tree, decoded archives or path history. Complete committed recovery is unestablished; related evidence/digest references are not full-file retention. External backups were not inspected.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "brc exp001 slice a static output proof pre hostile target correction; pre-correction bytes retained for historical witness/oracle lineage."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-static-output-proof-pre-unknown-single-correction.json",
+      "bytes": 107607,
+      "sha256": "5cebc27fd4c32052e662b901e4e326c1433f9609ba29a6ec54982664c8d549f6",
+      "exact_recovery_locations": [],
+      "classification": "superseded_historically_meaningful",
+      "complete_bytes_recoverable_from_committed_archive": false,
+      "recoverability_note": "No exact copy found in the inspected committed tree, decoded archives or path history. Complete committed recovery is unestablished; related evidence/digest references are not full-file retention. External backups were not inspected.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "brc exp001 slice a static output proof pre unknown single correction; pre-correction bytes retained for historical witness/oracle lineage."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-static-output-proof.json",
+      "bytes": 271461,
+      "sha256": "658993cbcab8c6943c1f71b7134f8bb3621a47c6b85cc61ff2d81d4c33d1317f",
+      "exact_recovery_locations": [
+        "docs/superpowers/reports/2026-09-12-brc-exp001-slice-a-final-execution-report.md :: fence[1] brc-exp001-zlib-base64 (base64+zlib)/frozen_source_artifacts/2026-09-11-brc-exp001-slice-a-static-output-proof.json/canonical_utf8"
+      ],
+      "classification": "exact_recoverable_duplicate",
+      "complete_bytes_recoverable_from_committed_archive": true,
+      "recoverability_note": "Exact recovered UTF-8/base64 bytes matched the inventory SHA-256 and size.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "brc exp001 slice a static output proof; frozen experiment inputs, commitments or static expectations, not a runtime application input."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-structural-read-matrix-pre-hostile-target-correction.json",
+      "bytes": 1042826,
+      "sha256": "6bbc0aae71b802ac2c73b19734d4befb1fdf781b4ed12940f748c98cb3f0f706",
+      "exact_recovery_locations": [],
+      "classification": "superseded_historically_meaningful",
+      "complete_bytes_recoverable_from_committed_archive": false,
+      "recoverability_note": "No exact copy found in the inspected committed tree, decoded archives or path history. Complete committed recovery is unestablished; related evidence/digest references are not full-file retention. External backups were not inspected.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "brc exp001 slice a structural read matrix pre hostile target correction; pre-correction bytes retained for historical witness/oracle lineage."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-structural-read-matrix-pre-unknown-single-correction.json",
+      "bytes": 4125,
+      "sha256": "253eecda8e740cb499909b9b7e0d44118bf51e38a9dd83c95b4c07b38f953b35",
+      "exact_recovery_locations": [],
+      "classification": "superseded_historically_meaningful",
+      "complete_bytes_recoverable_from_committed_archive": false,
+      "recoverability_note": "No exact copy found in the inspected committed tree, decoded archives or path history. Complete committed recovery is unestablished; related evidence/digest references are not full-file retention. External backups were not inspected.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "brc exp001 slice a structural read matrix pre unknown single correction; pre-correction bytes retained for historical witness/oracle lineage."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-structural-read-matrix.json",
+      "bytes": 1052307,
+      "sha256": "aed60553424d089c6f49383f3d89c83cbdbe9bd008a2470cd6359c467605652a",
+      "exact_recovery_locations": [
+        "docs/superpowers/reports/2026-09-12-brc-exp001-slice-a-final-execution-report.md :: fence[1] brc-exp001-zlib-base64 (base64+zlib)/frozen_source_artifacts/2026-09-11-brc-exp001-slice-a-structural-read-matrix.json/canonical_utf8"
+      ],
+      "classification": "exact_recoverable_duplicate",
+      "complete_bytes_recoverable_from_committed_archive": true,
+      "recoverability_note": "Exact recovered UTF-8/base64 bytes matched the inventory SHA-256 and size.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "brc exp001 slice a structural read matrix; frozen experiment inputs, commitments or static expectations, not a runtime application input."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-unknown-single-output-correction-report.md",
+      "bytes": 7351,
+      "sha256": "3bed5aec2c987e46830ea60b25160bb9ca342cdcf6bf97ccd2e46ff0b8c46a18",
+      "exact_recovery_locations": [],
+      "classification": "superseded_historically_meaningful",
+      "complete_bytes_recoverable_from_committed_archive": false,
+      "recoverability_note": "No exact copy found in the inspected committed tree, decoded archives or path history. Complete committed recovery is unestablished; related evidence/digest references are not full-file retention. External backups were not inspected.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "BRC-EXP-001 Slice A unknown-single output correction; original dated preparation/review/execution context retained, not current delivery status."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-unknown-single-output-discrepancy-report.md",
+      "bytes": 10681,
+      "sha256": "1faff615761f8f93de8ffd994a2437a8286581b9c416d1f2b41da5749551c1a7",
+      "exact_recovery_locations": [],
+      "classification": "superseded_historically_meaningful",
+      "complete_bytes_recoverable_from_committed_archive": false,
+      "recoverability_note": "No exact copy found in the inspected committed tree, decoded archives or path history. Complete committed recovery is unestablished; related evidence/digest references are not full-file retention. External backups were not inspected.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "BRC-EXP-001 Slice A final preexecution closure — frozen-oracle discrepancy; original dated preparation/review/execution context retained, not current delivery status."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-12-brc-exp001-mode-b-candidate-package-manifest.json",
+      "bytes": 179777,
+      "sha256": "3be37d8858b50cba4d02bf9731c0d4eb0da85c35cd3fc0b79193afc7a505f970",
+      "exact_recovery_locations": [
+        "docs/superpowers/reports/2026-09-12-brc-exp001-mode-b-final-execution-report.md :: fence[0] brc-mode-b-final-execution-archive (base64+zlib)/package_manifest_bytes (UTF-8)",
+        "docs/superpowers/reports/2026-09-12-brc-exp001-mode-b-output-resource-amendment-report.md :: fence[1] brc-mode-b-amendment-archive (base64+zlib)/package_manifest_bytes (UTF-8)"
+      ],
+      "classification": "exact_recoverable_duplicate",
+      "complete_bytes_recoverable_from_committed_archive": true,
+      "recoverability_note": "Exact recovered UTF-8/base64 bytes matched the inventory SHA-256 and size.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "brc exp001 mode b candidate package manifest; frozen experiment inputs, commitments or static expectations, not a runtime application input."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-12-brc-exp001-mode-b-candidate-package.json",
+      "bytes": 7302016,
+      "sha256": "fa1f3b3cbd9e9586a063ae7df10fc75a22298fa80d1971ef363ddf702bbe957e",
+      "exact_recovery_locations": [
+        "docs/superpowers/reports/2026-09-12-brc-exp001-mode-b-final-execution-report.md :: fence[0] brc-mode-b-final-execution-archive (base64+zlib)/package_bytes (UTF-8)",
+        "docs/superpowers/reports/2026-09-12-brc-exp001-mode-b-output-resource-amendment-report.md :: fence[1] brc-mode-b-amendment-archive (base64+zlib)/package_bytes (UTF-8)"
+      ],
+      "classification": "exact_recoverable_duplicate",
+      "complete_bytes_recoverable_from_committed_archive": true,
+      "recoverability_note": "Exact recovered UTF-8/base64 bytes matched the inventory SHA-256 and size.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "brc exp001 mode b candidate package; frozen experiment inputs, commitments or static expectations, not a runtime application input."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-12-brc-exp001-mode-b-preexecution-rehearsal-report.md",
+      "bytes": 21244,
+      "sha256": "44c2dfe961b9127679ced87e0e30d41a400fc04a969918da0bcdcd5d20124353",
+      "exact_recovery_locations": [],
+      "classification": "superseded_historically_meaningful",
+      "complete_bytes_recoverable_from_committed_archive": false,
+      "recoverability_note": "No exact copy found in the inspected committed tree, decoded archives or path history. Complete committed recovery is unestablished; related evidence/digest references are not full-file retention. External backups were not inspected.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "BRC-EXP-001 Mode B preexecution rehearsal; original dated preparation/review/execution context retained, not current delivery status."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-12-brc-exp001-slice-a-completion-report.md",
+      "bytes": 45026,
+      "sha256": "f6c61cb0bdcb2667d35d2ff9bb1c357ffa11c1da1b33e6d130e8522efe8cb8d3",
+      "exact_recovery_locations": [],
+      "classification": "superseded_historically_meaningful",
+      "complete_bytes_recoverable_from_committed_archive": false,
+      "recoverability_note": "No exact copy found in the inspected committed tree, decoded archives or path history. Complete committed recovery is unestablished; related evidence/digest references are not full-file retention. External backups were not inspected.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "BRC-EXP-001 Slice A Completion Attempt — Contract-Contradiction Stop; original dated preparation/review/execution context retained, not current delivery status."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-12-brc-exp001-slice-a-output-resource-amendment-report.md",
+      "bytes": 84215,
+      "sha256": "798800630ff1326ac94e6097c95d5850514891dabc34dc2439bfba139b048da5",
+      "exact_recovery_locations": [],
+      "classification": "superseded_historically_meaningful",
+      "complete_bytes_recoverable_from_committed_archive": false,
+      "recoverability_note": "No exact copy found in the inspected committed tree, decoded archives or path history. Complete committed recovery is unestablished; related evidence/digest references are not full-file retention. External backups were not inspected.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "BRC-EXP-001 Slice A Output Resource Amendment Report; original dated preparation/review/execution context retained, not current delivery status."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-12-conditional-prediction-codex-lead-investigation-challenger-audit.md",
+      "bytes": 12270,
+      "sha256": "5b9517f17ee03c748a455d4c93b1d251ef21b0fa60756e6ea90d0c96f4741399",
+      "exact_recovery_locations": [
+        "docs/superpowers/reports/2026-09-13-conditional-prediction-comparative-proof-completion-report.md :: fence[0] base64-zlib (base64+zlib)/docs/superpowers/reports/2026-09-13-conditional-prediction-comparative-proof-final-execution-report.md/base64 :: fence[0] base64-zlib (base64+zlib)/docs/superpowers/reports/2026-09-12-conditional-prediction-codex-lead-investigation-challenger-audit.md/base64"
+      ],
+      "classification": "exact_recoverable_duplicate",
+      "complete_bytes_recoverable_from_committed_archive": true,
+      "recoverability_note": "Exact recovered UTF-8/base64 bytes matched the inventory SHA-256 and size.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "Conditional-prediction Codex lead investigation — challenger audit; original dated preparation/review/execution context retained, not current delivery status."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-13-conditional-prediction-comparative-proof-candidate-manifest.json",
+      "bytes": 75523,
+      "sha256": "41bca0da605f257925ebf4e321fd1b3e7d99daa4abe8d6243cc1f9059e662768",
+      "exact_recovery_locations": [
+        "docs/superpowers/reports/2026-09-13-conditional-prediction-comparative-proof-completion-report.md :: fence[0] base64-zlib (base64+zlib)/docs/superpowers/reports/2026-09-13-conditional-prediction-comparative-proof-candidate-manifest.json/base64"
+      ],
+      "classification": "exact_recoverable_duplicate",
+      "complete_bytes_recoverable_from_committed_archive": true,
+      "recoverability_note": "Exact recovered UTF-8/base64 bytes matched the inventory SHA-256 and size.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "conditional prediction comparative proof candidate manifest; frozen experiment inputs, commitments or static expectations, not a runtime application input."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-13-conditional-prediction-comparative-proof-candidate-package.json",
+      "bytes": 28743806,
+      "sha256": "793ea96ff8fb3d3bcab7f90854d69c2599b74e5115f0fea821dc877a1e9ed497",
+      "exact_recovery_locations": [
+        "docs/superpowers/reports/2026-09-13-conditional-prediction-comparative-proof-completion-report.md :: fence[0] base64-zlib (base64+zlib)/docs/superpowers/reports/2026-09-13-conditional-prediction-comparative-proof-candidate-package.json/base64"
+      ],
+      "classification": "exact_recoverable_duplicate",
+      "complete_bytes_recoverable_from_committed_archive": true,
+      "recoverability_note": "Exact recovered UTF-8/base64 bytes matched the inventory SHA-256 and size.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "conditional prediction comparative proof candidate package; frozen experiment inputs, commitments or static expectations, not a runtime application input."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-13-conditional-prediction-comparative-proof-final-execution-report.md",
+      "bytes": 19089430,
+      "sha256": "5e25763160cc07b429cb81acb825170deb7627afb1ca62d266335c8fae23a449",
+      "exact_recovery_locations": [
+        "docs/superpowers/reports/2026-09-13-conditional-prediction-comparative-proof-completion-report.md :: fence[0] base64-zlib (base64+zlib)/docs/superpowers/reports/2026-09-13-conditional-prediction-comparative-proof-final-execution-report.md/base64"
+      ],
+      "classification": "exact_recoverable_duplicate",
+      "complete_bytes_recoverable_from_committed_archive": true,
+      "recoverability_note": "Exact recovered UTF-8/base64 bytes matched the inventory SHA-256 and size.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "Conditional-prediction comparative proof: execution stopped on frozen-oracle conflict; original dated preparation/review/execution context retained, not current delivery status."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-13-conditional-prediction-comparative-proof-preexecution-report.md",
+      "bytes": 23185,
+      "sha256": "97c984a7841f25f797e8d2cdf4cec2fb9015fdbe775fae7221c1208d59ca1905",
+      "exact_recovery_locations": [
+        "docs/superpowers/reports/2026-09-13-conditional-prediction-comparative-proof-completion-report.md :: fence[0] base64-zlib (base64+zlib)/docs/superpowers/reports/2026-09-13-conditional-prediction-comparative-proof-final-execution-report.md/base64 :: fence[0] base64-zlib (base64+zlib)/docs/superpowers/reports/2026-09-13-conditional-prediction-comparative-proof-preexecution-report.md/base64",
+        "docs/superpowers/reports/2026-09-13-conditional-prediction-comparative-proof-completion-report.md :: fence[0] base64-zlib (base64+zlib)/docs/superpowers/reports/2026-09-13-conditional-prediction-comparative-proof-preexecution-report.md/base64"
+      ],
+      "classification": "exact_recoverable_duplicate",
+      "complete_bytes_recoverable_from_committed_archive": true,
+      "recoverability_note": "Exact recovered UTF-8/base64 bytes matched the inventory SHA-256 and size.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "Conditional-prediction comparative proof: completed preexecution rehearsal; original dated preparation/review/execution context retained, not current delivery status."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-14-model-derived-prediction-candidate-manifest.json",
+      "bytes": 125928,
+      "sha256": "a0e26aecda0c8e4feb8ee675e555e7f339c8e5aba2f61725b8fcc6e111d3df82",
+      "exact_recovery_locations": [
+        "docs/superpowers/reports/2026-09-14-model-derived-prediction-final-execution-report.md :: fence[1] text (base64+zlib)/entries[100]/content"
+      ],
+      "classification": "exact_recoverable_duplicate",
+      "complete_bytes_recoverable_from_committed_archive": true,
+      "recoverability_note": "Exact recovered UTF-8/base64 bytes matched the inventory SHA-256 and size.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "model derived prediction candidate manifest; frozen experiment inputs, commitments or static expectations, not a runtime application input."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-14-model-derived-prediction-candidate-package.json",
+      "bytes": 1479865,
+      "sha256": "4445b88add208e926d313151bc129246f3d3e3b8421a8876c02bc57700be3fd8",
+      "exact_recovery_locations": [
+        "docs/superpowers/reports/2026-09-14-model-derived-prediction-final-execution-report.md :: fence[1] text (base64+zlib)/entries[101]/content"
+      ],
+      "classification": "exact_recoverable_duplicate",
+      "complete_bytes_recoverable_from_committed_archive": true,
+      "recoverability_note": "Exact recovered UTF-8/base64 bytes matched the inventory SHA-256 and size.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "model derived prediction candidate package; frozen experiment inputs, commitments or static expectations, not a runtime application input."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-14-model-derived-prediction-codex-lead-investigation-challenger-audit.md",
+      "bytes": 34841,
+      "sha256": "30c12d1825b5df399a7b3fe93d449a90c92a1d54d403ff0333497b27f3e1266b",
+      "exact_recovery_locations": [
+        "docs/superpowers/reports/2026-09-14-model-derived-prediction-final-execution-report.md :: fence[1] text (base64+zlib)/entries[0]/content/objects/30c12d1825b5df399a7b3fe93d449a90c92a1d54d403ff0333497b27f3e1266b/content",
+        "docs/superpowers/reports/2026-09-14-model-derived-prediction-final-execution-report.md :: fence[1] text (base64+zlib)/entries[101]/content/objects/30c12d1825b5df399a7b3fe93d449a90c92a1d54d403ff0333497b27f3e1266b/content"
+      ],
+      "classification": "exact_recoverable_duplicate",
+      "complete_bytes_recoverable_from_committed_archive": true,
+      "recoverability_note": "Exact recovered UTF-8/base64 bytes matched the inventory SHA-256 and size.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "Model-derived prediction investigation: adversarial challenger audit; original dated preparation/review/execution context retained, not current delivery status."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-14-model-derived-prediction-independent-review.md",
+      "bytes": 17441,
+      "sha256": "1be11cf816a4718c485135e3fc40c488d86cd27e5b17871fe92a9ffdf75b326d",
+      "exact_recovery_locations": [
+        "docs/superpowers/reports/2026-09-14-model-derived-prediction-final-execution-report.md :: fence[1] text (base64+zlib)/entries[0]/content/objects/1be11cf816a4718c485135e3fc40c488d86cd27e5b17871fe92a9ffdf75b326d/content",
+        "docs/superpowers/reports/2026-09-14-model-derived-prediction-final-execution-report.md :: fence[1] text (base64+zlib)/entries[101]/content/objects/1be11cf816a4718c485135e3fc40c488d86cd27e5b17871fe92a9ffdf75b326d/content"
+      ],
+      "classification": "exact_recoverable_duplicate",
+      "complete_bytes_recoverable_from_committed_archive": true,
+      "recoverability_note": "Exact recovered UTF-8/base64 bytes matched the inventory SHA-256 and size.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "Model-derived prediction: independent focused review; original dated preparation/review/execution context retained, not current delivery status."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-14-model-derived-prediction-preexecution-report.md",
+      "bytes": 42694,
+      "sha256": "94f955b3e828e787128aae32083f4ded8e87b585e12aaa4ac22cfd1d2e99eb6f",
+      "exact_recovery_locations": [
+        "docs/superpowers/reports/2026-09-14-model-derived-prediction-final-execution-report.md :: fence[1] text (base64+zlib)/entries[104]/content"
+      ],
+      "classification": "exact_recoverable_duplicate",
+      "complete_bytes_recoverable_from_committed_archive": true,
+      "recoverability_note": "Exact recovered UTF-8/base64 bytes matched the inventory SHA-256 and size.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "Model-derived prediction: exact-package preexecution report; original dated preparation/review/execution context retained, not current delivery status."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-delivery-independent-review.md",
+      "bytes": 26970,
+      "sha256": "2bc917bee36a4e0db9b8b07b5a650455f98008e7d286a482c1127bdb8a7ddf29",
+      "exact_recovery_locations": [],
+      "classification": "superseded_historically_meaningful",
+      "complete_bytes_recoverable_from_committed_archive": false,
+      "recoverability_note": "No exact copy found in the inspected committed tree, decoded archives or path history. Complete committed recovery is unestablished; related evidence/digest references are not full-file retention. External backups were not inspected.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "Independent adversarial review of the bounded decision workflow delivery proposal; original dated preparation/review/execution context retained, not current delivery status."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-implementation-readiness-report.md",
+      "bytes": 15852,
+      "sha256": "3792d9ade000b83c9226d50217b4b35154e8abfc780c39d6d9c3ce797f568d93",
+      "exact_recovery_locations": [],
+      "classification": "superseded_historically_meaningful",
+      "complete_bytes_recoverable_from_committed_archive": false,
+      "recoverability_note": "No exact copy found in the inspected committed tree, decoded archives or path history. Complete committed recovery is unestablished; related evidence/digest references are not full-file retention. External backups were not inspected.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "Bounded decision-workflow implementation readiness report; original dated preparation/review/execution context retained, not current delivery status."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-persistent-environment-report.md",
+      "bytes": 12752,
+      "sha256": "4e83517a4ee3ec360ed681c336c71cd94dbf58b76bc98bddc541f5f70c3935e2",
+      "exact_recovery_locations": [],
+      "classification": "unique_external_input_or_authority",
+      "complete_bytes_recoverable_from_committed_archive": false,
+      "recoverability_note": "No exact copy found in the inspected committed tree, decoded archives or path history. Complete committed recovery is unestablished; related evidence/digest references are not full-file retention. External backups were not inspected.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "Persistent ext4 interpreter/wheel provisioning and identity report; complete file remains external to Git."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-15-one-step-intervention-projection-candidate-manifest.json",
+      "bytes": 64151,
+      "sha256": "3f66828ee716c74e464862433fd9c62016cc758428f5a6a8c52952c7bbf97079",
+      "exact_recovery_locations": [],
+      "classification": "unique_external_input_or_authority",
+      "complete_bytes_recoverable_from_committed_archive": false,
+      "recoverability_note": "No exact copy found in the inspected committed tree, decoded archives or path history. Complete committed recovery is unestablished; related evidence/digest references are not full-file retention. External backups were not inspected.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "Frozen one-step experimental input package/manifest referenced by the accepted proof; execution archive retains hashes/results rather than this complete file."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-15-one-step-intervention-projection-candidate-package.json",
+      "bytes": 1020759,
+      "sha256": "97a78717e1964463a2e2ed41d6dd65291e4b0bc6272d8884b0c4bbf8ec24257b",
+      "exact_recovery_locations": [],
+      "classification": "unique_external_input_or_authority",
+      "complete_bytes_recoverable_from_committed_archive": false,
+      "recoverability_note": "No exact copy found in the inspected committed tree, decoded archives or path history. Complete committed recovery is unestablished; related evidence/digest references are not full-file retention. External backups were not inspected.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "Frozen one-step experimental input package/manifest referenced by the accepted proof; execution archive retains hashes/results rather than this complete file."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-15-one-step-intervention-projection-independent-review.md",
+      "bytes": 29260,
+      "sha256": "41c6ece7848bb9ee59a2cc62eff21c234c1b2d2e9c472ab57b213a6d1c0390b3",
+      "exact_recovery_locations": [],
+      "classification": "superseded_historically_meaningful",
+      "complete_bytes_recoverable_from_committed_archive": false,
+      "recoverability_note": "No exact copy found in the inspected committed tree, decoded archives or path history. Complete committed recovery is unestablished; related evidence/digest references are not full-file retention. External backups were not inspected.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "Independent review of the one-step intervention-projection proof design; original dated preparation/review/execution context retained, not current delivery status."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-15-one-step-intervention-projection-preexecution-report.md",
+      "bytes": 15907,
+      "sha256": "0df39edb1033ac0a3389864a69a582ca49748c326cf9cff2b6e5bac4dac0d56b",
+      "exact_recovery_locations": [],
+      "classification": "superseded_historically_meaningful",
+      "complete_bytes_recoverable_from_committed_archive": false,
+      "recoverability_note": "No exact copy found in the inspected committed tree, decoded archives or path history. Complete committed recovery is unestablished; related evidence/digest references are not full-file retention. External backups were not inspected.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "One-step intervention-projection preexecution report; original dated preparation/review/execution context retained, not current delivery status."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-15-post-experiment-objective-and-architecture-consolidation.md",
+      "bytes": 30224,
+      "sha256": "08bdd577755c5e1e8b04a2780c137ae31de8a742dcdc8020f2c2097a534f9574",
+      "exact_recovery_locations": [],
+      "classification": "superseded_historically_meaningful",
+      "complete_bytes_recoverable_from_committed_archive": false,
+      "recoverability_note": "No exact copy found in the inspected committed tree, decoded archives or path history. Complete committed recovery is unestablished; related evidence/digest references are not full-file retention. External backups were not inspected.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "Post-experiment objective and architecture consolidation; original dated preparation/review/execution context retained, not current delivery status."
+    },
+    {
+      "path": "docs/superpowers/reports/2026-09-15-source-agnostic-backend-gap-assessment.md",
+      "bytes": 29772,
+      "sha256": "121f832852c5e2162882a2bdc1ecd3e0249f1e3d6afd8cd7da23b3f5ab7e63a9",
+      "exact_recovery_locations": [],
+      "classification": "superseded_historically_meaningful",
+      "complete_bytes_recoverable_from_committed_archive": false,
+      "recoverability_note": "No exact copy found in the inspected committed tree, decoded archives or path history. Complete committed recovery is unestablished; related evidence/digest references are not full-file retention. External backups were not inspected.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "Source-agnostic backend architecture-gap assessment; original dated preparation/review/execution context retained, not current delivery status."
+    },
+    {
+      "path": "docs/superpowers/specs/2026-09-15-bounded-decision-workflow-corrected-delivery-design.md",
+      "bytes": 52349,
+      "sha256": "54b8b9dcd34d7bd31056f24d4fe82a9eab7e0cc5a5e1e383401dd3498de426ab",
+      "exact_recovery_locations": [],
+      "classification": "unique_external_input_or_authority",
+      "complete_bytes_recoverable_from_committed_archive": false,
+      "recoverability_note": "No exact copy found in the inspected committed tree, decoded archives or path history. Complete committed recovery is unestablished; related evidence/digest references are not full-file retention. External backups were not inspected.",
+      "ownership_note": "Historical repository evidence with identified purpose; no disposal authority inferred.",
+      "historical_purpose": "Approved application semantic/delivery authority referenced by the committed implementation plan; complete file remains external to Git."
+    }
+  ],
+  "decoded_archives": [
+    {
+      "location": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-completion-report.md :: fence[0] base64-log (base64)",
+      "bytes": 6500,
+      "sha256": "a765954f04c4e57d1001e7c9e8437c2104e6544d93183e1b62c30b9681ae0c22"
+    },
+    {
+      "location": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-completion-report.md :: fence[1] base64 (base64)",
+      "bytes": 94819,
+      "sha256": "67fe5d164251fdc6d8ba577e90660b0c486ea626af0a1faccac5362481f188c1"
+    },
+    {
+      "location": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-completion-report.md :: fence[2] base64 (base64)",
+      "bytes": 189522,
+      "sha256": "bace2e4bec513e920b8afdd11d5562971cb213e7dec2ea08878b136b71192a9b"
+    },
+    {
+      "location": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-completion-report.md :: fence[3] base64-log (base64)",
+      "bytes": 5142,
+      "sha256": "0a0697d0fc025774e4443ceff5a967e8f8708636cadf664257b0c938e6cb627f"
+    },
+    {
+      "location": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-resource-calibration-report.md :: fence[0] base64-audit (base64)",
+      "bytes": 33689,
+      "sha256": "379dc4c44fbc7014ed0bec7ac7d5d49627772f79339e77bf67735228bc34c1f2"
+    },
+    {
+      "location": "docs/superpowers/reports/2026-09-12-brc-exp001-mode-b-final-execution-report.md :: fence[0] brc-mode-b-final-execution-archive (base64+zlib)",
+      "bytes": 41332253,
+      "sha256": "f05da5a10fe5d20f4771aed70175c280aba041017397cd4bf8c12ed7c8ddfa50"
+    },
+    {
+      "location": "docs/superpowers/reports/2026-09-12-brc-exp001-mode-b-output-resource-amendment-report.md :: fence[1] brc-mode-b-amendment-archive (base64+zlib)",
+      "bytes": 8715588,
+      "sha256": "4b9ebefc9820789af3639cfef680ab1be2bf452971de2fe62fc908b4fed47eea"
+    },
+    {
+      "location": "docs/superpowers/reports/2026-09-12-brc-exp001-slice-a-final-execution-report.md :: fence[1] brc-exp001-zlib-base64 (base64+zlib)",
+      "bytes": 44144528,
+      "sha256": "4f5d5c7a3730b22ec6236e027175504e6fac155ca0372345475dd131079e6838"
+    },
+    {
+      "location": "docs/superpowers/reports/2026-09-13-conditional-prediction-comparative-proof-completion-report.md :: fence[0] base64-zlib (base64+zlib)",
+      "bytes": 97583650,
+      "sha256": "5dfaf1ad941477ce3e83fe6128572c239e3029e18d56233aa9b0c4dcc1df6a35"
+    },
+    {
+      "location": "docs/superpowers/reports/2026-09-13-conditional-prediction-comparative-proof-completion-report.md :: fence[0] base64-zlib (base64+zlib)/docs/superpowers/reports/2026-09-13-conditional-prediction-comparative-proof-final-execution-report.md/base64 :: fence[0] base64-zlib (base64+zlib)",
+      "bytes": 61797182,
+      "sha256": "fa175a1fda9d7fdcaf382e41ade4e2490d2464c717c7fe9aad89d11fafa18443"
+    },
+    {
+      "location": "docs/superpowers/reports/2026-09-14-model-derived-prediction-final-execution-report.md :: fence[1] text (base64+zlib)",
+      "bytes": 21847109,
+      "sha256": "346a59447900bdefa3f4cedc953e1a56b240c9bfb407fe3e026894fea54beffe"
+    },
+    {
+      "location": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-s6-resource-and-cli-completion-report.md :: fence[1] base64 (base64+zlib)",
+      "bytes": 256728,
+      "sha256": "336b1ffed263df47067238b233fa564d354b9552e3ab404e9748bf9424739a30"
+    },
+    {
+      "location": "docs/superpowers/reports/2026-09-15-one-step-intervention-projection-final-execution-report.md :: fence[0] text (base64+zlib)",
+      "bytes": 2129379,
+      "sha256": "e2f5781b1ae1a8c615587e9a633cfee71669e0d0a404bdc98e56143a5136d112"
+    }
+  ],
+  "verified_embedded_entries": 585,
+  "branch_to_main_scope": [
+    {
+      "status": "M",
+      "path": "CLAUDE.md",
+      "bytes": 49333,
+      "sha256": "f231973525619f424cef12b4803ac6a95a01fcb1db7a0d6e200cb63096ce731b"
+    },
+    {
+      "status": "M",
+      "path": "README.md",
+      "bytes": 15260,
+      "sha256": "d58a6740361679359df94381ac51fada914777091a83e45de9eee2b967a6d859"
+    },
+    {
+      "status": "A",
+      "path": "applications/__init__.py",
+      "bytes": 59,
+      "sha256": "990c1106c1c2b37ad9720e07708b0c44b21c9ea4b2e5f2c3777b77988fdad25b"
+    },
+    {
+      "status": "A",
+      "path": "applications/bounded_decision_workflow/README.md",
+      "bytes": 7735,
+      "sha256": "af6f32cc6f0f103271e46d1e5fdf58cb5db18aa8753e8a7c8b7a2716a6ecedfd"
+    },
+    {
+      "status": "A",
+      "path": "applications/bounded_decision_workflow/__init__.py",
+      "bytes": 2055,
+      "sha256": "77b185dc1399412a8abaf7a28c94d13da72127ee2cd5d993348ae8349592d5af"
+    },
+    {
+      "status": "A",
+      "path": "applications/bounded_decision_workflow/__main__.py",
+      "bytes": 144,
+      "sha256": "8a9577bd418fc214881592dd7290d3dd64c3bc75d9c9c3f47c36c2ff67f956b5"
+    },
+    {
+      "status": "A",
+      "path": "applications/bounded_decision_workflow/admission.py",
+      "bytes": 13302,
+      "sha256": "4dcde01ee9f47bd0f7e40fe5c8d027e160862b177922b73abd9b649a1ce831e6"
+    },
+    {
+      "status": "A",
+      "path": "applications/bounded_decision_workflow/build.py",
+      "bytes": 3345,
+      "sha256": "8e939d234c4b0328673f91496913a47742f03901b45277f5dc955c5541da3023"
+    },
+    {
+      "status": "A",
+      "path": "applications/bounded_decision_workflow/cli.py",
+      "bytes": 14586,
+      "sha256": "225940c0ab9a85b1376ca8960a0bdaf6e9c5ec1e910e9be41f39d7545c7248ad"
+    },
+    {
+      "status": "A",
+      "path": "applications/bounded_decision_workflow/contracts.py",
+      "bytes": 6944,
+      "sha256": "8a77f18c0b6c11f6c3519e28e47f29da5d0d412c8fdae617ce2cbf5cd94e44ce"
+    },
+    {
+      "status": "A",
+      "path": "applications/bounded_decision_workflow/decision_review.py",
+      "bytes": 17667,
+      "sha256": "69e194832e568268dc154581d46b3eec3122e97d12668cd6cb743785f33e64bc"
+    },
+    {
+      "status": "A",
+      "path": "applications/bounded_decision_workflow/errors.py",
+      "bytes": 947,
+      "sha256": "7829278c93e60c0ee3321e3bc124926cc8dddb2ee05c07641f52a95373dbda72"
+    },
+    {
+      "status": "A",
+      "path": "applications/bounded_decision_workflow/examples/request.json",
+      "bytes": 16460,
+      "sha256": "24635e493d371a5e05f9b61e729457fde7397ddfb0f31bc3dbb7f14ebe19c125"
+    },
+    {
+      "status": "A",
+      "path": "applications/bounded_decision_workflow/examples/snapshot.json",
+      "bytes": 84979,
+      "sha256": "782332fd8dd350d6852f57d0497c2c152a031caf08ee2dfc2cb040cdde8f326f"
+    },
+    {
+      "status": "A",
+      "path": "applications/bounded_decision_workflow/input.py",
+      "bytes": 10857,
+      "sha256": "44755b05c57d29ebc023bcd4ebd7739d21d9d9d0f4cb75f6f90b1ed7a5e7d65b"
+    },
+    {
+      "status": "A",
+      "path": "applications/bounded_decision_workflow/policy.py",
+      "bytes": 7417,
+      "sha256": "8169975cffc7e40f053042c9fc3e850b684cea8b2b1d49bf436cc42cf114b656"
+    },
+    {
+      "status": "A",
+      "path": "applications/bounded_decision_workflow/policy_profile.py",
+      "bytes": 4981,
+      "sha256": "1bda0610001d145b56e5cec67c6afa012ecfacfbe76351f5e65070a4e046d1af"
+    },
+    {
+      "status": "A",
+      "path": "applications/bounded_decision_workflow/preflight.py",
+      "bytes": 4029,
+      "sha256": "daf2dd54164c628e5cb9e40a8ac74730f070bf9baa62983522372da68b72c86b"
+    },
+    {
+      "status": "A",
+      "path": "applications/bounded_decision_workflow/projection.py",
+      "bytes": 8889,
+      "sha256": "9f9c9d68481911a17336ca44aac7fe6d2cc01f49235b7703dcc01e5c2752de48"
+    },
+    {
+      "status": "A",
+      "path": "applications/bounded_decision_workflow/projection_profile.py",
+      "bytes": 9055,
+      "sha256": "eb33f3c307be360c8bb8fade7c78ac4f70a4f9e1c6c597c1e4894330bd96ee47"
+    },
+    {
+      "status": "A",
+      "path": "applications/bounded_decision_workflow/requirements.lock",
+      "bytes": 191,
+      "sha256": "7c87f0d7a3f12c271311cc0c33e59025e0161c37f16336901a0764b4330c0817"
+    },
+    {
+      "status": "A",
+      "path": "applications/bounded_decision_workflow/retention.py",
+      "bytes": 20186,
+      "sha256": "3474dd7f16a2a4e574b84998fcc1bf049d3bf329e8dc74268656ec982bc06189"
+    },
+    {
+      "status": "A",
+      "path": "applications/bounded_decision_workflow/terminal.py",
+      "bytes": 3469,
+      "sha256": "1c48277b9843d2e3d68d5f58c00afafac38f5ac52702e5f09a3bc0e098f60cbb"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/plans/2026-09-11-brc-exp001-slice-a-execution-plan.md",
+      "bytes": 29171,
+      "sha256": "b90744258eaee2434fbd4c5b7c3c96a7fb0a98e92f85fa524de2c5658aa9c021"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/plans/2026-09-12-brc-exp001-mode-b-execution-plan.md",
+      "bytes": 12137,
+      "sha256": "87b030cd984a45e345db55549493604085604c7bac34482c1a4f7292ec62bfa3"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/plans/2026-09-13-conditional-prediction-comparative-proof-execution-plan.md",
+      "bytes": 12913,
+      "sha256": "80b838e23a01e506c489a5a0537cb6f4f72a78e76cbb60f345c64b80ad7b64f2"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/plans/2026-09-14-model-derived-prediction-execution-plan.md",
+      "bytes": 14844,
+      "sha256": "ca6799f122d05f75b3525cb96dfe5ae6e6935fc3e94fdaf9aa6a8fc2eb43d43f"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/plans/2026-09-15-bounded-decision-workflow-implementation-plan.md",
+      "bytes": 25631,
+      "sha256": "04ca2f425c8764c92923f4a1eae219e0c2d3b74469b7598d80406d9d7cee5760"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/plans/2026-09-15-one-step-intervention-projection-execution-plan.md",
+      "bytes": 11120,
+      "sha256": "0e3607101e4ec30d2ee767b242d5b1508be9333d5b25e56ae1ea88e27f2f497e"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/proposals/2026-09-11-brc-exp001-codex-lead-proposal.md",
+      "bytes": 64770,
+      "sha256": "0c830c433674eac130c2c01cb337a4e474eba5d2fa88fc72269e6de656a2bfeb"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/proposals/2026-09-11-brc-exp001-slice-a-experiment-redesign-proposal.md",
+      "bytes": 83407,
+      "sha256": "ec4f818c42ce8e67c10c0d2564ac54fdf4e66fd7ebdc8ec01e30306f18119012"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/proposals/2026-09-14-prospective-model-validation-feasibility.md",
+      "bytes": 23569,
+      "sha256": "fbff2eed30134e9980017861dcbd7d1dbfd8ec7e6d9d28c54a122d53cb0088c8"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/proposals/2026-09-15-bounded-decision-workflow-s6-policy-resolution.md",
+      "bytes": 16764,
+      "sha256": "a7d260571e6eca40ba9764a08735b088e0bb85fd571d2339ab0e4d9c1e63cd7a"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-11-brc-exp001-codex-lead-proposal-challenger-audit.md",
+      "bytes": 48126,
+      "sha256": "65738e0d45ecdc47f9cdaa17bf5890b6337c9d09769ae478320f988d77ce4791"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-11-brc-exp001-final-design-owner-approval.md",
+      "bytes": 6254,
+      "sha256": "c91cdd4e1ae7b1a77ad4dab5a85fecb88d44e1b48be6b300bb0272d8d05c6356"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-completion-report.md",
+      "bytes": 423274,
+      "sha256": "7ac7a4aed2a930ea4fa225ecd73b082fb71d714720fca9f323209f4896beec80"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-experiment-redesign-correction-report.md",
+      "bytes": 17036,
+      "sha256": "12a5c6811014e9f715440dc9c6cb460497e18f64c3481f076e740249f6cc2df5"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-experiment-redesign-proposal-challenger-audit.md",
+      "bytes": 65538,
+      "sha256": "e4d7b6b2aea52e949eb322067d4c6660c3268afb415501e9585761725dfb93ea"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-multiple-match-discrepancy-report.md",
+      "bytes": 14109,
+      "sha256": "b0cd21dc2e73c471f589618b9e688084599f0146022db95a4c0a2093e172475c"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-multiple-match-gate-correction-report.md",
+      "bytes": 8621,
+      "sha256": "aab56652314b9d4bdf84ee80bb222837d9531ae58fb0e08df493f2c268d95d8f"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-resource-accounting-correction-report.md",
+      "bytes": 6278,
+      "sha256": "b0c4940d43b022bad4d8d7f5b9081ad56fa84e8b04ca7895476e3c792a2d0967"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-resource-calibration-report.md",
+      "bytes": 75279,
+      "sha256": "9c3b4b97dc6a80b84f644bfa36bf507fd90d11fc18fe1e58c67d3750e800679c"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-12-brc-exp001-final-owner-acceptance.md",
+      "bytes": 13079,
+      "sha256": "74f833a1dd2f119d417c97a8b4b78590d9fd4c71fc3d04b7a35c3fd08c10ba78"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-12-brc-exp001-mode-b-final-execution-report.md",
+      "bytes": 4965514,
+      "sha256": "39afa882cd41bd01b1c39047ff651732770c326b62c03a56c8ab9925d4a495ca"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-12-brc-exp001-mode-b-output-resource-amendment-report.md",
+      "bytes": 1073123,
+      "sha256": "b37b999f98ff64e2586d908516dcdd06e11087a4fe2a1b8ba10880c5611cecec"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-12-brc-exp001-slice-a-final-execution-report.md",
+      "bytes": 5715759,
+      "sha256": "5a101e9815d4561d1b2fad6a678eb93c3250d395385efe044d270c85840ea5b2"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-12-brc-exp001-slice-a-hostile-target-correction-report.md",
+      "bytes": 49463,
+      "sha256": "7fa1c6db658fb2c9d6c12aedb0bdb4138322dd468188e1ef1bfbe3869cfffc0c"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-12-brc-exp001-slice-a-owner-acceptance.md",
+      "bytes": 6515,
+      "sha256": "dad65d192fc92b3f50554c4fcb8a43afd3216f46ac3167ebb3cb9875fb82bdac"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-13-conditional-prediction-c7-equivalence-correction-report.md",
+      "bytes": 5699,
+      "sha256": "0adf183abed57fc06a26f3f27506dfe46bd355776d5737479dabec900786a79a"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-13-conditional-prediction-comparative-proof-completion-report.md",
+      "bytes": 46008166,
+      "sha256": "b97c7a3336d2d6cae684ba86b1f51acd6836d928c07fcf3c6bf8abf43d7fb91e"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-13-conditional-prediction-comparative-proof-owner-acceptance.md",
+      "bytes": 9111,
+      "sha256": "3922b52bb986ee0fba5540e0c8271bc4f4ab1346b35b12995b182c9741bb2922"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-14-model-derived-prediction-final-execution-report.md",
+      "bytes": 1766344,
+      "sha256": "14f7149e89d9242459c6f1cc379c0ea7de6346dec220aa03328f6f6f86767d81"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-14-model-derived-prediction-owner-acceptance.md",
+      "bytes": 13860,
+      "sha256": "1e6d1501e931382c255c43c911174f8e61dbfd6d1cc35ee95e7eec577f482717"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-14-prospective-model-validation-closeout.md",
+      "bytes": 9182,
+      "sha256": "32af871e8081c9193a3bf7661e80b9a9713f862cb83fec15f36cbdeb2b5a5fe8"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-candidate-manifest-pre-obs3-decimal-correction.json",
+      "bytes": 687,
+      "sha256": "6ac24d274ac5f898876a0ab28f7c250ae1413b909260e1a48eb6d3f00aa55959"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-candidate-manifest-pre-s3-policy-correction.json",
+      "bytes": 1144,
+      "sha256": "5305aef821a19c01c74223ce9a1d483518b41d8c946ead4dd8aeea064b9b3b4a"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-candidate-manifest-pre-s4-complete-sweep.json",
+      "bytes": 1805,
+      "sha256": "75382b7098b9ab98382f104da7cb201dacb357cee67cfb9c9ca81f8f2202c460"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-candidate-manifest-pre-s4-review-correction.json",
+      "bytes": 1510,
+      "sha256": "9b9effe6809bb49ad2f0a7cd1096eeef688ef17dee1a87f44b0832af1e478de9"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-candidate-manifest-pre-s5-retention-correction.json",
+      "bytes": 2047,
+      "sha256": "e0a94c429d69dff69d7b00351dac52ba125e858683f41c0f585c0aafbabd10fc"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-candidate-manifest.json",
+      "bytes": 2310,
+      "sha256": "6f1c6103cbc834e089c839f6e3a4503e0a6d91408dccb70972f40a628784fb57"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-candidate-package-pre-obs3-decimal-correction.json",
+      "bytes": 175271,
+      "sha256": "0d3b3a6f53c465dc45a3fc44b79523bc7d51131c42b342e9f4afa62795d29365"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-candidate-package-pre-s3-policy-correction.json",
+      "bytes": 222648,
+      "sha256": "199d82590048b610f9aa9e96de1620f9015884e727459e88d156d6052ed20ad4"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-candidate-package-pre-s4-complete-sweep.json",
+      "bytes": 297123,
+      "sha256": "6af90f315b7f1c407a30e57d526d609c650dfbd10bb2489c87087a6f596a8a63"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-candidate-package-pre-s4-review-correction.json",
+      "bytes": 246030,
+      "sha256": "df9766b51dea3339b9b2096ab3a96ea75ff01b130b6eb913da86d337c5d7cb1e"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-candidate-package-pre-s5-retention-correction.json",
+      "bytes": 301339,
+      "sha256": "89ba39623a72326d876740d624af501b467179c608ae89ce9e40f66806ec0d4e"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-candidate-package.json",
+      "bytes": 307943,
+      "sha256": "355b169df2805fa09eaba8865eea1a89e02071cc56c302a078677789fad616bf"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-obs3-decimal-fixture-correction.md",
+      "bytes": 6854,
+      "sha256": "feca0900ea3a2519065be2368afe50ae289779d883734276198043c91a7144f2"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-s1-input-public-admission-blocker-report.md",
+      "bytes": 8612,
+      "sha256": "d7255969245010f4f41b922558e4a741993169bd13687110c52e67c559b0652c"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-s1-input-public-admission-completion-report.md",
+      "bytes": 8042,
+      "sha256": "a9c0dea75c17184d7ce00d40b08d3d3ce842ff44481013851fc9cbd13c9d24ab"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-s1-owner-acceptance.md",
+      "bytes": 3593,
+      "sha256": "b30f16f6b1b3f84dcc61351c54b8d1ebe9b89c8eeeb472c212271c622bc0e2ce"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-s1-owner-authorization.md",
+      "bytes": 2366,
+      "sha256": "6a56936d2a8c94ead3e513c081ddcb1b8db8d5fb44d2635e930c4ab6ff64bd88"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-s2-owner-acceptance.md",
+      "bytes": 3048,
+      "sha256": "064e17ec322a24a5c79458f6e6398197c3b74dac699c26f9a6e718b705ae81cd"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-s2-raw-projection-completion-report.md",
+      "bytes": 15797,
+      "sha256": "55d4c2b3587664b074e0b8f14c3552b940d0728498f53b6f8989f5d2d0eacfbc"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-s3-owner-acceptance.md",
+      "bytes": 3639,
+      "sha256": "ed567d369b373d1afccdae1d96946ac6eaeda0a01d220f19dfc3add90fefdd05"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-s3-policy-fixture-correction-report.md",
+      "bytes": 6096,
+      "sha256": "1bdc6e67c2968f1d5de1d605d0ef322a67a7fce9ef69eeaccf6baab5d3f475d9"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-s3-target-and-policy-blocker-report.md",
+      "bytes": 12468,
+      "sha256": "5fbae38608d6a04d3967d6f4bdb86eaa1842bf72e20f324a9b6e57691a0c8d66"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-s3-target-and-policy-completion-report.md",
+      "bytes": 12736,
+      "sha256": "c4fe6effeb3649a7cf2aa399e60a3f279c24de9f53cec981dade0a69a8338eca"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-s4-complete-sweep-correction-report.md",
+      "bytes": 4837,
+      "sha256": "1b27dd37d1cd4acfa3dab7316bf4deb59c74bb52ece27542583f1be81006ef53"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-s4-decision-review-completion-report.md",
+      "bytes": 14230,
+      "sha256": "59cbc7541cf1fb6a6400bbe2dd5b55555da1fc5cbaf706c2adb937bbf5bf23ec"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-s4-decision-review-discrepancy-report.md",
+      "bytes": 11848,
+      "sha256": "8dc27ca1f691b58e45bc6ed3bacce9d3415931deea845b173260c0a1e0244f1a"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-s4-owner-acceptance.md",
+      "bytes": 2801,
+      "sha256": "ae1721827d70d713a3e8cb39ec14a8969648a7526adf128c53c09adc922686ef"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-s4-review-fixture-correction-report.md",
+      "bytes": 9312,
+      "sha256": "fe3bfaccc3c33610708e31aca20cd37a57a8f28fbebef0d3e848b1ee18db2b01"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-s5-owner-acceptance.md",
+      "bytes": 2685,
+      "sha256": "9719fff89953d8dc578929d2f8f2e593d177ce7e01b36447018d7ec904ed2a48"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-s5-retention-and-recovery-completion-report.md",
+      "bytes": 14758,
+      "sha256": "a2d8307c8d8fcaf9a5a7a313d8534bae6d55684f136d742f42e358d0aa5dcc90"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-s5-retention-fixture-correction-report.md",
+      "bytes": 3526,
+      "sha256": "d8a14bc9838753a35a84cc3af59007e82a7839a460a81206b59e7da1bd9e643a"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-s6-owner-acceptance.md",
+      "bytes": 2522,
+      "sha256": "4590466333b7399c8ae4b23bee01567ba9a1d32c7d93c46d58e422e3dbfa13b3"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-s6-policy-owner-approval.md",
+      "bytes": 2401,
+      "sha256": "ec1ce902ba3e36b21b2b1ecaa47c1359b54df02b6c47d9c5b23a37306030395f"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-s6-resource-and-cli-completion-report.md",
+      "bytes": 41521,
+      "sha256": "f808d3fef64c400590ccd90abe21997ab5557f44325f69df4d60aafa8d74c458"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-s6-resource-and-cli-incomplete-checkpoint.md",
+      "bytes": 14723,
+      "sha256": "50b80f1d793c7a2bc182c6f24a8b0fe9a13e833f5fdebcee0ebe2b7fe1003f6f"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-15-one-step-intervention-projection-final-execution-report.md",
+      "bytes": 314901,
+      "sha256": "bb84cdd0743f4aa08eb6cfc58c07478493deac534db97f7c133ce93d2a77aba1"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-15-one-step-intervention-projection-owner-acceptance.md",
+      "bytes": 14118,
+      "sha256": "f4e016475520bb3c1b6ce656134ef4e2e2c5fd7f5ab0a31b542e0c955702789d"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-16-bounded-decision-workflow-final-owner-acceptance.md",
+      "bytes": 7987,
+      "sha256": "c1e825927c2627f0df7f3c9ed06a9a28a83da293faf3e5ca8bdcd9fce994dedf"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-16-bounded-decision-workflow-s7-final-owner-review-receipt.md",
+      "bytes": 23061,
+      "sha256": "ed6ae233e7bf603090d6b2dc923d3cf5638aec102aba4b00ab58615cc7954c2b"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-16-bounded-decision-workflow-s7-final-release-verification.md",
+      "bytes": 12364,
+      "sha256": "ba600db39ddf26f088ff1c2c0a52c9ffad08b26f6be2ef478ea39fc64d560103"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-16-bounded-decision-workflow-s7-full-suite-evidence.json",
+      "bytes": 193808,
+      "sha256": "1e75847a3311eb24d5b5635fb6a88fd33fe5d502d037a689f04468cfd77da274"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-16-bounded-decision-workflow-s7-release-completion-report-pre-marker.md",
+      "bytes": 10052,
+      "sha256": "4e90e82b56f1d25227c23506a80e18b43cdae62c183dfde1835bbd7349664aec"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-16-bounded-decision-workflow-s7-release-completion-report.md",
+      "bytes": 10110,
+      "sha256": "6e2ff01b9172559b3914938b9d9c9e1d41215cfa3771cc2844144f61bd72b9c1"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/reports/2026-09-16-bounded-decision-workflow-s7-release-evidence.json",
+      "bytes": 52086,
+      "sha256": "8db348f00d36e1f75de3798b9f404cdb20d9a2141509a086402f57dd65f6747b"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/specs/2026-09-11-brc-exp001-baseline-reasoning-closure-spike-design.md",
+      "bytes": 147054,
+      "sha256": "03d17caac8daaa4953e4698ec81add76495dffd58b3428d75f9affee17930b23"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/specs/2026-09-13-conditional-prediction-comparative-proof-design.md",
+      "bytes": 44917,
+      "sha256": "4026880e5a9ed0210cc6ba54945d827bf66c639c033de5b902e9ddd79ae8c5c4"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/specs/2026-09-14-model-derived-prediction-bounded-experiment-design.md",
+      "bytes": 61139,
+      "sha256": "23905c499923b138d9e6d2b2baf528d86dfc0c35952d538a3334f565ef81d5ea"
+    },
+    {
+      "status": "A",
+      "path": "docs/superpowers/specs/2026-09-15-one-step-intervention-projection-corrected-design.md",
+      "bytes": 44448,
+      "sha256": "39292efeb3611282d8025fcb52542c28dccb5346a5478848bdc813b46bfb4a76"
+    },
+    {
+      "status": "A",
+      "path": "tests/applications/__init__.py",
+      "bytes": 31,
+      "sha256": "e4bb72f07ecbe964a4ccec6be5e0074ee604807853850e4c1ea20674bc89a106"
+    },
+    {
+      "status": "A",
+      "path": "tests/applications/bounded_decision_workflow/__init__.py",
+      "bytes": 39,
+      "sha256": "08e62b37cee43eee1e030b945f661aafb7b09f68d2529407025340a7ace15761"
+    },
+    {
+      "status": "A",
+      "path": "tests/applications/bounded_decision_workflow/s4_expected_reasoning.py",
+      "bytes": 3822,
+      "sha256": "448bdce91f633d19c50f1bc0e6cc4447e7ebb029105e67fadc29c21c97c0e470"
+    },
+    {
+      "status": "A",
+      "path": "tests/applications/bounded_decision_workflow/test_s1_input_public_admission.py",
+      "bytes": 17320,
+      "sha256": "77e1a314cf68660d84c096c68175d2f667e11cebd96681e6fe073f12cbc737af"
+    },
+    {
+      "status": "A",
+      "path": "tests/applications/bounded_decision_workflow/test_s2_raw_projection.py",
+      "bytes": 20814,
+      "sha256": "a4cc3745fbc2e386b5042768cb9fefdf5accd781f5939fdaaa01042dd4eb4729"
+    },
+    {
+      "status": "A",
+      "path": "tests/applications/bounded_decision_workflow/test_s3_fixture_correction.py",
+      "bytes": 4047,
+      "sha256": "1e3de93191c95fdeb7fb3bb85a14e4c4bc7e7830d5251b5547c27160b992cbf0"
+    },
+    {
+      "status": "A",
+      "path": "tests/applications/bounded_decision_workflow/test_s3_target_and_policy.py",
+      "bytes": 20799,
+      "sha256": "a0194956247541d9d93d44148d1ea5174cff15d3044e9e799f3aeac5c45e6937"
+    },
+    {
+      "status": "A",
+      "path": "tests/applications/bounded_decision_workflow/test_s4_decision_review.py",
+      "bytes": 21774,
+      "sha256": "920a2aa643be1c05e288d66e45ea3edaa331a7ab135bfe1db48d95bea3f44372"
+    },
+    {
+      "status": "A",
+      "path": "tests/applications/bounded_decision_workflow/test_s4_fixture_correction.py",
+      "bytes": 5072,
+      "sha256": "8df4b8493e28b45477964cb3b24adada9806e9fb9a4cf7f837c91572a60466ee"
+    },
+    {
+      "status": "A",
+      "path": "tests/applications/bounded_decision_workflow/test_s5_fixture_correction.py",
+      "bytes": 1635,
+      "sha256": "22915f00787d88c92d12a176460ed583d15a5e9d6b4f96b35fb896d870e92d14"
+    },
+    {
+      "status": "A",
+      "path": "tests/applications/bounded_decision_workflow/test_s5_retention_recovery.py",
+      "bytes": 22264,
+      "sha256": "8fed5d9ff8f2b480d687ac99a67e14e035ca98654a6d94549aa2d1eeccbf74fb"
+    },
+    {
+      "status": "A",
+      "path": "tests/applications/bounded_decision_workflow/test_s6_cli.py",
+      "bytes": 16572,
+      "sha256": "6457046887a16537472164ac94ee2b7927fca1f8133657f9519c8a4fede43124"
+    },
+    {
+      "status": "A",
+      "path": "tests/applications/bounded_decision_workflow/test_s6_policy_conflicts.py",
+      "bytes": 2350,
+      "sha256": "67448262c40a15dc75291879f0776b7e30834c919312380bf62de26d88a7bbbd"
+    },
+    {
+      "status": "A",
+      "path": "tests/applications/bounded_decision_workflow/test_s6_policy_resolution.py",
+      "bytes": 10300,
+      "sha256": "c215a1de004597993acaac0bdaf86c007fbc60564a9df7a242dc3a48ab00bf04"
+    },
+    {
+      "status": "A",
+      "path": "tests/applications/bounded_decision_workflow/test_s6_preflight.py",
+      "bytes": 2874,
+      "sha256": "2525b13aaf1a8f529d1069bd55079eb63214c5bf26c554c8aa0331ac4e66c9ce"
+    },
+    {
+      "status": "A",
+      "path": "tests/applications/bounded_decision_workflow/test_s7_release.py",
+      "bytes": 8041,
+      "sha256": "a572de0f97d4778ec3dd7c0595cc3f65cd7411328bff0f49a1d7352ab3ad6992"
+    }
+  ],
+  "untracked_path_collisions": {
+    "main": [],
+    "origin/main": [],
+    "HEAD": []
+  },
+  "nontracked_markdown_links": [
+    {
+      "source": "docs/superpowers/plans/2026-09-13-conditional-prediction-comparative-proof-execution-plan.md",
+      "target": "docs/superpowers/reports/2026-09-13-conditional-prediction-comparative-proof-preexecution-report.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/plans/2026-09-14-model-derived-prediction-execution-plan.md",
+      "target": "docs/superpowers/reports/2026-09-14-model-derived-prediction-preexecution-report.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/plans/2026-09-14-model-derived-prediction-execution-plan.md",
+      "target": "docs/superpowers/reports/2026-09-14-model-derived-prediction-candidate-package.json",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/plans/2026-09-14-model-derived-prediction-execution-plan.md",
+      "target": "docs/superpowers/reports/2026-09-14-model-derived-prediction-candidate-manifest.json",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/plans/2026-09-15-bounded-decision-workflow-implementation-plan.md",
+      "target": "docs/superpowers/specs/2026-09-15-bounded-decision-workflow-corrected-delivery-design.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/plans/2026-09-15-bounded-decision-workflow-implementation-plan.md",
+      "target": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-delivery-independent-review.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/plans/2026-09-15-one-step-intervention-projection-execution-plan.md",
+      "target": "docs/superpowers/reports/2026-09-15-one-step-intervention-projection-candidate-package.json",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/plans/2026-09-15-one-step-intervention-projection-execution-plan.md",
+      "target": "docs/superpowers/reports/2026-09-15-one-step-intervention-projection-candidate-manifest.json",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/proposals/2026-09-11-brc-exp001-slice-a-experiment-redesign-proposal.md",
+      "target": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-resource-calibration-continuation-report.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/proposals/2026-09-11-brc-exp001-slice-a-experiment-redesign-proposal.md",
+      "target": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-request-carriage-redesign-investigation-report.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/proposals/2026-09-11-brc-exp001-slice-a-experiment-redesign-proposal.md",
+      "target": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-candidate-assumptions.json",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/proposals/2026-09-11-brc-exp001-slice-a-experiment-redesign-proposal.md",
+      "target": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-candidate-assumptions-manifest.json",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/proposals/2026-09-15-bounded-decision-workflow-s6-policy-resolution.md",
+      "target": "docs/superpowers/specs/2026-09-15-bounded-decision-workflow-corrected-delivery-design.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-completion-report.md",
+      "target": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-candidate-assumptions.json",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-completion-report.md",
+      "target": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-candidate-assumptions-manifest.json",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-completion-report.md",
+      "target": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-preexecution-rehearsal-report.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-experiment-redesign-correction-report.md",
+      "target": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-resource-calibration-continuation-report.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-experiment-redesign-correction-report.md",
+      "target": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-request-carriage-redesign-investigation-report.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-experiment-redesign-proposal-challenger-audit.md",
+      "target": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-resource-calibration-continuation-report.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-experiment-redesign-proposal-challenger-audit.md",
+      "target": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-request-carriage-redesign-investigation-report.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-experiment-redesign-proposal-challenger-audit.md",
+      "target": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-candidate-assumptions.json",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-experiment-redesign-proposal-challenger-audit.md",
+      "target": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-candidate-assumptions-manifest.json",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-experiment-redesign-proposal-challenger-audit.md",
+      "target": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-preexecution-rehearsal-report.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-multiple-match-discrepancy-report.md",
+      "target": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-operational-cohort.json",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-multiple-match-discrepancy-report.md",
+      "target": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-operational-cohort-manifest.json",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-multiple-match-discrepancy-report.md",
+      "target": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-resource-guards.json",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-multiple-match-discrepancy-report.md",
+      "target": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-resource-guards-manifest.json",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-multiple-match-discrepancy-report.md",
+      "target": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-redesigned-preexecution-rehearsal-report.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-multiple-match-discrepancy-report.md",
+      "target": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-candidate-assumptions.json",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-multiple-match-discrepancy-report.md",
+      "target": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-candidate-assumptions-manifest.json",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-resource-calibration-report.md",
+      "target": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-candidate-assumptions.json",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-resource-calibration-report.md",
+      "target": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-candidate-assumptions-manifest.json",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-resource-calibration-report.md",
+      "target": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-preexecution-rehearsal-report.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-13-conditional-prediction-c7-equivalence-correction-report.md",
+      "target": "docs/superpowers/reports/2026-09-13-conditional-prediction-comparative-proof-final-execution-report.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-14-model-derived-prediction-final-execution-report.md",
+      "target": "docs/superpowers/reports/2026-09-14-model-derived-prediction-candidate-package.json",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-14-model-derived-prediction-final-execution-report.md",
+      "target": "docs/superpowers/reports/2026-09-14-model-derived-prediction-candidate-manifest.json",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-14-model-derived-prediction-final-execution-report.md",
+      "target": "docs/superpowers/reports/2026-09-14-model-derived-prediction-preexecution-report.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-14-model-derived-prediction-final-execution-report.md",
+      "target": "docs/superpowers/proposals/2026-09-14-model-derived-prediction-codex-lead-investigation.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-14-model-derived-prediction-final-execution-report.md",
+      "target": "docs/superpowers/reports/2026-09-14-model-derived-prediction-codex-lead-investigation-challenger-audit.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-14-model-derived-prediction-final-execution-report.md",
+      "target": "docs/superpowers/reports/2026-09-14-model-derived-prediction-independent-review.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-s1-input-public-admission-blocker-report.md",
+      "target": "docs/superpowers/specs/2026-09-15-bounded-decision-workflow-corrected-delivery-design.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-s1-input-public-admission-blocker-report.md",
+      "target": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-implementation-readiness-report.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-s1-input-public-admission-blocker-report.md",
+      "target": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-persistent-environment-report.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-s2-raw-projection-completion-report.md",
+      "target": "docs/superpowers/specs/2026-09-15-bounded-decision-workflow-corrected-delivery-design.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-s3-owner-acceptance.md",
+      "target": "docs/superpowers/specs/2026-09-15-bounded-decision-workflow-corrected-delivery-design.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-s3-policy-fixture-correction-report.md",
+      "target": "docs/superpowers/specs/2026-09-15-bounded-decision-workflow-corrected-delivery-design.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-s3-target-and-policy-blocker-report.md",
+      "target": "docs/superpowers/specs/2026-09-15-bounded-decision-workflow-corrected-delivery-design.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-s3-target-and-policy-completion-report.md",
+      "target": "docs/superpowers/specs/2026-09-15-bounded-decision-workflow-corrected-delivery-design.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-s4-decision-review-completion-report.md",
+      "target": "docs/superpowers/specs/2026-09-15-bounded-decision-workflow-corrected-delivery-design.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-s4-decision-review-discrepancy-report.md",
+      "target": "docs/superpowers/specs/2026-09-15-bounded-decision-workflow-corrected-delivery-design.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-s4-owner-acceptance.md",
+      "target": "docs/superpowers/specs/2026-09-15-bounded-decision-workflow-corrected-delivery-design.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-s4-review-fixture-correction-report.md",
+      "target": "docs/superpowers/specs/2026-09-15-bounded-decision-workflow-corrected-delivery-design.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-s5-retention-and-recovery-completion-report.md",
+      "target": "docs/superpowers/specs/2026-09-15-bounded-decision-workflow-corrected-delivery-design.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-s6-policy-owner-approval.md",
+      "target": "docs/superpowers/specs/2026-09-15-bounded-decision-workflow-corrected-delivery-design.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-s6-resource-and-cli-completion-report.md",
+      "target": "docs/superpowers/specs/2026-09-15-bounded-decision-workflow-corrected-delivery-design.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-s6-resource-and-cli-incomplete-checkpoint.md",
+      "target": "docs/superpowers/specs/2026-09-15-bounded-decision-workflow-corrected-delivery-design.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-15-one-step-intervention-projection-final-execution-report.md",
+      "target": "docs/superpowers/reports/2026-09-15-one-step-intervention-projection-candidate-package.json",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-15-one-step-intervention-projection-final-execution-report.md",
+      "target": "docs/superpowers/reports/2026-09-15-one-step-intervention-projection-candidate-manifest.json",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-15-one-step-intervention-projection-final-execution-report.md",
+      "target": "docs/superpowers/reports/2026-09-15-one-step-intervention-projection-preexecution-report.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-15-one-step-intervention-projection-owner-acceptance.md",
+      "target": "docs/superpowers/proposals/2026-09-15-one-step-intervention-projection-proof-design.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-15-one-step-intervention-projection-owner-acceptance.md",
+      "target": "docs/superpowers/reports/2026-09-15-one-step-intervention-projection-independent-review.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-15-one-step-intervention-projection-owner-acceptance.md",
+      "target": "docs/superpowers/reports/2026-09-15-source-agnostic-backend-gap-assessment.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/reports/2026-09-16-bounded-decision-workflow-s7-final-owner-review-receipt.md",
+      "target": "docs/superpowers/specs/2026-09-15-bounded-decision-workflow-corrected-delivery-design.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/specs/2026-09-13-conditional-prediction-comparative-proof-design.md",
+      "target": "docs/superpowers/proposals/2026-09-12-conditional-prediction-codex-lead-investigation.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/specs/2026-09-13-conditional-prediction-comparative-proof-design.md",
+      "target": "docs/superpowers/reports/2026-09-12-conditional-prediction-codex-lead-investigation-challenger-audit.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/specs/2026-09-14-model-derived-prediction-bounded-experiment-design.md",
+      "target": "docs/superpowers/proposals/2026-09-14-model-derived-prediction-codex-lead-investigation.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/specs/2026-09-14-model-derived-prediction-bounded-experiment-design.md",
+      "target": "docs/superpowers/reports/2026-09-14-model-derived-prediction-codex-lead-investigation-challenger-audit.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/specs/2026-09-14-model-derived-prediction-bounded-experiment-design.md",
+      "target": "docs/superpowers/reports/2026-09-14-model-derived-prediction-independent-review.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/specs/2026-09-15-one-step-intervention-projection-corrected-design.md",
+      "target": "docs/superpowers/proposals/2026-09-15-one-step-intervention-projection-proof-design.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/specs/2026-09-15-one-step-intervention-projection-corrected-design.md",
+      "target": "docs/superpowers/reports/2026-09-15-one-step-intervention-projection-independent-review.md",
+      "present_untracked": true,
+      "exists": true
+    },
+    {
+      "source": "docs/superpowers/specs/2026-09-15-one-step-intervention-projection-corrected-design.md",
+      "target": "docs/superpowers/reports/2026-09-15-source-agnostic-backend-gap-assessment.md",
+      "present_untracked": true,
+      "exists": true
+    }
+  ],
+  "introduced_blobs": {
+    "count": 203,
+    "total_uncompressed_bytes": 65670849,
+    "largest": [
+      {
+        "oid": "f603a638d40d8c6318a02cb9d8c4ad45c5c57b60",
+        "bytes": 46008166,
+        "path": "docs/superpowers/reports/2026-09-13-conditional-prediction-comparative-proof-completion-report.md"
+      },
+      {
+        "oid": "fc807216389862f342892cf52dfafda34fdc2909",
+        "bytes": 5715759,
+        "path": "docs/superpowers/reports/2026-09-12-brc-exp001-slice-a-final-execution-report.md"
+      },
+      {
+        "oid": "c6e135775820c8bbb7eeb23542d0bb528cc53fba",
+        "bytes": 4965514,
+        "path": "docs/superpowers/reports/2026-09-12-brc-exp001-mode-b-final-execution-report.md"
+      },
+      {
+        "oid": "2d9a5aa14294656d93ad95f515d050edcc51416e",
+        "bytes": 1766344,
+        "path": "docs/superpowers/reports/2026-09-14-model-derived-prediction-final-execution-report.md"
+      },
+      {
+        "oid": "ba7586d7807afeeee7f75653316dda8903d83d45",
+        "bytes": 1073123,
+        "path": "docs/superpowers/reports/2026-09-12-brc-exp001-mode-b-output-resource-amendment-report.md"
+      },
+      {
+        "oid": "318bfb4786ad0c0a1d8fd3eee1254e1f54c50bf0",
+        "bytes": 423274,
+        "path": "docs/superpowers/reports/2026-09-11-brc-exp001-slice-a-completion-report.md"
+      },
+      {
+        "oid": "cefaa116d091eff99441d486e5ffc5ef088554de",
+        "bytes": 314901,
+        "path": "docs/superpowers/reports/2026-09-15-one-step-intervention-projection-final-execution-report.md"
+      },
+      {
+        "oid": "5ee2bdaaba7d22c4c8dd8fa3708c864a0caecb90",
+        "bytes": 307943,
+        "path": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-candidate-package.json"
+      },
+      {
+        "oid": "500e8200ffea126445442f177f04ccb8dfe17bd6",
+        "bytes": 301339,
+        "path": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-candidate-package-pre-s5-retention-correction.json"
+      },
+      {
+        "oid": "be2830ab5d13af4f5b07c87853d124d8da1c8038",
+        "bytes": 297123,
+        "path": "docs/superpowers/reports/2026-09-15-bounded-decision-workflow-candidate-package-pre-s4-complete-sweep.json"
+      }
+    ]
+  },
+  "artifact_path_history_commits": [],
+  "schema": "bdw.post-delivery-accounting.v1",
+  "starting_head": "06c487ab90a53eb7c1f9474aa1a37520309b41ef",
+  "main_and_recorded_origin_main": "debcffec5a77ae270bbf8822f82ef1aa7556c5bd",
+  "remote_freshness": "Local recorded refs only; no fetch or remote contact. origin/main last reflog: 2026-09-10 21:18:25 +0200, update by push.",
+  "method": "Compared all 63 original paths and SHA-256 values with committed S7 inventory, read purpose/title/schema, searched tracked documentation/JSON byte bodies and recursively decoded fenced base64/zlib archives and embedded UTF-8/base64 contents without executing or extracting source. Exact matches only; no canonical reserialization/semantic equivalence accepted as a duplicate. Decoding capped at 128 MiB per archive. Checked all-ref path history (no commits), branch-to-main file scope and all introduced Git blob sizes. No claim about external backups.",
+  "inventory_source": "docs/superpowers/reports/2026-09-16-bounded-decision-workflow-s7-full-suite-evidence.json",
+  "inventory_source_sha256": "1e75847a3311eb24d5b5635fb6a88fd33fe5d502d037a689f04468cfd77da274",
+  "totals": {
+    "artifacts": 63,
+    "bytes": 66455899,
+    "classifications": {
+      "exact_recoverable_duplicate": 27,
+      "superseded_historically_meaningful": 32,
+      "unique_external_input_or_authority": 4
+    },
+    "complete_recovery_proven": 27,
+    "complete_recovery_unestablished": 36,
+    "unidentified_purpose": 0,
+    "removed_moved_renamed_ignored_or_staged": 0
+  },
+  "scope_note": "branch_to_main_scope and introduced_blobs describe the starting acceptance HEAD only. This housekeeping commit additionally changes README.md/CLAUDE.md and adds the reconciliation report and this inventory; accepted source/evidence stays unchanged.",
+  "ending_marker": "END OF BOUNDED DECISION WORKFLOW POST-DELIVERY INVENTORY"
+}

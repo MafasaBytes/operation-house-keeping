@@ -8,6 +8,21 @@ contains the binding project guidance.
 
 ## Current status
 
+The maintained [bounded decision workflow](applications/bounded_decision_workflow/README.md)
+is owner accepted through S1–S7 at implementation
+`64f4389b6d93484339afa29cbb7f7f21f6ef2758`; see the
+[acceptance record](docs/superpowers/reports/2026-09-16-bounded-decision-workflow-final-owner-acceptance.md).
+Its local evaluate/verify/replay commands deliver public input admission, rational
+one-step projection, target/feasibility assessment, tied selection among supplied
+actions, named dependency review and retained recomputing replay. The supported
+profile fixes two supplied hypotheses and four supplied actions; it generates
+neither alternatives nor measurement tests and is not a general planner.
+The [post-delivery reconciliation](docs/superpowers/reports/2026-09-16-bounded-decision-workflow-post-delivery-reconciliation.md)
+maps all seven original objectives and records integration and retention gaps.
+The earlier BRC, conditional-prediction, model-derived-prediction and one-step
+proofs remain historical disposable experiments; their test-ranking capabilities
+were not promoted into the maintained application.
+
 The accepted implemented milestone sequence through FC-001 is complete.
 EA-001 is adversarially repaired, full-suite verified, and
 dual-clean-checkout verified. TA-001 Slice A is owner accepted at exact tested
@@ -60,6 +75,7 @@ source or sensor authority, trusted time, global atomicity, or physical truth.
 | `backend/constraint_evaluation` | Read-only evidence-gated evaluation of explicit variable constraints. |
 | `backend/behavior_evaluation` | Read-only evaluation of the bounded explicit BH-001 behavior declaration. |
 | `backend/state_classification` | Read-only evidence-gated classification of an explicit state declaration. |
+| `applications/bounded_decision_workflow` | Accepted local supplied-alternative workflow over reconstructed public results and explicit synthetic premises; application-owned projection/policy/review and filesystem retention, with no backend ledger or contract extension. |
 
 Dependencies point from upper composition layers toward accepted lower
 contracts. `system_identity` has no backend dependency; `model_kernel` depends
@@ -114,7 +130,8 @@ source, sensor, signer, clock, engineering conclusion, or physical condition.
 
 ## Architectural frontier
 
-FC-001 is the current completed boundary; ADR-0022 is the latest accepted ADR.
+FC-001 is the current completed backend boundary; ADR-0022 is the latest accepted ADR.
+The accepted bounded application is a separate delivery boundary over these contracts.
 FC determines which explicit VCN governs one exact FM effective body and
 whether that designation is applicable under the selected model revision.
 The existing FC + EA/alignment + CN public-result join answers the bounded
@@ -148,17 +165,19 @@ traversal package is justified without a second concrete consumer or demonstrate
 correctness failure. CV-001 backend additions are cancelled; CV-001 application
 delivery is deferred pending concrete application requirements, as recorded in
 the [CV-001 owner decision](docs/superpowers/reports/2026-09-10-cv001-deferral-owner-decision.md).
-Existing public APIs suffice for correct in-process composition, but no stable
-application entry point exposes the complete commissioning answer. Objectives
-2 and 7 have architecture/test support, not delivered application capability.
-Further application work must await all consumer requirements listed in that
+CV's complete commissioning application remains deferred. The separately accepted
+bounded decision workflow now delivers a local entry point for its narrower
+current-condition and provenance/replay scope, advancing objectives 2 and 7.
+Further application scopes must supply the consumer requirements listed in that
 decision: ingress/invocation, authentication/authorization, policy authority,
 policy schema/version/retention, decision-result retention, application/user
 identity, confidentiality, capacity/latency, error presentation,
 deployment/resource ownership, and scope completeness. Further backend abstraction
-must not begin without a demonstrated integrity gap. Causal diagnosis remains
-premature; causal diagnosis, next-test ranking, impact prediction, and planning
-remain unauthorized. No successor milestone has been approved.
+must not begin without a demonstrated integrity gap. General causal diagnosis,
+maintained next-test ranking, complete impact discovery and multi-step planning
+remain undelivered and unauthorized. The accepted application does deliver its
+fixed named-decision review and supplied-action one-step projections.
+No successor milestone has been approved.
 ADR-0023 remains absent, unallocated, and unreserved.
 
 The [prospective physical-model validation investigation](docs/superpowers/proposals/2026-09-14-prospective-model-validation-feasibility.md)
@@ -170,7 +189,8 @@ Backend correctness concerns explicit semantics, reference integrity, lifecycle,
 provenance, inference rules and computation under declared assumptions; synthetic,
 mathematical, adversarial and replay evidence validates those properties within
 its tested scope, not physical truth. Accepted experimental findings remain valid
-within their original scope; no production capability was added.
+within their original scope; those experiments added no production capability.
+The subsequent maintained application has its own explicit acceptance above.
 
 Empirical adequacy of particular equations, bounds and hypotheses belongs to a
 separately authorized application/domain activity for a concrete predictive claim.
@@ -179,20 +199,30 @@ content integrity and deterministic reconstruction. A specific adapter or demo
 does not determine general hypothesis, prediction, influence or change-impact
 semantics. Future empirical work requires an explicit application-specific request;
 using observations or reasoning in a backend milestone does not reopen it.
-IN-001 and CI-001 remain available architectural options, neither authorized here.
+IN-001 and CI-001 remain open and unselected, neither authorized here.
 
 The next architectural question, without a successor proposal or predetermined
 answer, is: “Given a complete explicitly supplied hypothetical system model,
 which missing semantics or reasoning operations still prevent the backend from
 answering the original objectives?”
 
-Physical-flow occurrence, automatic candidate selection, causal explanation,
-next-test recommendation, impact propagation, desired-state planning, and
-safety or health verdicts remain absent. Occurrence/history needs explicit
+Physical-flow occurrence, generated candidates, causal identification,
+maintained next-test recommendation, general impact propagation, multi-step
+desired-state planning and safety or health verdicts remain absent. Finite-set
+action selection is delivered only within the accepted application profile;
+it establishes no global optimality. Occurrence/history needs explicit
 time-window, continuity, and authenticity semantics; graph traversal, ranking,
 reasoning, and optimization each need an identified consumer and explicit rules.
 
 ## Verification
+
+Application acceptance retains 4,648 full-repository passes, 35 optional CAD/PDF
+skips and one sandbox socket setup error, followed by that case passing in a
+permitted isolated rerun; no product failures were recorded. Earlier command,
+clean-build, recovery, replay, determinism and 27-row evidence remains applicable.
+Observed platform evidence is locked CPython 3.13.11 on ext4; XFS, reboot and
+power-loss durability remain unverified. Integration documentation does not
+change the accepted implementation or its exact-build replay requirement.
 
 ```
 .venv/bin/python -m pytest        # base-only: CAD/PDF-marked tests skip

@@ -25,6 +25,24 @@ must remain authoritative.
 
 ## Status (added 2026-08-07 — historical guidance below is preserved)
 
+Application delivery update (2026-09-16): the maintained
+[bounded decision workflow](applications/bounded_decision_workflow/README.md) is
+[owner accepted through S1–S7](docs/superpowers/reports/2026-09-16-bounded-decision-workflow-final-owner-acceptance.md)
+at `64f4389b6d93484339afa29cbb7f7f21f6ef2758`. Its local evaluate/verify/replay
+commands provide public input admission, rational one-step projection,
+target/feasibility assessment, tied finite-set action selection, fixed named
+dependency review, retention and recomputing replay. Hypotheses, action/effect
+premises and policy are supplied within the fixed supported profile. This does
+not deliver generated hypotheses/actions/tests, next-test ranking, arbitrary-law
+evaluation, multi-step planning, global optimality or causal truth.
+Historical disposable experiments are evidence within their accepted scope,
+not maintained application entry points. The
+[post-delivery objective and integration report](docs/superpowers/reports/2026-09-16-bounded-decision-workflow-post-delivery-reconciliation.md)
+supersedes older general statements of application absence; it leaves the
+backend contracts and ADR frontier unchanged. IN-001 and CI-001 remain open
+and unselected. No successor, integration, push or artifact cleanup is authorized
+by this documentation checkpoint.
+
 The "Current Phase" and DS-001 sections below are the original milestone
 record, retained as historical guidance. Their sentence "Only `data_sources`
 is currently in scope" is superseded by this Status section. All other general
@@ -115,7 +133,7 @@ at this checkpoint. Reconsideration requires a new owner-approved proposal
 demonstrating a concrete integrity attack that existing public-result validation
 cannot prevent; convenience or aggregation preference is insufficient.
 ADR-0022 is the latest accepted ADR. No successor milestone has been approved;
-ADR-0023 remains absent, unallocated, and unreserved. The current architectural frontier is
+ADR-0023 remains absent, unallocated, and unreserved. The backend architectural frontier is
 the owner-accepted [post-FC objective-gap reconciliation](docs/superpowers/reports/2026-09-10-post-fc001-architecture-and-adr-reconciliation-report.md),
 which supersedes inherited roadmap ordering. CS-001 was investigated and is
 closed without implementation as commissioning application policy, not deferred
@@ -141,23 +159,30 @@ traversal and explicit limits. No reusable traversal package is justified withou
 a second concrete consumer or demonstrated correctness failure. CV-001 backend
 additions are cancelled; CV-001 application delivery is deferred pending concrete
 application requirements; see the [CV-001 owner decision](docs/superpowers/reports/2026-09-10-cv001-deferral-owner-decision.md).
-Existing APIs suffice for correct in-process composition; no stable application
-entry point exposes the complete commissioning answer. Objectives 2 and 7 have
-architecture/test support, not delivered application capability. Further
-application work requires all eleven consumer requirements listed in that
+Existing APIs suffice for correct in-process composition; the complete CV
+commissioning application remains deferred. The separately accepted bounded
+workflow now exposes its narrower current-condition and provenance/replay answer,
+advancing objectives 2 and 7. Further application scopes require the eleven
+consumer requirements listed in that
 decision, including ingress/invocation, authentication/authorization, policy
 authority and schema/version/retention, decision-result retention, application/user
 identity, confidentiality, capacity/latency, error presentation,
 deployment/resource ownership, and scope completeness. Further backend abstraction
-requires a demonstrated integrity gap. Causal diagnosis remains premature;
-causal diagnosis, next-test ranking, impact prediction, and planning remain
-unauthorized. No generic backend wrapper may conceal the application prerequisites.
+requires a demonstrated integrity gap. General causal diagnosis, maintained
+next-test ranking, complete impact discovery and multi-step planning remain
+undelivered and unauthorized. The accepted application supplies only its bounded
+named-decision review and one-step action projections. No generic backend wrapper
+may conceal the application prerequisites.
 No successor milestone has been approved.
-Physical-flow occurrence, automatic candidate selection, causal explanation,
-next-test recommendation, impact propagation, desired-state planning, and safety
-or health verdicts remain absent. Accountable occurrence/history still requires
-explicit time-window, continuity, and authenticity semantics. Goals, actions,
-optimization, configuration timelines, and control remain deferred.
+Physical-flow occurrence, candidate generation, causal identification, maintained
+next-test recommendation, general impact propagation, multi-step desired-state
+planning and safety or health verdicts remain absent. Finite-set action selection
+is delivered within the accepted application profile, without global optimality.
+Accountable occurrence/history still requires
+explicit time-window, continuity, and authenticity semantics. Shared backend goal,
+action and optimization contracts, configuration timelines and control remain
+deferred; application-owned targets, supplied actions and finite selection are
+limited to the accepted workflow above.
 
 EA-001 is complete and owner accepted. Its accepted lineage includes the Slice
 A lower read seams and integrity repair at
@@ -193,7 +218,8 @@ integrity and deterministic reconstruction. The backend may carry evidence and
 disclose limitations without certifying it as physically true. A specific adapter
 or demonstration must not determine general hypothesis, prediction, influence or
 change-impact semantics. Accepted experimental findings and their limits remain
-unchanged; no production capability or new experiment is authorized.
+unchanged; that empirical closeout authorized no production capability or new
+experiment. The later bounded application has its separate acceptance above.
 
 Future empirical validation requires a separate explicit application/domain request
 identifying a concrete application or predictive claim. Another backend milestone's
