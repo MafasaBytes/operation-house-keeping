@@ -182,3 +182,9 @@ def test_missing_policy_is_typed_build_refusal(monkeypatch,tmp_path):
     monkeypatch.setattr(r,'ROOT',tmp_path)
     with pytest.raises(WorkflowInputError) as e:r.policy()
     assert e.value.diagnostic.code=='REPLAY_BUILD_UNAVAILABLE'
+
+def test_measurement_harness_observes_forbidden_dispatch(monkeypatch):
+    from . import measure_governed_slice as m
+    from applications.bounded_decision_workflow import projection
+    monkeypatch.setattr(m,'_measure',lambda:projection._prepare_projection(),raising=False)
+    with pytest.raises(AssertionError,match='outside pure slice'):m.measure()

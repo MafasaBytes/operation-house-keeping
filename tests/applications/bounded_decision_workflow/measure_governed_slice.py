@@ -6,12 +6,14 @@ Caller retains this bounded evidence in the slice report, not in runtime bundles
 import hashlib
 import json
 import time
+from contextlib import ExitStack
+from unittest.mock import patch
 from applications.bounded_decision_workflow import governed_admission as gate, governed_build
 from applications.bounded_decision_workflow.errors import WorkflowInputError
 from applications.bounded_decision_workflow.terminal import diagnostic_line
 from .governed_fixtures import C,H,fixture,reference_boundary
 
-def measure():
+def _measure():
     startup=[];build,digest=governed_build.identity(observer=startup.append)
     cases={};event_max=0
     for name in ['W0','J1','X-denied','D2-X','working-adopted','amended-unavailable',
@@ -41,7 +43,26 @@ def measure():
     return {'scope':'pure_first_slice_not_end_to_end','build':json.loads(build),'build_sha256':digest,
             'build_bytes':len(build),'startup_hashing':startup,'cases':cases,'max_event_bytes':event_max,
             'test_observer_caps':{'event_bytes':512,'events_per_case':4096},
-            'projection_calls':0,'publication_calls':0,
             'binding_note':'Fresh I binds actual build; comparison=null is an explicitly separate pure nomination, never a three-world comparison. Originals retained in authority archive.'}
+
+def measure():
+    # Observe prohibited entry points, including imported review aliases. Abort
+    # before their work if reached; zero is measured, not filled into the report.
+    from applications.bounded_decision_workflow import projection,policy,decision_review,retention
+    counts={'projection':0,'policy':0,'publication':0}
+    def forbidden(kind):
+        def call(*args,**kwargs):
+            counts[kind]+=1
+            raise AssertionError('outside pure slice: '+kind)
+        return call
+    with ExitStack() as stack:
+        for module,name,kind in [(projection,'_prepare_projection','projection'),
+            (decision_review,'_prepare_projection','projection'),(policy,'_assess_admitted','policy'),
+            (decision_review,'_assess_admitted','policy'),(retention,'publish_bundle','publication'),
+            (retention,'_publish_bundle','publication')]:
+            stack.enter_context(patch.object(module,name,forbidden(kind)))
+        result=_measure()
+    result['observed_dispatch_counts']=counts
+    return result
 
 if __name__=='__main__':print(json.dumps(measure(),sort_keys=True,separators=(',',':')))
