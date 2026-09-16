@@ -107,6 +107,9 @@ def test_physical_operation_evidence():
     p=json.loads(a.physical_bytes)
     assert p['operations']['public_reconstruction']['completed']==1
     assert p['operations']['decode_object']['completed']>0
+    assert p['operations']['membership']['completed']==1
+    assert p['operations']['graph_validation']['completed']==1
+    assert p['operations']['envelope_validation']['completed']==1
     assert any(e['phase']=='operation' and e['scope']=='public_reconstruction' and e['outcome']=='started' for e in events)
     assert all(len(C(e))<=512 for e in events)
 

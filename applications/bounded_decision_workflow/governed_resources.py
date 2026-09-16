@@ -99,7 +99,8 @@ class Budget:
     @contextmanager
     def operation(self,name):
         # Fixed internal inventory; never accepts an input-supplied operation name.
-        if name not in ('decode_object','public_reconstruction','profile_validation','membership'):
+        if name not in ('decode_object','public_reconstruction','profile_validation','membership',
+                        'envelope_validation','graph_validation'):
             raise ValueError('unknown internal operation')
         counts=self.operations.setdefault(name,{'started':0,'completed':0,'failed':0})
         def emit(outcome):

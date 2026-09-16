@@ -163,16 +163,18 @@ def assess(invocation_wire,objects,*,expected_authority_pin,limits=None,observer
     # Reference traversal is scoped. A completed node never replaces contextual joins.
     # Complete envelope checks occur after existing public Q/B guards. No omitted
     # present fields are converted to epistemic unknowns.
-    for kind in (D,S,A,T,I):
-        for stored_kind,wire,raw,nodes in store.items.values():
-            if stored_kind==kind:
-                validate(kind,raw)
-                if kind==D and len(raw['pairs'])>budget.caps['membership_rows']:
-                    raise problem('INPUT_RESOURCE_LIMIT_EXCEEDED',resource=True,target='membership_rows')
+    with budget.operation('envelope_validation'):
+        for kind in (D,S,A,T,I):
+            for stored_kind,wire,raw,nodes in store.items.values():
+                if stored_kind==kind:
+                    validate(kind,raw)
+                    if kind==D and len(raw['pairs'])>budget.caps['membership_rows']:
+                        raise problem('INPUT_RESOURCE_LIMIT_EXCEEDED',resource=True,target='membership_rows')
     if expected_authority_pin is None:raise problem('AUTHORITY_UNAVAILABLE')
     if type(expected_authority_pin) is not str or not SHA.fullmatch(expected_authority_pin) or iv['selection']['sha256']!=expected_authority_pin:
         raise problem('AUTHORITY_REFERENCE_MISMATCH')
-    store.visit(ir,I)
+    with budget.operation('graph_validation'):
+        store.visit(ir,I)
     authority=store.get(iv['selection'],A)[2]
     if authority['scenario']!=iv['scenario'] or authority['declaration']!=sc['declaration']:raise problem('AUTHORITY_REFERENCE_MISMATCH')
     if authority['purpose']=='accepted_working_evaluation':
@@ -183,23 +185,24 @@ def assess(invocation_wire,objects,*,expected_authority_pin,limits=None,observer
     envelopes=[iv,sc,decl,authority]+([store.get(iv['adoption'],T)[2]] if iv['adoption'] else [])
     budget.work('context_nodes',2*(current_q[3]+template_q[3])+sum(_nodes(x) for x in envelopes)+_nodes(decl['pairs']),scope='membership_join')
     budget.work('context_bytes',2*(len(current_q[1])+len(template_q[1]))+sum(len(C(x)) for x in envelopes)+len(C(decl['pairs'])),scope='membership_join')
-    q=current_q[2];template=template_q[2]
-    tw,tf=_keys(template);w,f=_keys(q)
-    def complete(raw):
-        g=raw['premises']['global_applicability']
-        return g['availability']=='present' and g['value']['status'] is True and all(v['availability']=='present' for v in raw['premises']['coordinates'].values())
-    if not complete(template):raise problem('DECLARATION_SCHEMA_INVALID',profile=True)
-    ga=q['premises']['global_applicability']
-    if ga['availability']!='present':disposition,reason='applicability_unknown','global_applicability_unknown'
-    elif ga['value']['status'] is False:disposition,reason='declaration_not_applicable','fixed_scope_mismatch'
-    elif any(v['availability']!='present' for v in q['premises']['coordinates'].values()):disposition,reason='admissibility_unknown','missing_or_unknown_premise'
-    elif f!=tf:disposition,reason='declaration_not_applicable','fixed_scope_mismatch'
-    else:
-        pair={k:q['premises']['coordinates'][k]['value']['lower'] for k in ('gamma','beta')}
-        # Entire table cost reserved; no favorable early-match accounting refund.
-        member=any(pair==p for p in decl['pairs'])
-        disposition,reason=('admissible','finite_pair_member') if member else ('inadmissible','outside_declared_pairs')
-    permit=disposition=='admissible'
+    with budget.operation('membership'):
+        q=current_q[2];template=template_q[2]
+        tw,tf=_keys(template);w,f=_keys(q)
+        def complete(raw):
+            g=raw['premises']['global_applicability']
+            return g['availability']=='present' and g['value']['status'] is True and all(v['availability']=='present' for v in raw['premises']['coordinates'].values())
+        if not complete(template):raise problem('DECLARATION_SCHEMA_INVALID',profile=True)
+        ga=q['premises']['global_applicability']
+        if ga['availability']!='present':disposition,reason='applicability_unknown','global_applicability_unknown'
+        elif ga['value']['status'] is False:disposition,reason='declaration_not_applicable','fixed_scope_mismatch'
+        elif any(v['availability']!='present' for v in q['premises']['coordinates'].values()):disposition,reason='admissibility_unknown','missing_or_unknown_premise'
+        elif f!=tf:disposition,reason='declaration_not_applicable','fixed_scope_mismatch'
+        else:
+            pair={k:q['premises']['coordinates'][k]['value']['lower'] for k in ('gamma','beta')}
+            # Entire table cost reserved; no favorable early-match accounting refund.
+            member=any(pair==p for p in decl['pairs'])
+            disposition,reason=('admissible','finite_pair_member') if member else ('inadmissible','outside_declared_pairs')
+        permit=disposition=='admissible'
     sem=C({'scope':'pure_nomination_not_workflow','invocation':H(invocation_wire),'evaluation_permitted':permit,
            'disposition':disposition,'reason':reason,'world_sha256':H(w),'fixed_sha256':H(f),'logical':budget.logical})
     return GateAssessment(permit,disposition,reason,w,f,sem,budget.summary())
