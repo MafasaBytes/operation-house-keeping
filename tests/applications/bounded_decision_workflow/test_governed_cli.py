@@ -5,7 +5,7 @@ import pytest
 from applications.bounded_decision_workflow import cli, governed_build
 from applications.bounded_decision_workflow.errors import WorkflowInputError
 from .governed_fixtures import fixture,C,H
-BUILD=C({'schema':'test-only-build-not-executable'})
+from .test_governed_persistence import BUILD
 
 def test_explicit_governed_usage_no_legacy_fallback():
     a=cli._arguments(['governed-evaluate','--invocation','i','--objects-dir','o','--authority-pin','0'*64,'--output-dir','r'])

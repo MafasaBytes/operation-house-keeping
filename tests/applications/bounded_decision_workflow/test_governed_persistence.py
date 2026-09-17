@@ -4,9 +4,22 @@ import pytest
 from applications.bounded_decision_workflow import governed_persistence as p
 from applications.bounded_decision_workflow import governed_build, governed_review, policy
 from applications.bounded_decision_workflow.errors import WorkflowInputError
-from .governed_fixtures import fixture,C,H
+from .governed_fixtures import fixture,C,H,ROOT
+from applications.bounded_decision_workflow.build import LOCK,PUBLIC
+from applications.bounded_decision_workflow.governed_resources import policy as limits,POLICY_SHA
 
-BUILD=C({'schema':'test-only-build-not-executable'})
+# Structural record only, supplied by an explicitly patched unit-test provider.
+# It is NOT an executable witness: the source paths/commit below are synthetic.
+# Real command acceptance always derives the unpatched exact executable identity.
+BUILD=C({'schema':'governed-executable-build.v1','git_commit':'0'*40,
+ 'implementation_id':'bdw.governed-application.v1','inner_schema':'bdw001.1',
+ 'workflow_profile':'hypothetical_enclosure_one_step.v1','build_policy_id':'bdw.governed-resource-policy.v1',
+ 'application_source_sha256':{'applications/test_only_not_an_executable.py':'0'*64},
+ 'backend_source_inventory_sha256':'0'*64,'public_module_sha256':{p:'0'*64 for p in PUBLIC},
+ 'python':{'implementation':'CPython','version':'3.13.11'},
+ 'dependencies':dict(line.split('==') for line in (ROOT/LOCK).read_text().splitlines()),
+ 'dependency_lock_sha256':H((ROOT/LOCK).read_bytes()),'contract_source_sha256':governed_build.CONTRACTS,
+ 'policy_file_sha256':POLICY_SHA,'limit_policy_sha256':H(C(limits()))})
 
 @pytest.fixture(autouse=True)
 def build(monkeypatch):
@@ -135,3 +148,8 @@ def test_observation_failure_cannot_publish(tmp_path):
     def fail(e):raise RuntimeError('bounded observer failure')
     with pytest.raises(WorkflowInputError):p.publish(tmp_path/'r',run(),observer=fail)
     assert not (tmp_path/'r').exists()
+
+def test_byte_verify_does_not_accept_malformed_build_record(tmp_path,monkeypatch):
+    monkeypatch.setitem(globals(),'BUILD',C({'schema':'test-only-build-not-executable'}))
+    p.publish(tmp_path/'bad-build',run())
+    with pytest.raises(WorkflowInputError):p.verify(tmp_path/'bad-build')
