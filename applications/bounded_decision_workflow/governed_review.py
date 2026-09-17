@@ -176,6 +176,48 @@ class _KernelStore(gate._Captured):
 def evaluate(invocation_wire,objects,*,expected_authority_pin,prior_files=None,limits=None,observer=None):
     """All current/ancestor gates finish before any projection; no writes or CLI."""
     budget=Budget(limits,observer)
+    return _evaluate(invocation_wire,objects,expected_authority_pin,prior_files,budget,observer)
+
+
+class _ReplayBudget(Budget):
+    def work(self,k,delta,*,scope,extra=False):
+        # Immutable buffers recovered by this operation are not recaptured.
+        # Owning reconstruction pays their bytes; role/decode checks still run.
+        if k=='capture_bytes' and scope=='capture':return
+        return super().work(k,delta,scope=scope,extra=extra)
+
+
+def replay(files,*,observer=None):
+    """Owning replay: validate complete bytes, re-admit and recompute every world.
+
+    No caller validation flag. Reuse only the Carried value created here under
+    the exact local executable. Captured authority is historical, not current.
+    """
+    return _replay(files,_ReplayBudget(observer=observer),observer)
+
+
+def _replay(files,budget,observer):
+    bw,bid=governed_build.identity(observer=observer)
+    if type(files) is not dict or files.get('build.json')!=bw:raise governed_build.unavailable()
+    full=validate_carried(files,expected_manifest=H(files['manifest.json']),expected_build=bw,budget=budget,replay_root=True)
+    current=full.worlds[-1];z=current.closure
+    prior=(Carried(full.worlds[-2].files,full.worlds[:-1],sum(sum(map(len,w.files.values())) for w in full.worlds[:-1]))
+           if len(full.worlds)>1 else None)
+    entries=[]
+    for e in z['objects'].values():
+        if e['kind'] in (D,S,A,T,Q,B,'captured-basis'):
+            if 'canonical_json' in e:wire=bounded_json(e['canonical_json'],budget.caps['resolved_container_bytes'],'resolved_container_bytes')
+            else:
+                import base64
+                wire=base64.b64decode(''.join(e['opaque_chunks']),validate=True)
+            entries.append((e['kind'],wire))
+    result=_evaluate(files['request.json'],entries,z['expected_authority_pin'],None,budget,observer,recovered=prior,replaying=True)
+    if result.result_bytes!=files['result.json'] or result.trace_bytes!=files['trace.json'] or result.closure_bytes!=files['resolved-input.json']:
+        raise problem('REPLAY_SEMANTIC_MISMATCH',target='result_or_trace')
+    return result
+
+
+def _evaluate(invocation_wire,objects,expected_authority_pin,prior_files,budget,observer,*,recovered=None,replaying=False):
     iv=validate(I,decode(invocation_wire,budget.caps['request_wire_bytes'],budget.caps))
     budget.world=H(invocation_wire)
     def startup(event):
@@ -184,9 +226,10 @@ def evaluate(invocation_wire,objects,*,expected_authority_pin,prior_files=None,l
             except Exception as e:raise refusal('INTERNAL_ERROR',stage='internal_failure',target='instrumentation',retry='investigate',exit_code=7) from e
     bw,bid=governed_build.identity(observer=startup)
     if iv['build_identity']!=bid:raise governed_build.unavailable()
-    carried=None
+    carried=recovered
     if iv['comparison'] is not None:
-        carried=validate_carried(prior_files,expected_manifest=iv['comparison']['sha256'],expected_build=bw,budget=budget)
+        if not replaying:carried=validate_carried(prior_files,expected_manifest=iv['comparison']['sha256'],expected_build=bw,budget=budget)
+        elif carried is None or H(carried.files['manifest.json'])!=iv['comparison']['sha256']:raise problem('HISTORY_INCOMPATIBLE')
     elif prior_files is not None:raise problem('HISTORY_INCOMPATIBLE')
     # Capture current objects under accepted admission's guards before assembly.
     current=gate._Captured(objects,budget)
@@ -256,7 +299,7 @@ def evaluate(invocation_wire,objects,*,expected_authority_pin,prior_files=None,l
             with budget.operation('policy_assessment'):p=policy._assess_admitted(a,limits=local)
             if p.projection.corner_evaluations!=count:raise RuntimeError('projection work differs from reservation')
             corners+=count
-        rows_budget=Budget(limits,observer);rows_budget.world=budget.world
+        rows_budget=Budget(dict(budget.caps),observer);rows_budget.world=budget.world
         with budget.operation('row_review'):rows,previous=_rows(a,g,x,sc,p,previous,rows_budget)
         if index==len(admitted)-1:counts=dict(logical)
         else:

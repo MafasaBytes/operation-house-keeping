@@ -65,7 +65,7 @@ def shape(value,schema,defs):
         if 'pattern' in schema and re.search(schema['pattern'],value) is None:return False
     return True
 
-def decode_file(wire,name,budget,defs):
+def decode_file(wire,name,budget,defs,*,extra=False):
     if type(wire) is not bytes:raise incompatible()
     if len(wire)>budget.caps[CAPS[name]]:raise problem('INPUT_WIRE_LIMIT_EXCEEDED',resource=True,target=CAPS[name])
     limits=dict(BUILD_LIMITS)
@@ -73,7 +73,7 @@ def decode_file(wire,name,budget,defs):
                   budget.caps['result_nodes'] if name=='result.json' else budget.caps['lower_nodes_per_file'],
                   input_json_depth=budget.caps['input_json_depth'],input_max_string_bytes=budget.caps['input_max_string_bytes'])
     counts=scan(wire,limits)
-    budget.work('context_nodes',counts['nodes'],scope='carried_decode')
+    budget.work('context_nodes',counts['nodes'],scope='carried_decode',extra=extra)
     def integer(s):
         if len(s.lstrip('-'))>budget.caps['integer_digits']:raise problem('INPUT_RESOURCE_LIMIT_EXCEEDED',resource=True,target='integer_digits')
         return int(s)
@@ -96,7 +96,7 @@ class Carried:
     worlds: tuple
     reconstructed_bytes: int
 
-def validate_carried(files,*,expected_manifest,expected_build,budget):
+def validate_carried(files,*,expected_manifest,expected_build,budget,replay_root=False):
     """Recover and verify complete seven-file ancestors, oldest first.
 
     Callers cannot supply validation status. This function establishes byte and
@@ -104,8 +104,16 @@ def validate_carried(files,*,expected_manifest,expected_build,budget):
     """
     if type(files) is not dict or set(files)!=set(CAPS) or any(type(v) is not bytes for v in files.values()):raise incompatible()
     total=sum(map(len,files.values()))
-    budget.work('prior_capture_bytes',total,scope='prior_capture')
-    budget.work('capture_bytes',total,scope='prior_capture')
+    if replay_root:
+        # This is the current replay input, not an additional captured prior.
+        # Current I/B/closure are the required capture; stored outputs/build/work
+        # are positive extra capture, never paid for by unused prior capture.
+        for n,b in files.items():
+            budget.work('capture_bytes',len(b),scope='replay_capture',
+                        extra=n not in ('request.json','snapshot.json','resolved-input.json'))
+    else:
+        budget.work('prior_capture_bytes',total,scope='prior_capture')
+        budget.work('capture_bytes',total,scope='prior_capture')
     defs=schemas();worlds=[];active=set();reconstructed=0
     def inspect(f,expected):
         nonlocal reconstructed
@@ -113,9 +121,10 @@ def validate_carried(files,*,expected_manifest,expected_build,budget):
         budget.depth(len(active)+1);active.add(expected)
         total=sum(map(len,f.values()))
         if total>budget.caps['retention_bytes']:raise problem('INPUT_RESOURCE_LIMIT_EXCEEDED',resource=True,target='retention_bytes')
-        budget.work('reconstruction_bytes',total,scope='prior_reconstruction')
-        budget.work('context_bytes',total,scope='prior_reconstruction')
-        decoded={name:decode_file(wire,name,budget,defs) for name,wire in f.items()}
+        root_extra=replay_root and len(active)==1
+        budget.work('reconstruction_bytes',total,scope='prior_reconstruction',extra=root_extra)
+        budget.work('context_bytes',total,scope='prior_reconstruction',extra=root_extra)
+        decoded={name:decode_file(wire,name,budget,defs,extra=root_extra) for name,wire in f.items()}
         m=decoded['manifest.json'];z=decoded['resolved-input.json'];r=decoded['result.json'];t=decoded['trace.json'];iv=decoded['request.json']
         validate(I,iv)
         if f['build.json']!=expected_build or m['build_identity']!=H(expected_build) or iv['build_identity']!=H(expected_build):raise incompatible()
@@ -126,6 +135,7 @@ def validate_carried(files,*,expected_manifest,expected_build,budget):
         if z['invocation']!={'kind':I,'sha256':H(f['request.json'])} or z['expected_authority_pin']!=iv['selection']['sha256']:raise incompatible()
         if r['decision_review']['rows']!=t['rows']:raise incompatible()
         work=m['run_metadata']['operation_work'];logical=r['resource_accounting']
+        if work['output_reserved_bytes']<total:raise incompatible()
         if H(C(logical))!=work['logical_commitment']:raise incompatible()
         if len(C(work))>budget.caps['physical_evidence_bytes']:raise problem('INPUT_RESOURCE_LIMIT_EXCEEDED',resource=True,target='physical_evidence_bytes')
         for k in work['charged']:
@@ -165,9 +175,12 @@ def validate_carried(files,*,expected_manifest,expected_build,budget):
         if recover(z['invocation']['sha256'],I)!=f['request.json']:raise incompatible()
         scenario=json.loads(recover(iv['scenario']['sha256'],'governed-scenario.v1'))
         outline(S,scenario)
+        request=json.loads(recover(scenario['request']['sha256'],Q))
+        requested=request.get('requested_limits') or {}
+        if work['output_reserved_bytes']>min(budget.caps['retention_bytes'],requested.get('retention_bundle_bytes',budget.caps['retention_bytes'])):raise incompatible()
         if recover(scenario['snapshot']['sha256'],B)!=f['snapshot.json']:raise incompatible()
         payload_bytes=len(recover(scenario['request']['sha256'],Q))+len(f['snapshot.json'])+len(f['result.json'])+len(f['trace.json'])
-        budget.work('prior_reconstruction_payload_bytes',payload_bytes,scope='prior_callable_payload')
+        if not root_extra:budget.work('prior_reconstruction_payload_bytes',payload_bytes,scope='prior_callable_payload')
         for witness in z['world_witnesses']:
             reference(witness['request'],Q)
             qw=recover(witness['request']['sha256'],Q);parse_request_wire(qw)
