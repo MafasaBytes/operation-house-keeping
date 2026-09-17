@@ -161,6 +161,17 @@ raise SystemExit(main(sys.argv[1:],fault=fault))
     assert p.returncode==91 and not p.stdout
     run(cmd('governed-verify','--bundle',root/'interrupted'),3,'BUNDLE_INCOMPLETE')
     run(argv,5,'OUTPUT_COLLISION')
+    raced=root/'raced-capture';raced.mkdir()
+    for path in (root/'w0').iterdir():(raced/path.name).write_bytes(path.read_bytes())
+    race="""import sys
+from pathlib import Path
+from applications.bounded_decision_workflow.cli import main
+def fault(stage,name):
+ if stage=='after_read' and name=='manifest.json':
+  with (Path(sys.argv[1])/'extra').open('xb') as f:f.write(b'race')
+raise SystemExit(main(['governed-verify','--bundle',sys.argv[1]],fault=fault))
+"""
+    run([PY,'-c',race,str(raced)],3,'INPUT_CHANGED_DURING_READ')
     objects={};files={}
     for path in sorted(root.rglob('*')):
         if path.is_file():

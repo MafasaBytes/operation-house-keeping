@@ -165,3 +165,14 @@ def test_actual_scoped_cache_reuse_is_retained(tmp_path):
     m=json.loads(result.captured['manifest.json']);m['run_metadata']['operation_work']['cache_hits']=129
     (tmp_path/'shared/manifest.json').write_bytes(C(m))
     with pytest.raises(WorkflowInputError):p.verify(tmp_path/'shared')
+
+def test_final_inventory_check_does_not_depend_on_timestamp_resolution(tmp_path,monkeypatch):
+    import stat
+    path=tmp_path/'w';p.publish(path,run())
+    original=p.retention._metadata
+    monkeypatch.setattr(p.retention,'_metadata',lambda s:('same-directory-tick',) if stat.S_ISDIR(s.st_mode) else original(s))
+    assert p.verify(path).integrity_state=='complete_bundle'
+    def fault(stage,name):
+        if stage=='after_read' and name=='manifest.json':(path/'extra').write_bytes(b'race')
+    with pytest.raises(WorkflowInputError) as e:p.verify(path,fault=fault)
+    assert e.value.diagnostic.code=='INPUT_CHANGED_DURING_READ'

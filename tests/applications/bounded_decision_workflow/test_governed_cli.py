@@ -40,3 +40,14 @@ def test_wrong_pin_before_projection(tmp_path,monkeypatch):
     with pytest.raises(WorkflowInputError) as e:cli.execute(args)
     assert e.value.diagnostic.code=='AUTHORITY_REFERENCE_MISMATCH'
     assert not (tmp_path/'result').exists()
+
+def test_object_inventory_stability_not_timestamp_only(tmp_path,monkeypatch):
+    import stat
+    from pathlib import Path
+    from applications.bounded_decision_workflow import governed_cli,retention
+    args=prepare(tmp_path);original=retention._metadata
+    monkeypatch.setattr(retention,'_metadata',lambda s:('same-directory-tick',) if stat.S_ISDIR(s.st_mode) else original(s))
+    def fault(stage,name):
+        if stage=='after_read' and name.endswith('.public-snapshot'):(Path(args.objects_dir)/'extra').write_bytes(b'race')
+    with pytest.raises(WorkflowInputError) as e:governed_cli.capture_inputs(args.invocation,args.objects_dir,fault=fault)
+    assert e.value.diagnostic.code=='INPUT_CHANGED_DURING_READ'

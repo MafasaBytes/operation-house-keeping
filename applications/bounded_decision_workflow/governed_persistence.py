@@ -54,6 +54,21 @@ def output_parent(path):
     return absolute,parts
 
 
+def stable_inventory(fd,expected,cap,fault=None):
+    """A bounded second snapshot: timestamps can alias within one clock tick.
+
+    This does not promise continuous monitoring after capture. The fixed file
+    count bounds each scan independently; no recursive directory traversal.
+    """
+    retention._event(fault,'inventory_recheck','captured_directory')
+    final=set()
+    with os.scandir(fd) as it:
+        for e in it:
+            if len(final)>=cap:raise retention._error('INPUT_CHANGED_DURING_READ')
+            final.add(e.name)
+    if final!=set(expected):raise retention._error('INPUT_CHANGED_DURING_READ')
+
+
 def capture_bundle(path, *, fault=None, observer=None, _budget=None):
     """Capture fixed files once, bounded before reads. No semantic evaluation."""
     budget=_budget if _budget is not None else Budget(observer=observer);absolute,parts=retention._parts(path)
@@ -70,6 +85,7 @@ def capture_bundle(path, *, fault=None, observer=None, _budget=None):
             try:captured=retention._read_at(fd,name,cap,fault)
             except FileNotFoundError as e:raise retention._error('BUNDLE_INCOMPLETE') from e
             files[name]=captured.data;digests[name]=captured.sha256;total+=len(captured.data)
+        stable_inventory(fd,entries,budget.caps['files_per_bundle'],fault)
         if retention._metadata(os.fstat(fd))!=before:raise retention._error('INPUT_CHANGED_DURING_READ')
     # Owning closure validation decodes payloads once later. This adapter only
     # inspects the bounded manifest and fixed inventory; never a validated flag.

@@ -36,6 +36,7 @@ def capture_inputs(invocation_path,objects_dir,*,fault=None):
             total+=len(wire)
             if H(wire)!=h:raise problem('AUTHORITY_REFERENCE_MISMATCH')
             entries.append((kind,wire))
+        persistent.stable_inventory(fd,names,budget.caps['unique_objects'],fault)
         if retention._metadata(os.fstat(fd))!=before:raise retention._error('INPUT_CHANGED_DURING_READ')
     return iv,entries
 
