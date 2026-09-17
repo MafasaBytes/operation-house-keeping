@@ -4,6 +4,7 @@ No dependency installation/environment repair. New paths only. Returns recoverab
 records; callers retain them separately from the seven-file operational bundles.
 """
 import base64
+import gzip
 import json
 import os
 from pathlib import Path
@@ -22,10 +23,14 @@ ENV=dict(os.environ,PYTHONDONTWRITEBYTECODE='1')
 def measure(root):
     root=Path(root);root.mkdir(mode=0o700,exist_ok=False)
     commands=[];cases={};startup=[];bw,bid=governed_build.identity(observer=startup.append)
+    journal=root/'command-evidence';journal.mkdir()
+    def retain(row):
+        commands.append(row)
+        with (journal/(str(len(commands)).zfill(3)+'.json')).open('xb') as f:f.write(C(row))
     def run(argv,expected=0,code=None):
         start=time.monotonic();p=subprocess.run(argv,cwd=ROOT,env=ENV,capture_output=True,timeout=120)
         row={'argv':list(map(str,argv)),'returncode':p.returncode,'stdout':p.stdout.decode(),'stderr':p.stderr.decode(),'seconds':time.monotonic()-start}
-        commands.append(row)
+        retain(row)
         assert p.returncode==expected,row
         assert len(p.stdout)<=512 and len(p.stderr)<=512,row
         if expected:
@@ -74,6 +79,11 @@ def measure(root):
     run(argv,3,'AUTHORITY_REFERENCE_MISMATCH');assert not (root/'wrong-pin').exists()
     argv,_=prepare('missing-authority','missing-authority')
     run(argv,3,'AUTHORITY_UNAVAILABLE')
+    argv,_=prepare('oversized-wire','W0')
+    supplied=root/'oversized-wire-input/objects'
+    snapshot=next(supplied.glob('*.public-snapshot'))
+    snapshot.write_bytes(b' '*(131072+1)) # Raw counter refusal, not a valid boundary snapshot.
+    run(argv,4,'INPUT_WIRE_LIMIT_EXCEEDED')
     run(cmd('governed-evaluate'),2,'CLI_USAGE')
     run(cmd('governed-replay','--bundle',root/'w0','--output-dir',root/'w0'),5,'OUTPUT_COLLISION')
     # Legacy command semantics remain 22-row and cannot consume governed I.
@@ -84,6 +94,23 @@ def measure(root):
     assert len(json.loads((root/'legacy/result.json').read_bytes())['reevaluation']['decision_rows'])==22
     run(cmd('verify','--bundle',root/'legacy'))
     run(cmd('replay','--bundle',root/'legacy','--output-dir',root/'legacy-replay'))
+    historical=root/'historical-build-source';historical.mkdir()
+    for path in (root.parent/'commands-b/w0').iterdir():(historical/path.name).write_bytes(path.read_bytes())
+    run(cmd('governed-verify','--bundle',historical))
+    run(cmd('governed-replay','--bundle',historical,'--output-dir',root/'unavailable-historical-build'),3,'REPLAY_BUILD_UNAVAILABLE')
+    for name in ('w0','d1-x'):
+        receipt=run(cmd('governed-replay','--bundle',root/name,'--output-dir',root/(name+'-after-d2')))
+        assert receipt['evaluation_permitted'] is (name=='w0')
+        assert (root/name/'result.json').read_bytes()==(root/(name+'-after-d2')/'result.json').read_bytes()
+    # Fresh hostile copy: all hashes agree, but the selected action is false.
+    tampered=root/'rehashed-false-result';tampered.mkdir()
+    for path in (root/'w0').iterdir():(tampered/path.name).write_bytes(path.read_bytes())
+    r=json.loads((tampered/'result.json').read_bytes());r['selection']['selected_action_ids']=['aF'];b=C(r)
+    (tampered/'result.json').write_bytes(b);m=json.loads((tampered/'manifest.json').read_bytes())
+    m['files']['result.json']={'bytes':len(b),'sha256':H(b)};m['semantic_commitments']['result.json']=H(b)
+    (tampered/'manifest.json').write_bytes(C(m))
+    run(cmd('governed-verify','--bundle',tampered))
+    run(cmd('governed-replay','--bundle',tampered,'--output-dir',root/'false-replay'),3,'REPLAY_SEMANTIC_MISMATCH')
     # Exact subprocess observer seam, not a CLI flag or bypass. Same real build.
     argv,_=prepare('observed-d2','D2-X','d1-x')
     bootstrap="""import json,sys
@@ -103,12 +130,19 @@ raise SystemExit(code)
     assert sum(e.get('scope')=='policy_assessment' and e.get('outcome')=='started' for e in events)==2
     assert any(e.get('stage')=='parent_fsync' for e in events)
     assert (root/'observed-d2/result.json').read_bytes()==(root/'d2-x/result.json').read_bytes()
+    for name,source,bad in [('observed-denied','X-denied',False),('observed-refused','W0',True)]:
+        args,_=prepare(name,source)
+        if bad:args[args.index('--authority-pin')+1]='0'*64
+        target=root/(name+'-events.json')
+        run([PY,'-c',bootstrap,str(target),*args[3:]],3 if bad else 0,'AUTHORITY_REFERENCE_MISMATCH' if bad else None)
+        es=json.loads(target.read_bytes())
+        assert not any(e.get('scope') in ('policy_assessment','projection_plan') for e in es)
     # Two real competing processes: exactly one exclusively publishes.
     argv,_=prepare('concurrent','W0');children=[subprocess.Popen(argv,cwd=ROOT,env=ENV,stdout=subprocess.PIPE,stderr=subprocess.PIPE) for _ in range(2)]
     codes=[]
     for child in children:
         out,err=child.communicate(timeout=120);codes.append(child.returncode)
-        commands.append({'argv':argv,'returncode':child.returncode,'stdout':out.decode(),'stderr':err.decode(),'concurrent':True})
+        retain({'argv':argv,'returncode':child.returncode,'stdout':out.decode(),'stderr':err.decode(),'concurrent':True})
         if child.returncode:assert child.returncode==5 and json.loads(err)['code']=='OUTPUT_COLLISION' and not out
     assert sorted(codes)==[0,5]
     run(cmd('governed-verify','--bundle',root/'concurrent'))
@@ -121,7 +155,7 @@ def fault(stage,name):
 raise SystemExit(main(sys.argv[1:],fault=fault))
 """
     p=subprocess.run([PY,'-c',crash,*argv[3:]],cwd=ROOT,env=ENV,capture_output=True,timeout=120)
-    commands.append({'argv':[PY,'-c',crash,*argv[3:]],'returncode':p.returncode,'stdout':p.stdout.decode(),'stderr':p.stderr.decode()})
+    retain({'argv':[PY,'-c',crash,*argv[3:]],'returncode':p.returncode,'stdout':p.stdout.decode(),'stderr':p.stderr.decode()})
     assert p.returncode==91 and not p.stdout
     run(cmd('governed-verify','--bundle',root/'interrupted'),3,'BUNDLE_INCOMPLETE')
     run(argv,5,'OUTPUT_COLLISION')
@@ -130,8 +164,11 @@ raise SystemExit(main(sys.argv[1:],fault=fault))
         if path.is_file():
             b=path.read_bytes();h=H(b);objects[h]=base64.b64encode(b).decode();files[str(path.relative_to(root))]=h
     usage=resource.getrusage(resource.RUSAGE_CHILDREN)
-    return {'schema':'slice3-command-evidence.v1','root':str(root),'build_sha256':bid,'build_bytes':len(bw),'startup':startup,
+    evidence={'schema':'slice3-command-evidence.v1','root':str(root),'build_sha256':bid,'build_bytes':len(bw),'startup':startup,
             'commands':commands,'cases':cases,'events':events,'files':files,'objects':objects,
             'children_usage':{'user_seconds':usage.ru_utime,'system_seconds':usage.ru_stime,'max_rss_kib':usage.ru_maxrss,
                               'scope':'cumulative children of harness, not isolated per-command peaks'},
             'oracle':'same-author frozen law/expectations; exact executable and manifest bindings renewed, not historical bytes changed'}
+    with (root/'execution-evidence.json').open('xb') as f:f.write(C(evidence))
+    with (root/'execution-evidence.json.gz').open('xb') as f:f.write(gzip.compress(C(evidence),mtime=0))
+    return evidence
