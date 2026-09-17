@@ -17,8 +17,20 @@ one-step projection, target/feasibility assessment, tied selection among supplie
 actions, named dependency review and retained recomputing replay. The supported
 profile fixes two supplied hypotheses and four supplied actions; it generates
 neither alternatives nor measurement tests and is not a general planner.
-The [post-delivery reconciliation](docs/superpowers/reports/2026-09-16-bounded-decision-workflow-post-delivery-reconciliation.md)
-maps all seven original objectives and records integration and retention gaps.
+Finite-world admissibility enforcement is also
+[owner accepted](docs/superpowers/reports/2026-09-17-maintained-admissibility-final-owner-acceptance.md)
+at `15f773ba9c675b553283669fbf72c76407c0eabd`. The explicit governed route
+checks declaration, local-attestation, adoption and executable-build references
+before numerical evaluation, adds a 23-row dependency review, and retains
+verification and recomputing replay. A completed gate is not necessarily granted
+permission: denied scenarios cannot reach prohibited numerical work. Legacy
+commands retain their original meaning and do not enforce admissibility.
+The [current reconciliation](docs/superpowers/reports/2026-09-17-post-admissibility-reconciliation.md)
+maps all seven objectives, recovery and publication boundaries; the
+[earlier reconciliation](docs/superpowers/reports/2026-09-16-bounded-decision-workflow-post-delivery-reconciliation.md)
+is historical. Local attestation is not authentication, declared validity is not
+physical truth, and historical replay does not establish current adoption.
+Finite-world membership is not general correlated-support projection.
 The earlier BRC, conditional-prediction, model-derived-prediction and one-step
 proofs remain historical disposable experiments; their test-ranking capabilities
 were not promoted into the maintained application.
@@ -75,7 +87,7 @@ source or sensor authority, trusted time, global atomicity, or physical truth.
 | `backend/constraint_evaluation` | Read-only evidence-gated evaluation of explicit variable constraints. |
 | `backend/behavior_evaluation` | Read-only evaluation of the bounded explicit BH-001 behavior declaration. |
 | `backend/state_classification` | Read-only evidence-gated classification of an explicit state declaration. |
-| `applications/bounded_decision_workflow` | Accepted local supplied-alternative workflow over reconstructed public results and explicit synthetic premises; application-owned projection/policy/review and filesystem retention, with no backend ledger or contract extension. |
+| `applications/bounded_decision_workflow` | Accepted supplied-alternative workflow plus explicit governed finite-world admission before projection; application-owned authority/build binding, 23-row review and retained recomputing replay. Legacy routing remains distinct; no backend ledger or contract extension. |
 
 Dependencies point from upper composition layers toward accepted lower
 contracts. `system_identity` has no backend dependency; `model_kernel` depends

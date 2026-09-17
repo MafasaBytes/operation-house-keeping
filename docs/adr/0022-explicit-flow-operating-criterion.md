@@ -78,4 +78,10 @@ proposal demonstrating an attack existing explicit public-result checks cannot
 prevent. No identified attack currently qualifies; API convenience, one status
 or smaller carriage is insufficient. No successor milestone is authorized.
 
+Status reconciliation (2026-09-17): the
+[FC-001 owner acceptance](../superpowers/reports/2026-09-09-fc001-final-owner-acceptance.md)
+recorded the successful direct-join proof and cancelled FA-001. The conditional
+deferral above is historical, not outstanding work; the reconsideration boundary
+is unchanged. No new architectural decision is allocated here.
+
 END OF ADR-0022

@@ -25,7 +25,21 @@ must remain authoritative.
 
 ## Status (added 2026-08-07 — historical guidance below is preserved)
 
-Application delivery update (2026-09-16): the maintained
+Application delivery update (2026-09-17): finite-world admissibility enforcement
+is [owner accepted](docs/superpowers/reports/2026-09-17-maintained-admissibility-final-owner-acceptance.md)
+at `15f773ba9c675b553283669fbf72c76407c0eabd`. The explicit governed route
+enforces declared membership before numerical evaluation; denied permission blocks
+projection even when the gate completes successfully. Exact local-attestation,
+declaration, adoption and build references support 23-row review and persistent
+verification/recomputing replay. Local attestation is not authenticated identity
+or physical truth; historical replay is not current adoption. The finite gate
+does not implement general correlated-support reasoning or discover assumptions.
+Legacy invocation remains available without this enforcement guarantee.
+The [current seven-objective reconciliation](docs/superpowers/reports/2026-09-17-post-admissibility-reconciliation.md)
+supersedes the publication/status assessment below, not its historical evidence.
+C remains unresolved; IN-001 and CI-001 remain open and unselected.
+
+Earlier application delivery (2026-09-16): the maintained
 [bounded decision workflow](applications/bounded_decision_workflow/README.md) is
 [owner accepted through S1–S7](docs/superpowers/reports/2026-09-16-bounded-decision-workflow-final-owner-acceptance.md)
 at `64f4389b6d93484339afa29cbb7f7f21f6ef2758`. Its local evaluate/verify/replay

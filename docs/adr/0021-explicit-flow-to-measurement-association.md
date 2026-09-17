@@ -98,4 +98,9 @@ integrity, and immutable indexes. Accepted Slice B is limited to the five
 read-only queries and authoritatively reconstructed results. There is no Slice
 C or demonstration slice. FA-001 remains separate and unauthorized.
 
+Status reconciliation (2026-09-17): the later
+[FC-001 owner acceptance](../superpowers/reports/2026-09-09-fc001-final-owner-acceptance.md)
+cancelled FA-001. The preceding historical authorization status is not pending
+work. This annotation changes no FM contract or architectural decision.
+
 END OF ADR-0021
