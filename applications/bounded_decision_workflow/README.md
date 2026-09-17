@@ -173,7 +173,13 @@ status statements inside frozen reports remain unchanged. The later
 [owner retention approval](../../docs/superpowers/reports/2026-09-16-bounded-decision-workflow-retention-approval.md)
 authorizes the exact additions and metadata disclosure; integration and push
 remain separate owner gates.
-# Governed command boundary (Slices 1–3)
+## Governed command boundary (Slices 1–3 accepted; release gate pending)
+
+The owner has accepted [Slice 3](../../docs/superpowers/reports/2026-09-17-admissibility-slice3-owner-acceptance.md)
+at `250da5e66479ee1dd2e7c24cd81905509ffe5969`, following acceptance of the
+pure admission/build and internal review slices. Bounded final release verification
+is separately authorized; final maintained-admissibility acceptance is not implied.
+Frozen historical reports retain their original status statements.
 
 The explicitly named `governed-evaluate`, `governed-verify` and `governed-replay`
 commands select the immutable governed contract; the existing `evaluate`, `verify`
@@ -201,3 +207,47 @@ no-feasible-action result is distinct from denial. Publication never overwrites 
 automatically removes incomplete evidence. Runtime storage/pin selection remain
 local-owner responsibilities, not authenticated identity. Implementation is not
 final milestone acceptance; IN-001 and CI-001 remain open/unselected.
+
+The delivered question is conditional: under this exact authorized declaration,
+may this complete nominated world be evaluated, and which dependent decisions
+require reconsideration when its premises, context or declaration change?
+Membership uses a closed finite table of at most four world/context pairs, not
+a constrained joint-support engine. Each admitted world still uses the original
+Cartesian projection. The four-pair scope cap is not a resource-capacity promise.
+W0/J1 admission and D1-X denial depend on declared synthetic authority, not a
+discovered physical relationship. A revised declaration can admit D2-X without
+making an action feasible. Unknown applicability withholds permission; malformed
+material is a technical refusal, not an assessed membership denial.
+
+Declarations and authority/adoption records are immutable, content-addressed
+versions. Hypothetical evaluation is not working adoption. Working evaluation
+requires exact adoption references; historical replay uses captured authority
+only and never claims that it remains current. Observed evidence, assessed
+conclusions and hypothetical worlds remain separate. Neither revision nor a
+target change mutates observed system state. Names and pins are local owner
+attestations, not authenticated identities or evidence of empirical truth.
+
+Governed results retain 23 ordered decision slots. Permission denial assesses the
+gate and independent current condition and blocks 21 dependent slots; those slots
+do not imply numerical work. Required reviews, performed assessments, available
+values and comparable numerical changes are separate. Unavailable values are not
+reported as unchanged comparable numbers. Complete prior closure is validated
+and reconstructed before comparison; no caller-supplied validation flag is trusted.
+
+The committed first-slice authority recovery and its parts recover the frozen
+design, schemas, policy and fixture inputs. Maintained test fixture recovery uses
+that archive, not unrelated preparation files. The Slice 3 report's archive also
+recovers complete executable examples, but their invocations bind that historical
+build; do not pass them off as current-build examples. Select the exact historical
+checkout/environment for their replay. For new nominations derive a fresh actual
+build identity and immutable references; never replace the historical bytes.
+
+Runtime work is bounded by the selected version's policy and unchanged lower-layer
+limits. Replay-stable semantic counters and independently checked fresh physical
+work evidence remain distinct. Manifest-last no-overwrite publication does not
+establish atomic whole-directory visibility, reboot or power-loss durability.
+Observed platform support remains locked CPython 3.13.11 on ext4; XFS is not
+empirically qualified. There is no automatic environment restoration, discovery of
+valid assumptions, conflicting-evidence adjudication, physical monitoring,
+causal inference or automatic planning. C remains unresolved/dossier-only and F
+historical/analytical. No continuous-domain or statistical-correlation claim follows.
