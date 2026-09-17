@@ -173,13 +173,14 @@ status statements inside frozen reports remain unchanged. The later
 [owner retention approval](../../docs/superpowers/reports/2026-09-16-bounded-decision-workflow-retention-approval.md)
 authorizes the exact additions and metadata disclosure; integration and push
 remain separate owner gates.
-## Governed command boundary (Slices 1–3 accepted; release gate pending)
+## Governed command boundary (final owner acceptance granted)
 
-The owner has accepted [Slice 3](../../docs/superpowers/reports/2026-09-17-admissibility-slice3-owner-acceptance.md)
-at `250da5e66479ee1dd2e7c24cd81905509ffe5969`, following acceptance of the
-pure admission/build and internal review slices. Bounded final release verification
-is separately authorized; final maintained-admissibility acceptance is not implied.
-Frozen historical reports retain their original status statements.
+The owner has granted [final maintained-admissibility acceptance](../../docs/superpowers/reports/2026-09-17-maintained-admissibility-final-owner-acceptance.md)
+at tested candidate `15f773ba9c675b553283669fbf72c76407c0eabd`, following acceptance
+of Slices 1–3 and bounded release verification. This documentation closeout is not
+a newly tested build; replay requires the exact recorded checkout/environment.
+Frozen historical reports retain their original status statements. No successor
+work is authorized.
 
 The explicitly named `governed-evaluate`, `governed-verify` and `governed-replay`
 commands select the immutable governed contract; the existing `evaluate`, `verify`
@@ -205,8 +206,8 @@ in its receipt; false means no current numerical projection, not a failed proces
 Technical refusals have nonzero exit, bounded stderr and empty stdout. An admitted
 no-feasible-action result is distinct from denial. Publication never overwrites or
 automatically removes incomplete evidence. Runtime storage/pin selection remain
-local-owner responsibilities, not authenticated identity. Implementation is not
-final milestone acceptance; IN-001 and CI-001 remain open/unselected.
+local-owner responsibilities, not authenticated identity. Final acceptance is
+bounded by the owner record above; IN-001 and CI-001 remain open/unselected.
 
 The delivered question is conditional: under this exact authorized declaration,
 may this complete nominated world be evaluated, and which dependent decisions
