@@ -321,7 +321,8 @@ def _evaluate(invocation_wire,objects,expected_authority_pin,prior_files,budget,
                 'lower_resolved_bytes','prior_capture_bytes','reconstruction_bytes','corner_evaluations','capture_bytes')
     physical={'schema':'internal-governed-kernel-work.v1','coverage':'in_memory_kernel_only_not_publication',
               'logical_commitment':H(C(counts)),'operations':budget.operations,'actual':{},'extra':{},'charged':{},
-              'output_reserved_bytes':budget.actual['retention_bytes']}
+              'output_reserved_bytes':budget.actual['retention_bytes'],
+              'cache_hits':budget.physical['cache_hits']}
     for name in dimensions:
         k=mapping.get(name,name);extra=budget.extra[k];charged=counts[name]+extra
         if budget.actual[k]>charged or charged>budget.caps[k]:raise problem('INPUT_RESOURCE_LIMIT_EXCEEDED',resource=True,target=k)

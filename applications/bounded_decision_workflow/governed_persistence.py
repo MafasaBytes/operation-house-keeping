@@ -126,7 +126,7 @@ def publish(path,review,*,operation='evaluate',fault=None,observer=None):
         k=aliases.get(n,n)
         raw['actual'][n]=budget.actual[k];raw['extra'][n]=budget.extra[k];raw['charged'][n]=budget.logical[k]+budget.extra[k]
     work={'schema':'physical-work.v1','observed':True,'logical_commitment':raw['logical_commitment'],
-          'actual':raw['actual'],'extra':raw['extra'],'charged':raw['charged'],'cache_hits':0,
+          'actual':raw['actual'],'extra':raw['extra'],'charged':raw['charged'],'cache_hits':raw['cache_hits'],
           'output_reserved_bytes':retention_cap,
           'coverage':'through_payloads_manifest_publication_reserved','checks':'all_effective_limits_checked_before_work'}
     bounded_json(work,budget.caps['physical_evidence_bytes'],'physical_evidence_bytes')

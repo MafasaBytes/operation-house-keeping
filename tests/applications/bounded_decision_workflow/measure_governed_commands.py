@@ -74,6 +74,7 @@ def measure(root):
             logical=r['resource_accounting'],physical=json.loads((root/name/'manifest.json').read_bytes())['run_metadata']['operation_work'],
             replay_physical=json.loads((root/(name+'-replay')/'manifest.json').read_bytes())['run_metadata']['operation_work'],
             bytes={p.name:p.stat().st_size for p in (root/name).iterdir()})
+        assert cases[name]['physical']['cache_hits']>0 and cases[name]['replay_physical']['cache_hits']>0
     # Refusal nearest twins, without altering any accepted output.
     argv,_=prepare('wrong-pin','W0');argv[argv.index('--authority-pin')+1]='0'*64
     run(argv,3,'AUTHORITY_REFERENCE_MISMATCH');assert not (root/'wrong-pin').exists()

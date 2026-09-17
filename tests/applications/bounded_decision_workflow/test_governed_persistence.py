@@ -155,3 +155,13 @@ def test_byte_verify_does_not_accept_malformed_build_record(tmp_path,monkeypatch
     monkeypatch.setitem(globals(),'BUILD',C({'schema':'test-only-build-not-executable'}))
     p.publish(tmp_path/'bad-build',run())
     with pytest.raises(WorkflowInputError):p.verify(tmp_path/'bad-build')
+
+def test_actual_scoped_cache_reuse_is_retained(tmp_path):
+    review=run('J1');measured=json.loads(review.physical_bytes)
+    assert measured['cache_hits']>0
+    result=p.publish(tmp_path/'shared',review)
+    work=json.loads(result.captured['manifest.json'])['run_metadata']['operation_work']
+    assert work['cache_hits']==measured['cache_hits']
+    m=json.loads(result.captured['manifest.json']);m['run_metadata']['operation_work']['cache_hits']=129
+    (tmp_path/'shared/manifest.json').write_bytes(C(m))
+    with pytest.raises(WorkflowInputError):p.verify(tmp_path/'shared')
