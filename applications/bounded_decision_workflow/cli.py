@@ -44,6 +44,14 @@ def _arguments(argv):
         else:
             p.add_argument("--bundle", required=True)
             if mode == "replay": p.add_argument("--output-dir", required=True)
+    for mode in ('evaluate','verify','replay'):
+        p=sub.add_parser('governed-'+mode,add_help=False,allow_abbrev=False)
+        if mode=='evaluate':
+            for arg in ('invocation','objects-dir','authority-pin','output-dir'):p.add_argument('--'+arg,required=True)
+            p.add_argument('--compare-to')
+        else:
+            p.add_argument('--bundle',required=True)
+            if mode=='replay':p.add_argument('--output-dir',required=True)
     # Repeated flags have no implicit last-writer authority.
     flags = [x for x in argv if x.startswith("--")]
     if len(flags) != len(set(flags)): raise _problem("CLI_USAGE")
@@ -155,8 +163,11 @@ def _recover_valid_shape(inspection, build_id):
     return review, resolved, result, trace
 
 
-def execute(args, *, fault=None):
+def execute(args, *, fault=None, observer=None):
     """Trusted in-process fault seam; CLI offers no hooks or policy overrides."""
+    if args.operation.startswith('governed-'):
+        from . import governed_cli
+        return governed_cli.execute(args,fault=fault,observer=observer)
     if args.operation == "verify":
         checked = _checked_bundle(args.bundle)
         return {"operation": "verify", "bundle_commitment": checked.manifest_sha256, "integrity_state": checked.integrity_state}
@@ -240,10 +251,10 @@ def _prior_from_final(inspection, old, build_id):
             "result_sha256": _hash(inspection.captured["result.json"]), "trace_sha256": _hash(inspection.captured["trace.json"])}
 
 
-def main(argv=None, *, fault=None):
+def main(argv=None, *, fault=None, observer=None):
     try:
         args = _arguments(sys.argv[1:] if argv is None else argv)
-        receipt = execute(args, fault=fault)
+        receipt = execute(args, fault=fault,observer=observer)
         wire = canonical_json_bytes(receipt) + b"\n"
         if len(wire) > BUILD_LIMITS["output_stdout_stderr_bytes"]: raise _output_refusal()
         sys.stdout.buffer.write(wire); sys.stdout.buffer.flush()

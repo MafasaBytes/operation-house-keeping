@@ -173,3 +173,31 @@ status statements inside frozen reports remain unchanged. The later
 [owner retention approval](../../docs/superpowers/reports/2026-09-16-bounded-decision-workflow-retention-approval.md)
 authorizes the exact additions and metadata disclosure; integration and push
 remain separate owner gates.
+# Governed command boundary (Slices 1–3)
+
+The explicitly named `governed-evaluate`, `governed-verify` and `governed-replay`
+commands select the immutable governed contract; the existing `evaluate`, `verify`
+and `replay` commands remain legacy and do **not** claim admissibility enforcement.
+There is no auto-detection fallback from a governed invocation to legacy behavior.
+
+`governed-evaluate --invocation I.json --objects-dir OBJECTS --authority-pin SHA256
+--output-dir NEW [--compare-to PRIOR]` consumes canonical invocation bytes and a
+private directory of exact objects named `SHA256.kind` (for example
+`<digest>.finite-declaration.v1`). Allowed kinds are the approved D/S/A/T/I/Q/B and
+`captured-basis` roles. No object path comes from JSON; all files are captured with
+the maintained no-follow regular-file/ext4/xfs boundary. The external selection pin
+is mandatory owner input, not inferred from whichever selection is supplied.
+
+`governed-verify --bundle PATH` checks complete retained integrity and bounded work
+evidence, not permission or numerical truth. `governed-replay --bundle PATH
+--output-dir NEW` requires the exact historical executable/environment and
+reconstructs, re-admits and recomputes the complete chain. It never discovers a
+newer declaration, upgrades policy, fetches a checkout or claims current adoption.
+
+Completed governed evaluation/replay has exit 0 and explicit `evaluation_permitted`
+in its receipt; false means no current numerical projection, not a failed process.
+Technical refusals have nonzero exit, bounded stderr and empty stdout. An admitted
+no-feasible-action result is distinct from denial. Publication never overwrites or
+automatically removes incomplete evidence. Runtime storage/pin selection remain
+local-owner responsibilities, not authenticated identity. Implementation is not
+final milestone acceptance; IN-001 and CI-001 remain open/unselected.
