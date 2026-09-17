@@ -31,6 +31,12 @@ maps all seven objectives, recovery and publication boundaries; the
 is historical. Local attestation is not authentication, declared validity is not
 physical truth, and historical replay does not establish current adoption.
 Finite-world membership is not general correlated-support projection.
+Historical-retention disposition is recorded in the
+[retention decision](docs/superpowers/reports/2026-09-17-historical-retention-decision.md):
+the 242 existing untracked artifacts remain preserved, no historical source is
+added, and 16 locally available historical targets lack located committed
+recovery. They are not required for accepted authority, reproduction or runtime
+behavior; frozen historical links remain unchanged.
 The earlier BRC, conditional-prediction, model-derived-prediction and one-step
 proofs remain historical disposable experiments; their test-ranking capabilities
 were not promoted into the maintained application.
