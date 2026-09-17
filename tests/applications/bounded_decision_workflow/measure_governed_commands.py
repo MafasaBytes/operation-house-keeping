@@ -110,7 +110,8 @@ def measure(root):
     m['files']['result.json']={'bytes':len(b),'sha256':H(b)};m['semantic_commitments']['result.json']=H(b)
     (tampered/'manifest.json').write_bytes(C(m))
     run(cmd('governed-verify','--bundle',tampered))
-    run(cmd('governed-replay','--bundle',tampered,'--output-dir',root/'false-replay'),3,'REPLAY_SEMANTIC_MISMATCH')
+    diagnostic=run(cmd('governed-replay','--bundle',tampered,'--output-dir',root/'false-replay'),3,'REPLAY_SEMANTIC_MISMATCH')
+    assert diagnostic['retry_class']=='investigate_integrity' and diagnostic['bundle_state']=='absent'
     # Exact subprocess observer seam, not a CLI flag or bypass. Same real build.
     argv,_=prepare('observed-d2','D2-X','d1-x')
     bootstrap="""import json,sys

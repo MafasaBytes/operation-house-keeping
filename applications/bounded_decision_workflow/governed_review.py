@@ -6,7 +6,7 @@ import json
 from . import governed_admission as gate,governed_build,policy,projection
 from .governed_contracts import I,S,D,A,T,Q,B,validate,decode,edges
 from .governed_resources import Budget,problem,bounded_json
-from .errors import refusal
+from .errors import refusal,WorkflowDiagnostic,WorkflowInputError
 from .input import canonical_json_bytes as C,effective_limits
 from .decision_review import _support_and_decisions,_changed_paths
 from .projection_profile import ACTIONS,validate_profile
@@ -213,7 +213,9 @@ def _replay(files,budget,observer):
             entries.append((e['kind'],wire))
     result=_evaluate(files['request.json'],entries,z['expected_authority_pin'],None,budget,observer,recovered=prior,replaying=True)
     if result.result_bytes!=files['result.json'] or result.trace_bytes!=files['trace.json'] or result.closure_bytes!=files['resolved-input.json']:
-        raise problem('REPLAY_SEMANTIC_MISMATCH',target='result_or_trace')
+        raise WorkflowInputError(WorkflowDiagnostic('REPLAY_SEMANTIC_MISMATCH',
+            'commitment_public_reconstruction','result_or_trace','replay_semantic_mismatch',
+            'investigate_integrity',3,'absent'))
     return result
 
 

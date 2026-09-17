@@ -120,6 +120,8 @@ def test_replay_checks_computation_not_only_hashes(tmp_path):
     assert p.verify(path).integrity_state=='complete_bundle' # Not a semantic claim.
     with pytest.raises(WorkflowInputError) as e:p.replay(path,tmp_path/'bad-replay')
     assert e.value.diagnostic.code=='REPLAY_SEMANTIC_MISMATCH'
+    assert e.value.diagnostic.retry_class=='investigate_integrity'
+    assert e.value.diagnostic.bundle_state=='absent'
     assert not (tmp_path/'bad-replay').exists()
 
 @pytest.mark.parametrize('attack',['symlink','incomplete','extra-file','changed-during-read','overbudget-work'])
