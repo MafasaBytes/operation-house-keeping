@@ -1,5 +1,6 @@
 import hashlib
 import json
+from types import SimpleNamespace
 
 import pytest
 
@@ -12,6 +13,7 @@ from applications.bounded_decision_workflow.measurement_contracts import (
     parse_approved_policy,
     resolve_required_closure,
 )
+import applications.bounded_decision_workflow.measurement_contracts as measurement_contracts
 
 
 def ref(kind, payload):
@@ -262,8 +264,99 @@ def test_reference_digest_mismatch_is_distinct_from_missing_content():
     with pytest.raises(MeasurementContractError) as error:
         resolve_required_closure(mutated, objects)
     assert error.value.code == "REQUIRED_REFERENCE_MISSING"
-
     objects["nm.request.v1", "0" * 64] = objects[next(key for key in objects if key[0] == "nm.request.v1")]
     with pytest.raises(MeasurementContractError) as error:
         resolve_required_closure(mutated, objects)
     assert error.value.code == "REFERENCE_DIGEST_MISMATCH"
+
+
+def test_internal_graph_seam_exercises_cycles_and_diamond_sharing(monkeypatch):
+    """Exercise traversal after admission hashing, without weakening public checks.
+
+    The synthetic digest function is a test-only seam.  It makes a finite graph
+    with back-edges representable so this test reaches the resolver's active-path
+    cycle branch; it is not a public-input or production bypass.
+    """
+    approved_policy = open(
+        "docs/superpowers/reports/2026-09-19-next-measurement-preparation/resource-policy.json",
+        "rb",
+    ).read()
+    real_sha = hashlib.sha256
+
+    def graph_digest(schema, ident, revision=1):
+        return real_sha(f"{schema}:{ident}:{revision}".encode()).hexdigest()
+
+    def graph_ref(schema, ident, revision=1):
+        return {"kind": schema, "sha256": graph_digest(schema, ident, revision)}
+
+    def document(schema, ident, revision=1, **body):
+        return canonical_json_bytes({
+            "schema": schema, "profile": PROFILE, "id": ident,
+            "revision": revision, **body,
+        })
+
+    def synthetic_sha(payload=b""):
+        if payload == approved_policy:
+            digest = real_sha(payload).hexdigest()
+        else:
+            try:
+                value = json.loads(payload)
+            except (TypeError, ValueError, json.JSONDecodeError):
+                digest = real_sha(payload).hexdigest()
+            else:
+                digest = graph_digest(value["schema"], value["id"], value["revision"])
+        return SimpleNamespace(hexdigest=lambda: digest)
+
+    monkeypatch.setattr(measurement_contracts.hashlib, "sha256", synthetic_sha)
+
+    h = document("nm.hypothesis.v1", "H1", account_kind="a")
+    p = document("nm.procedure.v1", "P1", method="m")
+    build = document("nm.build.v1", "B1", status="executable")
+    policy_ref = {"kind": "nm.resource-policy.v1", "sha256": real_sha(approved_policy).hexdigest()}
+
+    def graph(cycle):
+        s1 = document("nm.support.v1", "S1", hypothesis=graph_ref("nm.hypothesis.v1", "H1"),
+                      procedure=graph_ref("nm.procedure.v1", "P1"),
+                      **({"cycle": graph_ref("nm.support.v1", cycle)} if cycle else {}))
+        s2 = document("nm.support.v1", "S2", hypothesis=graph_ref("nm.hypothesis.v1", "H1"),
+                      procedure=graph_ref("nm.procedure.v1", "P1"),
+                      **({"cycle": graph_ref("nm.support.v1", cycle)} if cycle else {}))
+        q = document("nm.request.v1", "Q1", hypotheses=[graph_ref("nm.hypothesis.v1", "H1")],
+                     measurements=[graph_ref("nm.procedure.v1", "P1")],
+                     support=[graph_ref("nm.support.v1", "S1"), graph_ref("nm.support.v1", "S2")],
+                     predecessor=None)
+        d = document("nm.declaration.v1", "D1", requests=[graph_ref("nm.request.v1", "Q1")])
+        a = document("nm.selection.v1", "A1", declaration=graph_ref("nm.declaration.v1", "D1"),
+                     request=graph_ref("nm.request.v1", "Q1"))
+        i = document("nm.invocation.v1", "I1", request=graph_ref("nm.request.v1", "Q1"),
+                     selection=graph_ref("nm.selection.v1", "A1"), adoption=None,
+                     build_identity=graph_digest("nm.build.v1", "B1"),
+                     resource_policy=policy_ref["sha256"])
+        payloads = [i, q, a, d, h, p, s1, s2, build, approved_policy]
+        objects = {}
+        for payload in payloads:
+            value = json.loads(payload)
+            if value.get("schema") == "nm.resource-policy.v1":
+                key = (value["schema"], real_sha(payload).hexdigest())
+            else:
+                key = (value["schema"], graph_digest(value["schema"], value["id"], value["revision"]))
+            objects[key] = payload
+        return i, objects
+
+    direct, direct_objects = graph("S1")
+    with pytest.raises(MeasurementContractError) as error:
+        resolve_required_closure(direct, direct_objects)
+    assert error.value.code == "REFERENCE_CYCLE"
+
+    indirect, indirect_objects = graph("S2")
+    with pytest.raises(MeasurementContractError) as error:
+        resolve_required_closure(indirect, indirect_objects)
+    assert error.value.code == "REFERENCE_CYCLE"
+
+    diamond, diamond_objects = graph(None)
+    result = resolve_required_closure(diamond, diamond_objects)
+    # The two support branches revisit H1/P1; complete-object memoization
+    # avoids another locate/reference charge while edge traversal still records
+    # the diamond fan-in.
+    assert result.edge_visits > len(result.objects)
+    assert result.objects[("nm.hypothesis.v1", graph_digest("nm.hypothesis.v1", "H1"))] == h
