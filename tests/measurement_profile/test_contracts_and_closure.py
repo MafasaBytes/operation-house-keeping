@@ -187,6 +187,19 @@ def test_plus_one_limits_and_history_envelope_refuse_without_truncation():
         resolve_required_closure(invocation, objects)
     assert error.value.code in {"REQUIRED_REFERENCE_MISSING", "RESOURCE_LIMIT_EXCEEDED"}
 
+    # A non-root revision cannot be accepted with a digest-free predecessor.
+    invocation, objects = base_objects()
+    qkey = next(key for key in objects if key[0] == "nm.request.v1")
+    q = json.loads(objects[qkey]); q["revision"] = 2
+    revised = canonical_json_bytes(q); qref = ref("nm.request.v1", revised)
+    objects.pop(qkey); objects[qref["kind"], qref["sha256"]] = revised
+    invocation_value = json.loads(invocation)
+    invocation_value["request"] = qref
+    invocation = canonical_json_bytes(invocation_value)
+    with pytest.raises(MeasurementContractError) as error:
+        resolve_required_closure(invocation, objects)
+    assert error.value.code == "REQUIRED_REFERENCE_MISSING"
+
 
 def test_cross_profile_reference_is_rejected_before_resolution():
     invocation, objects = base_objects()

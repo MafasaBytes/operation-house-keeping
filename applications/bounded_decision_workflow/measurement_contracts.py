@@ -353,6 +353,12 @@ def resolve_required_closure(invocation_wire, objects, *, authority_pin=None,
         if value["schema"] == "nm.prepared-build.v1" or value.get("status") == "prepared_not_executable":
             raise MeasurementContractError("NONEXECUTABLE_BUILD_WITNESS", stage="phase_2", target=path)
         _nomination_checks(value)
+        if value["schema"] == "nm.request.v1":
+            predecessor = value.get("predecessor")
+            if value["revision"] == 1 and predecessor is not None:
+                raise MeasurementContractError("PREDECESSOR_VERSION_MISMATCH", stage="phase_2", target="/predecessor")
+            if value["revision"] > 1 and predecessor is None:
+                raise MeasurementContractError("REQUIRED_REFERENCE_MISSING", stage="phase_2", target="/predecessor")
         active.append(key)
         try:
             for edge_path, edge in _special_edges(value):
