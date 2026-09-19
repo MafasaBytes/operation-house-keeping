@@ -210,3 +210,60 @@ def test_cross_profile_reference_is_rejected_before_resolution():
     with pytest.raises(MeasurementContractError) as error:
         resolve_required_closure(changed, objects)
     assert error.value.code == "REFERENCE_ROLE_MISMATCH"
+
+
+def test_same_logical_id_different_revision_is_not_silently_collapsed():
+    invocation, objects = base_objects()
+    hkey = next(key for key in objects if key[0] == "nm.hypothesis.v1")
+    original_h = json.loads(objects[hkey])
+    revised_h = dict(original_h, revision=2, account_kind="different")
+    revised_h_wire = canonical_json_bytes(revised_h)
+    revised_h_ref = ref("nm.hypothesis.v1", revised_h_wire)
+    objects[revised_h_ref["kind"], revised_h_ref["sha256"]] = revised_h_wire
+
+    qkey = next(key for key in objects if key[0] == "nm.request.v1")
+    q = json.loads(objects[qkey])
+    q["hypotheses"] = [q["hypotheses"][0], revised_h_ref]
+    q_wire = canonical_json_bytes(q)
+    old_q_ref = {"kind": qkey[0], "sha256": qkey[1]}
+    new_q_ref = ref("nm.request.v1", q_wire)
+    objects.pop(qkey)
+    objects[new_q_ref["kind"], new_q_ref["sha256"]] = q_wire
+    # Rebind the exact request through its declaration, selection and root.
+    for key, payload in list(objects.items()):
+        value = json.loads(payload)
+        changed = False
+        for field in ("request", "requests"):
+            if field not in value:
+                continue
+            if isinstance(value[field], list):
+                value[field] = [new_q_ref if x == old_q_ref else x for x in value[field]]
+                changed = True
+            elif value[field] == old_q_ref:
+                value[field] = new_q_ref
+                changed = True
+        if changed:
+            replacement = canonical_json_bytes(value)
+            objects.pop(key)
+            objects[(key[0], hashlib.sha256(replacement).hexdigest())] = replacement
+    invocation = next(payload for (kind, _), payload in objects.items()
+                      if kind == "nm.invocation.v1")
+    with pytest.raises(MeasurementContractError) as error:
+        resolve_required_closure(invocation, objects)
+    assert error.value.code == "DUPLICATE_NOMINATION_ID"
+
+
+def test_reference_digest_mismatch_is_distinct_from_missing_content():
+    invocation, objects = base_objects()
+    ikey = next(key for key in objects if key[0] == "nm.invocation.v1")
+    value = json.loads(objects[ikey])
+    value["request"]["sha256"] = "0" * 64
+    mutated = canonical_json_bytes(value)
+    with pytest.raises(MeasurementContractError) as error:
+        resolve_required_closure(mutated, objects)
+    assert error.value.code == "REQUIRED_REFERENCE_MISSING"
+
+    objects["nm.request.v1", "0" * 64] = objects[next(key for key in objects if key[0] == "nm.request.v1")]
+    with pytest.raises(MeasurementContractError) as error:
+        resolve_required_closure(mutated, objects)
+    assert error.value.code == "REFERENCE_DIGEST_MISMATCH"
