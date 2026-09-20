@@ -31,7 +31,13 @@ def base_objects():
     p = wire("nm.procedure.v1", "P1", method="m")
     s = wire("nm.support.v1", "S1", hypothesis=ref("nm.hypothesis.v1", h),
              procedure=ref("nm.procedure.v1", p))
-    q = wire("nm.request.v1", "Q1", hypotheses=[ref("nm.hypothesis.v1", h)],
+    q = wire("nm.request.v1", "Q1", context={
+                 "as_of": "2026-08-07T20:30:00Z",
+                 "assertion_context": {"kind": "lifecycle_view", "view": "as_operated"},
+                 "scenario_label": "nominated-comparison",
+                 "subject_entity_anchor_id": "ent_99999999999999999999999999999999",
+                 "variable_anchor_id": "var_11111111111111111111111111111111"},
+             hypotheses=[ref("nm.hypothesis.v1", h)],
              measurements=[ref("nm.procedure.v1", p)],
              support=[ref("nm.support.v1", s)], predecessor=None)
     d = wire("nm.declaration.v1", "D1", requests=[ref("nm.request.v1", q)])
