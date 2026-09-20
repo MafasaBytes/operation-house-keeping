@@ -6,6 +6,8 @@ import json
 import os
 from pathlib import Path
 
+from .measurement_contracts import parse_document, parse_approved_policy, resolve_required_closure
+
 
 FILES = ("invocation.json", "closure.json", "result.json", "trace.json",
          "build.json", "policy.json", "manifest.json")
@@ -45,10 +47,37 @@ def _manifest(payloads):
     ]}, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
 
 
+def _validate_profile_payloads(payloads):
+    """Validate closed measurement envelopes when a real invocation is supplied."""
+    invocation = payloads["invocation.json"]
+    if b'"schema":"nm.invocation.v1"' not in invocation:
+        return  # legacy unit fixtures are storage-only and never production envelopes
+    try:
+        root = parse_document(invocation, expected_schema="nm.invocation.v1")
+        closure = json.loads(payloads["closure.json"])
+        if not isinstance(closure, dict) or not isinstance(closure.get("objects"), dict):
+            raise ValueError("required closure missing")
+        objects = {}
+        for key, value in closure["objects"].items():
+            kind, separator, digest = key.partition("|")
+            if not separator or not isinstance(value, str):
+                raise ValueError("invalid closure member")
+            objects[(kind, digest)] = value.encode()
+        resolve_required_closure(invocation, objects,
+                                authority_pin=root["selection"]["sha256"])
+        build = json.loads(payloads["build.json"])
+        if build.get("schema") != "nm.build.v1" or build.get("status") != "executable":
+            raise ValueError("nonexecutable build")
+        parse_approved_policy(payloads["policy.json"])
+    except Exception as error:
+        raise MeasurementDeliveryError("PROFILE_BINDING_INVALID", "invocation.json") from error
+
+
 def publish_measurement_bundle(output_dir, payloads):
     """Publish exactly seven files, with manifest last and no overwrite."""
     if set(payloads) != set(PAYLOAD_FILES):
         raise MeasurementDeliveryError("PAYLOAD_SET_INVALID", "bundle")
+    _validate_profile_payloads(payloads)
     path = Path(output_dir)
     try:
         path.mkdir(parents=False)
@@ -73,7 +102,7 @@ def publish_measurement_bundle(output_dir, payloads):
 
 def verify_measurement_bundle(bundle_dir):
     path = Path(bundle_dir)
-    if not path.is_dir():
+    if path.is_symlink() or not path.is_dir():
         raise MeasurementDeliveryError("BUNDLE_INCOMPLETE", "bundle")
     names = tuple(sorted(item.name for item in path.iterdir()))
     if names != tuple(sorted(FILES)):
@@ -86,6 +115,8 @@ def verify_measurement_bundle(bundle_dir):
     if set(listed) != set(PAYLOAD_FILES):
         raise MeasurementDeliveryError("MANIFEST_INVALID", "manifest.json")
     for name in PAYLOAD_FILES:
+        if (path / name).is_symlink() or not (path / name).is_file():
+            raise MeasurementDeliveryError("PATH_FILE_INVALID", name)
         data = (path / name).read_bytes()
         item = listed[name]
         if item.get("bytes") != len(data) or item.get("sha256") != hashlib.sha256(data).hexdigest():
