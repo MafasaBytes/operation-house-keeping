@@ -40,9 +40,9 @@ def base_objects():
              hypotheses=[ref("nm.hypothesis.v1", h)],
              measurements=[ref("nm.procedure.v1", p)],
              support=[ref("nm.support.v1", s)], predecessor=None)
-    d = wire("nm.declaration.v1", "D1", requests=[ref("nm.request.v1", q)])
+    d = wire("nm.declaration.v1", "D1", requests=[ref("nm.request.v1", q)], scope_state="true")
     a = wire("nm.selection.v1", "A1", declaration=ref("nm.declaration.v1", d),
-             request=ref("nm.request.v1", q))
+             request=ref("nm.request.v1", q), purpose="hypothetical_evaluation")
     policy = open("docs/superpowers/reports/2026-09-19-next-measurement-preparation/resource-policy.json", "rb").read()
     build = wire("nm.build.v1", "B1", status="executable")
     i = wire("nm.invocation.v1", "I1", request=ref("nm.request.v1", q),

@@ -7,6 +7,10 @@ import os
 from pathlib import Path
 
 from .measurement_contracts import parse_document, parse_approved_policy, resolve_required_closure
+from .measurement_admission import admit_measurement
+from .support_qualification import qualify_supplied_support
+from .measurement_ranking import rank_measurements
+from . import build as maintained_build
 
 
 FILES = ("invocation.json", "closure.json", "result.json", "trace.json",
@@ -136,5 +140,89 @@ def replay_measurement_bundle(bundle_dir, *, build, policy, result, trace):
     if (path / "result.json").read_bytes() != result:
         raise MeasurementDeliveryError("REPLAY_SEMANTIC_MISMATCH", "result.json")
     if (path / "trace.json").read_bytes() != trace:
+        raise MeasurementDeliveryError("REPLAY_SEMANTIC_MISMATCH", "trace.json")
+    return bundle
+
+
+def _semantic_inputs(invocation, objects, public_request, public_snapshot,
+                     support_rows, candidates):
+    root = json.loads(invocation)
+    admission = admit_measurement(
+        invocation, objects, authority_pin=root["selection"]["sha256"],
+        public_request_wire=public_request, public_snapshot_wire=public_snapshot)
+    request_key = (root["request"]["kind"], root["request"]["sha256"])
+    request = json.loads(objects[request_key])
+    h_ref, p_ref = request["hypotheses"][0], request["measurements"][0]
+    cells = qualify_supplied_support(
+        support_rows, hypothesis=h_ref, procedure=p_ref,
+        context=request["context"], decoder=support_rows[0]["decoder"],
+        evidence=support_rows[0]["evidence"], outcomes=("high", "low"))
+    ranking = rank_measurements([json.loads(objects[(r["kind"], r["sha256"])])["id"]
+                                 for r in request["hypotheses"]], candidates)
+    result = {"admission": {"permission": admission.permission,
+                             "authority_state": admission.authority_state,
+                             "evidence_state": admission.evidence_state,
+                             "reasons": admission.reasons},
+              "support": [{"outcome": c.outcome, "relation": c.relation,
+                           "reasons": c.reasons, "sources": c.source_ids} for c in cells],
+              "ranking": {"disposition": ranking.disposition,
+                          "best": ranking.best, "reason": ranking.reason,
+                          "scores": [{"id": s.measurement_id,
+                                      "worst": s.worst_survivors,
+                                      "reduction": s.reduction,
+                                      "survivors": s.survivor_multiset}
+                                     for s in ranking.scores]}}
+    trace = {"phases": ["closure", "admission", "support", "ranking"],
+             "logical": {"objects": len(objects), "support_rows": len(support_rows),
+                         "candidates": len(candidates)}}
+    return (json.dumps(result, sort_keys=True, separators=(",", ":")).encode(),
+            json.dumps(trace, sort_keys=True, separators=(",", ":")).encode())
+
+
+def evaluate_semantic_bundle(output_dir, invocation, objects, public_request,
+                             public_snapshot, *, support_rows, candidates):
+    build_wire, build_id = maintained_build.identity()
+    root = json.loads(invocation)
+    if root.get("build_identity") != build_id:
+        raise MeasurementDeliveryError("BUILD_IDENTITY_MISMATCH", "invocation.build_identity")
+    policy = next(payload for (kind, _), payload in objects.items()
+                  if kind == "nm.resource-policy.v1")
+    parse_approved_policy(policy)
+    result, trace = _semantic_inputs(invocation, objects, public_request,
+                                     public_snapshot, support_rows, candidates)
+    closure = {"schema": "nm.closure.v1", "invocation": invocation.decode(),
+               "objects": {f"{kind}|{digest}": payload.decode()
+                           for (kind, digest), payload in objects.items()},
+               "public_request": public_request.decode(),
+               "public_snapshot": public_snapshot.decode(),
+               "support_rows": support_rows, "candidates": candidates}
+    payloads = {
+        "invocation.json": invocation,
+        "closure.json": json.dumps(closure, sort_keys=True, separators=(",", ":")).encode(),
+        "result.json": result, "trace.json": trace,
+        "build.json": build_wire, "policy.json": policy,
+    }
+    return publish_measurement_bundle(output_dir, payloads)
+
+
+def replay_semantic_bundle(bundle_dir):
+    bundle = verify_measurement_bundle(bundle_dir)
+    path = bundle.path
+    build_wire, build_id = maintained_build.identity()
+    if path.joinpath("build.json").read_bytes() != build_wire:
+        raise MeasurementDeliveryError("BUILD_IDENTITY_MISMATCH", "build.json")
+    closure = json.loads(path.joinpath("closure.json").read_bytes())
+    objects = {}
+    for key, value in closure["objects"].items():
+        kind, _, digest = key.partition("|")
+        objects[(kind, digest)] = value.encode()
+    invocation = closure["invocation"].encode()
+    result, trace = _semantic_inputs(
+        invocation, objects, closure["public_request"].encode(),
+        closure["public_snapshot"].encode(), closure["support_rows"],
+        closure["candidates"])
+    if path.joinpath("result.json").read_bytes() != result:
+        raise MeasurementDeliveryError("REPLAY_SEMANTIC_MISMATCH", "result.json")
+    if path.joinpath("trace.json").read_bytes() != trace:
         raise MeasurementDeliveryError("REPLAY_SEMANTIC_MISMATCH", "trace.json")
     return bundle
