@@ -1,0 +1,1 @@
+{"change_scope":"test-only approved oracle overlay; all historical artifacts, production/backend/dependency/ledger bytes unchanged","changed":["tests/measurement_profile/qualify_slice6.py"],"missing":[],"starting_head":"30aa6f2544d88de6fae470dce12d38a38c5edec6","starting_regular_files":2612,"starting_untracked_paths":1445}

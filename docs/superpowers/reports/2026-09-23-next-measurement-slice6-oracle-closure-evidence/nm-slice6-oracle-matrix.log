@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/tmp/nm-slice6-oracle-clean/tests/measurement_profile/qualify_slice6.py", line 186, in <module>
+    if __name__=='__main__':raise SystemExit(main())
+                                             ~~~~^^
+  File "/tmp/nm-slice6-oracle-clean/tests/measurement_profile/qualify_slice6.py", line 125, in main
+    from applications.bounded_decision_workflow.measurement_build import identity
+ModuleNotFoundError: No module named 'applications'
