@@ -149,12 +149,24 @@ class _Captured:
                     fail('AUTHORITY_REFERENCE_MISMATCH','/original/adoption','phase_2')
         # Decoder grammar is phase 2 in the reassessment profile, before later
         # semantic joins. The original selector's internal rules are unchanged.
+        decoder_errors=[]
         for r in sorted(scope):
             if decoders and r[0]=='nm.decoder.v1':
                 try:g._decoder(g.values[r])
                 except MeasurementContractError as e:
                     if e.code=='RESOURCE_LIMIT_EXCEEDED':raise
-                    fail('DECODER_INVALID','/original/decoder','phase_2')
+                    # Preserve the owning selector's semantic coordinates while
+                    # performing this profile's earlier decoder-integrity phase.
+                    paths=[g.request_path(qk)+f'/measurements/{i}/decoder'
+                           for qk in g.requests
+                           for i,pr in enumerate(g.values[qk]['measurements'])
+                           if typed(g.get(pr)['decoder'])==r]
+                    for path in paths or [g.paths[r]]:
+                        decoder_errors.append(MeasurementContractError(
+                            'DECODER_INVALID',target=path,stage='phase_2',
+                            details=dict(request=g.invocation['request'],references=[ref(*r)])))
+        if decoder_errors:
+            raise min(decoder_errors,key=lambda e:(e.code,e.target,canonical_json_bytes(e.details)))
         if joins:g._integrity()
 
     def _historical_integrity(self,c):

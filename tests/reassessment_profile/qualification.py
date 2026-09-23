@@ -37,9 +37,15 @@ def census():
     external={}
     for p in (ROOT/'indexes').glob('*record.json'):
         row=json.loads(p.read_bytes())
-        if row.get('event')=='external_export':external[row['path']]=row
+        if row.get('event') in ('external_export','external_export_intent'):
+            external[row['path']]=row
     for name,row in external.items():
-        p=Path(name);b=p.read_bytes()
+        p=Path(name)
+        if row.get('event')=='external_export_intent' and not p.exists():
+            counts['exports']+=row['bytes'];physical+=((row['bytes']+4095)//4096)*4096
+            files+=1
+            continue
+        b=p.read_bytes()
         assert len(b)==row['bytes'] and sha(b)==row['sha256']
         counts['exports']+=len(b);physical+=p.stat().st_blocks*512;files+=1
     assert all(counts[k]<=CAPS[k] for k in counts)
@@ -63,6 +69,29 @@ def record(x):
     names=sorted((ROOT/'indexes').glob('*.json'));last=names[-1]
     b=wire(dict(previous=sha(last.read_bytes()),**x))
     put(ROOT/'indexes'/f'{len(names):04d}-record.json',b)
+
+def publish_export(path, raw):
+    """Single-writer export: durable charged intent before exclusive creation.
+
+    An interrupted intent continues to consume its full allowance. Unexpected
+    partial/different bytes fail census closed; no deletion or retry frees it.
+    """
+    path=Path(path).absolute()
+    assert path.parent.is_dir() and not path.exists() and not path.is_symlink()
+    assert not path.is_relative_to(ROOT)
+    row=dict(path=str(path),bytes=len(raw),sha256=sha(raw))
+    reserve({'exports':len(raw),'indexes':8192},files=3)
+    record(dict(event='external_export_intent',**row))
+    last=sorted((ROOT/'indexes').glob('*.json'))[-1]
+    with last.open('rb') as f:os.fsync(f.fileno())
+    fd=os.open(ROOT/'indexes',os.O_RDONLY|os.O_DIRECTORY)
+    try:os.fsync(fd)
+    finally:os.close(fd)
+    # Recheck after intent; census includes the promised bytes before writing.
+    reserve({'indexes':4096},files=1)
+    with path.open('xb') as f:
+        f.write(raw);f.flush();os.fsync(f.fileno())
+    record(dict(event='external_export',**row,reservation_timing='durable_intent_before_create'))
 
 def mkdir(p):
     reserve({},files=0,dirs=1);p.mkdir()
