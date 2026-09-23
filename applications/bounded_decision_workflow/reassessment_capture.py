@@ -86,7 +86,13 @@ class _Captured:
                         fail('IDENTITY_VERSION_COLLISION',path or '/id','phase_2')
                     identities[identity]=k[1]
                     if k[0] in ('nm.request.v1','nr.request.v2'):work.charge('request_contexts')
-                    if k[0].startswith('nr.') or k[0]=='nm.request.v1':work.high('request_chain',v['revision'])
+                    if k[0].startswith('nr.') or k[0]=='nm.request.v1':
+                        try:work.high('request_chain',v['revision'])
+                        except MeasurementContractError as error:
+                            if k==typed(iv['request']) and error.code=='RESOURCE_LIMIT_EXCEEDED':
+                                error.target='/revision'
+                                error.details['request']=ref(*k)
+                            raise
                     if k[0]=='nm.build.v1':
                         work.high('build_bytes',len(raw))
                         if v['contract_sha256']!=measurement_build.CONTRACT_SHA:

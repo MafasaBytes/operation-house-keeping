@@ -20,6 +20,16 @@ def test_decoder_owning_target(name):
 def test_decoder_partition_valid_twin():
     assert structural('P4-partition').objects
 
+def test_revision_policy_target_is_captured_revision():
+    with zipfile.ZipFile(PACKAGE) as z:
+        expected=json.loads(z.read('cases/P10-fifth/stderr.expected'))
+    with pytest.raises(MeasurementContractError) as caught:structural('P10-fifth')
+    e=caught.value
+    assert e.target=='/revision'
+    assert e.details['request']==expected['target']['request']
+    assert {k:e.details[k] for k in ('dimension','attempted','limit')}==expected['resource']
+    assert e.code=='RESOURCE_LIMIT_EXCEEDED' and e.stage=='phase_2'
+
 @pytest.fixture
 def isolated_budget(tmp_path,monkeypatch):
     root=tmp_path/'corpus';root.mkdir()

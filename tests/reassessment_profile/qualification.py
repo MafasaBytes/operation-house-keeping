@@ -27,6 +27,19 @@ def wire(x):
 def sha(b):
     return hashlib.sha256(b).hexdigest()
 
+def expected_member(archive,name):
+    raw=archive.read(name)
+    overlay=REPO/'docs/superpowers/reports/2026-09-23-reassessment-p10-revision-target-overlay-v2.json'
+    correction=json.loads(overlay.read_bytes())
+    assert sha(PACKAGE.read_bytes())==correction['base_package_sha256']
+    for row in correction['changes']:
+        if row['member']==name:
+            assert sha(raw)==row['old_sha256']
+            old=row['byte_replacement']['old'].encode();new=row['byte_replacement']['new'].encode()
+            assert raw.count(old)==1
+            raw=raw.replace(old,new);assert sha(raw)==row['new_sha256']
+    return raw
+
 def census():
     counts=dict.fromkeys(CAPS,0);physical=0;files=0;dirs=0
     for here,ds,fs in os.walk(ROOT,followlinks=False):
@@ -131,17 +144,25 @@ def core():
     from test_capture import case,key,ref
     from applications.bounded_decision_workflow.reassessment_build import identity
     from applications.bounded_decision_workflow.measurement_wire import Work
-    w=Work();build=identity(w);put(ROOT/'inputs'/'actual-build.json',build)
+    resume='--resume' in sys.argv
+    completed=set()
+    if resume:
+        for p in (ROOT/'indexes').glob('*record.json'):
+            row=json.loads(p.read_bytes())
+            if row.get('event')=='comparison':completed.add(row['case'])
+    w=Work();build=identity(w);put(ROOT/'inputs'/('resumed-build.json' if resume else 'actual-build.json'),build)
     record(dict(event='actual_build',sha256=sha(build),bytes=len(build),logical=w.logical,physical=w.physical))
     results=[]
     with zipfile.ZipFile(PACKAGE) as z:
         matrix=json.loads(z.read('command-matrix.json'))
         for row in matrix['commands']:
             if not row['id'].startswith('E-'):continue
-            name=row['case'];c,p=case(name);oldroot=c['invocation'];iv=json.loads(p.pop(key(oldroot)))
+            name=row['case']
+            if name in completed:continue
+            c,p=case(name);oldroot=c['invocation'];iv=json.loads(p.pop(key(oldroot)))
             oldbuild=iv['build'];p.pop(key(oldbuild));newbuild=ref('nr.build.v2',sha(build));p[key(newbuild)]=build
             iv['build']=newbuild;raw=wire(iv);newroot=ref('nr.invocation.v2',sha(raw));p[key(newroot)]=raw
-            d=ROOT/'inputs'/name;reserve({'inputs':sum(map(len,p.values()))+len(raw)},files=len(p)+1,dirs=2);mkdir(d);mkdir(d/'objects')
+            d=ROOT/'inputs'/(('resume-' if resume else '')+name);reserve({'inputs':sum(map(len,p.values()))+len(raw)},files=len(p)+1,dirs=2);mkdir(d);mkdir(d/'objects')
             for (kind,digest),b in sorted(p.items()):put(d/'objects'/(digest+'.'+kind),b)
             put(d/'invocation.json',raw)
             out=ROOT/'outputs'/row['id'].lower()
@@ -163,12 +184,12 @@ def core():
                 checks['receipt_result']=receipt['result_sha256']==sha((out/'result.json').read_bytes())
                 checks['receipt_manifest']=receipt['bundle_sha256']==sha((out/'manifest.json').read_bytes())
             elif row['expected']['exit']:
-                expected=wire(bind(json.loads(z.read('cases/'+name+'/stderr.expected'))))+b'\n'
+                expected=wire(bind(json.loads(expected_member(z,'cases/'+name+'/stderr.expected'))))+b'\n'
                 checks['exact_diagnostic']=stderr==expected;checks['empty_stdout']=stdout==b'';checks['no_bundle']=not out.exists()
             else:checks['unexpected_refusal']=False
             record(dict(event='comparison',case=name,checks=checks));results.append(dict(case=name,checks=checks))
             print(name,all(checks.values()),flush=True)
-    put(ROOT/'indexes'/'core-comparison.json',wire(results))
+    put(ROOT/'indexes'/('resumed-core-comparison.json' if resume else 'core-comparison.json'),wire(results))
     print(json.dumps(census()),flush=True)
 
 if __name__=='__main__':core()
