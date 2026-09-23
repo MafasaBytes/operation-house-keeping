@@ -1,0 +1,26 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.11, pytest-9.1.1, pluggy-1.6.0
+rootdir: /mnt/d/operation-house-keeping
+configfile: pyproject.toml
+collected 241 items
+
+tests/measurement_profile/test_admission_slice2.py ....                  [  1%]
+tests/measurement_profile/test_contracts_and_closure.py ..........       [  5%]
+tests/measurement_profile/test_delivery_contract_mapping.py ............ [ 10%]
+...........                                                              [ 15%]
+tests/measurement_profile/test_delivery_slice5.py ...                    [ 16%]
+tests/measurement_profile/test_qualification_slice6.py ................. [ 23%]
+...                                                                      [ 24%]
+tests/measurement_profile/test_ranking_slice4.py .....                   [ 26%]
+tests/measurement_profile/test_resource_prefix_slice6.py ..              [ 27%]
+tests/measurement_profile/test_slice5_vertical.py .                      [ 28%]
+tests/measurement_profile/test_support_qualification_slice3.py ....      [ 29%]
+tests/applications/bounded_decision_workflow/test_s6_cli.py ............ [ 34%]
+............................                                             [ 46%]
+tests/applications/bounded_decision_workflow/test_governed_cli.py ...... [ 48%]
+.                                                                        [ 49%]
+tests/applications/bounded_decision_workflow/test_s5_retention_recovery.py . [ 49%]
+........................................................................ [ 79%]
+.................................................                        [100%]
+
+======================= 241 passed in 521.11s (0:08:41) ========================

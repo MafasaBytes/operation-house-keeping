@@ -1,0 +1,31 @@
+{
+  "affected_matrix_case": "J-existing-at-measurement",
+  "candidate_bytes": 16382,
+  "candidate_sha256": "170d3ced7bfec018ddc63b03687edcb3716661b7f9f824c8715a6eaa954456c9",
+  "changes": [
+    {
+      "new": "x",
+      "old": "bdw-case-baseline",
+      "path": "/request_id"
+    },
+    {
+      "new": "x",
+      "old": "local_project_owner",
+      "path": "/actor_assertion/actor_label"
+    },
+    {
+      "new": "x",
+      "old": "bounded synthetic supplied-alternative review",
+      "path": "/actor_assertion/purpose"
+    }
+  ],
+  "expected_code": "PROFILE_MISMATCH",
+  "expected_exit": 3,
+  "original_bytes": 16460,
+  "original_oversized_input": "preserved; observed capture refusal remains adverse resource evidence, not profile-dispatch coverage",
+  "original_path": "public/legacy-request.json",
+  "original_sha256": "24635e493d371a5e05f9b61e729457fde7397ddfb0f31bc3dbb7f14ebe19c125",
+  "planned_commands_if_approved": 142,
+  "status": "proposed_not_approved_not_executed",
+  "unchanged_limit": 16384
+}

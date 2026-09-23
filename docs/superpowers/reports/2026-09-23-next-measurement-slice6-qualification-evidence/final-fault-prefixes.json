@@ -1,0 +1,311 @@
+{
+  "method": "post-process exact retained files for 7 pre-write faults and 7 SIGKILL boundaries; no claim about mid-syscall/power-loss durability",
+  "prefixes": [
+    {
+      "files": [],
+      "manifest_present": false,
+      "path": "/tmp/nm-slice6-final-regression-20260923/test_actual_measurement_public0/partial",
+      "retained_prefix_bytes": 0
+    },
+    {
+      "files": [
+        {
+          "bytes": 504,
+          "name": "invocation.json",
+          "sha256": "40fdb425247fa90c346a38d76b94551b3b4b825faa32f8eb3a687ee90680960e"
+        }
+      ],
+      "manifest_present": false,
+      "path": "/tmp/nm-slice6-final-regression-20260923/test_actual_measurement_public1/partial",
+      "retained_prefix_bytes": 504
+    },
+    {
+      "files": [
+        {
+          "bytes": 175931,
+          "name": "closure.json",
+          "sha256": "a84afb9389edbb6f8bbdafc4b8fd8f1a39274c4b8f328c74d868300964d83e80"
+        },
+        {
+          "bytes": 504,
+          "name": "invocation.json",
+          "sha256": "40fdb425247fa90c346a38d76b94551b3b4b825faa32f8eb3a687ee90680960e"
+        },
+        {
+          "bytes": 10694,
+          "name": "result.json",
+          "sha256": "a2ee4402ce224bf1a44a6cf12708a30448153d4c16988bb0c82ed6a14fab4541"
+        }
+      ],
+      "manifest_present": false,
+      "path": "/tmp/nm-slice6-final-regression-20260923/test_actual_measurement_public10/partial",
+      "retained_prefix_bytes": 187129
+    },
+    {
+      "files": [
+        {
+          "bytes": 175931,
+          "name": "closure.json",
+          "sha256": "a84afb9389edbb6f8bbdafc4b8fd8f1a39274c4b8f328c74d868300964d83e80"
+        },
+        {
+          "bytes": 504,
+          "name": "invocation.json",
+          "sha256": "40fdb425247fa90c346a38d76b94551b3b4b825faa32f8eb3a687ee90680960e"
+        },
+        {
+          "bytes": 10694,
+          "name": "result.json",
+          "sha256": "a2ee4402ce224bf1a44a6cf12708a30448153d4c16988bb0c82ed6a14fab4541"
+        },
+        {
+          "bytes": 17707,
+          "name": "trace.json",
+          "sha256": "b3af5a71b968fad52b8358e9f8091ea23ae79fc460869e9e8489158e194289d9"
+        }
+      ],
+      "manifest_present": false,
+      "path": "/tmp/nm-slice6-final-regression-20260923/test_actual_measurement_public11/partial",
+      "retained_prefix_bytes": 204836
+    },
+    {
+      "files": [
+        {
+          "bytes": 26165,
+          "name": "build.json",
+          "sha256": "a74775ece6c09a00bda6e97d870613ab06c7a82e7671807670c3ad0084d2a4db"
+        },
+        {
+          "bytes": 175931,
+          "name": "closure.json",
+          "sha256": "a84afb9389edbb6f8bbdafc4b8fd8f1a39274c4b8f328c74d868300964d83e80"
+        },
+        {
+          "bytes": 504,
+          "name": "invocation.json",
+          "sha256": "40fdb425247fa90c346a38d76b94551b3b4b825faa32f8eb3a687ee90680960e"
+        },
+        {
+          "bytes": 10694,
+          "name": "result.json",
+          "sha256": "a2ee4402ce224bf1a44a6cf12708a30448153d4c16988bb0c82ed6a14fab4541"
+        },
+        {
+          "bytes": 17707,
+          "name": "trace.json",
+          "sha256": "b3af5a71b968fad52b8358e9f8091ea23ae79fc460869e9e8489158e194289d9"
+        }
+      ],
+      "manifest_present": false,
+      "path": "/tmp/nm-slice6-final-regression-20260923/test_actual_measurement_public12/partial",
+      "retained_prefix_bytes": 231001
+    },
+    {
+      "files": [
+        {
+          "bytes": 26165,
+          "name": "build.json",
+          "sha256": "a74775ece6c09a00bda6e97d870613ab06c7a82e7671807670c3ad0084d2a4db"
+        },
+        {
+          "bytes": 175931,
+          "name": "closure.json",
+          "sha256": "a84afb9389edbb6f8bbdafc4b8fd8f1a39274c4b8f328c74d868300964d83e80"
+        },
+        {
+          "bytes": 504,
+          "name": "invocation.json",
+          "sha256": "40fdb425247fa90c346a38d76b94551b3b4b825faa32f8eb3a687ee90680960e"
+        },
+        {
+          "bytes": 876,
+          "name": "policy.json",
+          "sha256": "a4a4c8016b35ab78a2b98797234a9a014f46a9bd891e45977477efd3be4ae22c"
+        },
+        {
+          "bytes": 10694,
+          "name": "result.json",
+          "sha256": "a2ee4402ce224bf1a44a6cf12708a30448153d4c16988bb0c82ed6a14fab4541"
+        },
+        {
+          "bytes": 17707,
+          "name": "trace.json",
+          "sha256": "b3af5a71b968fad52b8358e9f8091ea23ae79fc460869e9e8489158e194289d9"
+        }
+      ],
+      "manifest_present": false,
+      "path": "/tmp/nm-slice6-final-regression-20260923/test_actual_measurement_public13/partial",
+      "retained_prefix_bytes": 231877
+    },
+    {
+      "files": [
+        {
+          "bytes": 175931,
+          "name": "closure.json",
+          "sha256": "a84afb9389edbb6f8bbdafc4b8fd8f1a39274c4b8f328c74d868300964d83e80"
+        },
+        {
+          "bytes": 504,
+          "name": "invocation.json",
+          "sha256": "40fdb425247fa90c346a38d76b94551b3b4b825faa32f8eb3a687ee90680960e"
+        }
+      ],
+      "manifest_present": false,
+      "path": "/tmp/nm-slice6-final-regression-20260923/test_actual_measurement_public2/partial",
+      "retained_prefix_bytes": 176435
+    },
+    {
+      "files": [
+        {
+          "bytes": 175931,
+          "name": "closure.json",
+          "sha256": "a84afb9389edbb6f8bbdafc4b8fd8f1a39274c4b8f328c74d868300964d83e80"
+        },
+        {
+          "bytes": 504,
+          "name": "invocation.json",
+          "sha256": "40fdb425247fa90c346a38d76b94551b3b4b825faa32f8eb3a687ee90680960e"
+        },
+        {
+          "bytes": 10694,
+          "name": "result.json",
+          "sha256": "a2ee4402ce224bf1a44a6cf12708a30448153d4c16988bb0c82ed6a14fab4541"
+        }
+      ],
+      "manifest_present": false,
+      "path": "/tmp/nm-slice6-final-regression-20260923/test_actual_measurement_public3/partial",
+      "retained_prefix_bytes": 187129
+    },
+    {
+      "files": [
+        {
+          "bytes": 175931,
+          "name": "closure.json",
+          "sha256": "a84afb9389edbb6f8bbdafc4b8fd8f1a39274c4b8f328c74d868300964d83e80"
+        },
+        {
+          "bytes": 504,
+          "name": "invocation.json",
+          "sha256": "40fdb425247fa90c346a38d76b94551b3b4b825faa32f8eb3a687ee90680960e"
+        },
+        {
+          "bytes": 10694,
+          "name": "result.json",
+          "sha256": "a2ee4402ce224bf1a44a6cf12708a30448153d4c16988bb0c82ed6a14fab4541"
+        },
+        {
+          "bytes": 17707,
+          "name": "trace.json",
+          "sha256": "b3af5a71b968fad52b8358e9f8091ea23ae79fc460869e9e8489158e194289d9"
+        }
+      ],
+      "manifest_present": false,
+      "path": "/tmp/nm-slice6-final-regression-20260923/test_actual_measurement_public4/partial",
+      "retained_prefix_bytes": 204836
+    },
+    {
+      "files": [
+        {
+          "bytes": 26165,
+          "name": "build.json",
+          "sha256": "a74775ece6c09a00bda6e97d870613ab06c7a82e7671807670c3ad0084d2a4db"
+        },
+        {
+          "bytes": 175931,
+          "name": "closure.json",
+          "sha256": "a84afb9389edbb6f8bbdafc4b8fd8f1a39274c4b8f328c74d868300964d83e80"
+        },
+        {
+          "bytes": 504,
+          "name": "invocation.json",
+          "sha256": "40fdb425247fa90c346a38d76b94551b3b4b825faa32f8eb3a687ee90680960e"
+        },
+        {
+          "bytes": 10694,
+          "name": "result.json",
+          "sha256": "a2ee4402ce224bf1a44a6cf12708a30448153d4c16988bb0c82ed6a14fab4541"
+        },
+        {
+          "bytes": 17707,
+          "name": "trace.json",
+          "sha256": "b3af5a71b968fad52b8358e9f8091ea23ae79fc460869e9e8489158e194289d9"
+        }
+      ],
+      "manifest_present": false,
+      "path": "/tmp/nm-slice6-final-regression-20260923/test_actual_measurement_public5/partial",
+      "retained_prefix_bytes": 231001
+    },
+    {
+      "files": [
+        {
+          "bytes": 26165,
+          "name": "build.json",
+          "sha256": "a74775ece6c09a00bda6e97d870613ab06c7a82e7671807670c3ad0084d2a4db"
+        },
+        {
+          "bytes": 175931,
+          "name": "closure.json",
+          "sha256": "a84afb9389edbb6f8bbdafc4b8fd8f1a39274c4b8f328c74d868300964d83e80"
+        },
+        {
+          "bytes": 504,
+          "name": "invocation.json",
+          "sha256": "40fdb425247fa90c346a38d76b94551b3b4b825faa32f8eb3a687ee90680960e"
+        },
+        {
+          "bytes": 876,
+          "name": "policy.json",
+          "sha256": "a4a4c8016b35ab78a2b98797234a9a014f46a9bd891e45977477efd3be4ae22c"
+        },
+        {
+          "bytes": 10694,
+          "name": "result.json",
+          "sha256": "a2ee4402ce224bf1a44a6cf12708a30448153d4c16988bb0c82ed6a14fab4541"
+        },
+        {
+          "bytes": 17707,
+          "name": "trace.json",
+          "sha256": "b3af5a71b968fad52b8358e9f8091ea23ae79fc460869e9e8489158e194289d9"
+        }
+      ],
+      "manifest_present": false,
+      "path": "/tmp/nm-slice6-final-regression-20260923/test_actual_measurement_public6/partial",
+      "retained_prefix_bytes": 231877
+    },
+    {
+      "files": [],
+      "manifest_present": false,
+      "path": "/tmp/nm-slice6-final-regression-20260923/test_actual_measurement_public7/partial",
+      "retained_prefix_bytes": 0
+    },
+    {
+      "files": [
+        {
+          "bytes": 504,
+          "name": "invocation.json",
+          "sha256": "40fdb425247fa90c346a38d76b94551b3b4b825faa32f8eb3a687ee90680960e"
+        }
+      ],
+      "manifest_present": false,
+      "path": "/tmp/nm-slice6-final-regression-20260923/test_actual_measurement_public8/partial",
+      "retained_prefix_bytes": 504
+    },
+    {
+      "files": [
+        {
+          "bytes": 175931,
+          "name": "closure.json",
+          "sha256": "a84afb9389edbb6f8bbdafc4b8fd8f1a39274c4b8f328c74d868300964d83e80"
+        },
+        {
+          "bytes": 504,
+          "name": "invocation.json",
+          "sha256": "40fdb425247fa90c346a38d76b94551b3b4b825faa32f8eb3a687ee90680960e"
+        }
+      ],
+      "manifest_present": false,
+      "path": "/tmp/nm-slice6-final-regression-20260923/test_actual_measurement_public9/partial",
+      "retained_prefix_bytes": 176435
+    }
+  ]
+}

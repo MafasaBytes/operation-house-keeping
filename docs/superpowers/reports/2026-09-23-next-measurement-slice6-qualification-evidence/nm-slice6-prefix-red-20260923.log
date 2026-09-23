@@ -1,0 +1,25 @@
+F.                                                                       [100%]
+=================================== FAILURES ===================================
+__________ test_history_guard_precedes_fifth_revision_dependency_work __________
+
+tmp_path = PosixPath('/tmp/nm-slice6-prefix-red-20260923/test_history_guard_precedes_fi0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f48f3644770>
+
+    def test_history_guard_precedes_fifth_revision_dependency_work(tmp_path,monkeypatch):
+        iv,objects,pin=recover_case(tmp_path,'CL-Q5-refused')
+        reads=[];original=runtime._read
+        def observe(fd,name,cap,work):
+            reads.append(name);return original(fd,name,cap,work)
+        monkeypatch.setattr(runtime,'_read',observe)
+        with pytest.raises(MeasurementContractError) as error:runtime.evaluate(iv,objects,pin,tmp_path/'refused')
+        assert error.value.code=='RESOURCE_LIMIT_EXCEEDED'
+        assert error.value.details['dimension']=='request_chain'
+>       assert not any(n.endswith(('.nm.evidence.v1','.nm.hypothesis.v1','.nm.support.v1')) for n in reads),reads
+E       AssertionError: ['invocation.json', '42e934627c00cc6b012cbb91a06ea5e8948864a593dd9b79852faaef001888e9.nm.build.v1', 'a77343372309f4af3...c6d87d6d65025163bc.nm.basis', '727bfea2d359ada62a90da7edf8d514a2c6dbff22df10a6f592f12c2f7c42c2c.nm.hypothesis.v1', ...]
+E       assert not True
+E        +  where True = any(<generator object test_history_guard_precedes_fifth_revision_dependency_work.<locals>.<genexpr> at 0x7f48f360ef60>)
+
+tests/measurement_profile/test_resource_prefix_slice6.py:20: AssertionError
+=========================== short test summary info ============================
+FAILED tests/measurement_profile/test_resource_prefix_slice6.py::test_history_guard_precedes_fifth_revision_dependency_work
+1 failed, 1 passed in 18.57s

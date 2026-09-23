@@ -1,0 +1,13 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.11, pytest-9.1.1, pluggy-1.6.0
+rootdir: /tmp/nm-slice6-clean-f18491d
+configfile: pyproject.toml
+collected 15 items
+
+tests/measurement_profile/test_delivery_contract_mapping.py .....        [ 33%]
+tests/measurement_profile/test_resource_prefix_slice6.py ..              [ 46%]
+tests/applications/bounded_decision_workflow/test_s6_cli.py .            [ 53%]
+tests/applications/bounded_decision_workflow/test_governed_cli.py ...... [ 93%]
+.                                                                        [100%]
+
+============================= 15 passed in 41.98s ==============================

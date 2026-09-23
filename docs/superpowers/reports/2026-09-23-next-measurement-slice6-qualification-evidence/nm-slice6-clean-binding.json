@@ -1,0 +1,56 @@
+{
+  "head": "f18491d779becb1a327b259e7503cfcd276b710d",
+  "method": "separate clean local checkout, exact same provisioned interpreter/dependency artifacts, no reinstall",
+  "matches": [
+    {
+      "path": "/tmp/nm-slice6-clean-runtime-f18491d/test_complete_withholding_is_r0/withheld/build.json",
+      "sha256": "42e934627c00cc6b012cbb91a06ea5e8948864a593dd9b79852faaef001888e9",
+      "identical_to_source_checkout": true
+    },
+    {
+      "path": "/tmp/nm-slice6-clean-runtime-f18491d/test_complete_withholding_is_r0/replayed/build.json",
+      "sha256": "42e934627c00cc6b012cbb91a06ea5e8948864a593dd9b79852faaef001888e9",
+      "identical_to_source_checkout": true
+    },
+    {
+      "path": "/tmp/nm-slice6-clean-runtime-f18491d/test_complete_withholding_is_r3/withheld/build.json",
+      "sha256": "42e934627c00cc6b012cbb91a06ea5e8948864a593dd9b79852faaef001888e9",
+      "identical_to_source_checkout": true
+    },
+    {
+      "path": "/tmp/nm-slice6-clean-runtime-f18491d/test_complete_withholding_is_r3/replayed/build.json",
+      "sha256": "42e934627c00cc6b012cbb91a06ea5e8948864a593dd9b79852faaef001888e9",
+      "identical_to_source_checkout": true
+    },
+    {
+      "path": "/tmp/nm-slice6-clean-runtime-f18491d/test_supported_delivery_and_st0/result/build.json",
+      "sha256": "42e934627c00cc6b012cbb91a06ea5e8948864a593dd9b79852faaef001888e9",
+      "identical_to_source_checkout": true
+    },
+    {
+      "path": "/tmp/nm-slice6-clean-runtime-f18491d/test_supported_delivery_and_st0/replay/build.json",
+      "sha256": "42e934627c00cc6b012cbb91a06ea5e8948864a593dd9b79852faaef001888e9",
+      "identical_to_source_checkout": true
+    },
+    {
+      "path": "/tmp/nm-slice6-clean-runtime-f18491d/test_complete_withholding_is_r2/withheld/build.json",
+      "sha256": "42e934627c00cc6b012cbb91a06ea5e8948864a593dd9b79852faaef001888e9",
+      "identical_to_source_checkout": true
+    },
+    {
+      "path": "/tmp/nm-slice6-clean-runtime-f18491d/test_complete_withholding_is_r2/replayed/build.json",
+      "sha256": "42e934627c00cc6b012cbb91a06ea5e8948864a593dd9b79852faaef001888e9",
+      "identical_to_source_checkout": true
+    },
+    {
+      "path": "/tmp/nm-slice6-clean-runtime-f18491d/test_complete_withholding_is_r1/withheld/build.json",
+      "sha256": "42e934627c00cc6b012cbb91a06ea5e8948864a593dd9b79852faaef001888e9",
+      "identical_to_source_checkout": true
+    },
+    {
+      "path": "/tmp/nm-slice6-clean-runtime-f18491d/test_complete_withholding_is_r1/replayed/build.json",
+      "sha256": "42e934627c00cc6b012cbb91a06ea5e8948864a593dd9b79852faaef001888e9",
+      "identical_to_source_checkout": true
+    }
+  ]
+}

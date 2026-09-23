@@ -1,0 +1,61 @@
+{
+  "matches": [
+    {
+      "identical_to_source_checkout": true,
+      "path": "/tmp/nm-slice6-clean-runtime-c063958/test_complete_withholding_is_r0/withheld/build.json",
+      "sha256": "a74775ece6c09a00bda6e97d870613ab06c7a82e7671807670c3ad0084d2a4db"
+    },
+    {
+      "identical_to_source_checkout": true,
+      "path": "/tmp/nm-slice6-clean-runtime-c063958/test_complete_withholding_is_r0/replayed/build.json",
+      "sha256": "a74775ece6c09a00bda6e97d870613ab06c7a82e7671807670c3ad0084d2a4db"
+    },
+    {
+      "identical_to_source_checkout": true,
+      "path": "/tmp/nm-slice6-clean-runtime-c063958/test_eight_contexts_valid_and_0/8/result/build.json",
+      "sha256": "a74775ece6c09a00bda6e97d870613ab06c7a82e7671807670c3ad0084d2a4db"
+    },
+    {
+      "identical_to_source_checkout": true,
+      "path": "/tmp/nm-slice6-clean-runtime-c063958/test_complete_withholding_is_r3/withheld/build.json",
+      "sha256": "a74775ece6c09a00bda6e97d870613ab06c7a82e7671807670c3ad0084d2a4db"
+    },
+    {
+      "identical_to_source_checkout": true,
+      "path": "/tmp/nm-slice6-clean-runtime-c063958/test_complete_withholding_is_r3/replayed/build.json",
+      "sha256": "a74775ece6c09a00bda6e97d870613ab06c7a82e7671807670c3ad0084d2a4db"
+    },
+    {
+      "identical_to_source_checkout": true,
+      "path": "/tmp/nm-slice6-clean-runtime-c063958/test_supported_delivery_and_st0/result/build.json",
+      "sha256": "a74775ece6c09a00bda6e97d870613ab06c7a82e7671807670c3ad0084d2a4db"
+    },
+    {
+      "identical_to_source_checkout": true,
+      "path": "/tmp/nm-slice6-clean-runtime-c063958/test_supported_delivery_and_st0/replay/build.json",
+      "sha256": "a74775ece6c09a00bda6e97d870613ab06c7a82e7671807670c3ad0084d2a4db"
+    },
+    {
+      "identical_to_source_checkout": true,
+      "path": "/tmp/nm-slice6-clean-runtime-c063958/test_complete_withholding_is_r2/withheld/build.json",
+      "sha256": "a74775ece6c09a00bda6e97d870613ab06c7a82e7671807670c3ad0084d2a4db"
+    },
+    {
+      "identical_to_source_checkout": true,
+      "path": "/tmp/nm-slice6-clean-runtime-c063958/test_complete_withholding_is_r2/replayed/build.json",
+      "sha256": "a74775ece6c09a00bda6e97d870613ab06c7a82e7671807670c3ad0084d2a4db"
+    },
+    {
+      "identical_to_source_checkout": true,
+      "path": "/tmp/nm-slice6-clean-runtime-c063958/test_complete_withholding_is_r1/withheld/build.json",
+      "sha256": "a74775ece6c09a00bda6e97d870613ab06c7a82e7671807670c3ad0084d2a4db"
+    },
+    {
+      "identical_to_source_checkout": true,
+      "path": "/tmp/nm-slice6-clean-runtime-c063958/test_complete_withholding_is_r1/replayed/build.json",
+      "sha256": "a74775ece6c09a00bda6e97d870613ab06c7a82e7671807670c3ad0084d2a4db"
+    }
+  ],
+  "method": "separate clean source checkout, existing exact provisioned dependency environment; no reinstall",
+  "tested_head": "c06395859019bead8cb7cc6491fde3efd04f1524"
+}

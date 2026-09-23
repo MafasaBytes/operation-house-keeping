@@ -1,0 +1,13 @@
+{
+  "changed": [
+    "applications/bounded_decision_workflow/measurement_cli.py",
+    "applications/bounded_decision_workflow/measurement_compute.py",
+    "applications/bounded_decision_workflow/measurement_runtime.py",
+    "applications/bounded_decision_workflow/measurement_wire.py",
+    "tests/measurement_profile/test_delivery_contract_mapping.py"
+  ],
+  "inventory_files": 2474,
+  "inventory_sha256": "f146071e66a6c24d640739a83ae6e1a8434ef009396ee6ede57da51a098b3f4b",
+  "missing": [],
+  "scope": "nonignored regular files only; ignored existing runtime/cache trees not inventoried or targeted"
+}

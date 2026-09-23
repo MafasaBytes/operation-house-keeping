@@ -1,0 +1,7 @@
+{
+  "bytes": 16382,
+  "canonical_equal": true,
+  "check": "maintained parse_request_wire; no candidate CLI execution",
+  "request_id": "x",
+  "valid": true
+}

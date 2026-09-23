@@ -1,0 +1,40 @@
+{
+  "archives": [
+    {
+      "archive": "matrix-red.zip",
+      "compressed_bytes": 9266207,
+      "expanded_bytes": 38466853,
+      "sha256": "ebb502ddfec51e8e282e3da3ca6fd7db69493e46bf573d31023a14dbbf15e8b4",
+      "source": "/tmp/nm-slice6-matrix-red-20260923"
+    },
+    {
+      "archive": "matrix-fixed.zip",
+      "compressed_bytes": 9276475,
+      "expanded_bytes": 38459302,
+      "sha256": "3432dc5ae5d0b9eca9b60d32d97d2773b23a49062f0a62d28f51412a6f41d2b0",
+      "source": "/tmp/nm-slice6-matrix-fixed-20260923"
+    },
+    {
+      "archive": "matrix-final.zip",
+      "compressed_bytes": 9277524,
+      "expanded_bytes": 38459172,
+      "sha256": "fa9b8173284b9d466b0b45818285782cdfbad9c9f12b64ec1c0b252ad81913a8",
+      "source": "/tmp/nm-slice6-matrix-final-20260923"
+    },
+    {
+      "archive": "resource-probes.zip",
+      "compressed_bytes": 1355585,
+      "expanded_bytes": 5397010,
+      "sha256": "ac2edb446ecf2ab2caf4eee0e7d882ec80b7476533fca1acd18f55352557b045",
+      "source": "/tmp/nm-slice6-resources-red-20260923"
+    },
+    {
+      "archive": "observed-final.zip",
+      "compressed_bytes": 174391,
+      "expanded_bytes": 716676,
+      "sha256": "09e1557ebb63cf8b3fa2851c00dcc9e33bdec1787e0cddd2eab86e6442b190b5",
+      "source": "/tmp/nm-slice6-observed-final-20260923"
+    }
+  ],
+  "method": "ZIP reopened and all exact file bytes compared to per-file inventories; no runtime execution; original ext4 results preserved"
+}

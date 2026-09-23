@@ -1,0 +1,44 @@
+{
+  "canonical_matrix_bundles": 72,
+  "children_rss_highwater": 91021312,
+  "component_bytes": {
+    "build.json": 26165,
+    "bundle_total": 260474,
+    "closure.json": 191366,
+    "invocation.json": 609,
+    "manifest.json": 973,
+    "policy.json": 876,
+    "result.json": 11783,
+    "trace.json": 29882
+  },
+  "cpu_system_total_s": 33.284996,
+  "cpu_user_total_s": 164.82743299999998,
+  "files": 504,
+  "logical_required_maxima": {
+    "active_depth": 7,
+    "capture_bytes": 140419,
+    "closure_bytes": 191366,
+    "context_scan_bytes": 1738968,
+    "edge_visits": 109,
+    "invocation_bytes": 609,
+    "json_nodes": 4414,
+    "object_bytes": 86310,
+    "public_reconstruction_context_nodes": 10716,
+    "public_reconstruction_unique_nodes": 2679,
+    "reference_occurrences": 109,
+    "request_chain": 4,
+    "request_contexts": 4,
+    "unique_bytes": 140419,
+    "unique_objects": 26
+  },
+  "max_command_wall_ns": 4581225807,
+  "physical_manifest_maxima": {
+    "bytes_read": 47903477,
+    "bytes_written": 259501,
+    "elapsed_ns": 2702150432,
+    "peak_rss_bytes": 90968064,
+    "read_operations": 2264,
+    "write_operations": 6
+  },
+  "tested_head": "c06395859019bead8cb7cc6491fde3efd04f1524"
+}
