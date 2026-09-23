@@ -1,0 +1,14 @@
+Looking in links: /home/mafasa/operation-house-keeping-runtime/bounded-decision-workflow/dependency-artifacts
+Processing /home/mafasa/operation-house-keeping-runtime/bounded-decision-workflow/dependency-artifacts/annotated_types-0.8.0-py3-none-any.whl (from -r docs/superpowers/reports/2026-09-15-bounded-decision-workflow-requirements-hashed.txt (line 1))
+Processing /home/mafasa/operation-house-keeping-runtime/bounded-decision-workflow/dependency-artifacts/iniconfig-2.3.0-py3-none-any.whl (from -r docs/superpowers/reports/2026-09-15-bounded-decision-workflow-requirements-hashed.txt (line 2))
+Processing /home/mafasa/operation-house-keeping-runtime/bounded-decision-workflow/dependency-artifacts/packaging-26.3-py3-none-any.whl (from -r docs/superpowers/reports/2026-09-15-bounded-decision-workflow-requirements-hashed.txt (line 3))
+Processing /home/mafasa/operation-house-keeping-runtime/bounded-decision-workflow/dependency-artifacts/pluggy-1.6.0-py3-none-any.whl (from -r docs/superpowers/reports/2026-09-15-bounded-decision-workflow-requirements-hashed.txt (line 4))
+Processing /home/mafasa/operation-house-keeping-runtime/bounded-decision-workflow/dependency-artifacts/pydantic-2.13.4-py3-none-any.whl (from -r docs/superpowers/reports/2026-09-15-bounded-decision-workflow-requirements-hashed.txt (line 5))
+Processing /home/mafasa/operation-house-keeping-runtime/bounded-decision-workflow/dependency-artifacts/pydantic_core-2.46.4-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (from -r docs/superpowers/reports/2026-09-15-bounded-decision-workflow-requirements-hashed.txt (line 6))
+Processing /home/mafasa/operation-house-keeping-runtime/bounded-decision-workflow/dependency-artifacts/pygments-2.20.0-py3-none-any.whl (from -r docs/superpowers/reports/2026-09-15-bounded-decision-workflow-requirements-hashed.txt (line 7))
+Processing /home/mafasa/operation-house-keeping-runtime/bounded-decision-workflow/dependency-artifacts/pytest-9.1.1-py3-none-any.whl (from -r docs/superpowers/reports/2026-09-15-bounded-decision-workflow-requirements-hashed.txt (line 8))
+Processing /home/mafasa/operation-house-keeping-runtime/bounded-decision-workflow/dependency-artifacts/typing_extensions-4.16.0-py3-none-any.whl (from -r docs/superpowers/reports/2026-09-15-bounded-decision-workflow-requirements-hashed.txt (line 9))
+Processing /home/mafasa/operation-house-keeping-runtime/bounded-decision-workflow/dependency-artifacts/typing_inspection-0.4.2-py3-none-any.whl (from -r docs/superpowers/reports/2026-09-15-bounded-decision-workflow-requirements-hashed.txt (line 10))
+Installing collected packages: typing-inspection, typing-extensions, pytest, pygments, pydantic-core, pydantic, pluggy, packaging, iniconfig, annotated-types
+
+Successfully installed annotated-types-0.8.0 iniconfig-2.3.0 packaging-26.3 pluggy-1.6.0 pydantic-2.13.4 pydantic-core-2.46.4 pygments-2.20.0 pytest-9.1.1 typing-extensions-4.16.0 typing-inspection-0.4.2

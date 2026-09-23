@@ -1,0 +1,10 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.11, pytest-9.1.1, pluggy-1.6.0
+rootdir: /tmp/nm-final-release-clean
+configfile: pyproject.toml
+collected 1 item
+
+tests/data_sources/test_http_api_connector.py .                          [100%]
+
+------------ generated xml file: /tmp/nm-release-loopback-rerun.xml ------------
+============================== 1 passed in 0.73s ===============================
