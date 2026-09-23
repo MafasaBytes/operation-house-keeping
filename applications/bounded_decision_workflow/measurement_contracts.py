@@ -91,7 +91,8 @@ def _validate_header(value, *, expected_schema=None):
 
 def _ref(value, *, expected_kind=None):
     if type(value) is not dict or set(value) != {"kind", "sha256"} \
-            or type(value["kind"]) is not str or not _SHA.fullmatch(value["sha256"]):
+            or type(value["kind"]) is not str or type(value["sha256"]) is not str \
+            or not _SHA.fullmatch(value["sha256"]):
         raise MeasurementContractError("REFERENCE_SHAPE_INVALID", target="reference")
     if expected_kind is not None and value["kind"] != expected_kind:
         raise MeasurementContractError("REFERENCE_ROLE_MISMATCH", target=expected_kind)

@@ -16,6 +16,8 @@ def test_incomplete_bundle_is_not_a_completed_withholding(tmp_path):
     (tmp_path/'invocation.json').write_bytes(b'{}')
     with pytest.raises(MeasurementContractError) as error:verify_measurement_bundle(tmp_path)
     assert error.value.code=='BUNDLE_INCOMPLETE'
+    run=command('measurement-verify','--bundle',tmp_path)
+    assert run.returncode==3 and json.loads(run.stderr)['code']=='BUNDLE_INCOMPLETE'
 
 
 def test_obsolete_cli_does_not_accept_caller_computed_bytes(tmp_path):

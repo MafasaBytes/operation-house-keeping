@@ -296,3 +296,12 @@ def test_measurement_manifest_failure_leaves_honest_incomplete_bundle(tmp_path,m
     assert valid['disposition']=='preferred_within_supplied_set'
     collision=command('measurement-evaluate','--invocation',iv,'--objects-dir',objects,'--authority-pin',pin,'--output-dir',tmp_path/'incomplete')
     assert collision.returncode==5 and json.loads(collision.stderr)['code']=='OUTPUT_COLLISION'
+
+
+@pytest.mark.parametrize('operation',[
+    lambda: __import__('applications.bounded_decision_workflow.measurement_wire',fromlist=['key']).key({'kind':'nm.basis','sha256':1}),
+    lambda: __import__('applications.bounded_decision_workflow.measurement_wire',fromlist=['ordered']).ordered([{}],ids=True),
+])
+def test_malformed_field_types_are_input_refusals(operation):
+    from applications.bounded_decision_workflow.measurement_contracts import MeasurementContractError
+    with pytest.raises(MeasurementContractError):operation()

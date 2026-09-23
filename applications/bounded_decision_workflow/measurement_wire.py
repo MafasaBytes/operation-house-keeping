@@ -117,7 +117,9 @@ def attestation(v):
 
 def ordered(xs, *, ids=False, minimum=0):
     if type(xs) is not list or len(xs)<minimum:fail('SCHEMA_INVALID','array')
+    if ids and any(type(x) is not dict or 'id' not in x for x in xs):fail('SCHEMA_INVALID','array')
     values=[x['id'] for x in xs] if ids else xs
+    if any(type(x) is not str for x in values):fail('SCHEMA_INVALID','array')
     if ids:
         for x in values:local_id(x)
     if values!=sorted(values) or len(set(values))!=len(values):fail('ORDER_INVALID','array')
@@ -154,11 +156,18 @@ def edges(v):
         if kind=='nm.support.v1':
             one('hypothesis','nm.hypothesis.v1');one('procedure','nm.procedure.v1')
             many('basis','nm.basis');many('exclusion_basis','nm.basis')
+            shape(v['uncertainty'],'kind statement basis','uncertainty')
+            basis(v['uncertainty']['basis'])
             for i,r in enumerate(v['uncertainty']['basis']):found.append((f'/uncertainty/basis/{i}',key(r,'nm.basis')))
         if kind=='nm.procedure.v1':
+            if type(v['conditions']) is not list:fail('SCHEMA_INVALID','conditions')
             for i,c in enumerate(v['conditions']):
+                if type(c) is not dict:fail('SCHEMA_INVALID','conditions')
+                if 'basis' in c:basis(c['basis'])
                 for j,r in enumerate(c.get('basis',[])):found.append((f'/conditions/{i}/basis/{j}',key(r,'nm.basis')))
     elif kind=='nm.evidence.v1':
+        shape(v['token_roles'],'quantity observation_role unit basis','token_roles')
+        basis(v['token_roles']['basis'],1)
         for i,r in enumerate(v['token_roles']['basis']):found.append((f'/token_roles/basis/{i}',key(r,'nm.basis')))
     return sorted(found)
 
@@ -370,6 +379,7 @@ class Graph:
         for row in o['outcomes']:shape(row,'id region','outcome')
         if d['kind']=='literal_codes' and d['unit']=='code':
             ordered(d['values'],minimum=1);union=[]
+            for code in d['values']:local_id(code)
             for row in o['outcomes']:
                 r=row['region'];shape(r,'kind values','region');ordered(r['values'],minimum=1)
                 if r['kind']!='literal_set':fail('DECODER_INVALID','region')

@@ -166,8 +166,8 @@ def inspect_bundle(bundle_dir,work):
         with os.scandir(directory) as iterator:
             for entry in iterator:
                 names.add(entry.name)
-                if len(names)>7:fail('BUNDLE_INCOMPLETE','bundle','retention')
-        if names!=set(FILES):fail('BUNDLE_INCOMPLETE','bundle','retention')
+                if len(names)>7:fail('BUNDLE_INCOMPLETE','bundle','phase_1')
+        if names!=set(FILES):fail('BUNDLE_INCOMPLETE','bundle','phase_1')
         total=0
         for name in ('manifest.json',)+FILES[:-1]:
             payloads[name]=_read(directory,name,min(work.limits[CAPS[name]],work.limits['bundle_bytes']-total),work)
