@@ -64,7 +64,10 @@ def parse_document(wire, *, expected_schema=None, allow_opaque=False):
         raise
     except (UnicodeDecodeError, ValueError, json.JSONDecodeError) as error:
         raise MeasurementContractError("JSON_INVALID") from error
-    if canonical_json_bytes(value) != wire:
+    try:canonical = canonical_json_bytes(value)
+    except (UnicodeError, ValueError) as error:
+        raise MeasurementContractError('JSON_INVALID') from error
+    if canonical != wire:
         raise MeasurementContractError("CANONICAL_FORM_REQUIRED")
     if not isinstance(value, dict):
         raise MeasurementContractError("SCHEMA_INVALID")

@@ -193,3 +193,32 @@ def test_concurrent_publication_has_one_winner(tmp_path):
   if p.returncode==0:assert stderr==b'' and json.loads(stdout)['schema']=='nm.receipt.v1'
   else:assert stdout==b'' and json.loads(stderr)['code']=='OUTPUT_COLLISION'
  assert command('measurement-replay','--bundle',out,'--output-dir',tmp_path/'replay').returncode==0
+
+
+def test_cross_context_diagnostic_selection_uses_code_then_path(tmp_path,monkeypatch):
+ # Internal order seam, distinct from public hash-consistent fixture admission.
+ from tests.measurement_profile.test_delivery_contract_mapping import recover_case
+ iv,objects,pin=recover_case(tmp_path)
+ g=mw.Graph(iv.read_bytes(),lambda k,w:(objects/(k[1]+'.'+k[0])).read_bytes(),pin,mw.Work())
+ q=g.values[g.requests[0]];first=('nm.request.v1','0'*64);second=('nm.request.v1','f'*64)
+ for k,name in [(first,'first'),(second,'second')]:
+  g.values[k]=dict(q,id=name);g.objects[k]=mw.canonical_json_bytes(g.values[k])
+ g.requests=[first,second]
+ def joins(q,ref):mw.fail('SUPPORT_SUBJECT_MISMATCH' if q['id']=='first' else 'DECODER_INVALID','/measurements/0/decoder','phase_3')
+ monkeypatch.setattr(g,'_joins',joins);monkeypatch.setattr(g,'_intrinsic',lambda v:None)
+ with pytest.raises(MeasurementContractError) as e:g._integrity()
+ assert e.value.code=='DECODER_INVALID'
+
+
+def test_recovery_capture_guard_precedes_base64_allocation(monkeypatch):
+ import base64
+ value=dict(schema='nm.closure.v1',profile=mw.PROFILE,invocation=mw.ref('nm.invocation.v1','0'*64),authority_pin='1'*64,limits_override=None,members=[dict(reference=mw.ref('nm.basis','2'*64),encoding='base64',bytes=base64.b64encode(b'123456789').decode())])
+ payload={'closure.json':mw.canonical_json_bytes(value)}
+ monkeypatch.setattr(rt.base64,'b64decode',lambda *a,**k:pytest.fail('recovery allocated beyond capture budget'))
+ with pytest.raises(MeasurementContractError) as e:rt.recover(payload,mw.Work({'capture_bytes':8}))
+ assert e.value.details['dimension']=='capture_bytes' and e.value.details['attempted']==9
+
+
+def test_surrogate_wire_is_input_refusal():
+ with pytest.raises(MeasurementContractError) as e:mw.decode(b'{"x":"\\ud800"}',mw.Work())
+ assert e.value.code=='JSON_INVALID'

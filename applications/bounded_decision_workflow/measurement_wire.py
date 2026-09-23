@@ -270,6 +270,10 @@ class Graph:
                         work.high('request_chain',v['revision'])
                 self.objects[k]=wire;self.values[k]=v;self.nodes[k]=nodes
                 work.charge('json_nodes',nodes)
+            if parent is not None and parent[0]=='nm.request.v1' and path=='/predecessor':
+                current=self.values[parent];previous=self.values[k]
+                if previous['id']!=current['id'] or previous['revision']!=current['revision']-1:
+                    fail('PREDECESSOR_VERSION_MISMATCH','/predecessor','phase_2',request=iv['request'],references=[ref(*k)])
             if parent is not None:
                 work.charge('context_scan_bytes',len(self.objects[parent])+len(self.objects[k])+66)
             if k in active:fail('REFERENCE_CYCLE',path,'phase_2')
@@ -351,16 +355,28 @@ class Graph:
                         self.reject('DUPLICATE_NOMINATION_ID','/'+field,request=ref(*qk),references=xs,logical_id=ids[0],occurrence_count=len(xs))
                     if subcheck=='order' and ids!=sorted(ids):
                         self.reject('NOMINATION_ORDER_INVALID','/'+field,request=ref(*qk),references=xs,logical_id=ids[0])
+        errors=[]
+        self._checked_decoders=set();self._checked_methods=set()
+        def capture(call):
+            try:call()
+            except MeasurementContractError as error:
+                if error.code=='RESOURCE_LIMIT_EXCEEDED':raise
+                error.stage='phase_3'
+                if not error.target.startswith('/'):error.target='/'+error.target
+                errors.append(error)
         for qk in self.requests:
             q=self.values[qk]
-            extras=set(q)-(HEADER|set(BODIES['nm.request.v1'].split()))
-            if extras:self.reject('REQUEST_SCHEMA_INVALID','/'+sorted(extras)[0],request=ref(*qk))
-            for field,code in [('hypotheses','HYPOTHESIS_SET_EMPTY'),('measurements','MEASUREMENT_SET_EMPTY')]:
-                xs=q[field]
-                if not xs:self.reject(code,'/'+field,request=ref(*qk))
-            ss=[(self.get(r)['id'],self.get(r)['revision']) for r in q['support']]
-            if ss!=sorted(set(ss)):fail('ORDER_INVALID','support')
-            # Scope is each Q, including ancestors. Sharing never inherits eligibility.
+            def request_checks():
+                extras=set(q)-(HEADER|set(BODIES['nm.request.v1'].split()))
+                if extras:self.reject('REQUEST_SCHEMA_INVALID','/'+sorted(extras)[0],request=ref(*qk))
+                for field,code in [('hypotheses','HYPOTHESIS_SET_EMPTY'),('measurements','MEASUREMENT_SET_EMPTY')]:
+                    if not q[field]:self.reject(code,'/'+field,request=ref(*qk))
+                ss=[(self.get(r)['id'],self.get(r)['revision']) for r in q['support']]
+                if ss!=sorted(set(ss)):fail('ORDER_INVALID','support')
+            before=len(errors);capture(request_checks)
+            if len(errors)!=before:continue
+            # Charge each context even at shared completed objects. Resource
+            # refusal is immediate; it never searches beyond its approved bound.
             scope=set();todo=[qk]
             while todo:
                 k=todo.pop()
@@ -371,9 +387,11 @@ class Graph:
                     for path,child in edges(v):
                         if k==qk and path=='/predecessor':continue
                         w.charge('edge_visits');w.charge('scoped_edge_checks');todo.append(child)
-            self._joins(q,ref(*qk))
+            capture(lambda:self._joins(q,ref(*qk)))
         for v in self.values.values():
-            if v:self._intrinsic(v)
+            if v:capture(lambda:self._intrinsic(v))
+        if errors:
+            raise min(errors,key=lambda e:(e.code,e.target,canonical_json_bytes(e.details)))
 
     def _joins(self,q,qr):
         shape(q['context'],'subject_entity_anchor_id variable_anchor_id assertion_context as_of scenario_label','context')
@@ -382,6 +400,7 @@ class Graph:
         for i,pr in enumerate(q['measurements']):
             p=self.get(pr);o=self.get(p['decoder']);d=o['domain']
             path=self.request_path(key(qr))+f'/measurements/{i}/decoder'
+            self._checked_methods.add(id(p));self._checked_decoders.add(id(o))
             if (p['method'],d['kind'],d['unit']) not in [('reference_scalar','scalar_finite_decimal','degree_celsius'),('nonspecific_code','literal_codes','code')]:
                 decoder_errors.append(MeasurementContractError('PROCEDURE_DOMAIN_MISMATCH',target=path,stage='phase_3',details=dict(request=self.invocation['request'],references=[p['decoder']])))
                 continue
@@ -439,7 +458,7 @@ class Graph:
         if kind=='nm.procedure.v1':
             if type(v['method_edition']) is not int or v['method_edition']<1:fail('SCHEMA_INVALID','method_edition')
             d=self.get(v['decoder'])['domain']
-            if (v['method'],d['kind'],d['unit']) not in [('reference_scalar','scalar_finite_decimal','degree_celsius'),('nonspecific_code','literal_codes','code')]:fail('DECODER_INVALID','method')
+            if id(v) not in getattr(self,'_checked_methods',set()) and (v['method'],d['kind'],d['unit']) not in [('reference_scalar','scalar_finite_decimal','degree_celsius'),('nonspecific_code','literal_codes','code')]:fail('DECODER_INVALID','method')
             ordered(v['conditions'],ids=True)
             ids={c['id'] for c in v['conditions']}
             required={'applicability','availability','calibration','fidelity','hold'}
@@ -453,7 +472,7 @@ class Graph:
                     shape(c,'id kind state basis','condition')
                     if c['kind']!='local_assumption' or c['state'] not in ('true','false','unknown'):fail('SCHEMA_INVALID','condition')
                     basis(c['basis'],int(c['state']!='unknown'))
-        if kind=='nm.decoder.v1':self._decoder(v)
+        if kind=='nm.decoder.v1' and id(v) not in getattr(self,'_checked_decoders',set()):self._decoder(v)
         if kind=='nm.support.v1':
             for f in ['permits','excludes']:ordered(v[f])
             outcomes={o['id'] for o in self.get(v['decoder'])['outcomes']}

@@ -214,7 +214,13 @@ def recover(payloads,work):
         shape(m,'reference encoding bytes','member');k=key(m['reference']);ordered.append(k)
         if m['encoding']!='base64' or type(m['bytes']) is not str:fail('SCHEMA_INVALID','member','phase_1')
         if len(m['bytes'])>4*((work.limits['object_bytes']+2)//3):fail('RESOURCE_LIMIT_EXCEEDED','object_bytes','phase_2')
-        try:wire=base64.b64decode(m['bytes'],validate=True)
+        encoded=m['bytes']
+        padding=len(encoded)-len(encoded.rstrip('='))
+        if len(encoded)%4:fail('WIRE_INVALID','member','phase_1')
+        if padding>2:fail('CANONICAL_FORM_REQUIRED','member','phase_1')
+        decoded_size=(len(encoded)//4)*3-padding
+        work.guard('object_bytes',decoded_size);work.guard('capture_bytes',total+decoded_size)
+        try:wire=base64.b64decode(encoded,validate=True)
         except ValueError:fail('WIRE_INVALID','member','phase_1')
         if base64.b64encode(wire).decode()!=m['bytes']:fail('CANONICAL_FORM_REQUIRED','member','phase_1')
         total+=len(wire);work.guard('capture_bytes',total);work.guard('object_bytes',len(wire))
@@ -258,16 +264,22 @@ def _validate_retained_envelopes(payloads, work):
 
 
 def _retained(bundle_dir,limits_file=None):
-    initial=Work();extra=overrides(limits_file,initial)
+    pre=Work();extra=overrides(limits_file,pre)
+    initial=Work(extra);initial.physical.update(pre.physical)
     payloads=inspect_bundle(bundle_dir,initial)
-    closure,objects=recover(payloads,initial)
-    _validate_retained_envelopes(payloads,initial)
-    retained=Work(closure['limits_override']);effective={k:min(v,retained.limits[k]) for k,v in (extra or {}).items()}
-    # Preserve exact original override for semantic replay; stricter limits only
-    # restrict work, never rewrite the retained invocation's policy context.
-    merged=dict(closure['limits_override'] or {});merged.update(effective)
+    # Read the bounded closure envelope before decoding its member bytes, so
+    # both caller and retained limits guard recovery, not just later Graph work.
+    envelope,_=decode(payloads['closure.json'],initial,transport=True)
+    shape(envelope,'schema profile invocation authority_pin limits_override members','closure')
+    if envelope['schema']!='nm.closure.v1' or envelope['profile']!=PROFILE:fail('PROFILE_MISMATCH','closure','phase_1')
+    retained=Work(envelope['limits_override'])
+    merged=dict(envelope['limits_override'] or {})
+    merged.update({k:min(v,retained.limits[k]) for k,v in (extra or {}).items()})
     work=Work(merged);work.physical.update(initial.physical)
     work.guard('bundle_bytes',sum(map(len,payloads.values())))
+    for name,data in payloads.items():work.guard(CAPS[name],len(data))
+    closure,objects=recover(payloads,work)
+    _validate_retained_envelopes(payloads,work)
     def load(k,w):
         if k not in objects:fail('REQUIRED_REFERENCE_MISSING','required_closure','phase_2')
         return objects[k]
