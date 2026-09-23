@@ -274,3 +274,25 @@ def test_scoped_shared_edge_work_cannot_bypass_edge_budget(tmp_path):
                 '--output-dir',tmp_path/'too-little-work','--limits',limits)
     assert run.returncode==4,run.stdout.decode()
     assert json.loads(run.stderr)['resource']=={'dimension':'edge_visits','attempted':63,'limit':62}
+
+
+def test_measurement_manifest_failure_leaves_honest_incomplete_bundle(tmp_path,monkeypatch):
+    """Trusted test-only I/O fault; the command has no serialized fault switch."""
+    from applications.bounded_decision_workflow import measurement_runtime as runtime
+    from applications.bounded_decision_workflow.errors import WorkflowInputError
+    iv,objects,pin=recover_case(tmp_path)
+    original=runtime.retention._write_file
+    def fault(fd,name,data,hook):
+        if name=='manifest.json':raise runtime.retention._error('RETENTION_MANIFEST_FAILED')
+        return original(fd,name,data,hook)
+    monkeypatch.setattr(runtime.retention,'_write_file',fault)
+    with pytest.raises(WorkflowInputError) as error:runtime.evaluate(iv,objects,pin,tmp_path/'incomplete')
+    assert error.value.diagnostic.code=='RETENTION_MANIFEST_FAILED'
+    assert {p.name for p in (tmp_path/'incomplete').iterdir()}==set(runtime.FILES[:-1])
+    checked=command('measurement-verify','--bundle',tmp_path/'incomplete')
+    assert checked.returncode!=0 and not checked.stdout
+    monkeypatch.setattr(runtime.retention,'_write_file',original)
+    valid=runtime.evaluate(iv,objects,pin,tmp_path/'valid-twin')
+    assert valid['disposition']=='preferred_within_supplied_set'
+    collision=command('measurement-evaluate','--invocation',iv,'--objects-dir',objects,'--authority-pin',pin,'--output-dir',tmp_path/'incomplete')
+    assert collision.returncode==5 and json.loads(collision.stderr)['code']=='OUTPUT_COLLISION'
