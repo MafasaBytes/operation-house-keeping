@@ -337,6 +337,20 @@ class Graph:
                 p=self.get(previous)
                 if p['id']!=q['id'] or p['revision']!=q['revision']-1:self.reject('PREDECESSOR_VERSION_MISMATCH','/predecessor','phase_2',references=[previous])
         # Complete phase-2 lineage before any phase-3 nomination checks.
+        # Frozen nomination subchecks are global in subcheck/Q/field order.
+        for subcheck in ('reference','identity','order'):
+            for qk in self.requests:
+                q=self.values[qk]
+                for field in ('hypotheses','measurements'):
+                    xs=q[field]
+                    if len(xs)>2:fail('NOMINATION_CARDINALITY_INVALID',field)
+                    ks=[key(r) for r in xs];ids=[self.get(r)['id'] for r in xs]
+                    if subcheck=='reference' and len(set(ks))!=len(ks):
+                        self.reject('DUPLICATE_NOMINATION_REFERENCE','/'+field,request=ref(*qk),references=xs,logical_id=ids[0],occurrence_count=len(xs))
+                    if subcheck=='identity' and len(set(ids))!=len(ids):
+                        self.reject('DUPLICATE_NOMINATION_ID','/'+field,request=ref(*qk),references=xs,logical_id=ids[0],occurrence_count=len(xs))
+                    if subcheck=='order' and ids!=sorted(ids):
+                        self.reject('NOMINATION_ORDER_INVALID','/'+field,request=ref(*qk),references=xs,logical_id=ids[0])
         for qk in self.requests:
             q=self.values[qk]
             extras=set(q)-(HEADER|set(BODIES['nm.request.v1'].split()))
@@ -344,11 +358,6 @@ class Graph:
             for field,code in [('hypotheses','HYPOTHESIS_SET_EMPTY'),('measurements','MEASUREMENT_SET_EMPTY')]:
                 xs=q[field]
                 if not xs:self.reject(code,'/'+field,request=ref(*qk))
-                if len(xs)>2:fail('NOMINATION_CARDINALITY_INVALID',field)
-                ks=[key(r) for r in xs];ids=[self.get(r)['id'] for r in xs]
-                if len(set(ks))!=len(ks):self.reject('DUPLICATE_NOMINATION_REFERENCE','/'+field,request=ref(*qk),references=xs,logical_id=ids[0],occurrence_count=len(xs))
-                if len(set(ids))!=len(ids):self.reject('DUPLICATE_NOMINATION_ID','/'+field,request=ref(*qk),references=xs,logical_id=ids[0],occurrence_count=len(xs))
-                if ids!=sorted(ids):self.reject('NOMINATION_ORDER_INVALID','/'+field,request=ref(*qk),references=xs,logical_id=ids[0])
             ss=[(self.get(r)['id'],self.get(r)['revision']) for r in q['support']]
             if ss!=sorted(set(ss)):fail('ORDER_INVALID','support')
             # Scope is each Q, including ancestors. Sharing never inherits eligibility.
@@ -369,17 +378,18 @@ class Graph:
     def _joins(self,q,qr):
         shape(q['context'],'subject_entity_anchor_id variable_anchor_id assertion_context as_of scenario_label','context')
         local_id(q['context']['scenario_label'])
-        for r in q['hypotheses']+q['measurements']+q['support']:
-            v=self.get(r)
-            if v['evidence']!=q['evidence'] or v['context']!=q['context']:fail('SUPPORT_SUBJECT_MISMATCH','context/evidence')
-        for i,sr in enumerate(q['support']):
-            s=self.get(sr)
-            for field,nomination in [('hypothesis','hypotheses'),('procedure','measurements')]:
-                if s[field] not in q[nomination]:
-                    same=[r for r in q[nomination] if self.get(r)['id']==self.get(s[field])['id']]
-                    self.reject('SUPPORT_SUBJECT_MISMATCH',f'/support/{i}/{field}',request=qr,references=[sr,s[field],*same])
-            if s['decoder']!=self.get(s['procedure'])['decoder']:
-                self.reject('SUPPORT_SUBJECT_MISMATCH',f'/support/{i}/decoder',request=qr,references=[sr,s['decoder'],self.get(s['procedure'])['decoder']])
+        decoder_errors=[]
+        for i,pr in enumerate(q['measurements']):
+            p=self.get(pr);o=self.get(p['decoder']);d=o['domain']
+            path=self.request_path(key(qr))+f'/measurements/{i}/decoder'
+            if (p['method'],d['kind'],d['unit']) not in [('reference_scalar','scalar_finite_decimal','degree_celsius'),('nonspecific_code','literal_codes','code')]:
+                decoder_errors.append(MeasurementContractError('PROCEDURE_DOMAIN_MISMATCH',target=path,stage='phase_3',details=dict(request=self.invocation['request'],references=[p['decoder']])))
+                continue
+            try:self._decoder(o)
+            except MeasurementContractError as error:
+                if error.code=='RESOURCE_LIMIT_EXCEEDED':raise
+                decoder_errors.append(MeasurementContractError('DECODER_INVALID',target=path,stage='phase_3',details=dict(request=self.invocation['request'],references=[p['decoder']])))
+        if decoder_errors:raise min(decoder_errors,key=lambda e:(e.code,e.target))
         for hr in q['hypotheses']:
             for pr in q['measurements']:
                 if sum(self.get(s)['hypothesis']==hr and self.get(s)['procedure']==pr for s in q['support'])>2:
@@ -394,15 +404,17 @@ class Graph:
             encoded=canonical_json_bytes(meaning)
             if encoded in meanings:self.reject('SEMANTIC_ALIAS','/measurements',request=qr,references=q['measurements'],logical_id=self.get(q['measurements'][0])['id'])
             meanings.append(encoded)
-        for i,pr in enumerate(q['measurements']):
-            p=self.get(pr);o=self.get(p['decoder']);d=o['domain']
-            path=self.request_path(key(qr))+f'/measurements/{i}/decoder'
-            if (p['method'],d['kind'],d['unit']) not in [('reference_scalar','scalar_finite_decimal','degree_celsius'),('nonspecific_code','literal_codes','code')]:
-                self.reject('PROCEDURE_DOMAIN_MISMATCH',path,references=[p['decoder']])
-            try:self._decoder(o)
-            except MeasurementContractError as error:
-                if error.code=='RESOURCE_LIMIT_EXCEEDED':raise
-                self.reject('DECODER_INVALID',path,references=[p['decoder']])
+        for r in q['hypotheses']+q['measurements']+q['support']:
+            v=self.get(r)
+            if v['evidence']!=q['evidence'] or v['context']!=q['context']:fail('SUPPORT_SUBJECT_MISMATCH','context/evidence')
+        for i,sr in enumerate(q['support']):
+            s=self.get(sr)
+            for field,nomination in [('hypothesis','hypotheses'),('procedure','measurements')]:
+                if s[field] not in q[nomination]:
+                    same=[r for r in q[nomination] if self.get(r)['id']==self.get(s[field])['id']]
+                    self.reject('SUPPORT_SUBJECT_MISMATCH',f'/support/{i}/{field}',request=qr,references=[sr,s[field],*same])
+            if s['decoder']!=self.get(s['procedure'])['decoder']:
+                self.reject('SUPPORT_SUBJECT_MISMATCH',f'/support/{i}/decoder',request=qr,references=[sr,s['decoder'],self.get(s['procedure'])['decoder']])
 
     def _intrinsic(self,v):
         kind=v['schema'];w=self.work

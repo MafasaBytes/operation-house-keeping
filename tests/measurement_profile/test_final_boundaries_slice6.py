@@ -94,3 +94,37 @@ def test_partial_write_failure_counts_written_prefix(tmp_path,monkeypatch):
   with pytest.raises(WorkflowInputError):retention._write_file(fd,'result.json',b'123456',None,io=work.io)
  assert work.physical['bytes_written']==3 and work.physical['write_operations']==2
  assert not (tmp_path/'result.json').exists()
+
+
+def amend_request(iv,objects,mutate):
+ import hashlib
+ def get(r):return json.loads((objects/(r['sha256']+'.'+r['kind'])).read_bytes())
+ def put(v):
+  b=mw.canonical_json_bytes(v);r=mw.ref(v['schema'],hashlib.sha256(b).hexdigest());(objects/(r['sha256']+'.'+r['kind'])).write_bytes(b);return r
+ i=json.loads(iv.read_bytes());q=get(i['request']);a=get(i['selection']);d=get(a['declaration'])
+ mutate(q,get,put);i['request']=put(q);d['requests']=[i['request']];a['request']=i['request'];a['declaration']=put(d);i['selection']=put(a);iv.write_bytes(mw.canonical_json_bytes(i))
+ return i['selection']['sha256']
+
+
+def test_nomination_subcheck_precedence_across_namespaces(tmp_path):
+ from tests.measurement_profile.test_delivery_contract_mapping import recover_case,command
+ iv,objects,pin=recover_case(tmp_path)
+ def mutation(q,get,put):
+  q['hypotheses'].reverse();q['measurements']=[q['measurements'][0]]*2
+ pin=amend_request(iv,objects,mutation)
+ run=command('measurement-evaluate','--invocation',iv,'--objects-dir',objects,'--authority-pin',pin,'--output-dir',tmp_path/'refused')
+ d=json.loads(run.stderr)
+ assert run.returncode==3 and d['code']=='DUPLICATE_NOMINATION_REFERENCE'
+ assert d['target']['field']=='/measurements' and d['target']['occurrence_count']==2
+ assert d['target']['references'][0]==d['target']['references'][1]
+
+
+def test_decoder_precedes_support_join_error(tmp_path):
+ from tests.measurement_profile.test_delivery_contract_mapping import recover_case,command
+ iv,objects,pin=recover_case(tmp_path,'J-gap')
+ def mutation(q,get,put):
+  # Rehash an exact new support object whose context no longer matches Q.
+  s=get(q['support'][0]);s['context']['scenario_label']='other';q['support'][0]=put(s)
+ pin=amend_request(iv,objects,mutation)
+ run=command('measurement-evaluate','--invocation',iv,'--objects-dir',objects,'--authority-pin',pin,'--output-dir',tmp_path/'refused')
+ assert run.returncode==3 and json.loads(run.stderr)['code']=='DECODER_INVALID'
