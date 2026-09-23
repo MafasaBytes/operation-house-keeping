@@ -116,7 +116,11 @@ def _public(g, e_ref, context, request):
             'semantic_compatibility']['candidates'][b['semantic_candidate_index']][
             'value_candidate']['state_candidate']['bound']['observed']['occurrence']
         received = occurrence['received_at']
-    scalar = _decimal(observed.canonical_decimal, w)
+    try:
+        scalar = _decimal(observed.canonical_decimal, w)
+    except MeasurementContractError as exc:
+        exc.details.setdefault('request', request)
+        raise
     return dict(availability=observed.status, scalar=None if scalar is None else ratio(scalar),
         occurrence_id=observed.occurrence_id, raw_record_id=observed.raw_record_id,
         payload_checksum=observed.payload_checksum, unit=e['binding']['expected_unit'],

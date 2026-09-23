@@ -67,7 +67,7 @@ class _Captured:
             fail('PROFILE_MISMATCH','/profile','phase_1')
         validate(iv,root[0],invocation,work)
         typed(iv['authority'],'nr.authority.v2')
-        if pin!=iv['authority']['sha256']:fail('AUTHORITY_PIN_REQUIRED','/authority_pin','phase_1')
+        if pin!=iv['authority']['sha256']:fail('AUTHORITY_PIN_REQUIRED','/authority_pin','phase_1',request=iv['request'])
         def enter(k,parent,path):
             if k not in self.objects:
                 work.charge('unique_objects')
@@ -108,7 +108,11 @@ class _Captured:
                     current=self.values[parent];previous=self.values[k]
                     if k[0]!=parent[0] or previous['id']!=current['id'] or previous['revision']!=current['revision']-1:
                         fail('PREDECESSOR_VERSION_MISMATCH',path,'phase_2')
-        _walk(root,enter,lambda k:edges(self.values[k]),work)
+        try:_walk(root,enter,lambda k:edges(self.values[k]),work)
+        except MeasurementContractError as error:
+            if error.code=='RESOURCE_LIMIT_EXCEEDED':
+                error.details.setdefault('request',iv['request'])
+            raise
         self.invocation=iv
         if self.get(iv['authority'])['request']!=iv['request']:
             fail('AUTHORITY_REFERENCE_MISMATCH','/authority/request','phase_2')
@@ -173,7 +177,11 @@ class _Captured:
                             details=dict(request=g.invocation['request'],references=[ref(*r)])))
         if decoder_errors:
             raise min(decoder_errors,key=lambda e:(e.code,e.target,canonical_json_bytes(e.details)))
-        if joins:g._integrity()
+        if joins:
+            try:g._integrity()
+            except MeasurementContractError as error:
+                error.details.setdefault('request',g.invocation['request'])
+                raise
 
     def _historical_integrity(self,c):
         w=self.work
@@ -301,7 +309,7 @@ def capture(invocation_file,objects_dir,authority_pin,limits=None):
     if iv.get('schema')!='nr.invocation.v2' or iv.get('profile')!=PROFILE:
         fail('PROFILE_MISMATCH','/profile','phase_1')
     validate(iv,'nr.invocation.v2',raw,work)
-    if authority_pin!=typed(iv['authority'],'nr.authority.v2')[1]:fail('AUTHORITY_PIN_REQUIRED','/authority_pin','phase_1')
+    if authority_pin!=typed(iv['authority'],'nr.authority.v2')[1]:fail('AUTHORITY_PIN_REQUIRED','/authority_pin','phase_1',request=iv['request'])
     if typed(iv['resource_policy'],'nm.resource-policy.v1')[1]!=APPROVED_POLICY_SHA:
         fail('RESOURCE_POLICY_IDENTITY_MISMATCH','/resource_policy','phase_1')
     absolute,parts=retention._parts(objects_dir);pool={};total=len(raw)

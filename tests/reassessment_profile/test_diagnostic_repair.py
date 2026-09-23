@@ -30,6 +30,18 @@ def test_revision_policy_target_is_captured_revision():
     assert {k:e.details[k] for k in ('dimension','attempted','limit')}==expected['resource']
     assert e.code=='RESOURCE_LIMIT_EXCEEDED' and e.stage=='phase_2'
 
+@pytest.mark.parametrize('name', ['P9-context', 'P10b-external',
+    'P10-rational129', 'P10-context9', 'P10-objects129'])
+def test_refusal_preserves_owning_request(name):
+    from applications.bounded_decision_workflow.reassessment_admission import admit
+    with zipfile.ZipFile(PACKAGE) as z:
+        expected=json.loads(z.read('cases/'+name+'/stderr.expected'))
+    with pytest.raises(MeasurementContractError) as caught:
+        admit(structural(name))
+    e=caught.value
+    assert (e.code,e.stage,e.target)==(expected['code'],expected['stage'],expected['target']['field'])
+    assert e.details['request']==expected['target']['request']
+
 @pytest.fixture
 def isolated_budget(tmp_path,monkeypatch):
     root=tmp_path/'corpus';root.mkdir()
