@@ -257,6 +257,8 @@ historical/analytical. No continuous-domain or statistical-correlation claim fol
 
 The separate [measurement guide](../../docs/next-measurement/README.md) documents
 measurement-evaluate/verify/replay, committed-only fixture recovery and the exact
-bounded interpretation. Slices 1–6 are owner accepted; final release/milestone
-acceptance remains pending. The existing thermal/governed profiles retain their
+bounded interpretation. Slices 1–6 and the final milestone are
+[owner accepted](../../docs/superpowers/reports/2026-09-23-next-measurement-final-owner-acceptance.md)
+at tested implementation `23b60a42c2279fc228168967d47491b8983658fb`.
+The existing thermal/governed profiles retain their
 original semantics and historical build requirements.

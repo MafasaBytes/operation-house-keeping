@@ -4,8 +4,9 @@ This maps the packaged six-slice plan, semantic candidate §§7–7A and deliver
 obligations to retained evidence. The exact base authority is in the committed
 `docs/superpowers/reports/2026-09-23-next-measurement-slice6-correction-evidence/frozen-authority.zip`;
 [recovery](README.md#recoverable-synthetic-example-from-committed-material) verifies
-its original commitments. No historical report is rewritten. Final milestone
-acceptance is pending; release-suite evidence is recorded separately.
+its original commitments. No historical report is rewritten.
+[Final owner acceptance](../superpowers/reports/2026-09-23-next-measurement-final-owner-acceptance.md)
+is recorded; release-suite evidence retains its exact tested HEAD attribution.
 
 P denotes actual public CLI/captured-input evidence; I denotes internal algorithm
 or fault-injection assertions; H denotes a harness-only counterfactual/check.
@@ -49,7 +50,8 @@ turn earlier observations into fresh tests.
 No functional implementation is known to remain within the approved six slices.
 The [final release report](../superpowers/reports/2026-09-23-next-measurement-final-release-verification.md)
 records full-repository regression disposition, committed-only delivery and exact
-candidate recovery. Final milestone acceptance remains the owner’s decision. Optional CAD/PDF or platform skips must remain explicit limitations.
+candidate recovery. The final owner-acceptance record closes that gate.
+Optional CAD/PDF or platform skips must remain explicit limitations.
 Manual C is unresolved and has zero application commands. The six harness controls
 are separate from the 142 commands. No independent adversarial review is inferred
 from same-author oracle checking; no empirical model validity follows.

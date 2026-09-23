@@ -1,7 +1,8 @@
 # Maintained bounded next-measurement selection
 
 Slices 1–6 are owner accepted. [Final release verification](../superpowers/reports/2026-09-23-next-measurement-final-release-verification.md)
-is recorded; final milestone acceptance remains pending.
+is recorded; [final owner acceptance](../superpowers/reports/2026-09-23-next-measurement-final-owner-acceptance.md)
+covers tested implementation `23b60a42c2279fc228168967d47491b8983658fb`.
 The local source-agnostic consumer answers: given admitted evidence, explicitly
 retained hypotheses and nominated procedures, which measurement best separates
 those hypotheses under justified supplied predictions, or why must ranking be
@@ -136,4 +137,5 @@ prerequisites; skips are not coverage. No dependency acquisition is implied.
 
 Authority and qualification: [Slice 6 acceptance](../superpowers/reports/2026-09-23-next-measurement-slice6-owner-acceptance.md),
 [closure report](../superpowers/reports/2026-09-23-next-measurement-slice6-oracle-closure.md),
-[coverage map](coverage.md). Final milestone acceptance remains a separate owner gate.
+[coverage map](coverage.md),
+[final owner acceptance](../superpowers/reports/2026-09-23-next-measurement-final-owner-acceptance.md).

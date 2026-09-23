@@ -26,7 +26,8 @@ must remain authoritative.
 ## Status (added 2026-08-07 — historical guidance below is preserved)
 
 Application update (2026-09-23): next-measurement Slices 1–6 are owner accepted;
-final release verification is authorized and final milestone acceptance is pending.
+[final milestone acceptance](docs/superpowers/reports/2026-09-23-next-measurement-final-owner-acceptance.md)
+is recorded at tested implementation `23b60a42c2279fc228168967d47491b8983658fb`.
 The [measurement guide](docs/next-measurement/README.md) and
 [coverage map](docs/next-measurement/coverage.md) describe the maintained bounded
 objective-4 contribution. This supersedes older statements below that maintained
