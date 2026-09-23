@@ -1,6 +1,7 @@
 # Maintained bounded next-measurement selection
 
-Slices 1–6 are owner accepted; final release/milestone acceptance remains pending.
+Slices 1–6 are owner accepted. [Final release verification](../superpowers/reports/2026-09-23-next-measurement-final-release-verification.md)
+is recorded; final milestone acceptance remains pending.
 The local source-agnostic consumer answers: given admitted evidence, explicitly
 retained hypotheses and nominated procedures, which measurement best separates
 those hypotheses under justified supplied predictions, or why must ranking be
@@ -30,6 +31,9 @@ from the application [installation/recovery instructions](../../applications/bou
 Git does not supply that interpreter or dependency artifacts. A clean committed
 application/backend scope and exact installed artifact identities are required.
 No command installs dependencies, acquires measurements or fetches history.
+Reinstalling the same wheels at another environment prefix can change installed
+script hashes and therefore the actual build identity. A freshly bound invocation
+is not evidence of compatibility with an older retained environment witness.
 
 ```text
 python -m applications.bounded_decision_workflow measurement-evaluate --invocation FILE --objects-dir DIR --authority-pin SHA --output-dir NEWDIR [--limits FILE]

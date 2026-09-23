@@ -47,9 +47,9 @@ adds exact current full-suite and application-gate accounting; this table does n
 turn earlier observations into fresh tests.
 
 No functional implementation is known to remain within the approved six slices.
-The final release gate must still establish full-repository regression disposition,
-committed-only delivery and exact candidate recovery before recommending milestone
-acceptance. Optional CAD/PDF or platform skips must remain explicit limitations.
+The [final release report](../superpowers/reports/2026-09-23-next-measurement-final-release-verification.md)
+records full-repository regression disposition, committed-only delivery and exact
+candidate recovery. Final milestone acceptance remains the owner’s decision. Optional CAD/PDF or platform skips must remain explicit limitations.
 Manual C is unresolved and has zero application commands. The six harness controls
 are separate from the 142 commands. No independent adversarial review is inferred
 from same-author oracle checking; no empirical model validity follows.
