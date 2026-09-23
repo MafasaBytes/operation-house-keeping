@@ -79,6 +79,9 @@ def validate(value, kind, wire, work):
         if kind in NM_BODIES:
             required = NM_HEADER | set(NM_BODIES[kind].split())
             if kind != 'nm.request.v1' or not required <= set(value):shape(value,required,'/object')
+        if kind=='nm.request.v1':
+            if value['revision']==1 and value['predecessor'] is not None:fail('PREDECESSOR_VERSION_MISMATCH','/predecessor','phase_2')
+            if value['revision']>1 and value['predecessor'] is None:fail('REQUIRED_REFERENCE_MISSING','/predecessor','phase_2')
         return
     if value.get('profile') != PROFILE:fail('PROFILE_MISMATCH','/profile','phase_1')
     shape(value, HEADER | set(BODIES[kind].split()), '/object')

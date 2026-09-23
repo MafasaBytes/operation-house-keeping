@@ -105,10 +105,15 @@ class Captured:
         # Owning selector integrity is reused without public evidence admission,
         # support qualification or minimax computation. Scope each original I.
         for k in sorted(self.values):
-            if k[0]=='nm.invocation.v1':self._original_integrity(k)
+            if k[0]=='nm.invocation.v1':self._original_integrity(k,joins=False)
             if k[0]=='nr.request.v2':self._scope(k, skip_predecessor=True)
         for k,v in sorted(self.values.items()):
             if k[0]=='nr.retained-bundle.v2':self.prior_bundles[k]=self._recover(v)
+        # All phase-2 retained roles must precede phase-3 nomination joins.
+        for k in sorted(self.values):
+            if k[0]=='nm.invocation.v1':self._original_integrity(k,decoders=False)
+        for k,v in sorted(self.values.items()):
+            if k[0]=='nr.retained-bundle.v2':self._historical_integrity(v['closure'])
 
     def get(self,r):return self.values[typed(r)]
 
@@ -124,21 +129,40 @@ class Captured:
                 self.work.charge('edge_visits');self.work.charge('scoped_edge_checks');todo.append(c)
         return found
 
-    def _original_integrity(self,k):
+    def _original_integrity(self,k,*,joins=True,decoders=True):
         scope=self._scope(k)
         g=Graph.__new__(Graph)
         for f in ('objects','values','nodes','paths'):setattr(g,f,{r:getattr(self,f)[r] for r in scope})
         g.work=self.work;g.root=ref(*k);g.invocation=self.values[k]
         g.requests=sorted(r for r in scope if r[0]=='nm.request.v1')
+        if not joins:
+            iv=g.invocation;a=g.get(iv['selection'])
+            if a['request']!=iv['request'] or (iv['adoption'] is None)!=(a['purpose']=='hypothetical_evaluation'):
+                fail('AUTHORITY_REFERENCE_MISMATCH','/original/selection','phase_2')
+            if iv['adoption'] is not None:
+                adopted=g.get(iv['adoption'])
+                if adopted['request']!=iv['request'] or adopted['selection']!=iv['selection'] or adopted['declaration']!=a['declaration']:
+                    fail('AUTHORITY_REFERENCE_MISMATCH','/original/adoption','phase_2')
         # Decoder grammar is phase 2 in the reassessment profile, before later
         # semantic joins. The original selector's internal rules are unchanged.
         for r in sorted(scope):
-            if r[0]=='nm.decoder.v1':
+            if decoders and r[0]=='nm.decoder.v1':
                 try:g._decoder(g.values[r])
                 except MeasurementContractError as e:
                     if e.code=='RESOURCE_LIMIT_EXCEEDED':raise
                     fail('DECODER_INVALID','/original/decoder','phase_2')
-        g._integrity()
+        if joins:g._integrity()
+
+    def _historical_integrity(self,c):
+        w=self.work
+        historical=_HistoricalWork(c['limits_override'],w)
+        def old_load(k,unused):
+            raw=self.objects[k]
+            w.charge('hash_bytes',len(raw));w.charge('decode_bytes',len(raw) if k[0]!='nm.basis' else 0)
+            return raw
+        original=self.objects[typed(c['invocation'])]
+        w.charge('hash_bytes',len(original));w.charge('decode_bytes',len(original))
+        Graph(original,old_load,c['authority_pin'],historical)
 
     def closure(self,pin,limits=None):
         return _serialize_closure(dict(schema='nr.closure.v2',profile=PROFILE,
@@ -157,16 +181,6 @@ class Captured:
         effective.guard('unique_objects',len(members))
         effective.guard('capture_bytes',sum(len(self.objects[k]) for k in members))
         for k in members:effective.guard('object_bytes',len(self.objects[k]))
-        # Revalidate original input under its own recorded ceilings, including
-        # original traversal/context/node limits. Sharing avoids I/O, not work.
-        historical=_HistoricalWork(c['limits_override'],w)
-        def old_load(k,unused):
-            raw=self.objects[k]
-            w.charge('hash_bytes',len(raw));w.charge('decode_bytes',len(raw) if k[0]!='nm.basis' else 0)
-            return raw
-        original=self.objects[typed(c['invocation'])]
-        w.charge('hash_bytes',len(original));w.charge('decode_bytes',len(original))
-        Graph(original,old_load,c['authority_pin'],historical)
         header={k:v for k,v in c.items() if k!='members'}
         skeleton=dict(header,members=[dict(reference=ref(*k),encoding='base64',bytes='') for k in members])
         estimate=len(canonical_json_bytes(skeleton))+sum(4*((len(self.objects[k])+2)//3) for k in members)
@@ -266,9 +280,11 @@ def capture(invocation_file,objects_dir,authority_pin,limits=None):
             nonlocal total
             kind,digest=typed(ref(*k))
             if k not in pool:
-                cap=min(work.limits['object_bytes'],work.limits['capture_bytes']-total)
+                work.guard('unique_objects',len(pool)+2) # root plus new member
+                member_dimension='build_bytes' if kind.endswith('build.v2') or kind=='nm.build.v1' else 'object_bytes'
+                cap=min(work.limits[member_dimension],work.limits['capture_bytes']-total)
                 work.guard('capture_bytes',total)
-                dimension='capture_bytes' if cap<work.limits['object_bytes'] else 'object_bytes'
+                dimension='capture_bytes' if cap<work.limits[member_dimension] else member_dimension
                 pool[k]=_read(fd,digest+'.'+kind,cap,work,dimension,total if dimension=='capture_bytes' else 0)
                 total+=len(pool[k])
             return pool[k]

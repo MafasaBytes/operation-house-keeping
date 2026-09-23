@@ -250,9 +250,24 @@ def test_typed_reference_rejects_rehashed_cross_profile():
 
 def test_original_recorded_work_limit_is_not_erased_by_sharing():
     c,p=bound_internal();k=next(k for k in p if k[0]=='nr.retained-bundle.v2');d=json.loads(p[k])
-    d['closure']['limits_override']={'edge_visits':1};replace(c,p,k,d)
+    d['closure']['limits_override']={'edge_visits':1}
+    old=dict(d['closure'],members=[dict(reference=r,encoding='base64',bytes=base64.b64encode(p[key(r)]).decode()) for r in d['closure']['members']])
+    row=next(r for r in d['files'] if r['name']=='manifest.json');m=json.loads(p[key(row['source']['reference'])])
+    entry=next(r for r in m['files'] if r['name']=='closure.json');entry.update(bytes=len(wire(old)),sha256=sha(wire(old)))
+    b=wire(m);r=('nm.basis',sha(b));p[r]=b;row['source']['reference']=ref(*r)
+    replace(c,p,k,d)
     with pytest.raises(MeasurementContractError) as e:graph(c,p)
     assert e.value.code=='RESOURCE_LIMIT_EXCEEDED' and e.value.details['dimension']=='edge_visits'
+
+
+def test_phase_two_prior_integrity_precedes_nomination_diagnostics():
+    c,p=bound_internal();qk=next(k for k in p if k[0]=='nm.request.v1');q=json.loads(p[qk])
+    q['hypotheses'][1]=q['hypotheses'][0];replace(c,p,qk,q)
+    with pytest.raises(MeasurementContractError) as e:graph(c,p)
+    assert e.value.stage=='phase_2'
+    # Rehashing changed the selection, while the recipe's scalar pin remained
+    # frozen. That phase-2 join precedes both manifest and nomination checks.
+    assert e.value.code=='AUTHORITY_REFERENCE_MISMATCH'
 
 
 def files_for(tmp_path,c,p):
@@ -302,3 +317,43 @@ def test_production_file_admission(tmp_path,attack):
     elif attack=='fifo':iv.rename(tmp_path/'saved.json');os.mkfifo(iv)
     else:iv=iv.parent/'..'/iv.parent.name/iv.name
     with pytest.raises(WorkflowInputError):capture(iv,objects,pin)
+
+
+def test_production_detects_invocation_replacement(tmp_path,monkeypatch):
+    from applications.bounded_decision_workflow import retention
+    c,p=case();iv,objects,pin=files_for(tmp_path,c,p);original=retention._read_at
+    def replace_after_read(fd,name,*args,**kwargs):
+        item=original(fd,name,*args,**kwargs)
+        iv.rename(tmp_path/'saved.json');iv.write_bytes(item.data)
+        return item
+    monkeypatch.setattr(retention,'_read_at',replace_after_read)
+    with pytest.raises(MeasurementContractError,match='INPUT_CHANGED_DURING_READ'):capture(iv,objects,pin)
+
+
+def test_production_detects_directory_replacement(tmp_path,monkeypatch):
+    from applications.bounded_decision_workflow import reassessment_capture as module
+    c,p=actual_case();iv,objects,pin=files_for(tmp_path,c,p);original=module._read;done=False
+    def replace_after_read(fd,name,*args,**kwargs):
+        nonlocal done
+        item=original(fd,name,*args,**kwargs)
+        if name.endswith('.nr.build.v2') and not done:
+            objects.rename(tmp_path/'saved-objects');objects.mkdir();done=True
+        return item
+    monkeypatch.setattr(module,'_read',replace_after_read)
+    with pytest.raises(MeasurementContractError,match='INPUT_CHANGED_DURING_READ'):capture(iv,objects,pin)
+
+
+@pytest.mark.parametrize('case_name',['P7-newbaseline','P10-context8','P10-objects128','P10-shared_four'])
+def test_production_complete_required_material_fits(tmp_path,case_name):
+    c,p=actual_case(case_name);g=capture(*files_for(tmp_path,c,p))
+    assert len(g.closure_bytes)<=Work().limits['closure_bytes']
+    assert g.work.logical['unique_objects']==len(g.objects)
+    assert g.work.physical['bytes_read']==sum(map(len,g.objects.values()))
+    (tmp_path/'measurement.json').write_bytes(wire(dict(case=case_name,logical=g.work.logical,physical=g.work.physical,closure_bytes=len(g.closure_bytes))))
+
+
+def test_production_unreferenced_files_never_supply_or_expand_nomination(tmp_path):
+    c,p=actual_case('P1-point60');iv,objects,pin=files_for(tmp_path,c,p)
+    (objects/'unreferenced').symlink_to('/not/a/real/file')
+    g=capture(iv,objects,pin)
+    assert len(g.objects)==len(p)
