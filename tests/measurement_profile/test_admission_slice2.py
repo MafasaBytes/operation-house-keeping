@@ -43,7 +43,7 @@ def public_review(context, *, current="true", observed="admitted"):
     )
 
 
-def test_slice2_reuses_public_reconstruction_and_stops_after_authority_denial(monkeypatch):
+def test_slice2_reuses_public_reconstruction_and_retains_procedure_inapplicability(monkeypatch):
     invocation, objects = base_objects()
     request = json.loads(objects[next(k for k in objects if k[0] == "nm.request.v1")])
     monkeypatch.setattr(
@@ -53,11 +53,11 @@ def test_slice2_reuses_public_reconstruction_and_stops_after_authority_denial(mo
     result = admit_measurement(
         invocation, objects, authority_pin=json.loads(invocation)["selection"]["sha256"],
         public_request_wire=b"request", public_snapshot_wire=b"snapshot")
-    assert result.permission is False
-    assert result.authority_state == "denied"
-    assert "declaration_scope_false" in result.reasons
-    assert result.procedures == ()
-    assert result.downstream_work is False
+    assert result.permission is True
+    assert result.authority_state == "permitted"
+    assert result.procedures[0].state == "inapplicable"
+    assert "applicability_missing" in result.procedures[0].reasons
+    assert result.downstream_work is True
 
 
 def test_slice2_withholds_all_downstream_work_when_public_baseline_unavailable(monkeypatch):
