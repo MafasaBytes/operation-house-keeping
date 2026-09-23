@@ -89,6 +89,20 @@ def bind(case,build,root):
     save(root/'bound-expected-result.json',result);save(root/'bound-expected-trace.json',trace)
     return result,trace
 
+CORRECTION=ROOT/'docs/superpowers/reports/2026-09-23-next-measurement-slice6-qualification-evidence/proposed-cross-profile-correction'
+def corrected_cross_profile():
+    assert digest((CORRECTION/'proposal.json').read_bytes())=='edccbb50a2b50c2b8400652ea44148fcf6b275872ecf5d4d051478c35f350c61'
+    original=(PACKAGE/'public/legacy-request.json').read_bytes()
+    replacement=(CORRECTION/'legacy-request.json').read_bytes()
+    assert len(original)==16460 and digest(original)=='24635e493d371a5e05f9b61e729457fde7397ddfb0f31bc3dbb7f14ebe19c125'
+    assert len(replacement)==16382 and digest(replacement)=='170d3ced7bfec018ddc63b03687edcb3716661b7f9f824c8715a6eaa954456c9'
+    old=json.loads(original);new=json.loads(replacement)
+    for v in (old,new):
+        v['request_id']='x';v['actor_assertion']['actor_label']='x';v['actor_assertion']['purpose']='x'
+    assert old==new
+    return replacement
+
+
 def ceiling():resource.setrlimit(resource.RLIMIT_AS,(536870912,536870912))
 
 def main():
@@ -98,10 +112,11 @@ def main():
     from applications.bounded_decision_workflow.measurement_build import identity
     build=identity();(out/'build.json').write_bytes(build)
     metadata=dict(head=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT).decode().strip(),package_sha256=digest((PACKAGE/'package.zip').read_bytes()),harness_sha256=digest(Path(__file__).read_bytes()),python=sys.executable,oracle='frozen hand tables; same-author independent byte-demand binding; no runtime oracle',commands=142,safety=dict(wall_seconds=30,address_space_bytes=536870912,retained_corpus_bytes=67108864))
+    metadata['cross_profile_correction']=dict(proposal_sha256=digest((CORRECTION/'proposal.json').read_bytes()),input_sha256=digest(corrected_cross_profile()),base_package_unchanged=True,extra_oversize_control_outside_matrix=True)
     save(out/'metadata.json',metadata)
     expected={}
     for case in dict.fromkeys(x['case'] for x in matrix):expected[case]=bind(case,build,out/case.lower())
-    empty=out/'empty';empty.mkdir();legacy=out/'legacy-request.json';legacy.write_bytes((PACKAGE/'public/legacy-request.json').read_bytes())
+    empty=out/'empty';empty.mkdir();legacy=out/'legacy-request.json';legacy.write_bytes(corrected_cross_profile())
     records=[]
     for index,entry in enumerate(matrix+compat):
         case=entry.get('case',entry.get('id'));directory=out/case.lower();directory.mkdir(exist_ok=True)
@@ -134,12 +149,15 @@ def main():
             for filename,value in [('result.json',result),('trace.json',trace)]:record['differences']+=difference(value,read(bundle/filename),'/'+filename)
             receipt=read(PACKAGE/entry['stdout']);receipt['result_sha256']=digest(wire(result));receipt['bundle_sha256']=digest((bundle/'manifest.json').read_bytes())
             record['differences']+=difference(receipt,json.loads(stdout),'/stdout')
+            if stdout!=wire(receipt)+b'\n':record['differences'].append(dict(path='/stdout_bytes',expected_sha256=digest(wire(receipt)+b'\n'),actual_sha256=digest(stdout)))
             if stderr:record['differences'].append(dict(path='/stderr',expected='',actual=stderr.decode(errors='replace')))
             record['bundle_bytes']=sum(p.stat().st_size for p in bundle.iterdir());record['physical']=read(bundle/'manifest.json')['physical']
         elif entry['expected_exit']!=0:
             bound=directory/'bound-expected-diagnostic.json'
             exp=bound.read_bytes() if bound.exists() else (PACKAGE/entry.get('stderr',entry.get('expected_stderr'))).read_bytes()
-            try:record['differences']+=difference(json.loads(exp),json.loads(stderr),'/stderr')
+            try:
+                record['differences']+=difference(json.loads(exp),json.loads(stderr),'/stderr')
+                if stderr!=wire(json.loads(exp))+b'\n':record['differences'].append(dict(path='/stderr_bytes',expected_sha256=digest(wire(json.loads(exp))+b'\n'),actual_sha256=digest(stderr)))
             except ValueError:record['differences'].append(dict(path='/stderr',expected=exp.decode(errors='replace'),actual=stderr.decode(errors='replace')))
             if stdout:record['differences'].append(dict(path='/stdout',expected='',actual=stdout.decode(errors='replace')))
         record['stdout_sha256']=digest(stdout);record['stderr_sha256']=digest(stderr)
