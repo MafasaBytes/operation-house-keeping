@@ -26,7 +26,8 @@ def _filesystem(fd):
 
 
 def _stable(path, inode):
-    absolute,parts=retention._parts(path)
+    # Internal parent of a valid single-component relative filename.
+    absolute,parts=(False,[]) if path=='.' else retention._parts(path)
     with retention._directory(absolute,parts) as fd:
         now=os.fstat(fd)
         if (inode.st_dev,inode.st_ino)!=(now.st_dev,now.st_ino):
@@ -147,6 +148,7 @@ def _matches(v,s):
 
 
 def _output(v,kind):
+    if type(v) is not dict:fail('SCHEMA_INVALID','/retained/'+kind,'phase_1')
     if v.get('schema')!=kind or v.get('profile')!=PROFILE:fail('PROFILE_MISMATCH','/retained/'+kind,'phase_1')
     if not _matches(v,SCHEMAS[kind]):fail('SCHEMA_INVALID','/retained/'+kind,'phase_1')
 

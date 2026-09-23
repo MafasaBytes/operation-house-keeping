@@ -14,6 +14,7 @@ from applications.bounded_decision_workflow.errors import WorkflowInputError
 from applications.bounded_decision_workflow.measurement_wire import Work,BUNDLE_STATE
 
 TAG=os.environ.get('NR_ATTEMPT','unassigned')
+OUTPUTS=os.environ.get('NR_OUTPUT_CATEGORY','outputs')
 
 
 def cli(*args):
@@ -35,8 +36,8 @@ def inputs(name,label):
 
 @pytest.fixture(scope='module')
 def delivered():
-    root,iv,objects,pin=inputs('P8-before','admitted');out=ROOT/'outputs'/(TAG+'-admitted')
-    with reserve('outputs',1048576,'real evaluate'):r=cli('reassessment-evaluate','--invocation',iv,'--objects-dir',objects,'--authority-pin',pin,'--output-dir',out)
+    root,iv,objects,pin=inputs('P8-before','admitted');out=ROOT/OUTPUTS/(TAG+'-admitted')
+    with reserve(OUTPUTS,1048576,'real evaluate'):r=cli('reassessment-evaluate','--invocation',iv,'--objects-dir',objects,'--authority-pin',pin,'--output-dir',out)
     assert r.returncode==0,(r.stdout,r.stderr)
     assert r.stderr==b'' and r.stdout.endswith(b'\n')
     answer=json.loads(r.stdout);assert answer['disposition']=='one_compatible'
@@ -54,7 +55,7 @@ def clone(bundle,label,mutate=None):
     for row in manifest['files']:
         b=files[row['name']];row.update(bytes=len(b),sha256=sha(b))
     files['manifest.json']=wire(manifest)
-    out=directory('outputs',TAG+'-'+label)
+    out=directory(OUTPUTS,TAG+'-'+label)
     for n,b in files.items():put(out/n,b)
     return out
 
@@ -63,8 +64,8 @@ def test_standalone_command_replay(delivered):
     out,answer,retired,pin=delivered
     v=cli('reassessment-verify','--bundle',out)
     assert v.returncode==0 and v.stderr==b''
-    replay=ROOT/'outputs'/(TAG+'-replay')
-    with reserve('outputs',1048576,'standalone replay'):r=cli('reassessment-replay','--bundle',out,'--output-dir',replay)
+    replay=ROOT/OUTPUTS/(TAG+'-replay')
+    with reserve(OUTPUTS,1048576,'standalone replay'):r=cli('reassessment-replay','--bundle',out,'--output-dir',replay)
     assert r.returncode==0,(r.stdout,r.stderr)
     assert json.loads(r.stdout)['result_sha256']==answer['result_sha256']
     for n in ['invocation.json','closure.json','result.json','trace.json','build.json','policy.json']:
@@ -83,14 +84,14 @@ def test_rehashed_forgery_is_not_recomputation(delivered):
     bad=clone(out,'forged',forge)
     # Verification intentionally establishes integrity, not a recomputed claim.
     assert runtime.verify(bad)['disposition']=='model_prediction_mismatch'
-    target=ROOT/'outputs'/(TAG+'-forgery-must-not-publish')
+    target=ROOT/OUTPUTS/(TAG+'-forgery-must-not-publish')
     with pytest.raises(MeasurementContractError,match='REPLAY_SEMANTIC_MISMATCH'):runtime.replay(bad,target)
     assert not target.exists()
 
 
 def test_real_withholding_command():
-    root,iv,objects,pin=inputs('P10-denied','withheld');out=ROOT/'outputs'/(TAG+'-withheld')
-    with reserve('outputs',1048576,'withheld evaluate'):r=cli('reassessment-evaluate','--invocation',iv,'--objects-dir',objects,'--authority-pin',pin,'--output-dir',out)
+    root,iv,objects,pin=inputs('P10-denied','withheld');out=ROOT/OUTPUTS/(TAG+'-withheld')
+    with reserve(OUTPUTS,1048576,'withheld evaluate'):r=cli('reassessment-evaluate','--invocation',iv,'--objects-dir',objects,'--authority-pin',pin,'--output-dir',out)
     assert r.returncode==0 and r.stderr==b''
     result=json.loads((out/'result.json').read_bytes())
     assert result['summary']['disposition']=='evaluation_denied'
@@ -134,7 +135,7 @@ def test_unsafe_paths_and_collision(delivered):
     assert before=={p.name:p.read_bytes() for p in out.iterdir()}
     link=ROOT/'inputs'/(TAG+'-symlink')
     with reserve('inputs',len(str(retired/'invocation.json')),'symlink control'):link.symlink_to(retired/'invocation.json')
-    r=cli('reassessment-evaluate','--invocation',link,'--objects-dir',retired/'objects','--authority-pin',pin,'--output-dir',ROOT/'outputs'/(TAG+'-unsafe'))
+    r=cli('reassessment-evaluate','--invocation',link,'--objects-dir',retired/'objects','--authority-pin',pin,'--output-dir',ROOT/OUTPUTS/(TAG+'-unsafe'))
     assert r.returncode==5 and r.stdout==b''
     assert json.loads(r.stderr)['code'] in ('PATH_FINAL_SYMLINK','PATH_COMPONENT_UNSAFE')
     r=cli('reassessment-verify','--bundle',str(out)+'/../'+out.name)
@@ -147,7 +148,7 @@ def test_interrupted_publication(delivered,monkeypatch,fault):
     # Real semantic bytes already produced by the actual executable; the fault
     # seam is monkeypatch-only and not exposed through the production CLI.
     payloads={n:(out/n).read_bytes() for n in runtime.FILES[:-1]}
-    target=ROOT/'outputs'/(TAG+'-fault-'+fault);w=Work();BUNDLE_STATE.set('absent')
+    target=ROOT/OUTPUTS/(TAG+'-fault-'+fault);w=Work();BUNDLE_STATE.set('absent')
     import time,stat
     original=runtime.retention._write_file;fsync=os.fsync
     if fault=='write':
@@ -161,7 +162,7 @@ def test_interrupted_publication(delivered,monkeypatch,fault):
             if (fault=='file_fsync' and stat.S_ISREG(mode)) or (fault=='directory_fsync' and stat.S_ISDIR(mode)):raise OSError('injected fsync')
             return fsync(fd)
         monkeypatch.setattr(os,'fsync',fail)
-    with reserve('outputs',1048576,'fault '+fault):
+    with reserve(OUTPUTS,1048576,'fault '+fault):
         with pytest.raises(WorkflowInputError):runtime.publish(target,payloads,w,time.monotonic_ns())
     if fault=='directory_fsync':
         assert (target/'manifest.json').exists() and BUNDLE_STATE.get()=='complete_visible_durability_unknown'
@@ -185,6 +186,41 @@ def test_recovery_accounting_and_tight_limits(delivered):
     assert total.physical['bytes_written']==0
     limits=ROOT/'inputs'/(TAG+'-limits.json');put(limits,wire(dict(closure_bytes=100)))
     with pytest.raises(MeasurementContractError,match='RESOURCE_LIMIT_EXCEEDED'):
-        runtime.replay(out,ROOT/'outputs'/(TAG+'-resource-refusal'),limits)
+        runtime.replay(out,ROOT/OUTPUTS/(TAG+'-resource-refusal'),limits)
     record(dict(event='actual_work',logical=total.logical,physical=total.physical,
         files={n:len(b) for n,b in payloads.items()},corpus=inventory()))
+
+
+def test_malformed_retained_shape_is_input_refusal():
+    with pytest.raises(MeasurementContractError,match='SCHEMA_INVALID'):
+        runtime._output([], 'nr.result.v2')
+
+
+def test_current_directory_descriptor_is_valid():
+    runtime._stable('.',os.stat('.'))
+
+
+def test_largest_required_closure_and_actual_work():
+    from applications.bounded_decision_workflow.reassessment_capture import capture
+    root,iv,objects,pin=inputs('P7-newbaseline','largest')
+    g=capture(iv,objects,pin);payloads=runtime._payloads(g)
+    reserve_bytes=sum(map(len,payloads.values()))+g.work.limits['manifest_bytes']
+    assert len(payloads['closure.json'])<=524288 and reserve_bytes<=1048576
+    assert g.work.physical['bytes_written']==0
+    record(dict(event='largest_actual_case',files={n:len(b) for n,b in payloads.items()},logical=g.work.logical,
+        physical=g.work.physical,complete_reservation=reserve_bytes,build_sha256=sha(payloads['build.json'])))
+
+
+def test_prepared_build_remains_nonexecutable():
+    from test_capture import case
+    root=directory('inputs',TAG+'-prepared');c,p=case();objects=root/'objects';objects.mkdir()
+    for (kind,digest),raw in p.items():put(objects/(digest+'.'+kind),raw)
+    iv=root/'invocation.json';put(iv,p[key(c['invocation'])])
+    r=cli('reassessment-evaluate','--invocation',iv,'--objects-dir',objects,'--authority-pin',c['authority_pin'],'--output-dir',ROOT/OUTPUTS/(TAG+'-prepared-refused'))
+    assert r.returncode==3 and json.loads(r.stderr)['code']=='NONEXECUTABLE_BUILD_WITNESS'
+
+
+def test_legacy_dispatch_usage_is_unchanged():
+    for operation in ['evaluate','governed-evaluate','measurement-evaluate']:
+        r=cli(operation)
+        assert r.returncode==2 and r.stdout==b'' and json.loads(r.stderr)['code']=='CLI_USAGE'
