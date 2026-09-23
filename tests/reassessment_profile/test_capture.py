@@ -99,8 +99,8 @@ def test_rehashed_closed_shape_attacks(field,expected):
 
 
 @pytest.mark.parametrize('attack,expected',[
-    ('recipe','SCHEMA_INVALID'),('duplicate','SCHEMA_INVALID'),('extra','SCHEMA_INVALID'),
-    ('missing','SCHEMA_INVALID'),('role','REFERENCE_ROLE_MISMATCH'),('manifest','MANIFEST_COMMITMENT_MISMATCH'),
+    ('recipe','PRIOR_RECIPE_INVALID'),('duplicate','PRIOR_RECIPE_INVALID'),('extra','PRIOR_RECIPE_INVALID'),
+    ('missing','PRIOR_CLOSURE_MEMBER_MISMATCH'),('role','PRIOR_FILE_ROLE_MISMATCH'),('manifest','PRIOR_MANIFEST_COMMITMENT_MISMATCH'),
 ])
 def test_rehashed_descriptor_attacks(attack,expected):
     c,p=bound_internal();k=next(k for k in p if k[0]=='nr.retained-bundle.v2');d=json.loads(p[k])

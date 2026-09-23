@@ -167,22 +167,24 @@ def validate(value, kind, wire, work):
             if type(row['artifact_count']) is not int or row['artifact_count']<1:fail('SCHEMA_INVALID','/build/distributions/artifact_count','phase_1')
     elif kind == 'nr.retained-bundle.v2':
         rows=value['files']
-        if type(rows) is not list or len(rows)!=7:fail('SCHEMA_INVALID','/files','phase_2')
+        if type(rows) is not list or len(rows)!=7:fail('PRIOR_BUNDLE_INCOMPLETE','/files','phase_2')
         for row,name in zip(rows,sorted(FILES)):
             shape(row,'name source','/files')
             if row['name']!=name:fail('SCHEMA_INVALID','/files','phase_2')
             if name=='closure.json':
-                if row['source']!={'recipe':'original_closure'}:fail('SCHEMA_INVALID','/files/closure.json','phase_2')
+                if row['source']!={'recipe':'original_closure'}:fail('PRIOR_RECIPE_INVALID','/files/closure.json','phase_2')
             else:
                 shape(row['source'],'reference','/files/source');typed(row['source']['reference'],ROLES[name])
-        c=value['closure'];shape(c,'schema profile invocation authority_pin limits_override members','/closure')
+        c=value['closure']
+        if type(c) is not dict or set(c)!=set('schema profile invocation authority_pin limits_override members'.split()):
+            fail('PRIOR_RECIPE_INVALID','/closure','phase_2')
         if c['schema']!='nm.closure.v1' or c['profile']!=NM_PROFILE:fail('PROFILE_MISMATCH','/closure','phase_2')
         typed(c['invocation'],'nm.invocation.v1');digest(c['authority_pin'],'/closure/authority_pin')
         checked_limits(c['limits_override'])
         if type(c['members']) is not list:fail('SCHEMA_INVALID','/closure/members','phase_2')
         ks=[typed(r) for r in c['members']]
         if ks!=sorted(set(ks)) or any(not k[0].startswith('nm.') for k in ks):
-            fail('SCHEMA_INVALID','/closure/members','phase_2')
+            fail('PRIOR_RECIPE_INVALID','/closure/members','phase_2')
 
 
 def edges(value):

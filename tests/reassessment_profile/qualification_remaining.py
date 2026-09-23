@@ -1,15 +1,19 @@
 """Bounded test driver; expected values never enter production computation."""
 import json
+import base64
 import sys
 import zipfile
 import qualification as q
 from test_capture import actual_case,case,key,wire,sha,ref,replace
 
 def evaluate(row,c,p,*,extra=()):
-    tag=row['id'];root=q.ROOT/'inputs'/tag.lower();out=q.ROOT/'outputs'/tag.lower()
+    tag=row['id'];repair=tag.startswith('K-')
+    root=q.ROOT/('repairs' if repair else 'inputs')/tag.lower()
+    out=root/'bundle' if repair else q.ROOT/'outputs'/tag.lower()
     raw=p[key(c['invocation'])]
     assert sum(map(len,p.values()))+len(raw)<=1048576
-    with q.transaction(tag,{'inputs':1048576,'outputs':1048576,'logs':32768},files=len(p)+16,dirs=3):
+    charges={'repairs':2097152,'logs':32768} if repair else {'inputs':1048576,'outputs':1048576,'logs':32768}
+    with q.transaction(tag,charges,files=len(p)+16,dirs=3):
         if root.exists():
             assert (root/'invocation.json').read_bytes()==raw
             assert {x.name for x in (root/'objects').iterdir()}=={digest+'.'+kind for kind,digest in p}
@@ -38,4 +42,27 @@ def dispatch_controls():
         else:extra=['--computed-result','untrusted']
         evaluate(row,c,p,extra=extra)
 
-if __name__=='__main__':dispatch_controls()
+def carriage_controls():
+    with zipfile.ZipFile(q.PACKAGE) as z:
+        rows={r['id']:r for r in json.loads(z.read('command-matrix.json'))['commands']}
+        original=json.loads(z.read('carriage-controls/shared_valid.json'))
+        original_keys={key(m['reference']) for m in original['members']}
+        for name in ['unknown_recipe','recipe_extra','missing_member','substituted_bytes',
+                     'missing_recipe_member','duplicate_recipe_member','incompatible_role',
+                     'manifest_mismatch','missing_file']:
+            row=rows['D-'+name];c,p=actual_case(row['case'])
+            variant=json.loads(z.read('carriage-controls/'+name+'.json'))
+            pool={key(m['reference']):base64.b64decode(m['bytes']) for m in variant['members']}
+            old=key(original['descriptor']);new=key(variant['descriptor'])
+            # Rehash the new descriptor's owning exposure/Q/authority/I first;
+            # then impose exact missing/stale member bytes. Never refill from p.
+            p.update(pool)
+            if old!=new:replace(c,p,old,json.loads(pool[new]))
+            for victim in original_keys-set(pool):
+                if victim!=old:p.pop(victim,None)
+            p.update(pool)
+            evaluate(row,c,p)
+
+if __name__=='__main__':
+    if '--carriage' in sys.argv:carriage_controls()
+    else:dispatch_controls()

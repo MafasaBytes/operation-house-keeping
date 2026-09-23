@@ -198,7 +198,7 @@ class _Captured:
     def _recover(self,d):
         w=self.work;c=d['closure'];members=[typed(r) for r in c['members']]
         reached=self._scope(typed(c['invocation']))
-        if reached!=set(members):fail('SCHEMA_INVALID','/closure/members','phase_2')
+        if reached!=set(members):fail('PRIOR_CLOSURE_MEMBER_MISMATCH','/closure/members','phase_2')
         iv=self.get(c['invocation'])
         if c['authority_pin']!=iv['selection']['sha256']:
             fail('AUTHORITY_REFERENCE_MISMATCH','/closure/authority_pin','phase_2')
@@ -236,7 +236,7 @@ class _Captured:
                     w.charge('json_nodes',n);self.nodes[k]=n
                 expected={'manifest.json':'nm.bundle.v1','result.json':'nm.result.v1','trace.json':'nm.trace.v1'}.get(name,k[0])
                 if v.get('schema')!=expected or v.get('profile')!='bdw.measurement.supplied.v1':
-                    fail('REFERENCE_ROLE_MISMATCH','/files/'+name,'phase_2')
+                    fail('PRIOR_FILE_ROLE_MISMATCH','/files/'+name,'phase_2')
             effective.guard(CAPS[name],len(raw));w.guard(CAPS[name],len(raw))
             files[name]=raw
         effective.guard('bundle_bytes',sum(map(len,files.values())))
@@ -256,7 +256,7 @@ class _Captured:
         for row,name in zip(manifest['files'],FILES[:-1]):
             shape(row,'name bytes sha256','/manifest/files')
             if row['name']!=name or type(row['bytes']) is not int or row['bytes']!=len(files[name]) or row['sha256']!=sha(files[name],w):
-                fail('MANIFEST_COMMITMENT_MISMATCH','/files/'+name,'phase_2')
+                fail('PRIOR_MANIFEST_COMMITMENT_MISMATCH','/files/'+name,'phase_2')
         _validate_retained_envelopes(files,w,role_work=w)
         trace,_=decode(files['trace.json'],w)
         if trace['required_closure']!=[ref(*k) for k in members]:fail('REFERENCE_ROLE_MISMATCH','/trace/required_closure','phase_2')
