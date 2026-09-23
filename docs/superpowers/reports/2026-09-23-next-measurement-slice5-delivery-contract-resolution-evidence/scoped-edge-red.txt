@@ -1,0 +1,24 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+____________ test_scoped_shared_edge_work_cannot_bypass_edge_budget ____________
+
+tmp_path = PosixPath('/tmp/pytest-of-mafasa/pytest-44/test_scoped_shared_edge_work_c0')
+
+    def test_scoped_shared_edge_work_cannot_bypass_edge_budget(tmp_path):
+        iv,objects,pin=recover_case(tmp_path)
+        # P has 62 unique-graph edge occurrences in the frozen independent input
+        # graph. Its per-request scope has additional edge checks; 62 is therefore
+        # insufficient for the combined traversal work, although capture fits.
+        limits=tmp_path/'edge-budget.json';limits.write_bytes(b'{"edge_visits":62}')
+        run=command('measurement-evaluate','--invocation',iv,'--objects-dir',objects,'--authority-pin',pin,
+                    '--output-dir',tmp_path/'too-little-work','--limits',limits)
+>       assert run.returncode==4,run.stdout.decode()
+E       AssertionError: {"bundle_sha256":"b81b5024a865a828937d831f433bf47bfe51136e44a6b0db328bdfe674e7e4ce","disposition":"preferred_within_supplied_set","evaluation_permitted":true,"operation":"measurement-evaluate","result_sha256":"f89610e31887b7aa5eeec9d7269683002d43f385f8c0e8a39edf9fdaaa3afc02","schema":"nm.receipt.v1"}
+E         
+E       assert 0 == 4
+E        +  where 0 = CompletedProcess(args=['/home/mafasa/operation-house-keeping-runtime/bounded-decision-workflow/environments/cp313-bdw0...lt_sha256":"f89610e31887b7aa5eeec9d7269683002d43f385f8c0e8a39edf9fdaaa3afc02","schema":"nm.receipt.v1"}\n', stderr=b'').returncode
+
+tests/measurement_profile/test_delivery_contract_mapping.py:275: AssertionError
+=========================== short test summary info ============================
+FAILED tests/measurement_profile/test_delivery_contract_mapping.py::test_scoped_shared_edge_work_cannot_bypass_edge_budget
+1 failed, 19 deselected in 10.45s

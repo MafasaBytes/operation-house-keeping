@@ -1,0 +1,67 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+___________ test_malformed_field_types_are_input_refusals[<lambda>0] ___________
+
+operation = <function <lambda> at 0x7f1804a3a5c0>
+
+    @pytest.mark.parametrize('operation',[
+        lambda: __import__('applications.bounded_decision_workflow.measurement_wire',fromlist=['key']).key({'kind':'nm.basis','sha256':1}),
+        lambda: __import__('applications.bounded_decision_workflow.measurement_wire',fromlist=['ordered']).ordered([{}],ids=True),
+    ])
+    def test_malformed_field_types_are_input_refusals(operation):
+        from applications.bounded_decision_workflow.measurement_contracts import MeasurementContractError
+>       with pytest.raises(MeasurementContractError):operation()
+                                                     ^^^^^^^^^^^
+
+tests/measurement_profile/test_delivery_contract_mapping.py:307: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/measurement_profile/test_delivery_contract_mapping.py:302: in <lambda>
+    lambda: __import__('applications.bounded_decision_workflow.measurement_wire',fromlist=['key']).key({'kind':'nm.basis','sha256':1}),
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+applications/bounded_decision_workflow/measurement_wire.py:46: in key
+    def key(r,kind=None): return _ref(r,expected_kind=kind)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = {'kind': 'nm.basis', 'sha256': 1}, expected_kind = None
+
+    def _ref(value, *, expected_kind=None):
+        if type(value) is not dict or set(value) != {"kind", "sha256"} \
+>               or type(value["kind"]) is not str or not _SHA.fullmatch(value["sha256"]):
+                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               TypeError: expected string or bytes-like object, got 'int'
+
+applications/bounded_decision_workflow/measurement_contracts.py:94: TypeError
+___________ test_malformed_field_types_are_input_refusals[<lambda>1] ___________
+
+operation = <function <lambda> at 0x7f1804a3a660>
+
+    @pytest.mark.parametrize('operation',[
+        lambda: __import__('applications.bounded_decision_workflow.measurement_wire',fromlist=['key']).key({'kind':'nm.basis','sha256':1}),
+        lambda: __import__('applications.bounded_decision_workflow.measurement_wire',fromlist=['ordered']).ordered([{}],ids=True),
+    ])
+    def test_malformed_field_types_are_input_refusals(operation):
+        from applications.bounded_decision_workflow.measurement_contracts import MeasurementContractError
+>       with pytest.raises(MeasurementContractError):operation()
+                                                     ^^^^^^^^^^^
+
+tests/measurement_profile/test_delivery_contract_mapping.py:307: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/measurement_profile/test_delivery_contract_mapping.py:303: in <lambda>
+    lambda: __import__('applications.bounded_decision_workflow.measurement_wire',fromlist=['ordered']).ordered([{}],ids=True),
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+xs = [{}], ids = True, minimum = 0
+
+    def ordered(xs, *, ids=False, minimum=0):
+        if type(xs) is not list or len(xs)<minimum:fail('SCHEMA_INVALID','array')
+>       values=[x['id'] for x in xs] if ids else xs
+                ^^^^^^^
+E       KeyError: 'id'
+
+applications/bounded_decision_workflow/measurement_wire.py:120: KeyError
+=========================== short test summary info ============================
+FAILED tests/measurement_profile/test_delivery_contract_mapping.py::test_malformed_field_types_are_input_refusals[<lambda>0]
+FAILED tests/measurement_profile/test_delivery_contract_mapping.py::test_malformed_field_types_are_input_refusals[<lambda>1]
+2 failed, 21 deselected in 2.47s

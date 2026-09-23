@@ -1,0 +1,20 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+___ test_legacy_unbound_computation_arguments_are_not_production_interfaces ____
+
+    def test_legacy_unbound_computation_arguments_are_not_production_interfaces():
+        import inspect
+        from applications.bounded_decision_workflow import measurement_delivery
+        for name in ['evaluate_semantic_bundle','replay_semantic_bundle']:
+>           assert not {'public_request','public_snapshot','support_rows','candidates','result','trace'} & set(inspect.signature(getattr(measurement_delivery,name)).parameters)
+E           assert not ({'candidates', 'public_request', 'public_snapshot', 'result', 'support_rows', 'trace'} & {'candidates', 'invocation', 'objects', 'output_dir', 'public_request', 'public_snapshot', ...})
+E            +  where {'candidates', 'invocation', 'objects', 'output_dir', 'public_request', 'public_snapshot', ...} = set(mappingproxy(OrderedDict({'output_dir': <Parameter "output_dir">, 'invocation': <Parameter "invocation">, 'objects': <...': <Parameter "public_snapshot">, 'support_rows': <Parameter "support_rows">, 'candidates': <Parameter "candidates">})))
+E            +    where mappingproxy(OrderedDict({'output_dir': <Parameter "output_dir">, 'invocation': <Parameter "invocation">, 'objects': <...': <Parameter "public_snapshot">, 'support_rows': <Parameter "support_rows">, 'candidates': <Parameter "candidates">})) = <Signature (output_dir, invocation, objects, public_request, public_snapshot, *, support_rows, candidates)>.parameters
+E            +      where <Signature (output_dir, invocation, objects, public_request, public_snapshot, *, support_rows, candidates)> = <function signature at 0x7f755b429440>(<function evaluate_semantic_bundle at 0x7f75590823e0>)
+E            +        where <function signature at 0x7f755b429440> = <module 'inspect' from '/home/mafasa/miniconda3/lib/python3.13/inspect.py'>.signature
+E            +        and   <function evaluate_semantic_bundle at 0x7f75590823e0> = getattr(<module 'applications.bounded_decision_workflow.measurement_delivery' from '/mnt/d/operation-house-keeping/applications/bounded_decision_workflow/measurement_delivery.py'>, 'evaluate_semantic_bundle')
+
+tests/measurement_profile/test_delivery_contract_mapping.py:175: AssertionError
+=========================== short test summary info ============================
+FAILED tests/measurement_profile/test_delivery_contract_mapping.py::test_legacy_unbound_computation_arguments_are_not_production_interfaces
+1 failed, 13 deselected in 2.88s

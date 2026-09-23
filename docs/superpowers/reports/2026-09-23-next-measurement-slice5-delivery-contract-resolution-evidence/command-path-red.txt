@@ -1,0 +1,32 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+______ test_closed_command_mapping_has_no_out_of_band_semantic_arguments _______
+
+    def test_closed_command_mapping_has_no_out_of_band_semantic_arguments():
+>       from applications.bounded_decision_workflow import measurement_runtime
+E       ImportError: cannot import name 'measurement_runtime' from 'applications.bounded_decision_workflow' (/mnt/d/operation-house-keeping/applications/bounded_decision_workflow/__init__.py)
+
+tests/measurement_profile/test_delivery_contract_mapping.py:21: ImportError
+_____________ test_supported_delivery_and_standalone_recomputation _____________
+
+tmp_path = PosixPath('/tmp/pytest-of-mafasa/pytest-36/test_supported_delivery_and_st0')
+
+    def test_supported_delivery_and_standalone_recomputation(tmp_path):
+>       iv, objects, pin = recover_case(tmp_path)
+                           ^^^^^^^^^^^^^^^^^^^^^^
+
+tests/measurement_profile/test_delivery_contract_mapping.py:53: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/tmp/pytest-of-mafasa/pytest-36/test_supported_delivery_and_st0')
+case = 'P'
+
+    def recover_case(tmp_path, case='P'):
+>       from applications.bounded_decision_workflow.measurement_build import identity
+E       ModuleNotFoundError: No module named 'applications.bounded_decision_workflow.measurement_build'
+
+tests/measurement_profile/test_delivery_contract_mapping.py:28: ModuleNotFoundError
+=========================== short test summary info ============================
+FAILED tests/measurement_profile/test_delivery_contract_mapping.py::test_closed_command_mapping_has_no_out_of_band_semantic_arguments
+FAILED tests/measurement_profile/test_delivery_contract_mapping.py::test_supported_delivery_and_standalone_recomputation
+2 failed in 7.26s

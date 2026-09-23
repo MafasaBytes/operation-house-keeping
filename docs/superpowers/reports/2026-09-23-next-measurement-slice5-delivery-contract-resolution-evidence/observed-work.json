@@ -1,0 +1,136 @@
+{
+  "method": "read-only return-event observation; same author; not independent review",
+  "performance_note": "profiler overhead is present; use unprofiled CLI records for timings",
+  "observations": [
+    {
+      "logical_work": {
+        "build_bytes": 26165,
+        "active_depth": 4,
+        "unique_objects": 19,
+        "object_bytes": 86310,
+        "capture_bytes": 129617,
+        "json_nodes": 4057,
+        "reference_occurrences": 62,
+        "edge_visits": 117,
+        "context_scan_bytes": 1123794,
+        "request_contexts": 1,
+        "request_chain": 1,
+        "scoped_expansions": 14,
+        "scoped_edge_checks": 55,
+        "rational_operations": 4,
+        "decoder_comparisons": 1,
+        "closure_bytes": 175931,
+        "public_reconstruction_nodes": 2679,
+        "public_reconstructions": 1,
+        "condition_assessments": 10,
+        "hypothesis_checks": 4,
+        "source_contributions": 8,
+        "mapped_cells": 8,
+        "ranking_branches": 4
+      },
+      "physical_work": {
+        "bytes_read": 129617,
+        "read_operations": 51,
+        "bytes_written": 231877,
+        "write_operations": 6,
+        "build_read_operations": 2199,
+        "build_bytes_read": 47638249
+      },
+      "case": "P",
+      "receipt": {
+        "schema": "nm.receipt.v1",
+        "operation": "measurement-evaluate",
+        "evaluation_permitted": true,
+        "disposition": "preferred_within_supplied_set",
+        "result_sha256": "17c23796480f454d81b29def4cb567577143129c81093d67ddf720a6a2e561e8",
+        "bundle_sha256": "3e0e65987969a059a663f8614e747f40ac8ad26b205c29d680829be5d025c490"
+      },
+      "output": "/tmp/nm-slice5-observed-elsuh2vq/p"
+    },
+    {
+      "logical_work": {
+        "build_bytes": 26165,
+        "active_depth": 7,
+        "unique_objects": 22,
+        "object_bytes": 86310,
+        "capture_bytes": 134403,
+        "json_nodes": 4204,
+        "reference_occurrences": 95,
+        "edge_visits": 315,
+        "context_scan_bytes": 1782464,
+        "request_contexts": 4,
+        "request_chain": 4,
+        "scoped_expansions": 56,
+        "scoped_edge_checks": 220,
+        "rational_operations": 4,
+        "decoder_comparisons": 1,
+        "closure_bytes": 182749,
+        "public_reconstruction_nodes": 10716,
+        "public_reconstructions": 4,
+        "condition_assessments": 10,
+        "hypothesis_checks": 4,
+        "source_contributions": 8,
+        "mapped_cells": 8,
+        "ranking_branches": 4
+      },
+      "physical_work": {
+        "bytes_read": 134403,
+        "read_operations": 57,
+        "bytes_written": 247070,
+        "write_operations": 6,
+        "build_read_operations": 2199,
+        "build_bytes_read": 47638249
+      },
+      "case": "history4",
+      "receipt": {
+        "schema": "nm.receipt.v1",
+        "operation": "measurement-evaluate",
+        "evaluation_permitted": true,
+        "disposition": "preferred_within_supplied_set",
+        "result_sha256": "43f08d0823a0b741302669670ef67e9943233fb0e117708e9cf2210c7ee0596f",
+        "bundle_sha256": "352d3dbfb9c505c4c10f35fcb5f6dbeb6e95060c85a7a1e077a0a48c1c67a564"
+      },
+      "output": "/tmp/nm-slice5-observed-elsuh2vq/history4"
+    },
+    {
+      "logical_work": {
+        "build_bytes": 26165,
+        "active_depth": 5,
+        "unique_objects": 20,
+        "object_bytes": 86310,
+        "capture_bytes": 131126,
+        "json_nodes": 4104,
+        "reference_occurrences": 72,
+        "edge_visits": 182,
+        "context_scan_bytes": 1339064,
+        "request_contexts": 2,
+        "request_chain": 1,
+        "scoped_expansions": 28,
+        "scoped_edge_checks": 110,
+        "rational_operations": 4,
+        "decoder_comparisons": 1,
+        "closure_bytes": 178089,
+        "public_reconstruction_nodes": 5358,
+        "public_reconstructions": 2
+      },
+      "physical_work": {
+        "bytes_read": 131126,
+        "read_operations": 53,
+        "bytes_written": 228922,
+        "write_operations": 6,
+        "build_read_operations": 2199,
+        "build_bytes_read": 47638249
+      },
+      "case": "denied",
+      "receipt": {
+        "schema": "nm.receipt.v1",
+        "operation": "measurement-evaluate",
+        "evaluation_permitted": false,
+        "disposition": "evaluation_denied",
+        "result_sha256": "303f1e84bb0bf2573e57903d84401de38b6fb4e9a510795e3d5d79de2d250a00",
+        "bundle_sha256": "b38956f955029fa23b6274d479f0f79629b3cbf40e9500b2cd75d0fa6b4932fa"
+      },
+      "output": "/tmp/nm-slice5-observed-elsuh2vq/denied"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "tested_head": "d9350f87a918dc31466b31a682afb3f27ff7fe56",
+  "isolated_cwd": "/tmp/nm-slice5-recovery-Bk8qc5",
+  "source_input": "exact repository evidence copy of seven files; no original objects directory argument",
+  "commands": [
+    {
+      "argv": [
+        "measurement-verify",
+        "--bundle",
+        "/tmp/nm-slice5-recovery-Bk8qc5/captured"
+      ],
+      "returncode": 0,
+      "stdout": "{\"bundle_sha256\":\"0fd704dcb43ae5c7d2644dd6977aa4556d29b75f60a3c7dcb9d31bb4807ae99d\",\"disposition\":\"preferred_within_supplied_set\",\"evaluation_permitted\":true,\"operation\":\"measurement-verify\",\"result_sha256\":\"17c23796480f454d81b29def4cb567577143129c81093d67ddf720a6a2e561e8\",\"schema\":\"nm.receipt.v1\"}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "measurement-replay",
+        "--bundle",
+        "/tmp/nm-slice5-recovery-Bk8qc5/captured",
+        "--output-dir",
+        "/tmp/nm-slice5-recovery-Bk8qc5/replayed"
+      ],
+      "returncode": 0,
+      "stdout": "{\"bundle_sha256\":\"bb1aa7bd4fb2772900d384892d1660012b07a50a77e134f35454cfb0920a7296\",\"disposition\":\"preferred_within_supplied_set\",\"evaluation_permitted\":true,\"operation\":\"measurement-replay\",\"result_sha256\":\"17c23796480f454d81b29def4cb567577143129c81093d67ddf720a6a2e561e8\",\"schema\":\"nm.receipt.v1\"}\n",
+      "stderr": ""
+    }
+  ],
+  "result_and_trace_equal": true
+}

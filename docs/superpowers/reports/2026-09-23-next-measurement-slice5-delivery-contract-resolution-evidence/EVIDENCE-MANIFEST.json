@@ -1,0 +1,195 @@
+{
+  "files": [
+    {
+      "bytes": 283,
+      "path": "broader-regression-bfa2247.txt",
+      "sha256": "56c70a5c5c322dd0c6fd75f7cf7b1916098caa0ec01f3c91bb42ac4556e89caa"
+    },
+    {
+      "bytes": 1930,
+      "path": "command-path-red.txt",
+      "sha256": "567c3e028d689e4f034e4aad91da2ce91372d3d83c565635042c961da531fc61"
+    },
+    {
+      "bytes": 1356,
+      "path": "incomplete-exit-red.txt",
+      "sha256": "d04fa766edf3b44f29edc39e5d1c1928204d8f4951ef26f3bbfd5809e0ab337e"
+    },
+    {
+      "bytes": 4217,
+      "path": "malformed-fields-red.txt",
+      "sha256": "408c61dc09ee95fc9e2fef05653959cdd05366d0862f2485e6e50364603a3c46"
+    },
+    {
+      "bytes": 26015,
+      "path": "measurements.json",
+      "sha256": "f72b85da3af5674720b88388427359bf94f2a12e4fb08270b9c4355084b73267"
+    },
+    {
+      "bytes": 1880,
+      "path": "observe_work.py",
+      "sha256": "3e2722d250ecc945f03a47bc5001c2ce6d010ab0272856e72ad87cdfef57e7a7"
+    },
+    {
+      "bytes": 4541,
+      "path": "observed-work.json",
+      "sha256": "9bb8e83e766e381c83bf6646cd34f7eb89d1929cdcf8d660652708607f67aa9d"
+    },
+    {
+      "bytes": 506,
+      "path": "preservation.json",
+      "sha256": "f32acabc4a7c6ea9ef33eca2dbb2fc1246df6b290f3e666ecacd2a440e834070"
+    },
+    {
+      "bytes": 26165,
+      "path": "retained/P/build.json",
+      "sha256": "6ec18a5ed9cc5ee6a543cc2f8fa5a96f04404f7ef13ef90bac2e92efbf6dce82"
+    },
+    {
+      "bytes": 175931,
+      "path": "retained/P/closure.json",
+      "sha256": "13f3b3f79406b20a399c67627742275fc2523eb924b4ce32b881789b6315d180"
+    },
+    {
+      "bytes": 504,
+      "path": "retained/P/invocation.json",
+      "sha256": "db2d03a7c4b190bdedc10a0acf2e37903c7be586a061c74a8d067e14897a09de"
+    },
+    {
+      "bytes": 974,
+      "path": "retained/P/manifest.json",
+      "sha256": "0fd704dcb43ae5c7d2644dd6977aa4556d29b75f60a3c7dcb9d31bb4807ae99d"
+    },
+    {
+      "bytes": 876,
+      "path": "retained/P/policy.json",
+      "sha256": "a4a4c8016b35ab78a2b98797234a9a014f46a9bd891e45977477efd3be4ae22c"
+    },
+    {
+      "bytes": 10694,
+      "path": "retained/P/result.json",
+      "sha256": "17c23796480f454d81b29def4cb567577143129c81093d67ddf720a6a2e561e8"
+    },
+    {
+      "bytes": 17707,
+      "path": "retained/P/trace.json",
+      "sha256": "b549ae6bd8668cb31ce3253fbd826ae518c7893c22bae795d74b96bf6e7a09a5"
+    },
+    {
+      "bytes": 26165,
+      "path": "retained/U/build.json",
+      "sha256": "6ec18a5ed9cc5ee6a543cc2f8fa5a96f04404f7ef13ef90bac2e92efbf6dce82"
+    },
+    {
+      "bytes": 175803,
+      "path": "retained/U/closure.json",
+      "sha256": "5b761901e7bd00719b3b4f0f4d04cb570f3df5bfe8ed7fabc7366cf6abd5a69e"
+    },
+    {
+      "bytes": 504,
+      "path": "retained/U/invocation.json",
+      "sha256": "a1300dd06142a685e0b894333ee921eabcb0d3760f9ac834e9e3c3f9e3c817c5"
+    },
+    {
+      "bytes": 974,
+      "path": "retained/U/manifest.json",
+      "sha256": "99e074888fe5e42bd8b28626fb25317ade2d3c218d31fdda3286412a6827e000"
+    },
+    {
+      "bytes": 876,
+      "path": "retained/U/policy.json",
+      "sha256": "a4a4c8016b35ab78a2b98797234a9a014f46a9bd891e45977477efd3be4ae22c"
+    },
+    {
+      "bytes": 10077,
+      "path": "retained/U/result.json",
+      "sha256": "e86dc5ec4ebee5d6561edbde03faabe2b20d8ac15e0d2031d32f403c92e927a8"
+    },
+    {
+      "bytes": 17462,
+      "path": "retained/U/trace.json",
+      "sha256": "816e38979e809518f3fc218acff54f9cbdd8bbef050ba4685ff8fe1f94359418"
+    },
+    {
+      "bytes": 26165,
+      "path": "retained/history4/build.json",
+      "sha256": "6ec18a5ed9cc5ee6a543cc2f8fa5a96f04404f7ef13ef90bac2e92efbf6dce82"
+    },
+    {
+      "bytes": 182764,
+      "path": "retained/history4/closure.json",
+      "sha256": "6c202d8de27994c2e971afec383b2534d30f7c59d90ce2baecc2615f3af58caf"
+    },
+    {
+      "bytes": 517,
+      "path": "retained/history4/invocation.json",
+      "sha256": "5dda9804c38bd935ac6b621ce28f171aa6de3566414bd2a24c49ce3ce6ad9619"
+    },
+    {
+      "bytes": 974,
+      "path": "retained/history4/manifest.json",
+      "sha256": "29be499b4f0aa7f6cef7877c3da060f76a4187e59849d6f7c3bd1155eb51bb3d"
+    },
+    {
+      "bytes": 876,
+      "path": "retained/history4/policy.json",
+      "sha256": "a4a4c8016b35ab78a2b98797234a9a014f46a9bd891e45977477efd3be4ae22c"
+    },
+    {
+      "bytes": 10695,
+      "path": "retained/history4/result.json",
+      "sha256": "41607dc84bacf26803c1acb33d4fbef745ed58e01434f8102baa9c1d616f68c6"
+    },
+    {
+      "bytes": 26068,
+      "path": "retained/history4/trace.json",
+      "sha256": "14fc3cace40b8a013c7f4f83265e8e501468a5793f30c4527cb92e663d5126c0"
+    },
+    {
+      "bytes": 1974,
+      "path": "scoped-edge-red.txt",
+      "sha256": "8c2f4126b96dc1bb3a410ebfd784a6269ac569aae1100d4f2e1ba78c526701c5"
+    },
+    {
+      "bytes": 1398,
+      "path": "standalone-recovery.json",
+      "sha256": "c598c70f8ddd2621b939ddfd739c61b499e04f9eebcbb5eb7942a4db8127e50d"
+    },
+    {
+      "bytes": 400992,
+      "path": "starting-inventory.json",
+      "sha256": "b875a536e36b0afa987dda9cc4a6ac4254a94f3e3de64ffa16ca641c7e114bc7"
+    },
+    {
+      "bytes": 1004,
+      "path": "test-import-red.txt",
+      "sha256": "5f7f6f0bc7c04a56597e343f7e9e04ee875796ac4930bf34f55c851bf759e54b"
+    },
+    {
+      "bytes": 2656,
+      "path": "unbound-interface-red.txt",
+      "sha256": "b909518124213ae2b1be122ad8851afc0bb3bbdf928ce4e6553c8b63ab48cb39"
+    },
+    {
+      "bytes": 111,
+      "path": "verification-100c4b2.txt",
+      "sha256": "b19c37439e32edc734d1a0d836277e47623faafa7024ff19325244eb06d46d05"
+    },
+    {
+      "bytes": 111,
+      "path": "verification-a179afb.txt",
+      "sha256": "dcfbd4a45b9382bbabf140a61e79d11bfe6aa06b664f237c458ef13a77031eb2"
+    },
+    {
+      "bytes": 111,
+      "path": "verification-d9350f8.txt",
+      "sha256": "f777656258a66dcfa671e158dbdb9c9a4c645e7f2ec6d25c3cdb107460d33893"
+    },
+    {
+      "bytes": 1869,
+      "path": "verifier-profile-red.txt",
+      "sha256": "30d75e804a55144a90bb35ca75a2407a81be986efde46fe02567349714483003"
+    }
+  ],
+  "tested_head": "d9350f87a918dc31466b31a682afb3f27ff7fe56"
+}

@@ -1,0 +1,13 @@
+{
+  "starting_count": 2429,
+  "changed": [
+    "applications/bounded_decision_workflow/cli.py",
+    "applications/bounded_decision_workflow/measurement_cli.py",
+    "applications/bounded_decision_workflow/measurement_delivery.py",
+    "applications/bounded_decision_workflow/measurement_ranking.py",
+    "applications/bounded_decision_workflow/support_qualification.py",
+    "tests/measurement_profile/test_delivery_slice5.py",
+    "tests/measurement_profile/test_slice5_vertical.py"
+  ],
+  "missing": []
+}

@@ -1,0 +1,26 @@
+F.                                                                       [100%]
+=================================== FAILURES ===================================
+_____________ test_verify_rejects_rehashed_foreign_result_profile ______________
+
+tmp_path = PosixPath('/tmp/pytest-of-mafasa/pytest-42/test_verify_rejects_rehashed_f0')
+
+    def test_verify_rejects_rehashed_foreign_result_profile(tmp_path):
+        iv,objects,pin=recover_case(tmp_path)
+        out=tmp_path/'complete'
+        run=command('measurement-evaluate','--invocation',iv,'--objects-dir',objects,'--authority-pin',pin,'--output-dir',out)
+        assert run.returncode==0,run.stderr.decode()
+        result=json.loads((out/'result.json').read_bytes());result['profile']='thermal'
+        wire=canonical_json_bytes(result);(out/'result.json').write_bytes(wire)
+        m=json.loads((out/'manifest.json').read_bytes())
+        for r in m['files']:
+            if r['name']=='result.json':r.update(bytes=len(wire),sha256=hashlib.sha256(wire).hexdigest())
+        (out/'manifest.json').write_bytes(canonical_json_bytes(m))
+        checked=command('measurement-verify','--bundle',out)
+>       assert checked.returncode==3 and json.loads(checked.stderr)['code']=='PROFILE_MISMATCH'
+E       assert (0 == 3)
+E        +  where 0 = CompletedProcess(args=['/home/mafasa/operation-house-keeping-runtime/bounded-decision-workflow/environments/cp313-bdw0...lt_sha256":"1cc8a8a95e0e2024c39d6c1a4ca5d865c04f4c60fbf1e1e556f2eaac84fce5e8","schema":"nm.receipt.v1"}\n', stderr=b'').returncode
+
+tests/measurement_profile/test_delivery_contract_mapping.py:236: AssertionError
+=========================== short test summary info ============================
+FAILED tests/measurement_profile/test_delivery_contract_mapping.py::test_verify_rejects_rehashed_foreign_result_profile
+1 failed, 1 passed, 16 deselected in 13.09s
