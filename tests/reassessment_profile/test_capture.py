@@ -390,7 +390,9 @@ def test_production_root_capture_limit_precedes_build_work(tmp_path,monkeypatch)
     monkeypatch.setattr(reassessment_build,'identity',lambda *args:pytest.fail('build work after root overflow'))
     with pytest.raises(MeasurementContractError) as e:capture(iv,objects,pin,{'capture_bytes':1})
     assert e.value.code=='RESOURCE_LIMIT_EXCEEDED' and e.value.details['dimension']=='capture_bytes'
-    assert observed.physical['bytes_read']==observed.physical['read_operations']==0
+    # The maintained bounded reader uses the permitted cap+1 probe. Physical
+    # probing is not successful capture, and it must not read the full root.
+    assert observed.physical['bytes_read']==2 and observed.physical['read_operations']==1
 
 
 def test_prior_result_limit_precedes_role_parse(monkeypatch):
