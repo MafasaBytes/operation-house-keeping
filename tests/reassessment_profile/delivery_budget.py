@@ -16,9 +16,19 @@ def inventory():
     counts={k:0 for k in CAPS};physical=0;files=0;dirs=0
     for here,ds,fs in os.walk(ROOT,followlinks=False):
         physical+=os.lstat(here).st_blocks*512;dirs+=1
-        for name in fs:
+        for name in fs+[n for n in ds if (Path(here)/n).is_symlink()]:
             p=Path(here)/name;s=p.lstat();physical+=s.st_blocks*512;files+=1
             cat=p.relative_to(ROOT).parts[0];counts[cat]+=s.st_size
+    # Exported evidence is additional to the live corpus, even when committed
+    # outside it. Registration records are immutable and checked on every census.
+    external={}
+    for p in (ROOT/'indexes').glob('*.json'):
+        row=json.loads(p.read_bytes())
+        if row.get('event')=='external_export':external[row['path']]=row
+    for name,row in external.items():
+        p=Path(name);raw=p.read_bytes()
+        assert len(raw)==row['bytes'] and hashlib.sha256(raw).hexdigest()==row['sha256']
+        counts['exports']+=len(raw);physical+=p.stat().st_blocks*512;files+=1
     assert files<=4096 and dirs<=512 and physical<=54525952
     assert all(counts[k]+ACTIVE.get(k,0)<=CAPS[k] for k in CAPS)
     assert sum(counts.values())+sum(ACTIVE.values())<=33554432
