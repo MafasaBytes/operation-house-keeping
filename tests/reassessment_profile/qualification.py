@@ -34,6 +34,14 @@ def census():
         for n in fs+[n for n in ds if (Path(here)/n).is_symlink()]:
             p=Path(here)/n;s=p.lstat();files+=1;physical+=s.st_blocks*512
             counts[p.relative_to(ROOT).parts[0]]+=s.st_size
+    external={}
+    for p in (ROOT/'indexes').glob('*record.json'):
+        row=json.loads(p.read_bytes())
+        if row.get('event')=='external_export':external[row['path']]=row
+    for name,row in external.items():
+        p=Path(name);b=p.read_bytes()
+        assert len(b)==row['bytes'] and sha(b)==row['sha256']
+        counts['exports']+=len(b);physical+=p.stat().st_blocks*512;files+=1
     assert all(counts[k]<=CAPS[k] for k in counts)
     assert sum(counts.values())<=1120927744 and physical<=1204813824
     assert files<=16384 and dirs<=2048
@@ -109,7 +117,6 @@ def core():
             put(d/'invocation.json',raw)
             out=ROOT/'outputs'/row['id'].lower()
             answer,stdout,stderr=command(row['id'],['reassessment-evaluate','--invocation',d/'invocation.json','--objects-dir',d/'objects','--authority-pin',c['authority_pin'],'--output-dir',out],out)
-            mapping={tuple(oldroot.values()):newroot} # explicit key lookup below
             def bind(x):
                 if x==oldroot:return newroot
                 if x==oldbuild:return newbuild
