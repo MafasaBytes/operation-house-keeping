@@ -158,7 +158,10 @@ def mkdir(p):
 def command(tag,args,output=None):
     charges={'logs':32768,'indexes':16384}
     if output:charges[output.relative_to(ROOT).parts[0]]=1048576
-    reserve(charges,files=12,dirs=1 if output else 0)
+    # An enclosing durable transaction already owns its metadata envelope.
+    # Record writes check their exact bytes; do not reserve a second full 16 KiB
+    # after the transaction's intent has itself consumed metadata space.
+    reserve({k:v for k,v in charges.items() if ACTIVE is None or k!='indexes'},files=12,dirs=1 if output else 0)
     argv=[sys.executable,'-m','applications.bounded_decision_workflow',*map(str,args)]
     record(dict(event='command',tag=tag,head=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),argv=argv,reservation=charges))
     def limits():

@@ -306,6 +306,8 @@ def capture(invocation_file,objects_dir,authority_pin,limits=None):
             if (pinned.st_dev,pinned.st_ino)!=(current.st_dev,current.st_ino):
                 fail('INPUT_CHANGED_DURING_READ','/invocation','path')
     iv,_=decode(raw,work)
+    if iv.get('schema')=='nr.invocation.v1' and iv.get('profile')=='measurement-reassessment/v1':
+        fail('PROFILE_VERSION_UNSUPPORTED','/profile','phase_1')
     if iv.get('schema')!='nr.invocation.v2' or iv.get('profile')!=PROFILE:
         fail('PROFILE_MISMATCH','/profile','phase_1')
     validate(iv,'nr.invocation.v2',raw,work)

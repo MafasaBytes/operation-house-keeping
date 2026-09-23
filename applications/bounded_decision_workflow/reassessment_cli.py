@@ -10,7 +10,7 @@ from .errors import WorkflowInputError
 
 
 class Parser(argparse.ArgumentParser):
-    def error(self,message):fail('CLI_USAGE','arguments','usage')
+    def error(self,message):fail('USAGE_ERROR','arguments','usage')
 
 
 def arguments(argv):
@@ -22,7 +22,7 @@ def arguments(argv):
         for field in fields:c.add_argument('--'+field,required=True)
         if mode!='verify':c.add_argument('--limits')
     flags=[s.split('=',1)[0] for s in argv if s.startswith('--')]
-    if len(flags)!=len(set(flags)):fail('CLI_USAGE','arguments','usage')
+    if len(flags)!=len(set(flags)):fail('USAGE_ERROR','arguments','usage')
     return p.parse_args(argv)
 
 
