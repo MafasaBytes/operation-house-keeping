@@ -3,7 +3,7 @@ import re
 from datetime import datetime
 
 from .measurement_wire import (BODIES as NM_BODIES, HEADER as NM_HEADER,
-    edges as nm_edges, shape, key, local_id, basis, rational, fail, Work)
+    edges as nm_edges, shape, key, local_id, basis, rational, fail, Work, DIAGNOSTIC_CEILING)
 from .measurement_contracts import PROFILE as NM_PROFILE, parse_document, canonical_json_bytes
 from .measurement_wire import sha
 
@@ -24,6 +24,13 @@ KINDS = set(BODIES) | set(NM_BODIES) | {'nm.basis', 'nm.resource-policy.v1'}
 FILES = ('invocation.json','closure.json','result.json','trace.json','build.json','policy.json','manifest.json')
 ROLES = dict(zip(FILES, ('nm.invocation.v1',None,'nm.basis','nm.basis','nm.build.v1','nm.resource-policy.v1','nm.basis')))
 CAPS = dict(zip(FILES, ('invocation_bytes','closure_bytes','result_bytes','trace_bytes','build_bytes','object_bytes','manifest_bytes')))
+
+
+def checked_limits(overrides):
+    """Validate historical policy without replacing the caller's error budget."""
+    token=DIAGNOSTIC_CEILING.set(DIAGNOSTIC_CEILING.get())
+    try:return Work(overrides)
+    finally:DIAGNOSTIC_CEILING.reset(token)
 
 
 def typed(r, kind=None):
@@ -171,7 +178,7 @@ def validate(value, kind, wire, work):
         c=value['closure'];shape(c,'schema profile invocation authority_pin limits_override members','/closure')
         if c['schema']!='nm.closure.v1' or c['profile']!=NM_PROFILE:fail('PROFILE_MISMATCH','/closure','phase_2')
         typed(c['invocation'],'nm.invocation.v1');digest(c['authority_pin'],'/closure/authority_pin')
-        Work(c['limits_override'])
+        checked_limits(c['limits_override'])
         if type(c['members']) is not list:fail('SCHEMA_INVALID','/closure/members','phase_2')
         ks=[typed(r) for r in c['members']]
         if ks!=sorted(set(ks)) or any(not k[0].startswith('nm.') for k in ks):

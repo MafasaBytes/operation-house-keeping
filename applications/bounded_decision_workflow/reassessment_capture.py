@@ -9,15 +9,17 @@ import os
 
 from . import retention, reassessment_build, measurement_build
 from .measurement_contracts import canonical_json_bytes, APPROVED_POLICY_SHA, MeasurementContractError
-from .measurement_wire import Work, Graph, decode, sha, ref, key, shape, fail
+from .measurement_wire import Work, Graph, decode, sha, ref, key, shape, fail, DIAGNOSTIC_CEILING
 from .measurement_runtime import _read, _validate_retained_envelopes
-from .reassessment_contracts import PROFILE, BODIES, FILES, CAPS, typed, validate, edges
+from .reassessment_contracts import PROFILE, FILES, CAPS, typed, validate, edges, checked_limits
 
 
 class _HistoricalWork(Work):
     """Original effective ceilings plus charges for repeated, in-memory work."""
     def __init__(self,overrides,outer):
-        super().__init__(overrides)
+        token=DIAGNOSTIC_CEILING.set(DIAGNOSTIC_CEILING.get())
+        try:super().__init__(overrides)
+        finally:DIAGNOSTIC_CEILING.reset(token)
         self.limits={k:min(v,outer.limits[k]) for k,v in self.limits.items()}
         self.outer=outer
 
@@ -60,6 +62,8 @@ class _Captured:
         self.prior_bundles={};identities={}
         work.high('invocation_bytes',len(invocation))
         iv,_=decode(invocation,work)
+        if iv.get('schema')!='nr.invocation.v2' or iv.get('profile')!=PROFILE:
+            fail('PROFILE_MISMATCH','/profile','phase_1')
         validate(iv,root[0],invocation,work)
         typed(iv['authority'],'nr.authority.v2')
         if pin!=iv['authority']['sha256']:fail('AUTHORITY_PIN_REQUIRED','/authority_pin','phase_1')
@@ -171,7 +175,7 @@ class _Captured:
         iv=self.get(c['invocation'])
         if c['authority_pin']!=iv['selection']['sha256']:
             fail('AUTHORITY_REFERENCE_MISMATCH','/closure/authority_pin','phase_2')
-        effective=Work(c['limits_override'])
+        effective=checked_limits(c['limits_override'])
         effective.limits={k:min(v,w.limits[k]) for k,v in effective.limits.items()}
         # A shared original input still has to fit its original effective policy.
         effective.guard('unique_objects',len(members))
@@ -181,6 +185,12 @@ class _Captured:
         skeleton=dict(header,members=[dict(reference=ref(*k),encoding='base64',bytes='') for k in members])
         estimate=len(canonical_json_bytes(skeleton))+sum(4*((len(self.objects[k])+2)//3) for k in members)
         effective.guard('closure_bytes',estimate)
+        aggregate=estimate
+        for row in d['files']:
+            if row['name']!='closure.json':
+                w.charge('reference_occurrences');w.charge('edge_visits')
+                aggregate+=len(self.objects[typed(row['source']['reference'])])
+        effective.guard('bundle_bytes',aggregate);w.high('bundle_bytes',aggregate)
         files={}
         for row in d['files']:
             name=row['name'];w.charge('role_checks')
@@ -189,7 +199,10 @@ class _Captured:
                 k=typed(row['source']['reference']);raw=self.objects[k]
                 effective.guard(CAPS[name],len(raw));w.guard(CAPS[name],len(raw))
                 w.charge('reference_occurrences');w.charge('edge_visits')
-                v,n=decode(raw,w,node_base=w.logical.get('role_json_nodes',0))
+                # Reserve newly interpreted opaque-role nodes against the
+                # complete captured JSON total, before the parser allocates.
+                node_base=w.logical.get('json_nodes',0) if not self.nodes[k] else 0
+                v,n=decode(raw,w,node_base=node_base)
                 w.charge('role_json_nodes',n)
                 w.charge('context_scan_bytes',len(raw))
                 if k[0]=='nm.basis' and not self.nodes[k]:
@@ -265,7 +278,10 @@ def capture(invocation_file,objects_dir,authority_pin,limits=None):
             current=os.fstat(again)
             if (pinned.st_dev,pinned.st_ino)!=(current.st_dev,current.st_ino):
                 fail('INPUT_CHANGED_DURING_READ','/invocation','path')
-    iv,_=decode(raw,work);validate(iv,'nr.invocation.v2',raw,work)
+    iv,_=decode(raw,work)
+    if iv.get('schema')!='nr.invocation.v2' or iv.get('profile')!=PROFILE:
+        fail('PROFILE_MISMATCH','/profile','phase_1')
+    validate(iv,'nr.invocation.v2',raw,work)
     if authority_pin!=typed(iv['authority'],'nr.authority.v2')[1]:fail('AUTHORITY_PIN_REQUIRED','/authority_pin','phase_1')
     if typed(iv['resource_policy'],'nm.resource-policy.v1')[1]!=APPROVED_POLICY_SHA:
         fail('RESOURCE_POLICY_IDENTITY_MISMATCH','/resource_policy','phase_1')

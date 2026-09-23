@@ -405,6 +405,37 @@ def test_prior_result_limit_precedes_role_parse(monkeypatch):
     with pytest.raises(MeasurementContractError,match='RESOURCE_LIMIT_EXCEEDED'):graph(c,p,{'result_bytes':len(result)-1})
 
 
+def test_prior_aggregate_reserved_before_reconstruction(monkeypatch):
+    from applications.bounded_decision_workflow import reassessment_capture as module
+    c,p=bound_internal()
+    monkeypatch.setattr(module.base64,'b64encode',lambda *args:pytest.fail('reconstruction before aggregate reservation'))
+    with pytest.raises(MeasurementContractError,match='RESOURCE_LIMIT_EXCEEDED'):graph(c,p,{'bundle_bytes':232848})
+
+
+def test_historical_policy_does_not_replace_outer_diagnostic_ceiling():
+    from applications.bounded_decision_workflow.measurement_wire import DIAGNOSTIC_CEILING
+    c,p=bound_internal();g=graph(c,p,{'diagnostic_bytes':1000})
+    assert g.work.limits['diagnostic_bytes']==DIAGNOSTIC_CEILING.get()==1000
+
+
+def test_required_role_nodes_reserved_before_json_allocation(monkeypatch):
+    from applications.bounded_decision_workflow import measurement_wire as module
+    c,p=bound_internal();g=graph(c,p);trace=next(iter(g.prior_bundles.values()))['trace.json'];original=module.parse_document
+    def bounded(raw,*args,**kwargs):
+        assert raw!=trace,'aggregate node overflow reached JSON allocation'
+        return original(raw,*args,**kwargs)
+    monkeypatch.setattr(module,'parse_document',bounded)
+    with pytest.raises(MeasurementContractError,match='RESOURCE_LIMIT_EXCEEDED'):graph(c,p,{'json_nodes':g.work.logical['json_nodes']-1})
+
+
+@pytest.mark.parametrize('kind',['nr.invocation.v1','nm.invocation.v1'])
+def test_production_root_dispatch_precedes_typed_closure(tmp_path,kind):
+    c,p=case();k=key(c['invocation']);v=json.loads(p[k]);v['schema']=kind
+    b=wire(v);c['invocation']=ref('nr.invocation.v2',sha(b));p[key(c['invocation'])]=b
+    with pytest.raises(MeasurementContractError) as e:capture(*files_for(tmp_path,c,p))
+    assert (e.value.code,e.value.stage)==('PROFILE_MISMATCH','phase_1')
+
+
 def test_production_detects_invocation_replacement(tmp_path,monkeypatch):
     from applications.bounded_decision_workflow import retention
     c,p=case();iv,objects,pin=files_for(tmp_path,c,p);original=retention._read_at
