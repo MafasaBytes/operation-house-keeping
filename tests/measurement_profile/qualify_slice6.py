@@ -75,7 +75,8 @@ def bind(case,build,root):
     save(root/'bound-capture.json',cap)
     expected=PACKAGE/'expected'/case
     if not (expected/'result.json').exists():
-        save(root/'bound-expected-diagnostic.json',replace(read(expected/'stderr.jsonl')))
+        diagnostic = corrected_historical_diagnostic() if case == 'CL-historical-invalid' else (expected/'stderr.jsonl').read_bytes()
+        save(root/'bound-expected-diagnostic.json',replace(json.loads(diagnostic)))
         return None
     result=replace(read(expected/'result.json'));trace=replace(read(expected/'trace.json'))
     trace['required_closure'].sort(key=k);trace['origin']='observed_execution';trace['physical_observed']=True
@@ -103,6 +104,18 @@ def corrected_cross_profile():
     return replacement
 
 
+HISTORICAL = ROOT/'docs/superpowers/reports/2026-09-23-next-measurement-slice6-correction-evidence'
+def corrected_historical_diagnostic():
+    amendment = (HISTORICAL/'historical-diagnostic-amendment.json').read_bytes()
+    assert digest(amendment) == '013363cad50982537b1643a764354e062b29a23e54ff25b2bc1de2a18a459128'
+    original = (PACKAGE/'expected/CL-historical-invalid/stderr.jsonl').read_bytes()
+    replacement = (HISTORICAL/'proposed-historical-diagnostic.jsonl').read_bytes()
+    assert len(original) == 507 and digest(original) == 'eaba7bd78c1addbb9b73800827c28f9a9d7a7d1e5129d5cade3a70c626f4fdaa'
+    assert len(replacement) == 495 and digest(replacement) == 'ed2b2e22dee2ba86342ffe708c1a50faf477887f29905d797483f2280bb4c072'
+    old = json.loads(original); new = json.loads(replacement)
+    assert difference(old, new) == [dict(path='/target/field', expected='/predecessor/predecessor/measurements/0/decoder', actual='/predecessor/measurements/0/decoder')]
+    return replacement
+
 def ceiling():resource.setrlimit(resource.RLIMIT_AS,(536870912,536870912))
 
 def main():
@@ -113,6 +126,7 @@ def main():
     build=identity();(out/'build.json').write_bytes(build)
     metadata=dict(head=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT).decode().strip(),package_sha256=digest((PACKAGE/'package.zip').read_bytes()),harness_sha256=digest(Path(__file__).read_bytes()),python=sys.executable,oracle='frozen hand tables; same-author independent byte-demand binding; no runtime oracle',commands=142,safety=dict(wall_seconds=30,address_space_bytes=536870912,retained_corpus_bytes=67108864))
     metadata['cross_profile_correction']=dict(proposal_sha256=digest((CORRECTION/'proposal.json').read_bytes()),input_sha256=digest(corrected_cross_profile()),base_package_unchanged=True,extra_oversize_control_outside_matrix=True)
+    metadata['historical_diagnostic_correction'] = dict(amendment_sha256=digest((HISTORICAL/'historical-diagnostic-amendment.json').read_bytes()), corrected_sha256=digest(corrected_historical_diagnostic()), pointer='/target/field', base_package_unchanged=True)
     save(out/'metadata.json',metadata)
     expected={}
     for case in dict.fromkeys(x['case'] for x in matrix):expected[case]=bind(case,build,out/case.lower())
