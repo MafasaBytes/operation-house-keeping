@@ -57,6 +57,7 @@ def _walk(root, enter, outgoing, work):
 class _Captured:
     """Internal structural graph; not evidence of production build admission."""
     def __init__(self, invocation, load, pin, work):
+        work._wire_high_water=True
         self.work=work;self.objects={};self.values={};self.nodes={};self.paths={};self.occurrences=[]
         self.root=ref('nr.invocation.v2',sha(invocation,work));root=key(self.root)
         self.prior_bundles={};identities={}

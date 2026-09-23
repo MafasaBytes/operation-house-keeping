@@ -71,6 +71,10 @@ class Work:
     def guard(self,k,n):
         if n>self.limits[k]:
             fail('RESOURCE_LIMIT_EXCEEDED',k,'phase_2',dimension=k,attempted=n,limit=self.limits[k])
+        # Reassessment has closed reporting fields for these observed maxima.
+        # Legacy work/result layouts remain unchanged unless its capture opts in.
+        if getattr(self,'_wire_high_water',False) and k in ('json_depth','string_bytes'):
+            self.logical[k]=max(self.logical.get(k,0),n)
 
     def charge(self,k,n=1):
         amount=self.logical.get(k,0)+n
