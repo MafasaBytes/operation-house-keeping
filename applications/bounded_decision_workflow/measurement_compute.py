@@ -19,14 +19,16 @@ from .measurement_ranking import rank_measurements
 def ratio(n):return {'numerator':str(n.numerator),'denominator':str(n.denominator)}
 
 
-def public_evidence(e,context,work):
+def public_evidence(e,context,work,*,reconstruction_work=None):
     """Reconstruct with owning validator, then reuse maintained exact joins.
 
     The small attribute adapter carries measurement roles, not a thermal
     WorkflowRequest or a thermal premise commitment/authority.
     """
     wire=canonical_json_bytes(e['snapshot'])
-    parsed=parse_snapshot_wire(wire);enforce_snapshot_limits(parsed,dict(BUILD_LIMITS))
+    parsed=(parse_snapshot_wire(wire) if reconstruction_work is None else
+            parse_snapshot_wire(wire,work=reconstruction_work))
+    enforce_snapshot_limits(parsed,dict(BUILD_LIMITS))
     work.charge('public_reconstruction_nodes',parsed.counts.nodes)
     work.charge('public_reconstructions')
     try:

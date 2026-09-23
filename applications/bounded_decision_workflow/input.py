@@ -82,7 +82,7 @@ def _pairs(items):
     return result
 
 
-def _parse(wire: bytes, kind: Literal["request", "snapshot"]):
+def _parse(wire: bytes, kind: Literal["request", "snapshot"], *, work=None):
     wire_limit = BUILD_LIMITS[f"{kind}_wire_bytes"]
     if len(wire) > wire_limit:
         raise refusal(
@@ -90,6 +90,8 @@ def _parse(wire: bytes, kind: Literal["request", "snapshot"]):
             target=kind, retry="reduce_input", exit_code=4)
     try:
         text = wire.decode("utf-8")
+        if work is not None:
+            work.charge('json_decode_bytes', len(wire))
         value = json.loads(
             text, object_pairs_hook=_pairs,
             parse_constant=lambda token: (_ for _ in ()).throw(
@@ -286,8 +288,11 @@ def parse_request_wire(wire: bytes) -> tuple[WorkflowRequest, ParsedInput]:
     return request, parsed
 
 
-def parse_snapshot_wire(wire: bytes) -> ParsedInput:
-    value, canonical, counts = _parse(wire, "snapshot")
+def parse_snapshot_wire(wire: bytes, *, work=None) -> ParsedInput:
+    """Owning parser; optional application meter does not change wire semantics."""
+    value, canonical, counts = _parse(wire, "snapshot", work=work)
+    if work is not None:
+        work.charge('hash_bytes', len(canonical))
     return ParsedInput(
         kind="snapshot", raw=value, canonical_bytes=canonical,
         sha256=hashlib.sha256(canonical).hexdigest(), counts=counts)
