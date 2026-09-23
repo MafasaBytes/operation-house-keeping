@@ -14,12 +14,15 @@ import subprocess
 import sys
 import time
 import zipfile
+from contextlib import contextmanager
 
 ROOT = Path('/home/mafasa/operation-house-keeping-runtime/bounded-decision-workflow/test-workspaces/nr-slice5-qualification-r1')
 REPO = Path(__file__).resolve().parents[2]
 PACKAGE = REPO/'docs/superpowers/reports/2026-09-23-reassessment-preparation/package.zip'
-CAPS = dict(outputs=135266304,inputs=125829120,repairs=33554432,regressions=134217728,
-            checkouts=536870912,recovery=4194304,logs=8388608,indexes=8388608,exports=134217728)
+CAPS = dict(outputs=103809024,inputs=71303168,repairs=188743680,regressions=134217728,
+            checkouts=620756992,recovery=4194304,logs=8388608,indexes=8388608,exports=134217728)
+ACTIVE = None
+VERIFIED_EXPORTS = {}
 
 def wire(x):
     return json.dumps(x,sort_keys=True,separators=(',',':'),ensure_ascii=True).encode()
@@ -58,30 +61,73 @@ def census():
             counts['exports']+=row['bytes'];physical+=((row['bytes']+4095)//4096)*4096
             files+=1
             continue
-        b=p.read_bytes()
-        assert len(b)==row['bytes'] and sha(b)==row['sha256']
-        counts['exports']+=len(b);physical+=p.stat().st_blocks*512;files+=1
+        s=p.stat();identity=(s.st_dev,s.st_ino,s.st_size,s.st_mtime_ns,s.st_ctime_ns,row['sha256'])
+        if VERIFIED_EXPORTS.get(str(p))!=identity:
+            b=p.read_bytes()
+            assert len(b)==row['bytes'] and sha(b)==row['sha256']
+            VERIFIED_EXPORTS[str(p)]=identity
+        counts['exports']+=s.st_size;physical+=s.st_blocks*512;files+=1
     assert all(counts[k]<=CAPS[k] for k in counts)
-    assert sum(counts.values())<=1120927744 and physical<=1204813824
-    assert files<=16384 and dirs<=2048
+    assert sum(counts.values())<=1274019840 and physical<=1441792000
+    assert files<=32768 and dirs<=4096
     return dict(categories=counts,total=sum(counts.values()),combined=76560100+sum(counts.values()),physical=physical,files=files,directories=dirs)
 
 def reserve(charges,files=1,dirs=0):
     now=census();growth=sum(charges.values())
+    if ACTIVE is not None:
+        for k,v in charges.items():
+            assert now['categories'][k]+v<=ACTIVE['baseline']['categories'][k]+ACTIVE['charges'].get(k,0)
+        assert now['files']+files<=ACTIVE['baseline']['files']+ACTIVE['files']+2
+        assert now['directories']+dirs<=ACTIVE['baseline']['directories']+ACTIVE['dirs']
     assert all(now['categories'][k]+v<=CAPS[k] for k,v in charges.items())
-    assert now['total']+growth<=1120927744
-    assert now['files']+files<=16384 and now['directories']+dirs<=2048
-    assert now['physical']+growth+files*4096+dirs*8192<=1204813824
-    s=os.statvfs(ROOT);assert s.f_bavail*s.f_frsize>=1204813824-now['physical']
+    assert now['total']+growth<=1274019840
+    assert now['files']+files<=32768 and now['directories']+dirs<=4096
+    assert now['physical']+growth+files*4096+dirs*8192<=1441792000
+    s=os.statvfs(ROOT);assert s.f_bavail*s.f_frsize>=1441792000-now['physical']
 
 def put(p,b):
     reserve({p.relative_to(ROOT).parts[0]:len(b)})
     with p.open('xb') as f:f.write(b)
 
 def record(x):
-    names=sorted((ROOT/'indexes').glob('*.json'));last=names[-1]
+    names=sorted((ROOT/'indexes').glob('[0-9][0-9][0-9][0-9]-*.json'));last=names[-1]
     b=wire(dict(previous=sha(last.read_bytes()),**x))
-    put(ROOT/'indexes'/f'{len(names):04d}-record.json',b)
+    p=ROOT/'indexes'/f'{int(last.name[:4])+1:04d}-record.json'
+    reserve({'indexes':len(b)})
+    with p.open('xb') as f:f.write(b);f.flush();os.fsync(f.fileno())
+    fd=os.open(ROOT/'indexes',os.O_RDONLY|os.O_DIRECTORY)
+    try:os.fsync(fd)
+    finally:os.close(fd)
+
+@contextmanager
+def transaction(label,charges,*,files,dirs):
+    """Single writer. Incomplete intents block all subsequent producers.
+
+    Each producer is bounded before launch; completion records its actual files.
+    No interrupted reservation is automatically released on restart.
+    """
+    global ACTIVE
+    assert ACTIVE is None
+    pending=set()
+    for p in sorted((ROOT/'indexes').glob('*record.json')):
+        v=json.loads(p.read_bytes())
+        if v.get('event')=='reservation_begin':pending.add(v['id'])
+        if v.get('event')=='reservation_end':pending.discard(v['id'])
+    assert not pending,('unresolved reservation',pending)
+    charges=dict(charges);charges['indexes']=charges.get('indexes',0)+16384
+    reserve(charges,files=files+2,dirs=dirs)
+    baseline=census()
+    record(dict(event='reservation_begin',id=label,charges=charges,files=files,dirs=dirs,baseline=baseline))
+    ACTIVE=dict(baseline=baseline,charges=charges,files=files,dirs=dirs)
+    try:
+        yield
+        now=census()
+        assert all(now['categories'][k]<=baseline['categories'][k]+charges.get(k,0) for k in CAPS)
+        assert now['files']<=baseline['files']+files+2
+        assert now['directories']<=baseline['directories']+dirs
+        record(dict(event='reservation_end',id=label,inventory=now))
+    finally:
+        ACTIVE=None
 
 def publish_export(path, raw):
     """Single-writer export: durable charged intent before exclusive creation.

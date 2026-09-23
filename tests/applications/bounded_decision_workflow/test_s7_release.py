@@ -25,9 +25,28 @@ def canonical(value):
 
 def clone(path, commit='HEAD'):
     revision = subprocess.check_output(['git', '-C', str(ROOT), 'rev-parse', commit]).decode().strip()
-    subprocess.run(['git', 'clone', '--quiet', '--no-hardlinks', str(ROOT), str(path)], check=True)
+    subprocess.run(['git', 'clone', '--quiet', '--no-checkout', '--no-hardlinks', str(ROOT), str(path)], check=True)
+    # Owner-approved operational materialization. Each clone still owns its full
+    # independent Git database; no alternates or parent imports are permitted.
+    paths=['/applications/', '/backend/']
+    if commit=='HEAD':
+        paths += [
+            '/docs/superpowers/reports/2026-09-23-reassessment-preparation/package.zip',
+            '/docs/superpowers/specs/2026-09-16-maintained-admissibility-enforcement-shared-reference-corrected-design.md',
+            '/docs/superpowers/reports/2026-09-16-maintained-admissibility-amendment/AMENDMENT.md',
+            '/docs/superpowers/reports/2026-09-16-maintained-admissibility-amendment/policy.json',
+            '/docs/superpowers/reports/2026-09-16-maintained-admissibility-amendment/schemas.json',
+            '/docs/superpowers/reports/2026-09-16-maintained-admissibility-consolidation/CONTRACT-AND-PLAN.md',
+            '/docs/superpowers/reports/2026-09-16-maintained-admissibility-consolidation/build.schema.json',
+        ]
+    subprocess.run(['git','-C',str(path),'sparse-checkout','set','--no-cone','--stdin'],
+                   input='\n'.join(paths)+'\n',text=True,check=True)
     subprocess.run(['git', '-C', str(path), 'checkout', '--quiet', '--detach', revision], check=True)
     assert not subprocess.check_output(['git', '-C', str(path), 'status', '--porcelain'])
+    assert not (path/'.git/objects/info/alternates').exists()
+    assert subprocess.check_output(['git','-C',str(path),'rev-parse','HEAD']).decode().strip()==revision
+    for name in subprocess.check_output(['git','-C',str(path),'ls-files','applications','backend']).decode().splitlines():
+        assert (path/name).read_bytes()==subprocess.check_output(['git','-C',str(path),'show',revision+':'+name])
     return path
 
 
