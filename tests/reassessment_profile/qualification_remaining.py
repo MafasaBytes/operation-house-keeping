@@ -63,6 +63,30 @@ def carriage_controls():
             p.update(pool)
             evaluate(row,c,p)
 
+def graph_controls():
+    with zipfile.ZipFile(q.PACKAGE) as z:
+        rows={r['id']:r for r in json.loads(z.read('command-matrix.json'))['commands']}
+        for name in ['D-missing-ancestor','D-digest-before-cycle','D-wrong-build',
+                     'D-prepared-build','D-wrong-policy','D-wrong-profile','D-v1-wrapper']:
+            row=rows[name];c,p=case(row['case']) if name=='D-prepared-build' else actual_case(row['case'])
+            if name in ('D-missing-ancestor','D-digest-before-cycle'):
+                k=next(k for k in p if k[0]=='nr.request.v2' and json.loads(p[k])['revision']==1)
+                if name=='D-missing-ancestor':del p[k]
+                else:
+                    v=json.loads(p[k]);iv=json.loads(p[key(c['invocation'])]);v['predecessor']=iv['request'];p[k]=wire(v)
+            elif name=='D-wrong-build':
+                k=next(k for k in p if k[0]=='nr.build.v2');v=json.loads(p[k]);v['checkpoint']='0'*40
+                v['id']=sha(wire({f:x for f,x in v.items() if f not in ('schema','profile','id','revision','predecessor')}));replace(c,p,k,v)
+            elif name=='D-wrong-policy':
+                k=next(k for k in p if k[0]=='nm.resource-policy.v1');v=json.loads(p[k]);v['limits']['unique_objects']-=1;replace(c,p,k,v)
+            elif name=='D-wrong-profile':
+                k=next(k for k in p if k[0]=='nr.observation.v2');v=json.loads(p[k]);v['profile']='bdw.thermal.action.v1';replace(c,p,k,v)
+            elif name=='D-v1-wrapper':
+                raw=z.read('authority/v1-wrapper-reconstructed.json');assert len(raw)==311968
+                k=next(k for k in p if k[0]=='nr.retained-bundle.v2');replace(c,p,k,json.loads(raw))
+            evaluate(row,c,p)
+
 if __name__=='__main__':
     if '--carriage' in sys.argv:carriage_controls()
+    elif '--graph' in sys.argv:graph_controls()
     else:dispatch_controls()
