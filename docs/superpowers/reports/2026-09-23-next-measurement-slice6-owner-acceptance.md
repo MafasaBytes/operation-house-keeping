@@ -1,0 +1,7 @@
+# Next-measurement Slice 6 owner acceptance
+
+The owner accepts Slice 6 at tested HEAD `01dde502af7eacd5b0daed547bae1954ad922e70`, after verification from administrative checkpoint `14428991cf1cff7e1b8f17d1f32a4fe62f171a00`.
+
+The unchanged closure report has SHA-256 `abea7cf183f75177742a57ad6ffb4e24f7ea8fb8be49d0f2a4a4999d04f69036`. Both its evidence manifest and the referenced prior manifest were checked against their exact file bytes. The command records establish 142/142 exact matches and zero timeouts. The one-field historical diagnostic correction follows §4 phase/code/ASCII-path ordering (`measurements` before `predecessor`). Original oracle bytes, initial filesystem configuration error, successful isolated rerun and ordering twins remain retained. The 268-pass regression applies to the recorded earlier HEAD, with identical executable source/environment/contract/policy witnesses; it is not relabelled as a fresh run.
+
+This acceptance does not amend semantics or ceilings and does not accept the final milestone. Final release verification and documentation reconciliation are separately authorized, including the full repository suite, required application gates and committed-only clean-checkout delivery. No successor, backend extension, dependency acquisition, ADR allocation, push, merge or history rewrite is authorized. Historical reports retain their original status. Manual C remains unresolved; IN-001 and CI-001 remain open and unselected.
