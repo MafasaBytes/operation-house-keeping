@@ -30,9 +30,23 @@ def main():
     try:rt.evaluate(iv,objects,pin,a.output/'profiled')
     finally:sys.setprofile(None)
     save(a.output/'observed-work.json',dict(method='read-only profiler; overhead present',maximum_guard_demands=attempted,observed=observed))
+    baseline_result=read(a.output/'profiled/result.json')
+    baseline_closure=read(a.output/'profiled/closure.json')
     for dimension,maximum in sorted(attempted.items()):
-        # limits_override changes closure bytes, hence result size and aggregate
-        # reserve. Record these interactions, never normalize a failed twin.
+        # The caller override is itself retained. Solve the exact deterministic
+        # carriage demand; this is byte accounting, not a semantic-result oracle.
+        if dimension in ('closure_bytes','bundle_bytes'):
+            value=maximum
+            for unused in range(8):
+                closure=dict(baseline_closure,limits_override={dimension:value})
+                closure_size=len(wire(closure));delta=closure_size-len(wire(baseline_closure))
+                result=read(a.output/'profiled/result.json')
+                result['accounting']['logical_required']['closure_bytes']=closure_size
+                demand=maximum+delta
+                if dimension=='bundle_bytes':demand+=len(wire(result))-len(wire(baseline_result))
+                if demand==value:break
+                value=demand
+            maximum=value
         for name,limit in [('exact',maximum),('below',maximum-1)]:
             if limit<1:continue
             filename=a.output/(dimension+'-'+name+'.json');save(filename,{dimension:limit});output=a.output/(dimension+'-'+name)
@@ -40,8 +54,10 @@ def main():
             run=subprocess.run([sys.executable,'-m','applications.bounded_decision_workflow','measurement-evaluate','--invocation',str(iv),'--objects-dir',str(objects),'--authority-pin',pin,'--output-dir',str(output),'--limits',str(filename)],capture_output=True,timeout=30,preexec_fn=ceiling)
             after=resource.getrusage(resource.RUSAGE_CHILDREN)
             (a.output/(dimension+'-'+name+'.stdout')).write_bytes(run.stdout);(a.output/(dimension+'-'+name+'.stderr')).write_bytes(run.stderr)
-            events.append(dict(dimension=dimension,limit=limit,relation_to_baseline=name,exit=run.returncode,stdout_sha256=digest(run.stdout),stderr_sha256=digest(run.stderr),diagnostic=json.loads(run.stderr) if run.stderr else None,manifest_present=(output/'manifest.json').exists(),wall_ns=time.monotonic_ns()-start,cpu_user_s=after.ru_utime-before.ru_utime,cpu_system_s=after.ru_stime-before.ru_stime))
+            expected_exit=0 if name=='exact' else 4
+            events.append(dict(expected_exit=expected_exit,matched=run.returncode==expected_exit,dimension=dimension,limit=limit,relation_to_baseline=name,exit=run.returncode,stdout_sha256=digest(run.stdout),stderr_sha256=digest(run.stderr),diagnostic=json.loads(run.stderr) if run.stderr else None,manifest_present=(output/'manifest.json').exists(),wall_ns=time.monotonic_ns()-start,cpu_user_s=after.ru_utime-before.ru_utime,cpu_system_s=after.ru_stime-before.ru_stime))
             save(a.output/'boundary-observations.json',events);print(dimension,name,limit,run.returncode,flush=True)
+    save(a.output/'summary.json',dict(twins=len(events),matched=sum(e['matched'] for e in events),unreached=sorted(set(Work().limits)-set(attempted))))
     print('Guard dimensions not reached:',sorted(set(Work().limits)-set(attempted)),flush=True)
 
 if __name__=='__main__':main()

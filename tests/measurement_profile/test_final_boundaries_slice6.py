@@ -128,3 +128,68 @@ def test_decoder_precedes_support_join_error(tmp_path):
  pin=amend_request(iv,objects,mutation)
  run=command('measurement-evaluate','--invocation',iv,'--objects-dir',objects,'--authority-pin',pin,'--output-dir',tmp_path/'refused')
  assert run.returncode==3 and json.loads(run.stderr)['code']=='DECODER_INVALID'
+
+
+def test_public_diagnostic_budget_and_exact_twin(tmp_path):
+ from tests.measurement_profile.test_delivery_contract_mapping import recover_case,command
+ iv,objects,pin=recover_case(tmp_path)
+ args=['measurement-evaluate','--invocation',iv,'--objects-dir',objects,'--authority-pin','0'*64]
+ baseline=command(*args,'--output-dir',tmp_path/'baseline')
+ assert baseline.returncode==3 and json.loads(baseline.stderr)['code']=='AUTHORITY_PIN_REQUIRED'
+ for name,cap,code,status in [('exact',len(baseline.stderr),'AUTHORITY_PIN_REQUIRED',3),('below',len(baseline.stderr)-1,'DIAGNOSTIC_LIMIT_EXCEEDED',4),('one',1,'DIAGNOSTIC_LIMIT_EXCEEDED',4)]:
+  limit=tmp_path/(name+'.json');limit.write_bytes(mw.canonical_json_bytes({'diagnostic_bytes':cap}))
+  run=command(*args,'--output-dir',tmp_path/name,'--limits',limit)
+  assert run.returncode==status and run.stdout==b''
+  assert json.loads(run.stderr)['code']==code and not (tmp_path/name).exists()
+  if name=='exact':assert run.stderr==baseline.stderr
+  else:assert len(run.stderr)<=2048 and json.loads(run.stderr)['target'] is None
+
+
+@pytest.mark.parametrize('stage',['create','write','flush','file_fsync','rename','manifest_before_rename','directory_fsync','parent_fsync'])
+def test_real_publication_fault_boundaries(tmp_path,stage):
+ from tests.measurement_profile.test_delivery_contract_mapping import recover_case,command
+ iv,objects,pin=recover_case(tmp_path)
+ source='''import os,stat,sys
+from applications.bounded_decision_workflow import retention as r
+from applications.bounded_decision_workflow.cli import main
+stage=sys.argv[1]
+original=r._event
+def fault(hook,event,name):
+ if event==stage and (name=='manifest.json' if stage=='manifest_before_rename' else name=='result.json'):raise OSError('controlled fault')
+ return original(hook,event,name)
+r._event=fault
+original_sync=os.fsync
+count=0
+def fsync(fd):
+ global count
+ if stat.S_ISDIR(os.fstat(fd).st_mode):
+  count+=1
+  if (stage=='directory_fsync' and count==1) or (stage=='parent_fsync' and count==2):raise OSError('controlled sync failure')
+ return original_sync(fd)
+os.fsync=fsync
+raise SystemExit(main(sys.argv[2:]))
+'''
+ out=tmp_path/'faulted'
+ run=subprocess.run([sys.executable,'-c',source,stage,'measurement-evaluate','--invocation',str(iv),'--objects-dir',str(objects),'--authority-pin',pin,'--output-dir',str(out)],capture_output=True)
+ assert run.returncode==6 and run.stdout==b'',run.stderr
+ d=json.loads(run.stderr)
+ if stage.endswith('_fsync') and stage!='file_fsync':
+  assert (out/'manifest.json').exists() and d['bundle_state']=='complete_visible_durability_unknown'
+  assert command('measurement-verify','--bundle',out).returncode==0
+ else:
+  assert not (out/'manifest.json').exists() and d['bundle_state']=='incomplete'
+  assert command('measurement-verify','--bundle',out).returncode==3
+ assert command('measurement-evaluate','--invocation',iv,'--objects-dir',objects,'--authority-pin',pin,'--output-dir',out).returncode==5
+
+
+def test_concurrent_publication_has_one_winner(tmp_path):
+ from tests.measurement_profile.test_delivery_contract_mapping import recover_case,command
+ iv,objects,pin=recover_case(tmp_path);out=tmp_path/'race'
+ args=[sys.executable,'-m','applications.bounded_decision_workflow','measurement-evaluate','--invocation',str(iv),'--objects-dir',str(objects),'--authority-pin',pin,'--output-dir',str(out)]
+ children=[subprocess.Popen(args,stdout=subprocess.PIPE,stderr=subprocess.PIPE) for unused in range(2)]
+ streams=[p.communicate(timeout=30) for p in children]
+ assert sorted(p.returncode for p in children)==[0,5]
+ for p,(stdout,stderr) in zip(children,streams):
+  if p.returncode==0:assert stderr==b'' and json.loads(stdout)['schema']=='nm.receipt.v1'
+  else:assert stdout==b'' and json.loads(stderr)['code']=='OUTPUT_COLLISION'
+ assert command('measurement-replay','--bundle',out,'--output-dir',tmp_path/'replay').returncode==0
