@@ -80,3 +80,96 @@ def test_supported_delivery_and_standalone_recomputation(tmp_path):
     bad=command('measurement-replay','--bundle',out,'--output-dir',tmp_path/'forged-replay')
     assert bad.returncode==3
     assert json.loads(bad.stderr)['code']=='REPLAY_SEMANTIC_MISMATCH'
+
+
+@pytest.mark.parametrize('case,disposition,phase7',[
+    ('U','withheld_due_to_incomplete_predictions','assessed'),
+    ('X-conflict-missing','withheld_due_to_conflicting_predictions','assessed'),
+    ('G-denied','evaluation_denied','not_assessed_gate_blocked'),
+    ('A-false','withheld_due_to_inapplicable_candidate','not_assessed_inapplicable_candidate'),
+])
+def test_complete_withholding_is_retained_without_pruning(tmp_path,case,disposition,phase7):
+    iv,objects,pin=recover_case(tmp_path,case)
+    out=tmp_path/'withheld'
+    run=command('measurement-evaluate','--invocation',iv,'--objects-dir',objects,'--authority-pin',pin,'--output-dir',out)
+    assert run.returncode==0,run.stderr.decode()
+    r=json.loads((out/'result.json').read_bytes());t=json.loads((out/'trace.json').read_bytes())
+    assert r['ranking']['disposition']==disposition
+    assert r['ranking']['scores'] is None and r['ranking']['recommendation'] is None
+    assert len(r['procedure_assessments']['procedure_identity_map'])==2
+    assert t['phases'][6]['state']==phase7
+    if phase7!='assessed':assert r['accounting']['logical_required'].get('mapped_cells',0)==0
+    replay=command('measurement-replay','--bundle',out,'--output-dir',tmp_path/'replayed')
+    assert replay.returncode==0,replay.stderr.decode()
+
+
+@pytest.mark.parametrize('case,code',[
+    ('S-edition','SUPPORT_SUBJECT_MISMATCH'),
+    ('CL-Q3-missing-basis','REQUIRED_REFERENCE_MISSING'),
+    ('CL-Q5-refused','RESOURCE_LIMIT_EXCEEDED'),
+    ('HARNESS-field-rejected','SCHEMA_INVALID'),
+])
+def test_adverse_frozen_carriage_controls(tmp_path,case,code):
+    iv,objects,pin=recover_case(tmp_path,case)
+    run=command('measurement-evaluate','--invocation',iv,'--objects-dir',objects,'--authority-pin',pin,'--output-dir',tmp_path/'refused')
+    assert run.returncode in (3,4),run.stderr.decode()
+    assert json.loads(run.stderr)['code']==code
+    assert not (tmp_path/'refused').exists()
+
+
+def test_external_pin_substitution_and_safe_path_twins(tmp_path):
+    iv,objects,pin=recover_case(tmp_path)
+    def run(iv=iv,pin=pin,output=None):
+        return command('measurement-evaluate','--invocation',iv,'--objects-dir',objects,'--authority-pin',pin,'--output-dir',output or tmp_path/'result')
+    denied=run(pin='0'*64)
+    assert denied.returncode==3 and json.loads(denied.stderr)['code']=='AUTHORITY_PIN_REQUIRED'
+    symlink=tmp_path/'linked';symlink.symlink_to(iv)
+    unsafe=run(iv=symlink)
+    assert unsafe.returncode==5 and json.loads(unsafe.stderr)['code']=='PATH_FINAL_SYMLINK'
+    fifo=tmp_path/'fifo';import os;os.mkfifo(fifo)
+    assert run(iv=fifo).returncode==5
+    bad_parent=tmp_path/'linked-parent';bad_parent.symlink_to(tmp_path,target_is_directory=True)
+    assert run(output=bad_parent/'escape').returncode==5
+    existing=tmp_path/'existing';existing.mkdir();(existing/'untouched').write_bytes(b'preserve')
+    collision=run(output=existing)
+    assert collision.returncode==5 and json.loads(collision.stderr)['code']=='OUTPUT_COLLISION'
+    assert (existing/'untouched').read_bytes()==b'preserve'
+    incomplete=tmp_path/'incomplete';incomplete.mkdir();(incomplete/'invocation.json').write_bytes(iv.read_bytes())
+    assert command('measurement-verify','--bundle',incomplete).returncode!=0
+    # Unreferenced hostile bytes cannot become candidates or be discovered.
+    (objects/'extraneous').symlink_to(fifo)
+    good=run();assert good.returncode==0,good.stderr.decode()
+
+
+def test_correctly_shaped_build_substitution_and_policy_substitution(tmp_path):
+    iv,objects,pin=recover_case(tmp_path)
+    root=json.loads(iv.read_bytes())
+    build_path=objects/(root['build_identity']+'.nm.build.v1')
+    fake=json.loads(build_path.read_bytes());fake['checkpoint']='0'*40
+    wire=canonical_json_bytes(fake);digest=hashlib.sha256(wire).hexdigest()
+    (objects/(digest+'.nm.build.v1')).write_bytes(wire);root['build_identity']=digest;iv.write_bytes(canonical_json_bytes(root))
+    run=command('measurement-evaluate','--invocation',iv,'--objects-dir',objects,'--authority-pin',pin,'--output-dir',tmp_path/'bad-build')
+    assert run.returncode==3 and json.loads(run.stderr)['code']=='BUILD_IDENTITY_MISMATCH'
+    root['build_identity']=build_path.name.split('.')[0]
+    policy=json.loads((objects/(root['resource_policy']+'.nm.resource-policy.v1')).read_bytes())
+    policy['id']='substituted';wire=canonical_json_bytes(policy);digest=hashlib.sha256(wire).hexdigest()
+    (objects/(digest+'.nm.resource-policy.v1')).write_bytes(wire);root['resource_policy']=digest;iv.write_bytes(canonical_json_bytes(root))
+    run=command('measurement-evaluate','--invocation',iv,'--objects-dir',objects,'--authority-pin',pin,'--output-dir',tmp_path/'bad-policy')
+    assert run.returncode==3 and json.loads(run.stderr)['code']=='RESOURCE_POLICY_IDENTITY_MISMATCH'
+
+
+def test_closed_flags_and_cross_profile_dispatch(tmp_path):
+    for args in [[],['--invocation','a','--invocation=b'],['--matrix','x'],['--inv','x']]:
+        run=command('measurement-evaluate',*args)
+        assert run.returncode==2 and not run.stdout
+    thermal=tmp_path/'thermal';thermal.write_bytes(canonical_json_bytes({'schema_version':'bdw001.1'}))
+    objects=tmp_path/'objects';objects.mkdir()
+    run=command('measurement-evaluate','--invocation',thermal,'--objects-dir',objects,'--authority-pin','0'*64,'--output-dir',tmp_path/'foreign')
+    assert run.returncode==3 and json.loads(run.stderr)['code']=='PROFILE_MISMATCH'
+
+
+def test_legacy_unbound_computation_arguments_are_not_production_interfaces():
+    import inspect
+    from applications.bounded_decision_workflow import measurement_delivery
+    for name in ['evaluate_semantic_bundle','replay_semantic_bundle']:
+        assert not {'public_request','public_snapshot','support_rows','candidates','result','trace'} & set(inspect.signature(getattr(measurement_delivery,name)).parameters)

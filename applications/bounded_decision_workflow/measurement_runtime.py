@@ -109,8 +109,11 @@ def publish(output_dir,payloads,work,started):
             for name in FILES[:-1]:
                 retention._write_file(fd,name,payloads[name],None)
                 work.physical['write_operations']+=1;work.physical['bytes_written']+=len(payloads[name]);stable()
-            physical=dict(work.physical,elapsed_ns=time.monotonic_ns()-started,peak_rss_bytes=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*1024,
-                          observation_boundary='before_manifest_write',manifest_write_pending=True)
+            physical=dict(bytes_read=work.physical['bytes_read']+work.physical.get('build_bytes_read',0),
+                          read_operations=work.physical['read_operations']+work.physical.get('build_read_operations',0),
+                          bytes_written=work.physical['bytes_written'],write_operations=work.physical['write_operations'],
+                          elapsed_ns=time.monotonic_ns()-started,peak_rss_bytes=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*1024,
+                          status='observed_before_manifest_write')
             manifest=canonical_json_bytes(dict(schema='nm.bundle.v1',profile=PROFILE,completeness='complete',files=[dict(name=n,bytes=len(payloads[n]),sha256=sha(payloads[n])) for n in FILES[:-1]],physical=physical))
             work.guard('manifest_bytes',len(manifest));work.guard('bundle_bytes',total+len(manifest))
             retention._write_file(fd,'manifest.json',manifest,None);stable()

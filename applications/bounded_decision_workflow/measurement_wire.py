@@ -202,6 +202,8 @@ class Graph:
                     identities[ident]=k[1]
                 self.objects[k]=wire;self.values[k]=v;self.nodes[k]=nodes
                 work.charge('json_nodes',nodes)
+            if parent is not None:
+                work.charge('context_scan_bytes',len(self.objects[parent])+len(self.objects[k])+66)
             if k in active:fail('REFERENCE_CYCLE',path,'phase_2')
             if k in complete:continue
             active.add(k);stack.append((k,True,depth,parent,path))
@@ -214,6 +216,28 @@ class Graph:
         self._integrity()
 
     def get(self,r):return self.values[key(r)]
+
+    def requirements(self, closure_bytes):
+        # Frozen logical_required is full deterministic input demand, not an
+        # assertion that gated mapping/scoring work was executed.
+        def count(v):
+            pending=[v];n=0
+            while pending:
+                x=pending.pop();n+=1
+                if isinstance(x,dict):pending.extend(x.values())
+                elif isinstance(x,list):pending.extend(x)
+            return n
+        es=[v for k,v in self.values.items() if k[0]=='nm.evidence.v1']
+        public_unique=sum(count(e['snapshot']) for e in es)
+        public_context=sum(count(self.get(self.values[k]['evidence'])['snapshot']) for k in self.requests)
+        scan=sum(len(self.objects[key(e['source'])])+len(self.objects[key(e['target'])])+66 for e in self.occurrences)
+        return dict(unique_objects=len(self.objects),unique_bytes=sum(map(len,self.objects.values())),
+                    capture_bytes=sum(map(len,self.objects.values())),reference_occurrences=len(self.occurrences),
+                    edge_visits=len(self.occurrences),active_depth=self.work.logical['active_depth'],
+                    request_contexts=len(self.requests),request_chain=max(self.values[k]['revision'] for k in self.requests),
+                    json_nodes=sum(self.nodes.values()),public_reconstruction_unique_nodes=public_unique,
+                    public_reconstruction_context_nodes=public_context,context_scan_bytes=scan,closure_bytes=closure_bytes,
+                    object_bytes=max(map(len,self.objects.values())),invocation_bytes=len(self.objects[key(self.root)]))
 
     def _integrity(self):
         w=self.work;iv=self.invocation;a=self.get(iv['selection'])

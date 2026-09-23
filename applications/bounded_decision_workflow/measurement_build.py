@@ -15,7 +15,13 @@ CONTRACT_SHA = '2e802d1a04f570378c83963d21f7979415b061bc7f68794024a2c9fc9231fa24
 
 def identity(work=None):
     # Preserve the maintained clean executable, exact lock/interpreter gate.
-    old_wire,_=build.identity();old=json.loads(old_wire)
+    def git(*args):
+        return subprocess.check_output(['git','--no-optional-locks','-C',str(build.ROOT),*args],timeout=10).decode().strip()
+    if platform.python_implementation()!='CPython' or platform.python_version_tuple()[:2]!=('3','13'):
+        raise build.unavailable()
+    if git('status','--porcelain','--untracked-files=all','--','applications','backend'):
+        raise build.unavailable()
+    checkpoint=git('rev-parse','HEAD')
     names=subprocess.check_output(['git','--no-optional-locks','-C',str(build.ROOT),
                                   'ls-files','applications','backend'],timeout=10).decode().splitlines()
     def digest_file(path):
@@ -35,8 +41,15 @@ def identity(work=None):
         if name.endswith('.py') or name==build.LOCK:
             digest,size=digest_file(build.ROOT/name)
             sources.append(dict(path=name,sha256=digest,bytes=size))
+    lock=(build.ROOT/build.LOCK).read_bytes()
+    if work is not None:
+        work.physical['build_bytes_read']=work.physical.get('build_bytes_read',0)+len(lock)
+        work.physical['build_read_operations']=work.physical.get('build_read_operations',0)+1
+    lock_digest=hashlib.sha256(lock).hexdigest()
+    if lock_digest!='7c87f0d7a3f12c271311cc0c33e59025e0161c37f16336901a0764b4330c0817':raise build.unavailable()
     dependencies=[]
-    for name,version in sorted(old['dependencies'].items()):
+    for name,version in sorted(line.split('==') for line in lock.decode().splitlines()):
+        if importlib.metadata.version(name)!=version:raise build.unavailable()
         dist=importlib.metadata.distribution(name);artifacts=[]
         for entry in sorted(dist.files or (),key=str):
             if str(entry).endswith('.pyc'):continue
@@ -51,9 +64,9 @@ def identity(work=None):
     environment=dict(python=dict(implementation=platform.python_implementation(),version=platform.python_version(),
                         executable_sha256=executable_digest,executable_bytes=executable_bytes),
                      platform=dict(system=platform.system(),machine=platform.machine(),libc=list(platform.libc_ver())),
-                     distributions=dependencies,dependency_lock_sha256=old['dependency_lock_sha256'])
+                     distributions=dependencies,dependency_lock_sha256=lock_digest)
     value=dict(schema='nm.build.v1',profile=PROFILE,id='maintained-measurement-build',revision=1,
-               checkpoint=old['git_commit'],source_manifest=sources,environment_manifest=environment,
+               checkpoint=checkpoint,source_manifest=sources,environment_manifest=environment,
                entrypoint='python -m applications.bounded_decision_workflow',contract_sha256=CONTRACT_SHA,
                resource_policy_sha256=APPROVED_POLICY_SHA)
     wire=canonical_json_bytes(value)

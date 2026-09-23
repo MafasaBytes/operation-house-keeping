@@ -71,16 +71,17 @@ def compute(graph):
     a=g.get(iv['selection']);d=g.get(a['declaration'])
     reasons=[]
     def reason(phase,code,**kwargs):
-        r={'phase':phase,'code':code,**kwargs};reasons.append(r);return r
+        subject=kwargs.pop('procedure',kwargs.pop('request',iv['request']))
+        r={'code':code,'subject':subject,'detail':kwargs};reasons.append(r);return r
     if d['scope_state']=='false':reason(5,'declaration_scope_false',declaration=a['declaration'])
-    if iv['request'] not in d['requests']:reason(5,'request_not_member',request=iv['request'])
+    if iv['request'] not in d['requests']:reason(5,'request_not_member',request=iv['request'],declaration=a['declaration'])
     permission='denied' if reasons else 'unknown' if d['scope_state']=='unknown' else 'permitted'
     if permission=='unknown':reason(5,'declaration_scope_unknown',declaration=a['declaration'])
     def identity_map(rs):return [{'id':g.get(r)['id'],'revision':g.get(r)['revision'],'reference':r} for r in rs]
-    lower=[] if observed.status=='admitted' else [{'code':observed.unavailable_reason,'path':'/snapshot/constraint_evaluations/'+str(g.get(q['evidence'])['binding']['constraint_evaluation_index'])+'/candidates/'+str(g.get(q['evidence'])['binding']['semantic_candidate_index'])}]
+    lower=[] if observed.status=='admitted' else [{'code':observed.unavailable_reason,'path':'/snapshot/constraint_evaluations/'+str(g.get(q['evidence'])['binding']['constraint_evaluation_index'])+'/candidates/'+str(g.get(q['evidence'])['binding']['semantic_candidate_index'])+'/not_evaluated_reason'}]
     result={'schema':'nm.result.v1','profile':PROFILE,'invocation':g.root,
         'authority':dict(assessment_state='assessed',selection=iv['selection'],declaration=a['declaration'],adoption=iv['adoption'],request=iv['request'],policy=q['policy'],permission_state=permission,evaluation_permitted=permission=='permitted'),
-        'evidence':dict(assessment_state='assessed',reference=q['evidence'],availability=observed.status,observed=None if scalar is None else ratio(scalar),cn_verdict=verdict,lower_reasons=lower),
+        'evidence':dict(assessment_state='assessed',reference=q['evidence'],availability=observed.status,observed=None if scalar is None else ratio(scalar),cn_verdict=verdict if scalar is not None else None,lower_reasons=lower),
         'procedure_assessments':dict(assessment_state='assessed',procedure_identity_map=identity_map(q['measurements']),rows=[]),
         'hypothesis_assessments':dict(assessment_state='assessed',hypothesis_identity_map=identity_map(q['hypotheses']),viable=None,rows=[]),
         'cells':dict(assessment_state='assessed',rows=[]),
@@ -91,6 +92,7 @@ def compute(graph):
         result['ranking']['disposition']=disposition
         for s in sections:result[s]['assessment_state']='not_assessed_'+state
         for i in phase_numbers:phases[i-1]['state']='not_assessed_'+state
+        result['ranking']['assessment_state']='not_assessed_'+disposition
     if permission!='permitted':
         blocked('evaluation_denied' if permission=='denied' else 'evaluation_permission_unknown','gate_blocked',
                 ['procedure_assessments','hypothesis_assessments','cells','ranking'],[6,7])
@@ -107,7 +109,7 @@ def compute(graph):
                 state=('true' if scalar<=rational(c['threshold'],w) else 'false') if numeric else c['state']
                 states.append(state)
                 rows.append(dict(id=c['id'],state=state,basis=[] if numeric else c['basis'],observed=ratio(scalar) if numeric else None,threshold=c['threshold'] if numeric else None))
-                if state!='true':reason(6,'procedure_condition_'+state,procedure=pr,condition=c['id'])
+                if state!='true':reason(6,'condition_'+state,procedure=pr,condition=c['id'],observed=ratio(scalar) if numeric else None,threshold=c['threshold'] if numeric else None)
             result['procedure_assessments']['rows'].append(dict(procedure=pr,conditions=rows))
         viable=[]
         for hr in q['hypotheses']:
@@ -122,13 +124,13 @@ def compute(graph):
         result['hypothesis_assessments']['viable']=viable
         if any(s!='true' for s in states):
             disposition='withheld_due_to_inapplicable_candidate' if 'false' in states else 'withheld_due_to_unknown_applicability'
-            blocked(disposition,'applicability_blocked',['cells','ranking'],[7])
+            blocked(disposition,'inapplicable_candidate',['cells','ranking'],[7])
         else:
             cells={};conflict=False;missing=False
             for hr in q['hypotheses']:
                 for pr in q['measurements']:
                     p=g.get(pr);o=g.get(p['decoder']);outcomes=[x['id'] for x in o['outcomes']]
-                    sr=[r for r in q['support'] if g.get(r)['hypothesis']==hr and g.get(r)['procedure']==pr]
+                    sr=sorted([r for r in q['support'] if g.get(r)['hypothesis']==hr and g.get(r)['procedure']==pr],key=key)
                     rows=[g.get(r) for r in sr]
                     w.charge('source_contributions',len(rows)*len(outcomes));w.charge('mapped_cells',len(outcomes))
                     mapped=qualify_supplied_support(rows,hypothesis=hr,procedure=pr,decoder=p['decoder'],evidence=q['evidence'],context=q['context'],outcomes=outcomes)
@@ -139,7 +141,11 @@ def compute(graph):
                         if relation=='unknown':
                             has_conflict='support_conflict' in cell.reasons
                             conflict|=has_conflict;missing|=not has_conflict or 'support_unavailable' in cell.reasons
-                            for code in cell.reasons:cr.append(reason(7,code,hypothesis=hr,procedure=pr,outcome=cell.outcome,sources=sr))
+                            if has_conflict:cr.append('opposing_qualified_sources')
+                            unavailable=[row['qualification']['reason'] for row in rows if row['qualification']['status']=='unavailable']
+                            cr.extend(sorted(set(unavailable)))
+                            if not cr:cr.append('missing_row' if not rows else 'missing_exclusion_support')
+                            for code in cr:reason(7,code,hypothesis=hr,procedure=pr,outcome=cell.outcome,decoder=p['decoder'],sources=sr)
                         cells[(key(hr),key(pr),cell.outcome)]=relation;relations.append(relation)
                         result['cells']['rows'].append(dict(hypothesis=hr,procedure=pr,decoder=p['decoder'],outcome=cell.outcome,relation=relation,reasons=cr,source_refs=sr))
                     if relations and set(relations)=={'excludes'}:fail('ROW_ALL_EXCLUDED','support','phase_7')
@@ -165,5 +171,8 @@ def compute(graph):
                     equivalence=[dict(procedure=mapping[s.measurement_id],survivor_multiset=s.survivor_multiset) for s in ranked.scores])
     trace=dict(schema='nm.trace.v1',profile=PROFILE,invocation=g.root,origin='observed_execution',physical_observed=True,semantic_origin='synthetic_conditional',
                required_closure=[ref(*k) for k in sorted(g.objects)],reference_occurrences=g.occurrences,phases=phases)
-    result['accounting']=dict(assessment_state='assessed',logical_required=dict(w.logical),physical='not_part_of_semantic_result')
+    # Canonical reason order is semantic IDs/coordinates, never discovery order.
+    ids={key(r):g.get(r)['id'] for r in q['hypotheses']+q['measurements']}
+    reasons.sort(key=lambda r:(ids.get(key(r['subject']),''),ids.get(key(r['detail']['hypothesis']),'') if 'hypothesis' in r['detail'] else '',r['detail'].get('outcome',''),r['detail'].get('condition',''),r['code']))
+    result['accounting']=dict(assessment_state='assessed',logical_required=g.requirements(w.logical['closure_bytes']),physical='not_part_of_semantic_result')
     return result,trace
