@@ -218,8 +218,10 @@ def evaluate_semantic_bundle(output_dir, invocation, objects, public_request,
 def replay_semantic_bundle(bundle_dir):
     bundle = verify_measurement_bundle(bundle_dir)
     path = bundle.path
-    build_wire, build_id = maintained_build.identity()
-    if path.joinpath("build.json").read_bytes() != build_wire:
+    actual_wire, actual_id = maintained_build.identity()
+    retained_build = json.loads(path.joinpath("build.json").read_bytes())
+    if retained_build.get("actual_build_sha256") != actual_id \
+            or retained_build.get("actual_build") != actual_wire.decode():
         raise MeasurementDeliveryError("BUILD_IDENTITY_MISMATCH", "build.json")
     closure = json.loads(path.joinpath("closure.json").read_bytes())
     objects = {}
