@@ -14,7 +14,7 @@ import resource
 import time
 from . import retention
 from .errors import WorkflowInputError
-from .measurement_contracts import canonical_json_bytes, PROFILE, APPROVED_POLICY_SHA
+from .measurement_contracts import canonical_json_bytes, PROFILE, APPROVED_POLICY_SHA, MeasurementContractError
 from .measurement_wire import Work, Graph, decode, fail, key, ref, sha, shape, HEADER, BODIES
 from .measurement_compute import compute
 from .measurement_build import identity
@@ -57,7 +57,7 @@ def closure_wire(g,pin,limits):
 
 
 def _build_check(iv,load,work):
-    if iv.get('schema')!='nm.invocation.v1' or iv.get('profile')!=PROFILE:fail('PROFILE_MISMATCH','invocation','phase_1')
+    if iv.get('schema')!='nm.invocation.v1' or iv.get('profile')!=PROFILE:fail('PROFILE_MISMATCH','/profile','phase_1')
     shape(iv,HEADER|set(BODIES['nm.invocation.v1'].split()),'invocation')
     build_ref=key(ref('nm.build.v1',iv.get('build_identity')))
     if iv.get('resource_policy')!=APPROVED_POLICY_SHA:
@@ -73,8 +73,15 @@ def _build_check(iv,load,work):
 
 def _payloads(invocation,load,pin,limits,work):
     iv,_=decode(invocation,work)
+    if iv.get('schema')=='nm.invocation.v1' and iv.get('profile')==PROFILE and pin is None:
+        fail('AUTHORITY_PIN_REQUIRED','/authority_pin','phase_1',request=iv.get('request'))
     build_wire=_build_check(iv,load,work)
-    graph=Graph(invocation,load,pin,work)
+    try:
+        graph=Graph(invocation,load,pin,work)
+    except MeasurementContractError as error:
+        error.details.setdefault('request',iv.get('request'))
+        if error.code=='RESOURCE_LIMIT_EXCEEDED':error.target='/required_closure'
+        raise
     closure=closure_wire(graph,pin,limits);work.high('closure_bytes',len(closure))
     result,trace=compute(graph)
     payloads={'invocation.json':invocation,'closure.json':closure,

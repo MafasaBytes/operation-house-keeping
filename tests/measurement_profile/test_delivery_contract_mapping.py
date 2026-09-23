@@ -107,7 +107,7 @@ def test_complete_withholding_is_retained_without_pruning(tmp_path,case,disposit
     ('S-edition','SUPPORT_SUBJECT_MISMATCH'),
     ('CL-Q3-missing-basis','REQUIRED_REFERENCE_MISSING'),
     ('CL-Q5-refused','RESOURCE_LIMIT_EXCEEDED'),
-    ('HARNESS-field-rejected','SCHEMA_INVALID'),
+    ('HARNESS-field-rejected','REQUEST_SCHEMA_INVALID'),
 ])
 def test_adverse_frozen_carriage_controls(tmp_path,case,code):
     iv,objects,pin=recover_case(tmp_path,case)

@@ -18,7 +18,7 @@ def arguments(argv):
     for mode in ['evaluate','verify','replay']:
         c=sub.add_parser('measurement-'+mode,add_help=False,allow_abbrev=False)
         fields=['invocation','objects-dir','authority-pin','output-dir'] if mode=='evaluate' else ['bundle']+(['output-dir'] if mode=='replay' else [])
-        for field in fields:c.add_argument('--'+field,required=True)
+        for field in fields:c.add_argument('--'+field,required=field!='authority-pin')
         if mode!='verify':c.add_argument('--limits')
     flags=[s.split('=',1)[0] for s in argv if s.startswith('--')]
     if len(flags)!=len(set(flags)):fail('CLI_USAGE','arguments','usage')
@@ -42,8 +42,8 @@ def main(argv=None):
     except Exception:
         code='INTERNAL_ERROR';stage='internal';field='application';details={};status=7
     resource={k:details[k] for k in ['dimension','attempted','limit']} if all(k in details for k in ['dimension','attempted','limit']) else None
-    diagnostic=dict(schema='nm.diagnostic.v1',code=code,stage=stage,target=dict(request=None,field=field,logical_id=None,references=[],occurrence_count=None),
-        resource=resource,retry='correct_input_or_restore_matching_build',bundle_state='incomplete' if stage=='retention' else 'absent',message_key=code.lower())
+    diagnostic=dict(schema='nm.diagnostic.v1',code=code,stage=stage,target=dict(request=details.get('request'),field=field if field.startswith('/') else '/'+field,logical_id=details.get('logical_id'),references=details.get('references',[]),occurrence_count=details.get('occurrence_count')),
+        resource=resource,retry='reduce_input_or_request_policy_review' if resource is not None else 'correct_input',bundle_state='incomplete' if stage=='retention' else 'absent',message_key=code.lower())
     wire=canonical_json_bytes(diagnostic)+b'\n'
     if len(wire)>Work().limits['diagnostic_bytes']:
         diagnostic.update(code='DIAGNOSTIC_LIMIT_EXCEEDED',target=None,resource=None,message_key='diagnostic_limit_exceeded')

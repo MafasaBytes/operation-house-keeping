@@ -175,7 +175,7 @@ def edges(v):
 class Graph:
     def __init__(self, invocation, load, pin, work):
         self.work=work;self.objects={};self.values={};self.nodes={};self.occurrences=[]
-        self.root=ref('nm.invocation.v1',sha(invocation))
+        self.root=ref('nm.invocation.v1',sha(invocation));self.paths={key(self.root):''}
         iv,n=decode(invocation,work)
         if iv.get('schema')!='nm.invocation.v1' or iv.get('profile')!=PROFILE:
             fail('PROFILE_MISMATCH','invocation','phase_1')
@@ -193,21 +193,36 @@ class Graph:
                 self.occurrences.append({'source':ref(*parent),'path':path,'target':ref(*k)})
             if k not in self.objects:
                 work.charge('unique_objects')
-                wire=invocation if k==key(self.root) else load(k,work)
+                try:
+                    wire=invocation if k==key(self.root) else load(k,work)
+                except MeasurementContractError as error:
+                    if error.code=='REQUIRED_REFERENCE_MISSING' and parent is not None:
+                        error.target='/closure/'+parent[1]+path
+                        error.details.update(request=iv['request'],references=sorted([ref(*parent),ref(*k)],key=key))
+                    raise
+                self.paths[k]=self.paths.get(parent,'')+(path or '')
                 work.high('object_bytes',len(wire));work.charge('capture_bytes',len(wire))
-                if sha(wire)!=k[1]:fail('REFERENCE_DIGEST_MISMATCH',path,'phase_2')
+                if sha(wire)!=k[1]:fail('REFERENCE_DIGEST_MISMATCH',path,'phase_2',request=iv['request'],references=[ref(*k)])
                 if k[0]=='nm.basis':v=None;nodes=0
                 else:
                     v,nodes=decode(wire,work)
                     if v.get('schema')=='nm.prepared-build.v1':fail('NONEXECUTABLE_BUILD_WITNESS',path,'phase_1')
-                    parse_document(wire,expected_schema=k[0])
+                    try:parse_document(wire,expected_schema=k[0])
+                    except MeasurementContractError as error:
+                        error.stage='phase_2';error.target=self.paths[k]+'/'+error.target
+                        error.details['request']=iv['request'];raise
                     if k[0]=='nm.resource-policy.v1':
                         if sha(wire)!=APPROVED_POLICY_SHA:fail('RESOURCE_POLICY_IDENTITY_MISMATCH',path,'phase_1')
                     else:
                         if k[0] not in BODIES:fail('PROFILE_MISMATCH',path,'phase_1')
-                        shape(v,HEADER|set(BODIES[k[0]].split()),path)
+                        required=HEADER|set(BODIES[k[0]].split())
+                        # Q extension fields are rejected at the frozen phase-3
+                        # request boundary. They never generate traversal edges.
+                        if k[0]=='nm.request.v1' and required<=set(v):pass
+                        else:shape(v,required,path)
                     ident=(k[0],v['id'],v['revision'])
-                    if ident in identities and identities[ident]!=k[1]:fail('IDENTITY_VERSION_COLLISION',path,'phase_2')
+                    if ident in identities and identities[ident]!=k[1]:
+                        fail('IDENTITY_VERSION_COLLISION',path.rsplit('/',1)[0],'phase_2',request=iv['request'],logical_id=v['id'],references=sorted([ref(k[0],identities[ident]),ref(*k)],key=key))
                     identities[ident]=k[1]
                 self.objects[k]=wire;self.values[k]=v;self.nodes[k]=nodes
                 work.charge('json_nodes',nodes)
@@ -225,6 +240,18 @@ class Graph:
         self._integrity()
 
     def get(self,r):return self.values[key(r)]
+
+    def reject(self,code,field,stage='phase_3',request=None,references=(),logical_id=None,occurrence_count=None):
+        fail(code,field,stage,request=request or self.invocation['request'],references=sorted(references,key=key),logical_id=logical_id,occurrence_count=occurrence_count)
+
+    def request_path(self,qk):
+        current=key(self.invocation['request']);path=''
+        while True:
+            if current==qk:return path
+            previous=self.values[current]['predecessor']
+            if previous is None:return '/declared_requests/'+qk[1]
+            current=key(previous);path+='/predecessor'
+
 
     def requirements(self, closure_bytes):
         # Frozen logical_required is full deterministic input demand, not an
@@ -256,7 +283,7 @@ class Graph:
         if iv['adoption'] is not None:
             t=self.get(iv['adoption'])
             if t['request']!=iv['request'] or t['selection']!=iv['selection'] or t['declaration']!=a['declaration']:
-                fail('AUTHORITY_REFERENCE_MISMATCH','adoption','phase_2')
+                self.reject('AUTHORITY_REFERENCE_MISMATCH','/adoption/request','phase_2',references=[iv['adoption']])
         for qk in self.requests:
             q=self.values[qk];w.high('request_chain',q['revision'])
             previous=q['predecessor']
@@ -265,15 +292,20 @@ class Graph:
             else:
                 if previous is None:fail('REQUIRED_REFERENCE_MISSING','predecessor','phase_2')
                 p=self.get(previous)
-                if p['id']!=q['id'] or p['revision']!=q['revision']-1:fail('PREDECESSOR_VERSION_MISMATCH','predecessor','phase_2')
+                if p['id']!=q['id'] or p['revision']!=q['revision']-1:self.reject('PREDECESSOR_VERSION_MISMATCH','/predecessor','phase_2',references=[previous])
+        # Complete phase-2 lineage before any phase-3 nomination checks.
+        for qk in self.requests:
+            q=self.values[qk]
+            extras=set(q)-(HEADER|set(BODIES['nm.request.v1'].split()))
+            if extras:self.reject('REQUEST_SCHEMA_INVALID','/'+sorted(extras)[0],request=ref(*qk))
             for field,code in [('hypotheses','HYPOTHESIS_SET_EMPTY'),('measurements','MEASUREMENT_SET_EMPTY')]:
                 xs=q[field]
-                if not xs:fail(code,field)
+                if not xs:self.reject(code,'/'+field,request=ref(*qk))
                 if len(xs)>2:fail('NOMINATION_CARDINALITY_INVALID',field)
                 ks=[key(r) for r in xs];ids=[self.get(r)['id'] for r in xs]
-                if len(set(ks))!=len(ks):fail('DUPLICATE_NOMINATION_REFERENCE',field)
-                if len(set(ids))!=len(ids):fail('DUPLICATE_NOMINATION_ID',field)
-                if ids!=sorted(ids):fail('NOMINATION_ORDER_INVALID',field)
+                if len(set(ks))!=len(ks):self.reject('DUPLICATE_NOMINATION_REFERENCE','/'+field,request=ref(*qk),references=xs,logical_id=ids[0],occurrence_count=len(xs))
+                if len(set(ids))!=len(ids):self.reject('DUPLICATE_NOMINATION_ID','/'+field,request=ref(*qk),references=xs,logical_id=ids[0],occurrence_count=len(xs))
+                if ids!=sorted(ids):self.reject('NOMINATION_ORDER_INVALID','/'+field,request=ref(*qk),references=xs,logical_id=ids[0])
             ss=[(self.get(r)['id'],self.get(r)['revision']) for r in q['support']]
             if ss!=sorted(set(ss)):fail('ORDER_INVALID','support')
             # Scope is each Q, including ancestors. Sharing never inherits eligibility.
@@ -287,34 +319,47 @@ class Graph:
                     for path,child in edges(v):
                         if k==qk and path=='/predecessor':continue
                         w.charge('edge_visits');w.charge('scoped_edge_checks');todo.append(child)
-            self._joins(q)
+            self._joins(q,ref(*qk))
         for v in self.values.values():
             if v:self._intrinsic(v)
 
-    def _joins(self,q):
+    def _joins(self,q,qr):
         shape(q['context'],'subject_entity_anchor_id variable_anchor_id assertion_context as_of scenario_label','context')
         local_id(q['context']['scenario_label'])
         for r in q['hypotheses']+q['measurements']+q['support']:
             v=self.get(r)
             if v['evidence']!=q['evidence'] or v['context']!=q['context']:fail('SUPPORT_SUBJECT_MISMATCH','context/evidence')
-        for sr in q['support']:
+        for i,sr in enumerate(q['support']):
             s=self.get(sr)
-            if s['hypothesis'] not in q['hypotheses'] or s['procedure'] not in q['measurements'] or s['decoder']!=self.get(s['procedure'])['decoder']:
-                fail('SUPPORT_SUBJECT_MISMATCH','support')
+            for field,nomination in [('hypothesis','hypotheses'),('procedure','measurements')]:
+                if s[field] not in q[nomination]:
+                    same=[r for r in q[nomination] if self.get(r)['id']==self.get(s[field])['id']]
+                    self.reject('SUPPORT_SUBJECT_MISMATCH',f'/support/{i}/{field}',request=qr,references=[sr,s[field],*same])
+            if s['decoder']!=self.get(s['procedure'])['decoder']:
+                self.reject('SUPPORT_SUBJECT_MISMATCH',f'/support/{i}/decoder',request=qr,references=[sr,s['decoder'],self.get(s['procedure'])['decoder']])
         for hr in q['hypotheses']:
             for pr in q['measurements']:
                 if sum(self.get(s)['hypothesis']==hr and self.get(s)['procedure']==pr for s in q['support'])>2:
                     fail('SCHEMA_INVALID','support')
         hs=[self.get(r)['account_kind'] for r in q['hypotheses']]
-        if len(set(hs))!=len(hs):fail('SEMANTIC_ALIAS','hypotheses')
+        if len(set(hs))!=len(hs):self.reject('SEMANTIC_ALIAS','/hypotheses',request=qr,references=q['hypotheses'],logical_id=self.get(q['hypotheses'][0])['id'])
         meanings=[]
         for r in q['measurements']:
             p=self.get(r);o=self.get(p['decoder'])
             meaning=[p['context'],p['method'],p['method_edition'],o['domain'],sorted([x['region'] for x in o['outcomes']],key=canonical_json_bytes),
                      [{k:v for k,v in c.items() if k!='id'} for c in p['conditions']]]
             encoded=canonical_json_bytes(meaning)
-            if encoded in meanings:fail('SEMANTIC_ALIAS','measurements')
+            if encoded in meanings:self.reject('SEMANTIC_ALIAS','/measurements',request=qr,references=q['measurements'],logical_id=self.get(q['measurements'][0])['id'])
             meanings.append(encoded)
+        for i,pr in enumerate(q['measurements']):
+            p=self.get(pr);o=self.get(p['decoder']);d=o['domain']
+            path=self.request_path(key(qr))+f'/measurements/{i}/decoder'
+            if (p['method'],d['kind'],d['unit']) not in [('reference_scalar','scalar_finite_decimal','degree_celsius'),('nonspecific_code','literal_codes','code')]:
+                self.reject('PROCEDURE_DOMAIN_MISMATCH',path,references=[p['decoder']])
+            try:self._decoder(o)
+            except MeasurementContractError as error:
+                if error.code=='RESOURCE_LIMIT_EXCEEDED':raise
+                self.reject('DECODER_INVALID',path,references=[p['decoder']])
 
     def _intrinsic(self,v):
         kind=v['schema'];w=self.work

@@ -97,7 +97,7 @@ def compute(graph):
         blocked('evaluation_denied' if permission=='denied' else 'evaluation_permission_unknown','gate_blocked',
                 ['procedure_assessments','hypothesis_assessments','cells','ranking'],[6,7])
     elif scalar is None:
-        for r in lower:reason(6,r['code'],path=r['path'])
+        for r in lower:reasons.append(dict(code=r['code'],subject=q['evidence'],detail=None))
         blocked('baseline_unavailable','baseline_unavailable',['procedure_assessments','hypothesis_assessments','cells','ranking'],[6,7])
     else:
         states=[]
@@ -148,7 +148,8 @@ def compute(graph):
                             for code in cr:reason(7,code,hypothesis=hr,procedure=pr,outcome=cell.outcome,decoder=p['decoder'],sources=sr)
                         cells[(key(hr),key(pr),cell.outcome)]=relation;relations.append(relation)
                         result['cells']['rows'].append(dict(hypothesis=hr,procedure=pr,decoder=p['decoder'],outcome=cell.outcome,relation=relation,reasons=cr,source_refs=sr))
-                    if relations and set(relations)=={'excludes'}:fail('ROW_ALL_EXCLUDED','support','phase_7')
+                    if relations and set(relations)=={'excludes'}:
+                        fail('ROW_ALL_EXCLUDED','/cells/'+g.get(hr)['id']+'/'+p['id'],'phase_7',request=iv['request'],references=sorted([hr,pr],key=key))
             if conflict or missing:
                 blocked('withheld_due_to_conflicting_predictions' if conflict else 'withheld_due_to_incomplete_predictions','prediction_support_blocked',['ranking'],[])
             elif len(viable)<2:
@@ -173,6 +174,6 @@ def compute(graph):
                required_closure=[ref(*k) for k in sorted(g.objects)],reference_occurrences=g.occurrences,phases=phases)
     # Canonical reason order is semantic IDs/coordinates, never discovery order.
     ids={key(r):g.get(r)['id'] for r in q['hypotheses']+q['measurements']}
-    reasons.sort(key=lambda r:(ids.get(key(r['subject']),''),ids.get(key(r['detail']['hypothesis']),'') if 'hypothesis' in r['detail'] else '',r['detail'].get('outcome',''),r['detail'].get('condition',''),r['code']))
+    reasons.sort(key=lambda r:(ids.get(key(r['subject']),''),ids.get(key((r['detail'] or {})['hypothesis']),'') if 'hypothesis' in (r['detail'] or {}) else '',(r['detail'] or {}).get('outcome',''),(r['detail'] or {}).get('condition',''),r['code']))
     result['accounting']=dict(assessment_state='assessed',logical_required=g.requirements(w.logical['closure_bytes']),physical='not_part_of_semantic_result')
     return result,trace
