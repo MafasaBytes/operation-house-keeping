@@ -14,7 +14,7 @@ import resource
 import time
 from . import retention
 from .errors import WorkflowInputError
-from .measurement_contracts import canonical_json_bytes, PROFILE
+from .measurement_contracts import canonical_json_bytes, PROFILE, APPROVED_POLICY_SHA
 from .measurement_wire import Work, Graph, decode, fail, key, ref, sha, shape, HEADER, BODIES
 from .measurement_compute import compute
 from .measurement_build import identity
@@ -60,7 +60,12 @@ def _build_check(iv,load,work):
     if iv.get('schema')!='nm.invocation.v1' or iv.get('profile')!=PROFILE:fail('PROFILE_MISMATCH','invocation','phase_1')
     shape(iv,HEADER|set(BODIES['nm.invocation.v1'].split()),'invocation')
     build_ref=key(ref('nm.build.v1',iv.get('build_identity')))
+    if iv.get('resource_policy')!=APPROVED_POLICY_SHA:
+        fail('RESOURCE_POLICY_IDENTITY_MISMATCH','resource_policy','phase_1')
     supplied=load(build_ref,work)
+    supplied_value,_=decode(supplied,work)
+    if supplied_value.get('schema')=='nm.prepared-build.v1':
+        fail('NONEXECUTABLE_BUILD_WITNESS','build_identity','phase_1')
     actual=identity(work)
     if supplied!=actual or sha(actual)!=build_ref[1]:fail('BUILD_IDENTITY_MISMATCH','build_identity','phase_1')
     return actual
@@ -203,10 +208,40 @@ def recover(payloads,work):
     return value,objects
 
 
+def _validate_retained_envelopes(payloads, work):
+    """Wire/profile validation, not acceptance of retained numerical claims."""
+    fields = {
+        'result.json': 'schema profile invocation authority evidence procedure_assessments hypothesis_assessments cells ranking review accounting',
+        'trace.json': 'schema profile invocation origin required_closure reference_occurrences phases semantic_origin physical_observed',
+    }
+    invocation=ref('nm.invocation.v1',sha(payloads['invocation.json']))
+    for name,spec in fields.items():
+        value,_=decode(payloads[name],work)
+        if value.get('schema')!=('nm.result.v1' if name=='result.json' else 'nm.trace.v1') or value.get('profile')!=PROFILE:
+            fail('PROFILE_MISMATCH',name,'phase_1')
+        shape(value,spec,name)
+        if value['invocation']!=invocation:fail('REFERENCE_DIGEST_MISMATCH',name+'/invocation','phase_2')
+        if name=='result.json':
+            sections={
+                'authority':'assessment_state selection declaration adoption request policy permission_state evaluation_permitted',
+                'evidence':'assessment_state reference availability observed cn_verdict lower_reasons',
+                'procedure_assessments':'assessment_state procedure_identity_map rows',
+                'hypothesis_assessments':'assessment_state hypothesis_identity_map rows viable',
+                'cells':'assessment_state rows',
+                'ranking':'assessment_state disposition reasons scores best recommendation branches equivalence',
+                'review':'assessment_state groups comparison',
+                'accounting':'assessment_state logical_required physical',
+            }
+            for section,keys in sections.items():shape(value[section],keys,name+'/'+section)
+            if type(value['authority']['evaluation_permitted']) is not bool or type(value['ranking']['disposition']) is not str:
+                fail('SCHEMA_INVALID',name,'phase_1')
+
+
 def _retained(bundle_dir,limits_file=None):
     initial=Work();extra=overrides(limits_file,initial)
     payloads=inspect_bundle(bundle_dir,initial)
     closure,objects=recover(payloads,initial)
+    _validate_retained_envelopes(payloads,initial)
     retained=Work(closure['limits_override']);effective={k:min(v,retained.limits[k]) for k,v in (extra or {}).items()}
     # Preserve exact original override for semantic replay; stricter limits only
     # restrict work, never rewrite the retained invocation's policy context.

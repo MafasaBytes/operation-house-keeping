@@ -219,3 +219,46 @@ def test_exact_frozen_semantic_fields_and_full_accounting(tmp_path):
     assert manifest['physical']['write_operations']==6
     assert manifest['physical']['status']=='observed_before_manifest_write'
     assert sum(p.stat().st_size for p in out.iterdir())<=1048576
+
+
+def test_verify_rejects_rehashed_foreign_result_profile(tmp_path):
+    iv,objects,pin=recover_case(tmp_path)
+    out=tmp_path/'complete'
+    run=command('measurement-evaluate','--invocation',iv,'--objects-dir',objects,'--authority-pin',pin,'--output-dir',out)
+    assert run.returncode==0,run.stderr.decode()
+    result=json.loads((out/'result.json').read_bytes());result['profile']='thermal'
+    wire=canonical_json_bytes(result);(out/'result.json').write_bytes(wire)
+    m=json.loads((out/'manifest.json').read_bytes())
+    for r in m['files']:
+        if r['name']=='result.json':r.update(bytes=len(wire),sha256=hashlib.sha256(wire).hexdigest())
+    (out/'manifest.json').write_bytes(canonical_json_bytes(m))
+    checked=command('measurement-verify','--bundle',out)
+    assert checked.returncode==3 and json.loads(checked.stderr)['code']=='PROFILE_MISMATCH'
+
+
+def test_capture_rejects_path_replacement_after_read(tmp_path,monkeypatch):
+    from applications.bounded_decision_workflow import measurement_runtime as runtime
+    from applications.bounded_decision_workflow.measurement_wire import Work
+    from applications.bounded_decision_workflow.measurement_contracts import MeasurementContractError
+    path=tmp_path/'input.json';path.write_bytes(b'{}')
+    original=runtime.retention._read_at
+    def replaced(parent,name,cap,hook=None):
+        captured=original(parent,name,cap,hook)
+        other=tmp_path/'replacement';other.write_bytes(b'{}');other.replace(path)
+        return captured
+    monkeypatch.setattr(runtime.retention,'_read_at',replaced)
+    with pytest.raises(MeasurementContractError) as error:runtime.read_path(path,'invocation_bytes',Work())
+    assert error.value.code=='INPUT_CHANGED_DURING_READ'
+
+
+def test_prepared_build_cannot_assert_executable_compatibility(tmp_path):
+    iv,objects,pin=recover_case(tmp_path)
+    root=json.loads(iv.read_bytes())
+    prepared=next((PACKAGE/'objects').glob('*.nm.prepared-build.v1')).read_bytes()
+    digest=hashlib.sha256(prepared).hexdigest()
+    # Even presenting its actual bytes under the only allowed build filename
+    # cannot promote the preparation witness into an executable identity.
+    (objects/(digest+'.nm.build.v1')).write_bytes(prepared)
+    root['build_identity']=digest;iv.write_bytes(canonical_json_bytes(root))
+    bad=command('measurement-evaluate','--invocation',iv,'--objects-dir',objects,'--authority-pin',pin,'--output-dir',tmp_path/'not-executable')
+    assert bad.returncode==3 and json.loads(bad.stderr)['code']=='NONEXECUTABLE_BUILD_WITNESS'
