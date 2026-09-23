@@ -243,7 +243,7 @@ def _retained(bundle_dir,limits_file=None):
     w.high('build_bytes',len(payloads['build.json']));actual=reassessment_build.identity(w)
     if actual!=payloads['build.json'] or sha(actual,w)!=bk[1]:fail('BUILD_IDENTITY_MISMATCH','/build','phase_1')
     g=_Captured(raw,objects.__getitem__,c['authority_pin'],w)
-    if set(g.objects)!=set(objects):fail('SCHEMA_INVALID','/extraneous_closure_member','phase_2')
+    if set(g.objects)!=set(objects):fail('EXTRANEOUS_CLOSURE_MEMBER','/extraneous_closure_member','phase_2')
     g.closure_bytes=g.closure(c['authority_pin'],c['limits_override'])
     if g.closure_bytes!=payloads['closure.json']:fail('SCHEMA_INVALID','/closure','phase_2')
     for name,kind in [('result.json','nr.result.v2'),('trace.json','nr.trace.v2')]:

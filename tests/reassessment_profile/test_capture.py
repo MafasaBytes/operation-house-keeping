@@ -136,7 +136,7 @@ def test_internal_actual_traversal_cycles_and_diamond(adj,cycle):
     seen=[];work=Work()
     def run():return _walk('a',lambda k,p,path:seen.append(k),lambda k:[('/'+str(i),x) for i,x in enumerate(adj[k])],work)
     if cycle:
-        with pytest.raises(MeasurementContractError,match='REFERENCE_CYCLE'):run()
+        with pytest.raises(MeasurementContractError,match='CYCLE'):run()
     else:
         assert run()==set(adj)
         assert seen.count('d')==2 and work.logical['reference_occurrences']==4
@@ -246,7 +246,7 @@ def test_canonical_and_token_preallocation_guards():
         with pytest.raises(MeasurementContractError,match='RESOURCE_LIMIT_EXCEEDED'):decode(invalid,Work(limits))
 
 
-@pytest.mark.parametrize('attack,expected',[('exact','DUPLICATE_NOMINATION_REFERENCE'),('revision','DUPLICATE_NOMINATION_ID'),('collision','IDENTITY_VERSION_COLLISION')])
+@pytest.mark.parametrize('attack,expected',[('exact','DUPLICATE_NOMINATION_REFERENCE'),('revision','DUPLICATE_NOMINATION_ID'),('collision','IDENTITY_COLLISION')])
 def test_owning_nomination_integrity(attack,expected):
     c,p=bound_internal('P1-point60');qk=next(k for k in p if k[0]=='nm.request.v1');q=json.loads(p[qk])
     if attack=='exact':q['hypotheses'][1]=q['hypotheses'][0];replace(c,p,qk,q)

@@ -47,7 +47,7 @@ def _walk(root, enter, outgoing, work):
             work.charge('reference_occurrences');work.charge('edge_visits')
         # Required bytes/type/digest are checked before active-path detection.
         enter(k,parent,path)
-        if k in active:fail('REFERENCE_CYCLE',path,'phase_2')
+        if k in active:fail('CYCLE',path,'phase_2')
         if k in complete:continue
         active.add(k);stack.append((k,True,depth,parent,path))
         for p,c in reversed(outgoing(k)):stack.append((c,False,depth+1,k,p))
@@ -83,7 +83,7 @@ class _Captured:
                         fail('RESOURCE_POLICY_IDENTITY_MISMATCH','/resource_policy','phase_1')
                     identity=(k[0],v['id'],v['revision'])
                     if identity in identities and identities[identity]!=k[1]:
-                        fail('IDENTITY_VERSION_COLLISION',path or '/id','phase_2')
+                        fail('IDENTITY_COLLISION',path or '/id','phase_2')
                     identities[identity]=k[1]
                     if k[0] in ('nm.request.v1','nr.request.v2'):work.charge('request_contexts')
                     if k[0].startswith('nr.') or k[0]=='nm.request.v1':
