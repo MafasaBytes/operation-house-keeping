@@ -46,6 +46,14 @@ def test_real_vertical_path_evaluates_publishes_and_replays(tmp_path):
     replay_semantic_bundle(bundle.path)
     forged = json.loads((bundle.path / "result.json").read_bytes())
     forged["ranking"]["best"] = ["forged"]
-    (bundle.path / "result.json").write_bytes(json.dumps(forged, sort_keys=True, separators=(",", ":")).encode())
+    forged_bytes = json.dumps(forged, sort_keys=True, separators=(",", ":")).encode()
+    (bundle.path / "result.json").write_bytes(forged_bytes)
+    manifest = json.loads((bundle.path / "manifest.json").read_bytes())
+    for item in manifest["files"]:
+        if item["name"] == "result.json":
+            item["bytes"] = len(forged_bytes)
+            item["sha256"] = hashlib.sha256(forged_bytes).hexdigest()
+    (bundle.path / "manifest.json").write_bytes(
+        json.dumps(manifest, sort_keys=True, separators=(",", ":")).encode())
     with pytest.raises(Exception):
         replay_semantic_bundle(bundle.path)
