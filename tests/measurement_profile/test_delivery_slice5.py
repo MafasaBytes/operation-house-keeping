@@ -3,7 +3,7 @@ import json
 import pytest
 from applications.bounded_decision_workflow.measurement_delivery import FILES,verify_measurement_bundle
 from applications.bounded_decision_workflow.measurement_contracts import MeasurementContractError
-from .test_delivery_contract_mapping import command
+from tests.measurement_profile.test_delivery_contract_mapping import command
 
 
 def test_storage_fixture_is_not_supported_measurement_delivery(tmp_path):

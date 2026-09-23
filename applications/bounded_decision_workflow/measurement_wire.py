@@ -301,7 +301,7 @@ class Graph:
         meanings=[]
         for r in q['measurements']:
             p=self.get(r);o=self.get(p['decoder'])
-            meaning=[p['context'],p['method'],p['method_edition'],o['domain'],[x['region'] for x in o['outcomes']],
+            meaning=[p['context'],p['method'],p['method_edition'],o['domain'],sorted([x['region'] for x in o['outcomes']],key=canonical_json_bytes),
                      [{k:v for k,v in c.items() if k!='id'} for c in p['conditions']]]
             encoded=canonical_json_bytes(meaning)
             if encoded in meanings:fail('SEMANTIC_ALIAS','measurements')

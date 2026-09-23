@@ -15,7 +15,7 @@ import time
 from . import retention
 from .errors import WorkflowInputError
 from .measurement_contracts import canonical_json_bytes, PROFILE
-from .measurement_wire import Work, Graph, decode, fail, key, ref, sha, shape
+from .measurement_wire import Work, Graph, decode, fail, key, ref, sha, shape, HEADER, BODIES
 from .measurement_compute import compute
 from .measurement_build import identity
 
@@ -58,6 +58,7 @@ def closure_wire(g,pin,limits):
 
 def _build_check(iv,load,work):
     if iv.get('schema')!='nm.invocation.v1' or iv.get('profile')!=PROFILE:fail('PROFILE_MISMATCH','invocation','phase_1')
+    shape(iv,HEADER|set(BODIES['nm.invocation.v1'].split()),'invocation')
     build_ref=key(ref('nm.build.v1',iv.get('build_identity')))
     supplied=load(build_ref,work)
     actual=identity(work)
@@ -145,8 +146,9 @@ def evaluate(invocation_file,objects_dir,authority_pin,output_dir,limits_file=No
                 captured[k]=_read(directory,digest+'.'+kind,cap,w)
             return captured[k]
         payloads=_payloads(invocation,load,authority_pin,limits,work)
+    answer=receipt('measurement-evaluate',payloads,'0'*64);work.guard('receipt_bytes',len(canonical_json_bytes(answer))+1)
     manifest=publish(output_dir,payloads,work,started)
-    answer=receipt('measurement-evaluate',payloads,manifest);work.guard('receipt_bytes',len(canonical_json_bytes(answer))+1)
+    answer['bundle_sha256']=manifest
     return answer
 
 
@@ -237,6 +239,7 @@ def replay(bundle_dir,output_dir,limits_file=None):
     if computed['closure.json']!=retained['closure.json']:fail('SCHEMA_INVALID','required_closure','phase_2')
     for name in ['result.json','trace.json']:
         if computed[name]!=retained[name]:fail('REPLAY_SEMANTIC_MISMATCH',name,'phase_8')
+    answer=receipt('measurement-replay',computed,'0'*64);work.guard('receipt_bytes',len(canonical_json_bytes(answer))+1)
     manifest=publish(output_dir,computed,work,started)
-    answer=receipt('measurement-replay',computed,manifest);work.guard('receipt_bytes',len(canonical_json_bytes(answer))+1)
+    answer['bundle_sha256']=manifest
     return answer
