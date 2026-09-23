@@ -135,7 +135,7 @@ raise SystemExit(main(sys.argv[3:]))
 def test_supported_filesystem_and_unsupported_output_twin(tmp_path):
     iv,objects,pin=recover_case(tmp_path)
     # Existing checkout is on DrvFS; nominate a fresh name but never create it.
-    unsupported=Path.cwd()/('nm-slice6-refused-output-'+tmp_path.name.lower())
+    unsupported=Path(os.environ.get('BDW_UNSUPPORTED_OUTPUT_PARENT',str(Path.cwd())))/('nm-slice6-refused-output-'+tmp_path.name.lower())
     assert not unsupported.exists()
     bad=command('measurement-evaluate','--invocation',iv,'--objects-dir',objects,'--authority-pin',pin,'--output-dir',unsupported)
     assert bad.returncode==5 and not unsupported.exists(),bad.stderr

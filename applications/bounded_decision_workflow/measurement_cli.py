@@ -36,7 +36,7 @@ def _emit(fd,wire):
 
 
 def main(argv=None):
-    DIAGNOSTIC_CEILING.set(2048)
+    defaults=Work()
     BUNDLE_STATE.set('absent')
     try:
         args=arguments(sys.argv[1:] if argv is None else argv)
@@ -44,7 +44,7 @@ def main(argv=None):
             answer=runtime.evaluate(args.invocation,args.objects_dir,args.authority_pin,args.output_dir,args.limits)
         elif args.operation=='measurement-verify':answer=runtime.verify(args.bundle)
         else:answer=runtime.replay(args.bundle,args.output_dir,args.limits)
-        wire=canonical_json_bytes(answer)+b'\n';Work().guard('receipt_bytes',len(wire))
+        wire=canonical_json_bytes(answer)+b'\n';defaults.guard('receipt_bytes',len(wire))
         _emit(1,wire);return 0
     except MeasurementContractError as error:
         code=error.code;stage=error.stage;field=error.target;details=error.details

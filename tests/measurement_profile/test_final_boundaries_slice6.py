@@ -222,3 +222,17 @@ def test_recovery_capture_guard_precedes_base64_allocation(monkeypatch):
 def test_surrogate_wire_is_input_refusal():
  with pytest.raises(MeasurementContractError) as e:mw.decode(b'{"x":"\\ud800"}',mw.Work())
  assert e.value.code=='JSON_INVALID'
+
+
+def test_failed_stdout_preserves_tight_diagnostic_budget(tmp_path):
+ source='''from applications.bounded_decision_workflow import measurement_cli as c
+from applications.bounded_decision_workflow.measurement_wire import Work
+def answer(*a):
+ Work({'diagnostic_bytes':1})
+ return dict(schema='nm.receipt.v1',operation='measurement-evaluate',evaluation_permitted=True,disposition='preferred_within_supplied_set',result_sha256='0'*64,bundle_sha256='1'*64)
+c.runtime.evaluate=answer
+raise SystemExit(c.main(['measurement-evaluate','--invocation','i','--objects-dir','o','--authority-pin','a','--output-dir','r']))
+'''
+ with open('/dev/full','wb',buffering=0) as sink:
+  run=subprocess.run([sys.executable,'-c',source],stdout=sink,stderr=subprocess.PIPE)
+ assert run.returncode==4 and json.loads(run.stderr)['code']=='DIAGNOSTIC_LIMIT_EXCEEDED'

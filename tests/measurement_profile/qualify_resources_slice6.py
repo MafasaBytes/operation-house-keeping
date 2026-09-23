@@ -57,7 +57,30 @@ def main():
             expected_exit=0 if name=='exact' else 4
             events.append(dict(expected_exit=expected_exit,matched=run.returncode==expected_exit,dimension=dimension,limit=limit,relation_to_baseline=name,exit=run.returncode,stdout_sha256=digest(run.stdout),stderr_sha256=digest(run.stderr),diagnostic=json.loads(run.stderr) if run.stderr else None,manifest_present=(output/'manifest.json').exists(),wall_ns=time.monotonic_ns()-start,cpu_user_s=after.ru_utime-before.ru_utime,cpu_system_s=after.ru_stime-before.ru_stime))
             save(a.output/'boundary-observations.json',events);print(dimension,name,limit,run.returncode,flush=True)
-    save(a.output/'summary.json',dict(twins=len(events),matched=sum(e['matched'] for e in events),unreached=sorted(set(Work().limits)-set(attempted))))
+    # Manifest counters are freshly observed; RSS/time digit widths can change
+    # its demand between runs. Keep nominal mismatches, then measure a true
+    # neighboring refusal without rewriting an earlier expectation.
+    repairs=[]
+    for event in events:
+        if event['dimension']=='manifest_bytes' and event['relation_to_baseline']=='below' and event['exit']==0:
+            successful=a.output/'manifest_bytes-below'/'manifest.json'
+            demand=len(successful.read_bytes())
+            assert demand<=event['limit']
+            for attempt in range(8):
+                limit=demand-1;label='manifest-calibration-'+str(attempt)
+                filename=a.output/(label+'.json');save(filename,{'manifest_bytes':limit});output=a.output/label
+                run=subprocess.run([sys.executable,'-m','applications.bounded_decision_workflow','measurement-evaluate','--invocation',str(iv),'--objects-dir',str(objects),'--authority-pin',pin,'--output-dir',str(output),'--limits',str(filename)],capture_output=True,timeout=30,preexec_fn=ceiling)
+                (a.output/(label+'.stdout')).write_bytes(run.stdout);(a.output/(label+'.stderr')).write_bytes(run.stderr)
+                row=dict(limit=limit,exit=run.returncode,prior_measured_demand=demand,diagnostic=json.loads(run.stderr) if run.stderr else None)
+                repairs.append(row);save(a.output/'manifest-calibration.json',repairs)
+                if run.returncode==4:
+                    assert row['diagnostic']['resource']['dimension']=='manifest_bytes'
+                    assert not (output/'manifest.json').exists()
+                    break
+                assert run.returncode==0,run.stderr
+                demand=len((output/'manifest.json').read_bytes());assert demand<=limit
+            else:raise AssertionError('manifest physical demand did not stabilize within bounded calibration')
+    save(a.output/'summary.json',dict(twins=len(events),matched=sum(e['matched'] for e in events),nominal_mismatches=[e for e in events if not e['matched']],manifest_calibration=repairs,unreached=sorted(set(Work().limits)-set(attempted))))
     print('Guard dimensions not reached:',sorted(set(Work().limits)-set(attempted)),flush=True)
 
 if __name__=='__main__':main()
