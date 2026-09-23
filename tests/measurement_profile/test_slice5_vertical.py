@@ -1,4 +1,5 @@
 import json
+import hashlib
 from pathlib import Path
 
 import pytest
@@ -12,7 +13,13 @@ from tests.measurement_profile.test_contracts_and_closure import base_objects
 
 def test_real_vertical_path_evaluates_publishes_and_replays(tmp_path):
     invocation, objects = base_objects()
-    build_wire, build_id = build.identity()
+    actual_wire, actual_id = build.identity()
+    build_wire = json.dumps({"schema": "nm.build.v1", "profile": "bdw.measurement.supplied.v1",
+                             "id": "B1", "revision": 1, "status": "executable",
+                             "actual_build_sha256": actual_id,
+                             "actual_build": actual_wire.decode()}, sort_keys=True,
+                            separators=(",", ":")).encode()
+    build_id = hashlib.sha256(build_wire).hexdigest()
     iv = json.loads(invocation)
     iv["build_identity"] = build_id
     invocation = json.dumps(iv, sort_keys=True, separators=(",", ":")).encode()

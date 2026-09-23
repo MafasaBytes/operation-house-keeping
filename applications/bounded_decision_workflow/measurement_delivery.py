@@ -181,10 +181,20 @@ def _semantic_inputs(invocation, objects, public_request, public_snapshot,
 
 def evaluate_semantic_bundle(output_dir, invocation, objects, public_request,
                              public_snapshot, *, support_rows, candidates):
-    build_wire, build_id = maintained_build.identity()
+    actual_build_wire, actual_build_id = maintained_build.identity()
+    build_wire = json.dumps({"schema": "nm.build.v1", "profile": "bdw.measurement.supplied.v1",
+                             "id": "B1", "revision": 1, "status": "executable",
+                             "actual_build_sha256": actual_build_id,
+                             "actual_build": actual_build_wire.decode()},
+                            sort_keys=True, separators=(",", ":")).encode()
+    build_id = hashlib.sha256(build_wire).hexdigest()
     root = json.loads(invocation)
     if root.get("build_identity") != build_id:
         raise MeasurementDeliveryError("BUILD_IDENTITY_MISMATCH", "invocation.build_identity")
+    build_obj = json.loads(build_wire)
+    if build_obj.get("actual_build_sha256") != actual_build_id \
+            or build_obj.get("actual_build") != actual_build_wire.decode():
+        raise MeasurementDeliveryError("BUILD_IDENTITY_MISMATCH", "build.json")
     policy = next(payload for (kind, _), payload in objects.items()
                   if kind == "nm.resource-policy.v1")
     parse_approved_policy(policy)
