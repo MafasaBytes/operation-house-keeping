@@ -41,9 +41,11 @@ def reserve(category,size,label):
         record(dict(event='observed',label=label,inventory=inventory()))
 
 def directory(category,label):
+    observed=inventory();assert observed['directories']<512 and observed['allocated']+4096<=54525952
     p=ROOT/category/label;p.mkdir();return p
 
 def put(path,raw):
+    observed=inventory();assert observed['files']<4096 and observed['allocated']+((len(raw)+4095)//4096)*4096<=54525952
     cat=path.relative_to(ROOT).parts[0]
     with reserve(cat,len(raw),str(path.relative_to(ROOT))):
         with path.open('xb') as f:f.write(raw)
