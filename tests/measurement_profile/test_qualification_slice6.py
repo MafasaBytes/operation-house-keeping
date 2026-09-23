@@ -83,7 +83,14 @@ def test_canonical_construction_and_directory_order_control(tmp_path):
     q=next(json.loads(base64.b64decode(m['bytes'])) for m in cap['members'] if m['reference']['kind']=='nm.request.v1')
     # Construction ordering of object keys is immaterial; wire H/P arrays are
     # unchanged and their deliberately reversed twins are separate refusals.
-    for items in [list(q.items()),list(reversed(list(q.items())))]:assert wire(dict(items))==wire(q)
+    values={m['reference']['sha256']:json.loads(base64.b64decode(m['bytes'])) for m in cap['members'] if m['reference']['kind']!='nm.basis'}
+    for reverse_h in [False,True]:
+        for reverse_p in [False,True]:
+            constructed=dict(reversed(list(q.items())))
+            for field,reverse in [('hypotheses',reverse_h),('measurements',reverse_p),('support',reverse_h != reverse_p)]:
+                insertion=list(reversed(q[field])) if reverse else list(q[field])
+                constructed[field]=sorted(insertion,key=lambda r:(values[r['sha256']]['id'],values[r['sha256']]['revision']))
+            assert wire(constructed)==wire(q)
 
 
 def test_completed_validation_cannot_waive_stricter_replay_context(tmp_path):

@@ -224,6 +224,11 @@ class Graph:
                     if ident in identities and identities[ident]!=k[1]:
                         fail('IDENTITY_VERSION_COLLISION',path.rsplit('/',1)[0],'phase_2',request=iv['request'],logical_id=v['id'],references=sorted([ref(k[0],identities[ident]),ref(*k)],key=key))
                     identities[ident]=k[1]
+                    if k[0]=='nm.request.v1':
+                        # Refuse an unsupported context/history before following
+                        # any dependency of that newly captured request.
+                        work.charge('request_contexts')
+                        work.high('request_chain',v['revision'])
                 self.objects[k]=wire;self.values[k]=v;self.nodes[k]=nodes
                 work.charge('json_nodes',nodes)
             if parent is not None:
@@ -236,7 +241,6 @@ class Graph:
             for edge,child in reversed(outgoing):stack.append((child,False,depth+1,k,edge))
         self.invocation=self.get(self.root)
         self.requests=sorted(k for k,v in self.values.items() if v and k[0]=='nm.request.v1')
-        work.charge('request_contexts',len(self.requests))
         self._integrity()
 
     def get(self,r):return self.values[key(r)]
