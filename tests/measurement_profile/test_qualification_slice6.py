@@ -116,11 +116,11 @@ from applications.bounded_decision_workflow import measurement_runtime as r
 from applications.bounded_decision_workflow.cli import main
 original=r.retention._write_file
 filename,kind=sys.argv[1:3]
-def fault(fd,name,data,unused):
+def fault(fd,name,data,unused,**kw):
     if name==filename:
         if kind=='interrupt':os.kill(os.getpid(),signal.SIGKILL)
         raise r.retention._error('RETENTION_WRITE_FAILED')
-    return original(fd,name,data,unused)
+    return original(fd,name,data,unused,**kw)
 r.retention._write_file=fault
 raise SystemExit(main(sys.argv[3:]))
 '''

@@ -1,9 +1,10 @@
 """Explicit measurement command dispatch; no matrices or injectable computations."""
+import os
 import argparse
 import json
 import sys
 from . import measurement_runtime as runtime
-from .measurement_wire import Work, fail
+from .measurement_wire import Work, fail, DIAGNOSTIC_CEILING, BUNDLE_STATE
 from .measurement_contracts import MeasurementContractError, canonical_json_bytes
 from .errors import WorkflowInputError
 
@@ -25,7 +26,18 @@ def arguments(argv):
     return p.parse_args(argv)
 
 
+def _emit(fd,wire):
+    # Unbuffered writes avoid a second interpreter-shutdown flush/exit 120.
+    view=memoryview(wire)
+    while view:
+        n=os.write(fd,view)
+        if n<=0:raise OSError('output unavailable')
+        view=view[n:]
+
+
 def main(argv=None):
+    DIAGNOSTIC_CEILING.set(2048)
+    BUNDLE_STATE.set('absent')
     try:
         args=arguments(sys.argv[1:] if argv is None else argv)
         if args.operation=='measurement-evaluate':
@@ -33,7 +45,7 @@ def main(argv=None):
         elif args.operation=='measurement-verify':answer=runtime.verify(args.bundle)
         else:answer=runtime.replay(args.bundle,args.output_dir,args.limits)
         wire=canonical_json_bytes(answer)+b'\n';Work().guard('receipt_bytes',len(wire))
-        sys.stdout.buffer.write(wire);sys.stdout.buffer.flush();return 0
+        _emit(1,wire);return 0
     except MeasurementContractError as error:
         code=error.code;stage=error.stage;field=error.target;details=error.details
         status=2 if stage=='usage' else 4 if code=='RESOURCE_LIMIT_EXCEEDED' else 5 if stage=='path' else 6 if stage=='retention' else 7 if stage=='internal' else 3
@@ -43,12 +55,14 @@ def main(argv=None):
         code='INTERNAL_ERROR';stage='internal';field='application';details={};status=7
     resource={k:details[k] for k in ['dimension','attempted','limit']} if all(k in details for k in ['dimension','attempted','limit']) else None
     diagnostic=dict(schema='nm.diagnostic.v1',code=code,stage=stage,target=dict(request=details.get('request'),field=field if field.startswith('/') else '/'+field,logical_id=details.get('logical_id'),references=details.get('references',[]),occurrence_count=details.get('occurrence_count')),
-        resource=resource,retry='reduce_input_or_request_policy_review' if resource is not None else 'correct_input',bundle_state='incomplete' if stage=='retention' else 'absent',message_key=code.lower())
+        resource=resource,retry='reduce_input_or_request_policy_review' if resource is not None else 'correct_input',bundle_state=BUNDLE_STATE.get() if BUNDLE_STATE.get()!='absent' else 'incomplete' if stage=='retention' else 'absent',message_key=code.lower())
     wire=canonical_json_bytes(diagnostic)+b'\n'
-    if len(wire)>Work().limits['diagnostic_bytes']:
+    if len(wire)>DIAGNOSTIC_CEILING.get():
         diagnostic.update(code='DIAGNOSTIC_LIMIT_EXCEEDED',target=None,resource=None,message_key='diagnostic_limit_exceeded')
         wire=canonical_json_bytes(diagnostic)+b'\n';status=4
-    sys.stderr.buffer.write(wire);sys.stderr.buffer.flush();return status
+    try:_emit(2,wire)
+    except OSError:return 7
+    return status
 
 
 if __name__=='__main__':raise SystemExit(main())

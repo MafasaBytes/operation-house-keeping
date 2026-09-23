@@ -3,12 +3,17 @@
 Delivery uses the approved I/Q/E carriage, with guards before capture/traversal.
 The public snapshot remains owned by the public StateClassificationResult.
 """
+from contextvars import ContextVar
 import hashlib
 import json
 import re
 from fractions import Fraction
 from .measurement_contracts import (PROFILE, APPROVED_LIMITS, APPROVED_POLICY_SHA,
     MeasurementContractError, canonical_json_bytes, parse_document, _ref)
+
+DIAGNOSTIC_CEILING = ContextVar('measurement_diagnostic_ceiling', default=APPROVED_LIMITS['diagnostic_bytes'])
+
+BUNDLE_STATE = ContextVar('measurement_bundle_state', default='absent')
 
 HEADER = {'schema','profile','id','revision'}
 BODIES = {
@@ -56,6 +61,10 @@ class Work:
                 if k not in self.limits or type(v) is not int or not 0<v<=self.limits[k]:
                     fail('RESOURCE_LIMIT_REQUEST_INVALID',k,'phase_1')
                 self.limits[k]=v
+        DIAGNOSTIC_CEILING.set(self.limits['diagnostic_bytes'])
+
+    def io(self,k,n):
+        self.physical[k]+=n
 
     def guard(self,k,n):
         if n>self.limits[k]:
@@ -70,30 +79,60 @@ class Work:
         self.guard(k,n);self.logical[k]=max(self.logical.get(k,0),n)
 
 
-def decode(wire, work, *, transport=False):
+def decode(wire, work, *, transport=False, node_base=0):
     work.guard('closure_bytes' if transport else 'object_bytes',len(wire))
-    # Lexical depth guard before json.loads; quotes/escapes do not add depth.
-    depth=0; string=False;escape=False
-    for c in wire:
-        if string:
-            if escape:escape=False
-            elif c==92:escape=True
-            elif c==34:string=False
-        elif c==34:string=True
-        elif c in (91,123):depth+=1;work.guard('json_depth',depth)
+    # Preflight tokens before constructing the document. The authoritative
+    # parser below still rejects invalid grammar, duplicate keys and noncanonical
+    # bytes. Keys are string work but not value nodes, as in the frozen oracle.
+    depth=0;nodes=0;i=0
+    while i<len(wire):
+        c=wire[i]
+        if c==34:
+            start=i;i+=1;size=0
+            while i<len(wire) and wire[i]!=34:
+                if wire[i]==92:
+                    i+=1
+                    if i<len(wire) and wire[i]==117:
+                        try:cp=int(wire[i+1:i+5],16)
+                        except ValueError:fail('JSON_INVALID','wire','phase_1')
+                        i+=4
+                        size+=1 if cp<128 else 2 if cp<2048 else 3
+                        if 0xD800<=cp<=0xDBFF and wire[i+1:i+3]==b'\\u':
+                            try:low=int(wire[i+3:i+7],16)
+                            except ValueError:low=0
+                            if 0xDC00<=low<=0xDFFF:size+=1;i+=6
+                    else:size+=1
+                else:size+=1
+                # Transport values may be base64; keys retain the ordinary cap.
+                work.guard('closure_bytes' if transport else 'string_bytes',size)
+                i+=1
+            i+=1;j=i
+            while j<len(wire) and wire[j] in b' \t\r\n':j+=1
+            is_key=j<len(wire) and wire[j]==58
+            if is_key:work.guard('string_bytes',size)
+            else:nodes+=1;work.guard('json_nodes',node_base+nodes)
+            continue
+        if c in (91,123):
+            depth+=1;work.guard('json_depth',depth);nodes+=1
+            work.guard('json_nodes',node_base+nodes)
         elif c in (93,125):depth-=1
+        elif c not in b' \t\r\n,:':
+            nodes+=1;work.guard('json_nodes',node_base+nodes)
+            while i+1<len(wire) and wire[i+1] not in b' \t\r\n,]}':i+=1
+        i+=1
     value=parse_document(wire,allow_opaque=True)
-    todo=[value];nodes=0
-    while todo:
-        v=todo.pop();nodes+=1;work.guard('json_nodes',nodes)
-        if isinstance(v,dict):
-            todo.extend(v.values())
-            for k in v:work.guard('string_bytes',len(k.encode()))
-        elif isinstance(v,list):todo.extend(v)
-        elif isinstance(v,str):
-            # Transport base64 has a separate pre-decoding byte guard.
-            work.guard('closure_bytes' if transport else 'string_bytes',len(v.encode()))
     return value,nodes
+
+
+def bounded_json(value,work,dimension):
+    # Bound each emitted chunk before retaining it; never allocate the complete
+    # oversized encoded document and then call that a pre-allocation guard.
+    chunks=[];size=0
+    encoder=json.JSONEncoder(sort_keys=True,separators=(',',':'),ensure_ascii=False,allow_nan=False)
+    for chunk in encoder.iterencode(value):
+        part=chunk.encode('utf-8');size+=len(part);work.guard(dimension,size)
+        chunks.append(part)
+    return b''.join(chunks)
 
 
 def rational(v,work):
@@ -205,7 +244,7 @@ class Graph:
                 if sha(wire)!=k[1]:fail('REFERENCE_DIGEST_MISMATCH',path,'phase_2',request=iv['request'],references=[ref(*k)])
                 if k[0]=='nm.basis':v=None;nodes=0
                 else:
-                    v,nodes=decode(wire,work)
+                    v,nodes=decode(wire,work,node_base=work.logical.get('json_nodes',0))
                     if v.get('schema')=='nm.prepared-build.v1':fail('NONEXECUTABLE_BUILD_WITNESS',path,'phase_1')
                     try:parse_document(wire,expected_schema=k[0])
                     except MeasurementContractError as error:

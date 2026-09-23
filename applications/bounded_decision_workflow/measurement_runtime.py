@@ -15,7 +15,7 @@ import time
 from . import retention
 from .errors import WorkflowInputError
 from .measurement_contracts import canonical_json_bytes, PROFILE, APPROVED_POLICY_SHA, MeasurementContractError
-from .measurement_wire import Work, Graph, decode, fail, key, ref, sha, shape, HEADER, BODIES
+from .measurement_wire import Work, Graph, decode, fail, key, ref, sha, shape, HEADER, BODIES, bounded_json, BUNDLE_STATE
 from .measurement_compute import compute
 from .measurement_build import identity
 
@@ -23,17 +23,18 @@ FILES=('invocation.json','closure.json','result.json','trace.json','build.json',
 CAPS=dict(zip(FILES,('invocation_bytes','closure_bytes','result_bytes','trace_bytes','build_bytes','object_bytes','manifest_bytes')))
 
 
-def _read(fd,name,cap,work):
-    def observe(event,unused):
-        if event=='read':work.physical['read_operations']+=1
+def _read(fd,name,cap,work,dimension='object_bytes',base=0):
     try:
-        item=retention._read_at(fd,name,cap,observe)
+        item=retention._read_at(fd,name,cap,io=work.io)
     except FileNotFoundError:fail('REQUIRED_REFERENCE_MISSING',name,'phase_2')
+    except WorkflowInputError as error:
+        if error.diagnostic.code=='INPUT_WIRE_LIMIT_EXCEEDED':
+            work.guard(dimension,base+cap+1)
+        raise
     # Check the pathname still names the captured inode, without reopening it.
     try:after=os.stat(name,dir_fd=fd,follow_symlinks=False)
     except FileNotFoundError:fail('INPUT_CHANGED_DURING_READ',name,'path')
     if retention._metadata(after)!=item.metadata:fail('INPUT_CHANGED_DURING_READ',name,'path')
-    work.physical['bytes_read']+=len(item.data)
     return item.data
 
 
@@ -41,7 +42,7 @@ def read_path(path,dimension,work):
     absolute,parts=retention._parts(path)
     with retention._directory(absolute,parts[:-1]) as fd:
         retention._filesystem(fd)
-        return _read(fd,parts[-1],work.limits[dimension],work)
+        return _read(fd,parts[-1],work.limits[dimension],work,dimension)
 
 
 def overrides(path,work):
@@ -52,6 +53,9 @@ def overrides(path,work):
 
 
 def closure_wire(g,pin,limits):
+    skeleton=dict(schema='nm.closure.v1',profile=PROFILE,invocation=g.root,authority_pin=pin,limits_override=limits,members=[dict(reference=ref(*k),encoding='base64',bytes='') for k in sorted(g.objects)])
+    size=len(canonical_json_bytes(skeleton))+sum(4*((len(b)+2)//3) for b in g.objects.values())
+    g.work.guard('closure_bytes',size)
     return canonical_json_bytes(dict(schema='nm.closure.v1',profile=PROFILE,invocation=g.root,
         authority_pin=pin,limits_override=limits,members=[dict(reference=ref(*k),encoding='base64',bytes=base64.b64encode(g.objects[k]).decode()) for k in sorted(g.objects)]))
 
@@ -85,7 +89,7 @@ def _payloads(invocation,load,pin,limits,work):
     closure=closure_wire(graph,pin,limits);work.high('closure_bytes',len(closure))
     result,trace=compute(graph)
     payloads={'invocation.json':invocation,'closure.json':closure,
-              'result.json':canonical_json_bytes(result),'trace.json':canonical_json_bytes(trace),
+              'result.json':bounded_json(result,work,'result_bytes'),'trace.json':bounded_json(trace,work,'trace_bytes'),
               'build.json':build_wire,'policy.json':graph.objects[('nm.resource-policy.v1',iv['resource_policy'])]}
     for name,wire in payloads.items():work.guard(CAPS[name],len(wire))
     return payloads
@@ -112,6 +116,7 @@ def publish(output_dir,payloads,work,started):
         try:os.mkdir(parts[-1],0o700,dir_fd=parent)
         except FileExistsError:raise retention._error('OUTPUT_COLLISION')
         except OSError:raise retention._error('RETENTION_CREATE_FAILED')
+        BUNDLE_STATE.set('incomplete')
         fd=os.open(parts[-1],os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW|os.O_CLOEXEC,dir_fd=parent)
         try:
             inode=os.fstat(fd)
@@ -120,17 +125,21 @@ def publish(output_dir,payloads,work,started):
                 if (current.st_dev,current.st_ino)!=(inode.st_dev,inode.st_ino):fail('INPUT_CHANGED_DURING_READ','output_dir','retention')
             stable()
             for name in FILES[:-1]:
-                retention._write_file(fd,name,payloads[name],None)
-                work.physical['write_operations']+=1;work.physical['bytes_written']+=len(payloads[name]);stable()
+                retention._write_file(fd,name,payloads[name],None,io=work.io)
+                stable()
             physical=dict(bytes_read=work.physical['bytes_read']+work.physical.get('build_bytes_read',0),
                           read_operations=work.physical['read_operations']+work.physical.get('build_read_operations',0),
                           bytes_written=work.physical['bytes_written'],write_operations=work.physical['write_operations'],
                           elapsed_ns=time.monotonic_ns()-started,peak_rss_bytes=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*1024,
                           status='observed_before_manifest_write')
-            manifest=canonical_json_bytes(dict(schema='nm.bundle.v1',profile=PROFILE,completeness='complete',files=[dict(name=n,bytes=len(payloads[n]),sha256=sha(payloads[n])) for n in FILES[:-1]],physical=physical))
+            manifest=bounded_json(dict(schema='nm.bundle.v1',profile=PROFILE,completeness='complete',files=[dict(name=n,bytes=len(payloads[n]),sha256=sha(payloads[n])) for n in FILES[:-1]],physical=physical),work,'manifest_bytes')
             work.guard('manifest_bytes',len(manifest));work.guard('bundle_bytes',total+len(manifest))
-            retention._write_file(fd,'manifest.json',manifest,None);stable()
-            os.fsync(fd);os.fsync(parent)
+            retention._write_file(fd,'manifest.json',manifest,None,io=work.io);stable()
+            BUNDLE_STATE.set('complete_visible_durability_unknown')
+            try:os.fsync(fd)
+            except OSError:raise retention._error('RETENTION_DIR_FSYNC_FAILED')
+            try:os.fsync(parent)
+            except OSError:raise retention._error('RETENTION_PARENT_FSYNC_FAILED')
         finally:os.close(fd)
     return sha(manifest)
 
@@ -155,7 +164,9 @@ def evaluate(invocation_file,objects_dir,authority_pin,output_dir,limits_file=No
                 if not re.fullmatch(r'nm\.[a-z-]+(?:\.v1)?',kind):fail('REFERENCE_ROLE_MISMATCH','kind','phase_2')
                 cap=min(w.limits['object_bytes'],w.limits['capture_bytes']-sum(map(len,captured.values()))-len(invocation))
                 if cap<0:fail('RESOURCE_LIMIT_EXCEEDED','capture_bytes','phase_2')
-                captured[k]=_read(directory,digest+'.'+kind,cap,w)
+                base=sum(map(len,captured.values()))+len(invocation)
+                dimension='capture_bytes' if cap<w.limits['object_bytes'] else 'object_bytes'
+                captured[k]=_read(directory,digest+'.'+kind,cap,w,dimension,base if dimension=='capture_bytes' else 0)
             return captured[k]
         payloads=_payloads(invocation,load,authority_pin,limits,work)
     answer=receipt('measurement-evaluate',payloads,'0'*64);work.guard('receipt_bytes',len(canonical_json_bytes(answer))+1)
@@ -177,7 +188,9 @@ def inspect_bundle(bundle_dir,work):
         if names!=set(FILES):fail('BUNDLE_INCOMPLETE','bundle','phase_1')
         total=0
         for name in ('manifest.json',)+FILES[:-1]:
-            payloads[name]=_read(directory,name,min(work.limits[CAPS[name]],work.limits['bundle_bytes']-total),work)
+            cap=min(work.limits[CAPS[name]],work.limits['bundle_bytes']-total)
+            dimension='bundle_bytes' if cap<work.limits[CAPS[name]] else CAPS[name]
+            payloads[name]=_read(directory,name,cap,work,dimension,total if dimension=='bundle_bytes' else 0)
             total+=len(payloads[name]);work.guard('bundle_bytes',total)
     manifest,_=decode(payloads['manifest.json'],work)
     shape(manifest,'schema profile completeness files physical','manifest')

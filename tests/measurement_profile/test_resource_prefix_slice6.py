@@ -11,8 +11,8 @@ from tests.measurement_profile.test_delivery_contract_mapping import recover_cas
 def test_history_guard_precedes_fifth_revision_dependency_work(tmp_path,monkeypatch):
     iv,objects,pin=recover_case(tmp_path,'CL-Q5-refused')
     reads=[];original=runtime._read
-    def observe(fd,name,cap,work):
-        reads.append(name);return original(fd,name,cap,work)
+    def observe(fd,name,cap,work,*args,**kw):
+        reads.append(name);return original(fd,name,cap,work,*args,**kw)
     monkeypatch.setattr(runtime,'_read',observe)
     with pytest.raises(MeasurementContractError) as error:runtime.evaluate(iv,objects,pin,tmp_path/'refused')
     assert error.value.code=='RESOURCE_LIMIT_EXCEEDED'

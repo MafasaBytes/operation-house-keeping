@@ -242,8 +242,8 @@ def test_capture_rejects_path_replacement_after_read(tmp_path,monkeypatch):
     from applications.bounded_decision_workflow.measurement_contracts import MeasurementContractError
     path=tmp_path/'input.json';path.write_bytes(b'{}')
     original=runtime.retention._read_at
-    def replaced(parent,name,cap,hook=None):
-        captured=original(parent,name,cap,hook)
+    def replaced(parent,name,cap,hook=None,**kw):
+        captured=original(parent,name,cap,hook,**kw)
         other=tmp_path/'replacement';other.write_bytes(b'{}');other.replace(path)
         return captured
     monkeypatch.setattr(runtime.retention,'_read_at',replaced)
@@ -282,9 +282,9 @@ def test_measurement_manifest_failure_leaves_honest_incomplete_bundle(tmp_path,m
     from applications.bounded_decision_workflow.errors import WorkflowInputError
     iv,objects,pin=recover_case(tmp_path)
     original=runtime.retention._write_file
-    def fault(fd,name,data,hook):
+    def fault(fd,name,data,hook,**kw):
         if name=='manifest.json':raise runtime.retention._error('RETENTION_MANIFEST_FAILED')
-        return original(fd,name,data,hook)
+        return original(fd,name,data,hook,**kw)
     monkeypatch.setattr(runtime.retention,'_write_file',fault)
     with pytest.raises(WorkflowInputError) as error:runtime.evaluate(iv,objects,pin,tmp_path/'incomplete')
     assert error.value.diagnostic.code=='RETENTION_MANIFEST_FAILED'

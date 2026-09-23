@@ -134,7 +134,7 @@ def _metadata(s):
     return (s.st_dev, s.st_ino, s.st_mode, s.st_size, s.st_mtime_ns, s.st_ctime_ns, s.st_nlink)
 
 
-def _read_at(parent, name, cap, hook=None):
+def _read_at(parent, name, cap, hook=None, *, io=None):
     try:
         before = os.stat(name, dir_fd=parent, follow_symlinks=False)
         if stat.S_ISLNK(before.st_mode): raise _error("PATH_FINAL_SYMLINK")
@@ -153,7 +153,9 @@ def _read_at(parent, name, cap, hook=None):
         chunks, count = [], 0
         while count <= cap:
             _event(hook, "read", name)
+            if io is not None: io("read_operations", 1)
             chunk = os.read(fd, min(8192, cap + 1 - count))
+            if io is not None: io("bytes_read", len(chunk))
             if not chunk: break
             chunks.append(chunk); count += len(chunk)
         _event(hook, "after_read", name)
@@ -235,7 +237,7 @@ def _rename_exclusive(fd, old, new):
         raise OSError(e, os.strerror(e))
 
 
-def _write_file(fd, name, data, hook):
+def _write_file(fd, name, data, hook, *, io=None):
     stage = "create"
     temp = "." + name + ".tmp"
     try:
@@ -244,7 +246,16 @@ def _write_file(fd, name, data, hook):
         with os.fdopen(out, "wb") as stream:
             os.fchmod(stream.fileno(), 0o600)
             stage = "write"; _event(hook, stage, name)
-            stream.write(data)
+            if io is None:
+                stream.write(data)
+            else:
+                view = memoryview(data)
+                while view:
+                    io("write_operations", 1)
+                    count = os.write(stream.fileno(), view)
+                    if count <= 0: raise OSError("short write")
+                    io("bytes_written", count)
+                    view = view[count:]
             stage = "flush"; _event(hook, stage, name); stream.flush()
             stage = "file_fsync"; _event(hook, stage, name); os.fsync(stream.fileno())
         stage = "manifest_before_rename" if name == "manifest.json" else "rename"
