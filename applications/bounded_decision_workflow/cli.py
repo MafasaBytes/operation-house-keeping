@@ -252,6 +252,10 @@ def _prior_from_final(inspection, old, build_id):
 
 
 def main(argv=None, *, fault=None, observer=None):
+    supplied = sys.argv[1:] if argv is None else argv
+    if supplied and supplied[0].startswith('measurement-'):
+        from .measurement_cli import main as measurement_main
+        return measurement_main(supplied)
     try:
         args = _arguments(sys.argv[1:] if argv is None else argv)
         receipt = execute(args, fault=fault,observer=observer)

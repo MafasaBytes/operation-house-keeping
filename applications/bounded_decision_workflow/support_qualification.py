@@ -55,10 +55,13 @@ def qualify_supplied_support(rows, *, hypothesis, procedure, context,
         for outcome in row.get("permits", ()):
             if outcome in cells:
                 cells[outcome].append(("supports", "positive_support", row["id"]))
-        for outcome in row.get("excludes", ()):
+        excluded = row.get("excludes", ())
+        if row.get("coverage") == "complete_envelope" and row.get("exclusion_basis"):
+            excluded = [o for o in outcomes if o not in row.get("permits", ())]
+        for outcome in excluded:
             if outcome not in cells:
                 continue
-            if row.get("coverage") != "explicit_exclusions" or not row.get("exclusion_basis"):
+            if row.get("coverage") not in {"explicit_exclusions", "complete_envelope"} or not row.get("exclusion_basis"):
                 cells[outcome].append(("unknown", "unsupported_exclusion", row["id"]))
             else:
                 cells[outcome].append(("excludes", "qualified_exclusion", row["id"]))
@@ -71,7 +74,10 @@ def qualify_supplied_support(rows, *, hypothesis, procedure, context,
         if not entries:
             result.append(SupportCell(outcome, "unavailable", ("support_missing",), ()))
         elif "unavailable" in relations or ("supports" in relations and "excludes" in relations):
-            result.append(SupportCell(outcome, "unknown", ("support_conflict_or_gap",), ids))
+            reasons = []
+            if "unavailable" in relations: reasons.append("support_unavailable")
+            if "supports" in relations and "excludes" in relations: reasons.append("support_conflict")
+            result.append(SupportCell(outcome, "unknown", tuple(reasons), ids))
         elif "unknown" in relations:
             result.append(SupportCell(outcome, "unknown", ("unsupported_exclusion",), ids))
         elif "supports" in relations:

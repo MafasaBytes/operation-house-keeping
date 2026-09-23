@@ -30,7 +30,7 @@ class MeasurementRankingError(ValueError):
 def canonical_survivor_multiset(branches):
     """Canonicalize branches while preserving empty arrays and multiplicity."""
     arrays = [tuple(branch.get("survivors", ())) for branch in branches]
-    return tuple(sorted(arrays, key=lambda values: (len(values), values)))
+    return tuple(sorted(arrays))
 
 
 def rank_measurements(hypothesis_ids, candidates):
