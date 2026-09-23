@@ -48,8 +48,9 @@ def timestamp(value, path):
         return
     text(value, path)
     try:
-        if not value.endswith('Z') or datetime.fromisoformat(value).utcoffset().total_seconds() != 0:
+        if not re.fullmatch(r'[0-9]{4}-[0-9]{2}-[0-9]{2}[Tt][0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]+)?(?:[Zz]|\+00:00)',value):
             raise ValueError()
+        if datetime.fromisoformat(value[:-1]+'Z' if value.endswith('z') else value).utcoffset().total_seconds()!=0:raise ValueError()
     except ValueError:
         fail('SCHEMA_INVALID', path, 'phase_1')
 
@@ -181,11 +182,12 @@ def edges(value):
     kind=value['schema']
     if kind.startswith('nm.'):return nm_edges(value)
     out=[]
-    def one(path,r,k):
-        if r is not None:out.append((path,typed(r,k)))
+    def one(path,r,k,nullable=False):
+        if r is None and nullable:return
+        out.append((path,typed(r,k)))
     def many(path,rs):
         for i,r in enumerate(rs):one(path+'/'+str(i),r,'nm.basis')
-    one('/predecessor',value['predecessor'],kind)
+    one('/predecessor',value['predecessor'],kind,nullable=True)
     fields={
         'nr.invocation.v2': [('request','nr.request.v2'),('authority','nr.authority.v2'),('build','nr.build.v2'),('resource_policy','nm.resource-policy.v1')],
         'nr.request.v2': [('original_invocation','nm.invocation.v1'),('procedure','nm.procedure.v1'),('decoder','nm.decoder.v1'),('observation','nr.observation.v2'),('execution','nr.execution.v2'),('exposure','nr.exposure.v2'),('policy','nr.policy.v2')],
@@ -194,7 +196,7 @@ def edges(value):
         'nr.exposure.v2': [('original_invocation','nm.invocation.v1'),('observation','nr.observation.v2'),('prior_bundle','nr.retained-bundle.v2')],
         'nr.authority.v2': [('request','nr.request.v2')],
     }
-    for f,k in fields.get(kind,[]):one('/'+f,value[f],k)
+    for f,k in fields.get(kind,[]):one('/'+f,value[f],k,nullable=f=='prior_bundle')
     if kind=='nr.request.v2':many('/interpretation/basis',value['interpretation']['basis'])
     if kind=='nr.observation.v2':many('/provenance',value['provenance'])
     if kind in ('nr.authority.v2','nr.exposure.v2'):many('/basis',value['basis'])

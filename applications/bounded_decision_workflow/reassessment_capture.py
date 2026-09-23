@@ -52,7 +52,7 @@ def _walk(root, enter, outgoing, work):
     return complete
 
 
-class Captured:
+class _Captured:
     """Internal structural graph; not evidence of production build admission."""
     def __init__(self, invocation, load, pin, work):
         self.work=work;self.objects={};self.values={};self.nodes={};self.paths={};self.occurrences=[]
@@ -294,7 +294,7 @@ def capture(invocation_file,objects_dir,authority_pin,limits=None):
         work.high('build_bytes',len(supplied))
         actual=reassessment_build.identity(work)
         if supplied!=actual or sha(actual)!=bk[1]:fail('BUILD_IDENTITY_MISMATCH','/build','phase_1')
-        graph=Captured(raw,load,authority_pin,work)
+        graph=_Captured(raw,load,authority_pin,work)
         graph.closure_bytes=graph.closure(authority_pin,limits)
         with retention._directory(absolute,parts) as again:
             current=os.fstat(again)

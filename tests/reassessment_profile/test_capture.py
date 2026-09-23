@@ -9,7 +9,7 @@ import pytest
 from applications.bounded_decision_workflow.measurement_wire import Work, sha, ref, key
 from applications.bounded_decision_workflow.measurement_contracts import canonical_json_bytes as wire
 from applications.bounded_decision_workflow.measurement_contracts import MeasurementContractError
-from applications.bounded_decision_workflow.reassessment_capture import Captured, capture
+from applications.bounded_decision_workflow.reassessment_capture import _Captured, capture
 
 PACKAGE = Path('docs/superpowers/reports/2026-09-23-reassessment-preparation/package.zip')
 
@@ -37,7 +37,7 @@ def bound_internal(name='P8-before'):
 
 
 def graph(c,objects,limits=None):
-    return Captured(objects[key(c['invocation'])], objects.__getitem__, c['authority_pin'], Work(limits))
+    return _Captured(objects[key(c['invocation'])], objects.__getitem__, c['authority_pin'], Work(limits))
 
 
 def structural(name='P8-before'):
@@ -49,6 +49,8 @@ def test_exact_historical_recovery_and_sharing():
     assert len(g.prior_bundles) == 1
     files = next(iter(g.prior_bundles.values()))
     assert sum(map(len, files.values())) == 232849
+    with zipfile.ZipFile(PACKAGE) as z:expected=json.loads(z.read('authority/expected-files.json'))
+    assert [dict(name=n,bytes=len(b),sha256=sha(b)) for n,b in sorted(files.items())]==expected
     assert sha(files['closure.json']) == '5d8df562890d51a2bfdba10ddc460fcc822c1f31adc247651c825305eda405cd'
     assert g.work.logical['reference_occurrences'] > len(g.objects)
     assert 'branch_intersections' not in g.work.logical
@@ -246,6 +248,26 @@ def test_typed_reference_rejects_rehashed_cross_profile():
     c,p=bound_internal('P1-point60');k=key(c['invocation']);v=json.loads(p[k])
     v['request']['kind']='thermal.request.v1';replace(c,p,k,v)
     with pytest.raises(MeasurementContractError,match='REFERENCE_ROLE_MISMATCH'):graph(c,p)
+
+
+def test_required_observation_reference_cannot_be_null():
+    c,p=bound_internal('P1-point60');k=next(k for k in p if k[0]=='nr.observation.v2');v=json.loads(p[k])
+    v['decoder']=None;replace(c,p,k,v)
+    with pytest.raises(MeasurementContractError,match='REFERENCE_SHAPE_INVALID'):graph(c,p)
+
+
+def test_utc_spellings_preserve_bytes_without_claiming_chronology():
+    c,p=bound_internal('P1-point60');k=next(k for k in p if k[0]=='nr.exposure.v2');v=json.loads(p[k])
+    v['declared_prediction_commitment_at']='2026-09-20T10:00:00+00:00'
+    replace(c,p,k,v)
+    assert graph(c,p).objects
+
+
+@pytest.mark.parametrize('timestamp',['2026-09-20T10:00:00+01:00','2026-02-30T10:00:00Z','20260920T100000Z'])
+def test_invalid_utc_lexical_twins(timestamp):
+    c,p=bound_internal('P1-point60');k=next(k for k in p if k[0]=='nr.exposure.v2');v=json.loads(p[k])
+    v['declared_prediction_commitment_at']=timestamp;replace(c,p,k,v)
+    with pytest.raises(MeasurementContractError,match='SCHEMA_INVALID'):graph(c,p)
 
 
 def test_original_recorded_work_limit_is_not_erased_by_sharing():
