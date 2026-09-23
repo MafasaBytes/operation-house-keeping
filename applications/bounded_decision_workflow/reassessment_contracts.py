@@ -76,7 +76,7 @@ def validate(value, kind, wire, work):
     if value.get('schema') != kind:
         fail('REFERENCE_ROLE_MISMATCH', '/schema', 'phase_2')
     if kind.startswith('nm.'):
-        parse_document(wire, expected_schema=kind)
+        parse_document(wire, expected_schema=kind, work=work)
         if kind in NM_BODIES:
             required = NM_HEADER | set(NM_BODIES[kind].split())
             if kind != 'nm.request.v1' or not required <= set(value):shape(value,required,'/object')
@@ -131,7 +131,8 @@ def validate(value, kind, wire, work):
         if any(value[k]!=v for k,v in expected.items()):fail('SCHEMA_INVALID','/policy','phase_1')
     elif kind == 'nr.build.v2':
         body={k:value[k] for k in BODIES[kind].split()}
-        if value['revision']!=1 or value['id']!=sha(canonical_json_bytes(body)):
+        body_digest=sha(canonical_json_bytes(body),work)
+        if value['revision']!=1 or value['id']!=body_digest:
             fail('BUILD_IDENTITY_MISMATCH','/build/id','phase_1')
         if type(value['checkpoint']) is not str or not re.fullmatch('[0-9a-f]{40}',value['checkpoint']):
             fail('SCHEMA_INVALID','/build/checkpoint','phase_1')

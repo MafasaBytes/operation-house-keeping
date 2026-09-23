@@ -53,10 +53,11 @@ def _pairs(items):
     return out
 
 
-def parse_document(wire, *, expected_schema=None, allow_opaque=False):
+def parse_document(wire, *, expected_schema=None, allow_opaque=False, work=None):
     if type(wire) is not bytes:
         raise MeasurementContractError("WIRE_TYPE_INVALID")
     try:
+        if work is not None:work.charge('json_decode_bytes',len(wire))
         value = json.loads(wire, object_pairs_hook=_pairs,
                            parse_constant=lambda token: (_ for _ in ()).throw(
                                ValueError(token)))

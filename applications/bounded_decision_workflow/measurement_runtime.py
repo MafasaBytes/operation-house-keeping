@@ -234,14 +234,15 @@ def recover(payloads,work):
     return value,objects
 
 
-def _validate_retained_envelopes(payloads, work):
+def _validate_retained_envelopes(payloads, work, *, role_work=None):
     """Wire/profile validation, not acceptance of retained numerical claims."""
     fields = {
         'result.json': 'schema profile invocation authority evidence procedure_assessments hypothesis_assessments cells ranking review accounting',
         'trace.json': 'schema profile invocation origin required_closure reference_occurrences phases semantic_origin physical_observed',
     }
-    invocation=ref('nm.invocation.v1',sha(payloads['invocation.json']))
+    invocation=ref('nm.invocation.v1',sha(payloads['invocation.json'],work))
     for name,spec in fields.items():
+        if role_work is not None:role_work.charge('context_scan_bytes',len(payloads[name]))
         value,_=decode(payloads[name],work)
         if value.get('schema')!=('nm.result.v1' if name=='result.json' else 'nm.trace.v1') or value.get('profile')!=PROFILE:
             fail('PROFILE_MISMATCH',name,'phase_1')

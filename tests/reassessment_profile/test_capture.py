@@ -168,6 +168,29 @@ def test_serialization_reserves_before_base64(monkeypatch):
     with pytest.raises(MeasurementContractError,match='RESOURCE_LIMIT_EXCEEDED'):g.closure(c['authority_pin'])
 
 
+def test_hash_work_includes_repeated_integrity_checks(monkeypatch):
+    import hashlib
+    c,p=bound_internal();original=hashlib.sha256;observed=0
+    def measured(data=b'',*args,**kwargs):
+        nonlocal observed
+        observed+=len(data)
+        return original(data,*args,**kwargs)
+    monkeypatch.setattr(hashlib,'sha256',measured)
+    g=graph(c,p)
+    assert g.work.logical['hash_bytes']==observed
+
+
+def test_json_work_includes_repeated_role_and_header_parsing(monkeypatch):
+    c,p=bound_internal();original=json.loads;observed=0
+    def measured(data,*args,**kwargs):
+        nonlocal observed
+        observed+=len(data.encode() if isinstance(data,str) else data)
+        return original(data,*args,**kwargs)
+    monkeypatch.setattr(json,'loads',measured)
+    g=graph(c,p)
+    assert g.work.logical['json_decode_bytes']==observed
+
+
 @pytest.mark.parametrize('name', ['P1-point60','P2-below'])
 def test_no_observation_or_support_work_in_slice_one(name):
     # Containment is deliberately Slice 2; positive capture is not admission.
@@ -317,6 +340,24 @@ def test_production_capture_actual_build_exact_prior_and_measurements(tmp_path):
     (tmp_path/'measurement.json').write_bytes(wire(record))
 
 
+def test_production_build_hash_accounting_matches_actual_calls(monkeypatch):
+    import hashlib
+    from applications.bounded_decision_workflow.reassessment_build import identity
+    original=hashlib.sha256;observed=0
+    class Observed:
+        def __init__(self,data=b'',*args,**kwargs):
+            nonlocal observed
+            observed+=len(data);self.inner=original(data,*args,**kwargs)
+        def update(self,data):
+            nonlocal observed
+            observed+=len(data);self.inner.update(data)
+        def hexdigest(self):return self.inner.hexdigest()
+        def digest(self):return self.inner.digest()
+    monkeypatch.setattr(hashlib,'sha256',Observed)
+    work=Work();identity(work)
+    assert work.physical['build_hash_bytes']==observed
+
+
 @pytest.mark.parametrize('attack,expected', [('prepared','NONEXECUTABLE_BUILD_WITNESS'),('build','BUILD_IDENTITY_MISMATCH'),('policy','RESOURCE_POLICY_IDENTITY_MISMATCH'),('pin','AUTHORITY_PIN_REQUIRED')])
 def test_production_build_policy_and_external_pin(tmp_path,attack,expected):
     c,p=case() if attack=='prepared' else actual_case()
@@ -339,6 +380,27 @@ def test_production_file_admission(tmp_path,attack):
     elif attack=='fifo':iv.rename(tmp_path/'saved.json');os.mkfifo(iv)
     else:iv=iv.parent/'..'/iv.parent.name/iv.name
     with pytest.raises(WorkflowInputError):capture(iv,objects,pin)
+
+
+def test_production_root_capture_limit_precedes_build_work(tmp_path,monkeypatch):
+    from applications.bounded_decision_workflow import reassessment_build, reassessment_capture
+    c,p=bound_internal();iv,objects,pin=files_for(tmp_path,c,p)
+    observed=Work({'capture_bytes':1})
+    monkeypatch.setattr(reassessment_capture,'Work',lambda limits:observed)
+    monkeypatch.setattr(reassessment_build,'identity',lambda *args:pytest.fail('build work after root overflow'))
+    with pytest.raises(MeasurementContractError) as e:capture(iv,objects,pin,{'capture_bytes':1})
+    assert e.value.code=='RESOURCE_LIMIT_EXCEEDED' and e.value.details['dimension']=='capture_bytes'
+    assert observed.physical['bytes_read']==observed.physical['read_operations']==0
+
+
+def test_prior_result_limit_precedes_role_parse(monkeypatch):
+    from applications.bounded_decision_workflow import reassessment_capture as module
+    c,p=bound_internal();g=graph(c,p);result=next(iter(g.prior_bundles.values()))['result.json'];original=module.decode
+    def bounded(raw,*args,**kwargs):
+        assert raw!=result,'oversized result was parsed before its role limit'
+        return original(raw,*args,**kwargs)
+    monkeypatch.setattr(module,'decode',bounded)
+    with pytest.raises(MeasurementContractError,match='RESOURCE_LIMIT_EXCEEDED'):graph(c,p,{'result_bytes':len(result)-1})
 
 
 def test_production_detects_invocation_replacement(tmp_path,monkeypatch):

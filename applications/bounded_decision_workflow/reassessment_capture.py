@@ -9,7 +9,7 @@ import os
 
 from . import retention, reassessment_build, measurement_build
 from .measurement_contracts import canonical_json_bytes, APPROVED_POLICY_SHA, MeasurementContractError
-from .measurement_wire import Work, Graph, decode, sha, ref, key, shape, fail, BODIES as NM_BODIES
+from .measurement_wire import Work, Graph, decode, sha, ref, key, shape, fail
 from .measurement_runtime import _read, _validate_retained_envelopes
 from .reassessment_contracts import PROFILE, BODIES, FILES, CAPS, typed, validate, edges
 
@@ -23,7 +23,7 @@ class _HistoricalWork(Work):
 
     def charge(self,k,n=1):
         super().charge(k,n)
-        if k in ('reference_occurrences','edge_visits','context_scan_bytes','scoped_expansions','scoped_edge_checks','rational_operations','decoder_comparisons'):
+        if k in ('reference_occurrences','edge_visits','context_scan_bytes','scoped_expansions','scoped_edge_checks','rational_operations','decoder_comparisons','hash_bytes','json_decode_bytes'):
             self.outer.charge(k,n)
         elif k=='json_nodes':self.outer.charge('reparsed_json_nodes',n)
         elif k=='capture_bytes':self.outer.charge('historical_reconstructed_input_bytes',n)
@@ -56,7 +56,7 @@ class _Captured:
     """Internal structural graph; not evidence of production build admission."""
     def __init__(self, invocation, load, pin, work):
         self.work=work;self.objects={};self.values={};self.nodes={};self.paths={};self.occurrences=[]
-        self.root=ref('nr.invocation.v2',sha(invocation));root=key(self.root)
+        self.root=ref('nr.invocation.v2',sha(invocation,work));root=key(self.root)
         self.prior_bundles={};identities={}
         work.high('invocation_bytes',len(invocation))
         iv,_=decode(invocation,work)
@@ -69,11 +69,10 @@ class _Captured:
                 try:raw=invocation if k==root else load(k)
                 except KeyError:fail('REQUIRED_REFERENCE_MISSING',path or '/closure','phase_2')
                 work.high('object_bytes',len(raw));work.charge('capture_bytes',len(raw))
-                work.charge('hash_bytes',len(raw))
-                if sha(raw)!=k[1]:fail('REFERENCE_DIGEST_MISMATCH',path or '/closure','phase_2')
+                if sha(raw,work)!=k[1]:fail('REFERENCE_DIGEST_MISMATCH',path or '/closure','phase_2')
                 if k[0]=='nm.basis':v=None;n=0
                 else:
-                    v,n=decode(raw,work,node_base=work.logical.get('json_nodes',0));work.charge('decode_bytes',len(raw))
+                    v,n=decode(raw,work,node_base=work.logical.get('json_nodes',0))
                     validate(v,k[0],raw,work)
                     if k[0]=='nm.resource-policy.v1' and k[1]!=APPROVED_POLICY_SHA:
                         fail('RESOURCE_POLICY_IDENTITY_MISMATCH','/resource_policy','phase_1')
@@ -157,11 +156,8 @@ class _Captured:
         w=self.work
         historical=_HistoricalWork(c['limits_override'],w)
         def old_load(k,unused):
-            raw=self.objects[k]
-            w.charge('hash_bytes',len(raw));w.charge('decode_bytes',len(raw) if k[0]!='nm.basis' else 0)
-            return raw
+            return self.objects[k]
         original=self.objects[typed(c['invocation'])]
-        w.charge('hash_bytes',len(original));w.charge('decode_bytes',len(original))
         Graph(original,old_load,c['authority_pin'],historical)
 
     def closure(self,pin,limits=None):
@@ -191,9 +187,10 @@ class _Captured:
             if name=='closure.json':raw=_serialize_closure(header,members,self.objects,w)
             else:
                 k=typed(row['source']['reference']);raw=self.objects[k]
+                effective.guard(CAPS[name],len(raw));w.guard(CAPS[name],len(raw))
                 w.charge('reference_occurrences');w.charge('edge_visits')
                 v,n=decode(raw,w,node_base=w.logical.get('role_json_nodes',0))
-                w.charge('role_json_nodes',n);w.charge('decode_bytes',len(raw))
+                w.charge('role_json_nodes',n)
                 w.charge('context_scan_bytes',len(raw))
                 if k[0]=='nm.basis' and not self.nodes[k]:
                     w.charge('json_nodes',n);self.nodes[k]=n
@@ -207,7 +204,7 @@ class _Captured:
         w.charge('reconstructed_file_bytes',sum(map(len,files.values())))
         if files['invocation.json']!=self.objects[typed(c['invocation'])]:fail('REFERENCE_DIGEST_MISMATCH','/files/invocation.json','phase_2')
         for name,field in [('build.json','build_identity'),('policy.json','resource_policy')]:
-            if sha(files[name])!=iv[field]:fail('REFERENCE_DIGEST_MISMATCH','/files/'+name,'phase_2')
+            if sha(files[name],w)!=iv[field]:fail('REFERENCE_DIGEST_MISMATCH','/files/'+name,'phase_2')
         manifest,_=decode(files['manifest.json'],w)
         shape(manifest,'schema profile completeness files physical','/manifest')
         if manifest['completeness']!='complete' or type(manifest['files']) is not list or len(manifest['files'])!=6:
@@ -218,10 +215,9 @@ class _Captured:
             fail('MANIFEST_INVALID','/manifest/physical','phase_2')
         for row,name in zip(manifest['files'],FILES[:-1]):
             shape(row,'name bytes sha256','/manifest/files')
-            w.charge('hash_bytes',len(files[name]))
-            if row['name']!=name or type(row['bytes']) is not int or row['bytes']!=len(files[name]) or row['sha256']!=sha(files[name]):
+            if row['name']!=name or type(row['bytes']) is not int or row['bytes']!=len(files[name]) or row['sha256']!=sha(files[name],w):
                 fail('MANIFEST_COMMITMENT_MISMATCH','/files/'+name,'phase_2')
-        _validate_retained_envelopes(files,w)
+        _validate_retained_envelopes(files,w,role_work=w)
         trace,_=decode(files['trace.json'],w)
         if trace['required_closure']!=[ref(*k) for k in members]:fail('REFERENCE_ROLE_MISMATCH','/trace/required_closure','phase_2')
         result,_=decode(files['result.json'],w)
@@ -263,7 +259,8 @@ def capture(invocation_file,objects_dir,authority_pin,limits=None):
     with retention._directory(absolute,parts[:-1]) as fd:
         if retention._filesystem(fd)!='ext4':raise retention._error('FILESYSTEM_UNSUPPORTED')
         pinned=os.fstat(fd)
-        raw=_read(fd,parts[-1],work.limits['invocation_bytes'],work,'invocation_bytes')
+        dimension=min(('invocation_bytes','capture_bytes'),key=lambda k:work.limits[k])
+        raw=_read(fd,parts[-1],work.limits[dimension],work,dimension)
         with retention._directory(absolute,parts[:-1]) as again:
             current=os.fstat(again)
             if (pinned.st_dev,pinned.st_ino)!=(current.st_dev,current.st_ino):
@@ -293,7 +290,8 @@ def capture(invocation_file,objects_dir,authority_pin,limits=None):
         if value.get('schema')=='nr.prepared-build.v2':fail('NONEXECUTABLE_BUILD_WITNESS','/build','phase_1')
         work.high('build_bytes',len(supplied))
         actual=reassessment_build.identity(work)
-        if supplied!=actual or sha(actual)!=bk[1]:fail('BUILD_IDENTITY_MISMATCH','/build','phase_1')
+        if supplied!=actual:fail('BUILD_IDENTITY_MISMATCH','/build','phase_1')
+        if sha(actual,work)!=bk[1]:fail('BUILD_IDENTITY_MISMATCH','/build','phase_1')
         graph=_Captured(raw,load,authority_pin,work)
         graph.closure_bytes=graph.closure(authority_pin,limits)
         with retention._directory(absolute,parts) as again:

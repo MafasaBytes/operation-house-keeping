@@ -46,7 +46,9 @@ def local_id(x):
         fail('IDENTITY_INVALID','id')
 
 
-def sha(wire): return hashlib.sha256(wire).hexdigest()
+def sha(wire, work=None):
+    if work is not None:work.charge('hash_bytes',len(wire))
+    return hashlib.sha256(wire).hexdigest()
 def ref(kind, digest): return {'kind':kind,'sha256':digest}
 def key(r,kind=None): return _ref(r,expected_kind=kind)
 
@@ -120,7 +122,7 @@ def decode(wire, work, *, transport=False, node_base=0):
             nodes+=1;work.guard('json_nodes',node_base+nodes)
             while i+1<len(wire) and wire[i+1] not in b' \t\r\n,]}':i+=1
         i+=1
-    value=parse_document(wire,allow_opaque=True)
+    value=parse_document(wire,allow_opaque=True,work=work)
     return value,nodes
 
 
@@ -214,7 +216,7 @@ def edges(v):
 class Graph:
     def __init__(self, invocation, load, pin, work):
         self.work=work;self.objects={};self.values={};self.nodes={};self.occurrences=[]
-        self.root=ref('nm.invocation.v1',sha(invocation));self.paths={key(self.root):''}
+        self.root=ref('nm.invocation.v1',sha(invocation,work));self.paths={key(self.root):''}
         iv,n=decode(invocation,work)
         if iv.get('schema')!='nm.invocation.v1' or iv.get('profile')!=PROFILE:
             fail('PROFILE_MISMATCH','invocation','phase_1')
@@ -241,17 +243,17 @@ class Graph:
                     raise
                 self.paths[k]=self.paths.get(parent,'')+(path or '')
                 work.high('object_bytes',len(wire));work.charge('capture_bytes',len(wire))
-                if sha(wire)!=k[1]:fail('REFERENCE_DIGEST_MISMATCH',path,'phase_2',request=iv['request'],references=[ref(*k)])
+                if sha(wire,work)!=k[1]:fail('REFERENCE_DIGEST_MISMATCH',path,'phase_2',request=iv['request'],references=[ref(*k)])
                 if k[0]=='nm.basis':v=None;nodes=0
                 else:
                     v,nodes=decode(wire,work,node_base=work.logical.get('json_nodes',0))
                     if v.get('schema')=='nm.prepared-build.v1':fail('NONEXECUTABLE_BUILD_WITNESS',path,'phase_1')
-                    try:parse_document(wire,expected_schema=k[0])
+                    try:parse_document(wire,expected_schema=k[0],work=work)
                     except MeasurementContractError as error:
                         error.stage='phase_2';error.target=self.paths[k]+'/'+error.target
                         error.details['request']=iv['request'];raise
                     if k[0]=='nm.resource-policy.v1':
-                        if sha(wire)!=APPROVED_POLICY_SHA:fail('RESOURCE_POLICY_IDENTITY_MISMATCH',path,'phase_1')
+                        if sha(wire,work)!=APPROVED_POLICY_SHA:fail('RESOURCE_POLICY_IDENTITY_MISMATCH',path,'phase_1')
                     else:
                         if k[0] not in BODIES:fail('PROFILE_MISMATCH',path,'phase_1')
                         required=HEADER|set(BODIES[k[0]].split())

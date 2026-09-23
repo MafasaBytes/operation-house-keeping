@@ -22,6 +22,9 @@ def identity(work=None):
     if git('status','--porcelain','--untracked-files=all','--','applications','backend'):
         raise build.unavailable()
     checkpoint=git('rev-parse','HEAD')
+    def digest_bytes(data):
+        if work is not None:work.physical['build_hash_bytes']=work.physical.get('build_hash_bytes',0)+len(data)
+        return hashlib.sha256(data).hexdigest()
     names=subprocess.check_output(['git','--no-optional-locks','-C',str(build.ROOT),
                                   'ls-files','applications','backend'],timeout=10).decode().splitlines()
     def digest_file(path):
@@ -32,6 +35,7 @@ def identity(work=None):
                 if work is not None:work.physical['build_read_operations']=work.physical.get('build_read_operations',0)+1
                 if not chunk:break
                 size+=len(chunk);h.update(chunk)
+                if work is not None:work.physical['build_hash_bytes']=work.physical.get('build_hash_bytes',0)+len(chunk)
         if work is not None:work.physical['build_bytes_read']=work.physical.get('build_bytes_read',0)+size
         return h.hexdigest(),size
     sources=[]
@@ -45,7 +49,7 @@ def identity(work=None):
     if work is not None:
         work.physical['build_bytes_read']=work.physical.get('build_bytes_read',0)+len(lock)
         work.physical['build_read_operations']=work.physical.get('build_read_operations',0)+1
-    lock_digest=hashlib.sha256(lock).hexdigest()
+    lock_digest=digest_bytes(lock)
     if lock_digest!='7c87f0d7a3f12c271311cc0c33e59025e0161c37f16336901a0764b4330c0817':raise build.unavailable()
     dependencies=[]
     for name,version in sorted(line.split('==') for line in lock.decode().splitlines()):
@@ -59,7 +63,7 @@ def identity(work=None):
             artifacts.append(dict(path=str(entry),sha256=digest,bytes=size))
         if not artifacts:fail('BUILD_IDENTITY_MISMATCH','installed_distribution','phase_1')
         dependencies.append(dict(name=name,version=version,artifact_count=len(artifacts),
-            artifact_manifest_sha256=hashlib.sha256(canonical_json_bytes(artifacts)).hexdigest()))
+            artifact_manifest_sha256=digest_bytes(canonical_json_bytes(artifacts))))
     executable_digest,executable_bytes=digest_file(Path(sys.executable))
     environment=dict(python=dict(implementation=platform.python_implementation(),version=platform.python_version(),
                         executable_sha256=executable_digest,executable_bytes=executable_bytes),
