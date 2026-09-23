@@ -262,3 +262,15 @@ def test_prepared_build_cannot_assert_executable_compatibility(tmp_path):
     root['build_identity']=digest;iv.write_bytes(canonical_json_bytes(root))
     bad=command('measurement-evaluate','--invocation',iv,'--objects-dir',objects,'--authority-pin',pin,'--output-dir',tmp_path/'not-executable')
     assert bad.returncode==3 and json.loads(bad.stderr)['code']=='NONEXECUTABLE_BUILD_WITNESS'
+
+
+def test_scoped_shared_edge_work_cannot_bypass_edge_budget(tmp_path):
+    iv,objects,pin=recover_case(tmp_path)
+    # P has 62 unique-graph edge occurrences in the frozen independent input
+    # graph. Its per-request scope has additional edge checks; 62 is therefore
+    # insufficient for the combined traversal work, although capture fits.
+    limits=tmp_path/'edge-budget.json';limits.write_bytes(b'{"edge_visits":62}')
+    run=command('measurement-evaluate','--invocation',iv,'--objects-dir',objects,'--authority-pin',pin,
+                '--output-dir',tmp_path/'too-little-work','--limits',limits)
+    assert run.returncode==4,run.stdout.decode()
+    assert json.loads(run.stderr)['resource']=={'dimension':'edge_visits','attempted':63,'limit':62}

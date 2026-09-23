@@ -277,7 +277,7 @@ class Graph:
                 if v:
                     for path,child in edges(v):
                         if k==qk and path=='/predecessor':continue
-                        w.charge('scoped_edge_checks');todo.append(child)
+                        w.charge('edge_visits');w.charge('scoped_edge_checks');todo.append(child)
             self._joins(q)
         for v in self.values.values():
             if v:self._intrinsic(v)
