@@ -8,6 +8,13 @@ contains the binding project guidance.
 
 ## Current status
 
+Maintained bounded [next-measurement selection](docs/next-measurement/README.md)
+has owner-accepted Slices 1–6. It adds qualified supplied predictions, prior-free
+minimax over nominated procedures, explicit whole-set withholding and standalone
+recomputing replay. Final release verification is authorized; final milestone
+acceptance remains pending. No backend extension or physical acquisition follows.
+
+
 The maintained [bounded decision workflow](applications/bounded_decision_workflow/README.md)
 is owner accepted through S1–S7 at implementation
 `64f4389b6d93484339afa29cbb7f7f21f6ef2758`; see the

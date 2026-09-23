@@ -25,6 +25,15 @@ must remain authoritative.
 
 ## Status (added 2026-08-07 — historical guidance below is preserved)
 
+Application update (2026-09-23): next-measurement Slices 1–6 are owner accepted;
+final release verification is authorized and final milestone acceptance is pending.
+The [measurement guide](docs/next-measurement/README.md) and
+[coverage map](docs/next-measurement/coverage.md) describe the maintained bounded
+objective-4 contribution. This supersedes older statements below that maintained
+next-test ranking is absent, only within the supplied measurement profile.
+No generated hypotheses/tests, physical acquisition, general influence layer or
+backend extension is implied. IN-001 and CI-001 remain open and unselected.
+
 Application delivery update (2026-09-17): finite-world admissibility enforcement
 is [owner accepted](docs/superpowers/reports/2026-09-17-maintained-admissibility-final-owner-acceptance.md)
 at `15f773ba9c675b553283669fbf72c76407c0eabd`. The explicit governed route

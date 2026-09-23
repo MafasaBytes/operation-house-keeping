@@ -144,7 +144,7 @@ Its explicit digest and exact-build requirements apply. Extract only to a new
 exclusive destination; incomplete bytes are not trusted merely because they can be
 read. Verification checks integrity; replay additionally reconstructs/recomputes.
 Original objectives are answered only within the nominated synthetic hypotheses,
-actions, hard bounds and policy. The workflow does not select measurements or
+actions, hard bounds and policy. The thermal profile does not select measurements or
 generate alternatives, and does not establish actual physical effects.
 
 ## Authority and historical evidence navigation
@@ -252,3 +252,11 @@ empirically qualified. There is no automatic environment restoration, discovery 
 valid assumptions, conflicting-evidence adjudication, physical monitoring,
 causal inference or automatic planning. C remains unresolved/dossier-only and F
 historical/analytical. No continuous-domain or statistical-correlation claim follows.
+
+## Supplied next-measurement profile
+
+The separate [measurement guide](../../docs/next-measurement/README.md) documents
+measurement-evaluate/verify/replay, committed-only fixture recovery and the exact
+bounded interpretation. Slices 1–6 are owner accepted; final release/milestone
+acceptance remains pending. The existing thermal/governed profiles retain their
+original semantics and historical build requirements.
