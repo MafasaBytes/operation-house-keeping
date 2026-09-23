@@ -1,0 +1,78 @@
+F.F                                                                      [100%]
+=================================== FAILURES ===================================
+___________________ test_failed_read_counts_consumed_prefix ____________________
+
+tmp_path = PosixPath('/tmp/nm-slice6-io-red/test_failed_read_counts_consum0')
+
+    def test_failed_read_counts_consumed_prefix(tmp_path):
+     p=tmp_path/'large';p.write_bytes(b'x'*20);work=mw.Work({'invocation_bytes':8})
+>    with pytest.raises(MeasurementContractError) as caught:rt.read_path(p,'invocation_bytes',work)
+                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/measurement_profile/test_final_boundaries_slice6.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+applications/bounded_decision_workflow/measurement_runtime.py:44: in read_path
+    return _read(fd,parts[-1],work.limits[dimension],work)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+applications/bounded_decision_workflow/measurement_runtime.py:30: in _read
+    item=retention._read_at(fd,name,cap,observe)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+parent = 12, name = 'large', cap = 8
+hook = <function _read.<locals>.observe at 0x7fb63c9e71a0>
+
+    def _read_at(parent, name, cap, hook=None):
+        try:
+            before = os.stat(name, dir_fd=parent, follow_symlinks=False)
+            if stat.S_ISLNK(before.st_mode): raise _error("PATH_FINAL_SYMLINK")
+            if not stat.S_ISREG(before.st_mode): raise _error("PATH_SPECIAL_FILE")
+            fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC, dir_fd=parent)
+        except FileNotFoundError:
+            raise
+        except OSError as e:
+            if e.errno == errno.ELOOP: raise _error("PATH_FINAL_SYMLINK") from e
+            raise _error("PATH_COMPONENT_UNSAFE") from e
+        try:
+            opened = os.fstat(fd)
+            if not stat.S_ISREG(opened.st_mode): raise _error("PATH_SPECIAL_FILE")
+            if _metadata(opened) != _metadata(before): raise _error("INPUT_CHANGED_DURING_READ")
+            _filesystem(fd)
+            chunks, count = [], 0
+            while count <= cap:
+                _event(hook, "read", name)
+                chunk = os.read(fd, min(8192, cap + 1 - count))
+                if not chunk: break
+                chunks.append(chunk); count += len(chunk)
+            _event(hook, "after_read", name)
+            if _metadata(os.fstat(fd)) != _metadata(opened): raise _error("INPUT_CHANGED_DURING_READ")
+>           if count > cap: raise _error("INPUT_WIRE_LIMIT_EXCEEDED")
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           applications.bounded_decision_workflow.errors.WorkflowInputError: INPUT_WIRE_LIMIT_EXCEEDED
+
+applications/bounded_decision_workflow/retention.py:161: WorkflowInputError
+_______________ test_partial_write_failure_counts_written_prefix _______________
+
+tmp_path = PosixPath('/tmp/nm-slice6-io-red/test_partial_write_failure_cou0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fb63c9ece90>
+
+    def test_partial_write_failure_counts_written_prefix(tmp_path,monkeypatch):
+     from applications.bounded_decision_workflow import retention
+     from applications.bounded_decision_workflow.errors import WorkflowInputError
+     work=mw.Work();real=os.write;calls=0
+     def broken(fd,data):
+      nonlocal calls
+      calls+=1
+      if calls==1:return real(fd,data[:3])
+      raise OSError('deliberate partial-write control')
+     with retention._directory(True,str(tmp_path).split('/')[1:]) as fd:
+      monkeypatch.setattr(os,'write',broken)
+>     with pytest.raises(WorkflowInputError):retention._write_file(fd,'result.json',b'123456',None,io=work.io)
+                                                                                                      ^^^^^^^
+E     AttributeError: 'Work' object has no attribute 'io'
+
+tests/measurement_profile/test_final_boundaries_slice6.py:94: AttributeError
+=========================== short test summary info ============================
+FAILED tests/measurement_profile/test_final_boundaries_slice6.py::test_failed_read_counts_consumed_prefix
+FAILED tests/measurement_profile/test_final_boundaries_slice6.py::test_partial_write_failure_counts_written_prefix
+2 failed, 1 passed, 8 deselected in 2.57s

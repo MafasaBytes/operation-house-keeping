@@ -1,0 +1,19 @@
+{
+  "changed": [
+    "applications/bounded_decision_workflow/measurement_cli.py",
+    "applications/bounded_decision_workflow/measurement_contracts.py",
+    "applications/bounded_decision_workflow/measurement_runtime.py",
+    "applications/bounded_decision_workflow/measurement_wire.py",
+    "applications/bounded_decision_workflow/retention.py",
+    "tests/measurement_profile/qualify_resources_slice6.py",
+    "tests/measurement_profile/qualify_slice6.py",
+    "tests/measurement_profile/test_delivery_contract_mapping.py",
+    "tests/measurement_profile/test_qualification_slice6.py",
+    "tests/measurement_profile/test_resource_prefix_slice6.py"
+  ],
+  "current_untracked_count": 1536,
+  "historical_reports_preserved": true,
+  "missing": [],
+  "starting_regular_files": 2513,
+  "starting_untracked_files": 1444
+}

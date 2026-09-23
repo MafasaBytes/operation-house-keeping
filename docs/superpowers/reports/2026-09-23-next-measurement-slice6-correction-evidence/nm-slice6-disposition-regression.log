@@ -1,0 +1,28 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.11, pytest-9.1.1, pluggy-1.6.0
+rootdir: /tmp/nm-slice6-disposition-clean
+configfile: pyproject.toml
+collected 268 items
+
+tests/measurement_profile/test_admission_slice2.py ....                  [  1%]
+tests/measurement_profile/test_contracts_and_closure.py ..........       [  5%]
+tests/measurement_profile/test_delivery_contract_mapping.py ............ [  9%]
+...........                                                              [ 13%]
+tests/measurement_profile/test_delivery_slice5.py ...                    [ 14%]
+tests/measurement_profile/test_final_boundaries_slice6.py .............. [ 20%]
+.............                                                            [ 25%]
+tests/measurement_profile/test_qualification_slice6.py ................. [ 31%]
+...                                                                      [ 32%]
+tests/measurement_profile/test_ranking_slice4.py .....                   [ 34%]
+tests/measurement_profile/test_resource_prefix_slice6.py ..              [ 35%]
+tests/measurement_profile/test_slice5_vertical.py .                      [ 35%]
+tests/measurement_profile/test_support_qualification_slice3.py ....      [ 36%]
+tests/applications/bounded_decision_workflow/test_s6_cli.py ............ [ 41%]
+............................                                             [ 51%]
+tests/applications/bounded_decision_workflow/test_governed_cli.py ...... [ 54%]
+.                                                                        [ 54%]
+tests/applications/bounded_decision_workflow/test_s5_retention_recovery.py . [ 54%]
+........................................................................ [ 81%]
+.................................................                        [100%]
+
+======================= 268 passed in 337.50s (0:05:37) ========================

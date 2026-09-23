@@ -1,0 +1,25 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_____________ test_failed_stdout_preserves_tight_diagnostic_budget _____________
+
+tmp_path = PosixPath('/tmp/nm-slice6-stream-budget-red/test_failed_stdout_preserves_t0')
+
+    def test_failed_stdout_preserves_tight_diagnostic_budget(tmp_path):
+     source='''from applications.bounded_decision_workflow import measurement_cli as c
+    from applications.bounded_decision_workflow.measurement_wire import Work
+    def answer(*a):
+     Work({'diagnostic_bytes':1})
+     return dict(schema='nm.receipt.v1',operation='measurement-evaluate',evaluation_permitted=True,disposition='preferred_within_supplied_set',result_sha256='0'*64,bundle_sha256='1'*64)
+    c.runtime.evaluate=answer
+    raise SystemExit(c.main(['measurement-evaluate','--invocation','i','--objects-dir','o','--authority-pin','a','--output-dir','r']))
+    '''
+     with open('/dev/full','wb',buffering=0) as sink:
+      run=subprocess.run([sys.executable,'-c',source],stdout=sink,stderr=subprocess.PIPE)
+>    assert run.returncode==4 and json.loads(run.stderr)['code']=='DIAGNOSTIC_LIMIT_EXCEEDED'
+E    assert (7 == 4)
+E     +  where 7 = CompletedProcess(args=['/home/mafasa/operation-house-keeping-runtime/bounded-decision-workflow/environments/cp313-bdw0...ternal","target":{"field":"/application","logical_id":null,"occurrence_count":null,"references":[],"request":null}}\n').returncode
+
+tests/measurement_profile/test_final_boundaries_slice6.py:238: AssertionError
+=========================== short test summary info ============================
+FAILED tests/measurement_profile/test_final_boundaries_slice6.py::test_failed_stdout_preserves_tight_diagnostic_budget
+1 failed, 26 deselected in 4.05s

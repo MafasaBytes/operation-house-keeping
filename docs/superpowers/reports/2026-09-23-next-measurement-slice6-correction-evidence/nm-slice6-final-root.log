@@ -1,0 +1,11 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.11, pytest-9.1.1, pluggy-1.6.0
+rootdir: /mnt/d/operation-house-keeping
+configfile: pyproject.toml
+collected 72 items / 57 deselected / 15 selected
+
+tests/measurement_profile/test_delivery_contract_mapping.py ......       [ 40%]
+tests/measurement_profile/test_resource_prefix_slice6.py ..              [ 53%]
+tests/applications/bounded_decision_workflow/test_s6_cli.py .......      [100%]
+
+================ 15 passed, 57 deselected in 168.74s (0:02:48) =================

@@ -1,0 +1,79 @@
+{
+  "bundle_files": 504,
+  "bundles": 72,
+  "children_rss_highwater": 90963968,
+  "command_block_in": 122072,
+  "command_block_out": 35936,
+  "cpu_system_seconds": 16.289013,
+  "cpu_user_seconds": 207.97552100000001,
+  "exact_matches": 141,
+  "exit_counts": {
+    "0": 108,
+    "3": 32,
+    "4": 2
+  },
+  "head": "96f71b7f987faacaf7f16c361018434e4ae21993",
+  "logical_required_maxima": {
+    "active_depth": 7,
+    "capture_bytes": 140419,
+    "closure_bytes": 191366,
+    "context_scan_bytes": 1738968,
+    "edge_visits": 109,
+    "invocation_bytes": 609,
+    "json_nodes": 4414,
+    "object_bytes": 86310,
+    "public_reconstruction_context_nodes": 10716,
+    "public_reconstruction_unique_nodes": 2679,
+    "reference_occurrences": 109,
+    "request_chain": 4,
+    "request_contexts": 4,
+    "unique_bytes": 140419,
+    "unique_objects": 26
+  },
+  "matrix_commands": 142,
+  "max_bundle_bytes": 260474,
+  "max_file_bytes": {
+    "build.json": 26165,
+    "closure.json": 191366,
+    "invocation.json": 609,
+    "manifest.json": 973,
+    "policy.json": 876,
+    "result.json": 11783,
+    "trace.json": 29882
+  },
+  "mismatches": [
+    {
+      "case": "CL-historical-invalid",
+      "differences": [
+        {
+          "actual": "/predecessor/measurements/0/decoder",
+          "expected": "/predecessor/predecessor/measurements/0/decoder",
+          "path": "/stderr/target/field"
+        },
+        {
+          "actual_sha256": "ed2b2e22dee2ba86342ffe708c1a50faf477887f29905d797483f2280bb4c072",
+          "expected_sha256": "eaba7bd78c1addbb9b73800827c28f9a9d7a7d1e5129d5cade3a70c626f4fdaa",
+          "path": "/stderr_bytes"
+        }
+      ],
+      "index": 137
+    }
+  ],
+  "operation_counts": {
+    "governed-evaluate": 1,
+    "measurement-evaluate": 69,
+    "measurement-replay": 36,
+    "measurement-verify": 36
+  },
+  "physical_manifest_maxima": {
+    "bytes_read": 47910315,
+    "bytes_written": 259501,
+    "elapsed_ns": 1809558917,
+    "peak_rss_bytes": 90963968,
+    "read_operations": 2264,
+    "write_operations": 6
+  },
+  "retained_matrix_regular_bytes": 38458580,
+  "timeouts": 0,
+  "wall_seconds_max": 4.985134434
+}

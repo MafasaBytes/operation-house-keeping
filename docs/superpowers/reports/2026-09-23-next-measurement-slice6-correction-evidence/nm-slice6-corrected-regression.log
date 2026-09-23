@@ -1,0 +1,13 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.11, pytest-9.1.1, pluggy-1.6.0
+rootdir: /mnt/d/operation-house-keeping
+configfile: pyproject.toml
+collected 264 items
+
+tests/measurement_profile/test_admission_slice2.py ....                  [  1%]
+tests/measurement_profile/test_contracts_and_closure.py ..........       [  5%]
+tests/measurement_profile/test_delivery_contract_mapping.py ............ [  9%]
+...........                                                              [ 14%]
+tests/measurement_profile/test_delivery_slice5.py ...                    [ 15%]
+tests/measurement_profile/test_final_boundaries_slice6.py .............. [ 20%]
+.......

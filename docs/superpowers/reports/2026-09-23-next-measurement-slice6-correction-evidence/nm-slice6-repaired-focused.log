@@ -1,0 +1,293 @@
+.....................FF..FFF.FFF..FF                                     [100%]
+=================================== FAILURES ===================================
+______________ test_external_pin_substitution_and_safe_path_twins ______________
+
+tmp_path = PosixPath('/tmp/nm-slice6-repaired-focused/test_external_pin_substitution0')
+
+    def test_external_pin_substitution_and_safe_path_twins(tmp_path):
+        iv,objects,pin=recover_case(tmp_path)
+        def run(iv=iv,pin=pin,output=None):
+            return command('measurement-evaluate','--invocation',iv,'--objects-dir',objects,'--authority-pin',pin,'--output-dir',output or tmp_path/'result')
+        denied=run(pin='0'*64)
+>       assert denied.returncode==3 and json.loads(denied.stderr)['code']=='AUTHORITY_PIN_REQUIRED'
+E       assert (3 == 3 and 'REPLAY_BUILD_UNAVAILABLE' == 'AUTHORITY_PIN_REQUIRED'
+E        +  where 3 = CompletedProcess(args=['/home/mafasa/operation-house-keeping-runtime/bounded-decision-workflow/environments/cp313-bdw0...e_1","target":{"field":"/build_identity","logical_id":null,"occurrence_count":null,"references":[],"request":null}}\n').returncode
+E         
+E         - AUTHORITY_PIN_REQUIRED
+E         + REPLAY_BUILD_UNAVAILABLE)
+
+tests/measurement_profile/test_delivery_contract_mapping.py:125: AssertionError
+_______ test_correctly_shaped_build_substitution_and_policy_substitution _______
+
+tmp_path = PosixPath('/tmp/nm-slice6-repaired-focused/test_correctly_shaped_build_su0')
+
+    def test_correctly_shaped_build_substitution_and_policy_substitution(tmp_path):
+>       iv,objects,pin=recover_case(tmp_path)
+                       ^^^^^^^^^^^^^^^^^^^^^^
+
+tests/measurement_profile/test_delivery_contract_mapping.py:145: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/measurement_profile/test_delivery_contract_mapping.py:36: in recover_case
+    build = identity()
+            ^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+work = None
+
+    def identity(work=None):
+        # Preserve the maintained clean executable, exact lock/interpreter gate.
+        def git(*args):
+            return subprocess.check_output(['git','--no-optional-locks','-C',str(build.ROOT),*args],timeout=10).decode().strip()
+        if platform.python_implementation()!='CPython' or platform.python_version_tuple()[:2]!=('3','13'):
+            raise build.unavailable()
+        if git('status','--porcelain','--untracked-files=all','--','applications','backend'):
+>           raise build.unavailable()
+E           applications.bounded_decision_workflow.errors.WorkflowInputError: REPLAY_BUILD_UNAVAILABLE
+
+applications/bounded_decision_workflow/measurement_build.py:23: WorkflowInputError
+_____________ test_logical_exact_limit_plus_one_and_shared_history _____________
+
+tmp_path = PosixPath('/tmp/nm-slice6-repaired-focused/test_logical_exact_limit_plus_0')
+
+    def test_logical_exact_limit_plus_one_and_shared_history(tmp_path):
+        # Public inputs, not internal counter injection; build is the real executable.
+>       iv,objects,pin=recover_case(tmp_path,'CL-Q4-envelope')
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/measurement_profile/test_delivery_contract_mapping.py:180: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/measurement_profile/test_delivery_contract_mapping.py:36: in recover_case
+    build = identity()
+            ^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+work = None
+
+    def identity(work=None):
+        # Preserve the maintained clean executable, exact lock/interpreter gate.
+        def git(*args):
+            return subprocess.check_output(['git','--no-optional-locks','-C',str(build.ROOT),*args],timeout=10).decode().strip()
+        if platform.python_implementation()!='CPython' or platform.python_version_tuple()[:2]!=('3','13'):
+            raise build.unavailable()
+        if git('status','--porcelain','--untracked-files=all','--','applications','backend'):
+>           raise build.unavailable()
+E           applications.bounded_decision_workflow.errors.WorkflowInputError: REPLAY_BUILD_UNAVAILABLE
+
+applications/bounded_decision_workflow/measurement_build.py:23: WorkflowInputError
+____________ test_exact_frozen_semantic_fields_and_full_accounting _____________
+
+tmp_path = PosixPath('/tmp/nm-slice6-repaired-focused/test_exact_frozen_semantic_fie0')
+
+    def test_exact_frozen_semantic_fields_and_full_accounting(tmp_path):
+>       iv,objects,pin=recover_case(tmp_path)
+                       ^^^^^^^^^^^^^^^^^^^^^^
+
+tests/measurement_profile/test_delivery_contract_mapping.py:200: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/measurement_profile/test_delivery_contract_mapping.py:36: in recover_case
+    build = identity()
+            ^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+work = None
+
+    def identity(work=None):
+        # Preserve the maintained clean executable, exact lock/interpreter gate.
+        def git(*args):
+            return subprocess.check_output(['git','--no-optional-locks','-C',str(build.ROOT),*args],timeout=10).decode().strip()
+        if platform.python_implementation()!='CPython' or platform.python_version_tuple()[:2]!=('3','13'):
+            raise build.unavailable()
+        if git('status','--porcelain','--untracked-files=all','--','applications','backend'):
+>           raise build.unavailable()
+E           applications.bounded_decision_workflow.errors.WorkflowInputError: REPLAY_BUILD_UNAVAILABLE
+
+applications/bounded_decision_workflow/measurement_build.py:23: WorkflowInputError
+_____________ test_verify_rejects_rehashed_foreign_result_profile ______________
+
+tmp_path = PosixPath('/tmp/nm-slice6-repaired-focused/test_verify_rejects_rehashed_f0')
+
+    def test_verify_rejects_rehashed_foreign_result_profile(tmp_path):
+>       iv,objects,pin=recover_case(tmp_path)
+                       ^^^^^^^^^^^^^^^^^^^^^^
+
+tests/measurement_profile/test_delivery_contract_mapping.py:225: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/measurement_profile/test_delivery_contract_mapping.py:36: in recover_case
+    build = identity()
+            ^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+work = None
+
+    def identity(work=None):
+        # Preserve the maintained clean executable, exact lock/interpreter gate.
+        def git(*args):
+            return subprocess.check_output(['git','--no-optional-locks','-C',str(build.ROOT),*args],timeout=10).decode().strip()
+        if platform.python_implementation()!='CPython' or platform.python_version_tuple()[:2]!=('3','13'):
+            raise build.unavailable()
+        if git('status','--porcelain','--untracked-files=all','--','applications','backend'):
+>           raise build.unavailable()
+E           applications.bounded_decision_workflow.errors.WorkflowInputError: REPLAY_BUILD_UNAVAILABLE
+
+applications/bounded_decision_workflow/measurement_build.py:23: WorkflowInputError
+__________ test_prepared_build_cannot_assert_executable_compatibility __________
+
+tmp_path = PosixPath('/tmp/nm-slice6-repaired-focused/test_prepared_build_cannot_ass0')
+
+    def test_prepared_build_cannot_assert_executable_compatibility(tmp_path):
+>       iv,objects,pin=recover_case(tmp_path)
+                       ^^^^^^^^^^^^^^^^^^^^^^
+
+tests/measurement_profile/test_delivery_contract_mapping.py:255: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/measurement_profile/test_delivery_contract_mapping.py:36: in recover_case
+    build = identity()
+            ^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+work = None
+
+    def identity(work=None):
+        # Preserve the maintained clean executable, exact lock/interpreter gate.
+        def git(*args):
+            return subprocess.check_output(['git','--no-optional-locks','-C',str(build.ROOT),*args],timeout=10).decode().strip()
+        if platform.python_implementation()!='CPython' or platform.python_version_tuple()[:2]!=('3','13'):
+            raise build.unavailable()
+        if git('status','--porcelain','--untracked-files=all','--','applications','backend'):
+>           raise build.unavailable()
+E           applications.bounded_decision_workflow.errors.WorkflowInputError: REPLAY_BUILD_UNAVAILABLE
+
+applications/bounded_decision_workflow/measurement_build.py:23: WorkflowInputError
+____________ test_scoped_shared_edge_work_cannot_bypass_edge_budget ____________
+
+tmp_path = PosixPath('/tmp/nm-slice6-repaired-focused/test_scoped_shared_edge_work_c0')
+
+    def test_scoped_shared_edge_work_cannot_bypass_edge_budget(tmp_path):
+>       iv,objects,pin=recover_case(tmp_path)
+                       ^^^^^^^^^^^^^^^^^^^^^^
+
+tests/measurement_profile/test_delivery_contract_mapping.py:268: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/measurement_profile/test_delivery_contract_mapping.py:36: in recover_case
+    build = identity()
+            ^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+work = None
+
+    def identity(work=None):
+        # Preserve the maintained clean executable, exact lock/interpreter gate.
+        def git(*args):
+            return subprocess.check_output(['git','--no-optional-locks','-C',str(build.ROOT),*args],timeout=10).decode().strip()
+        if platform.python_implementation()!='CPython' or platform.python_version_tuple()[:2]!=('3','13'):
+            raise build.unavailable()
+        if git('status','--porcelain','--untracked-files=all','--','applications','backend'):
+>           raise build.unavailable()
+E           applications.bounded_decision_workflow.errors.WorkflowInputError: REPLAY_BUILD_UNAVAILABLE
+
+applications/bounded_decision_workflow/measurement_build.py:23: WorkflowInputError
+______ test_measurement_manifest_failure_leaves_honest_incomplete_bundle _______
+
+tmp_path = PosixPath('/tmp/nm-slice6-repaired-focused/test_measurement_manifest_fail0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7ff9f4a454f0>
+
+    def test_measurement_manifest_failure_leaves_honest_incomplete_bundle(tmp_path,monkeypatch):
+        """Trusted test-only I/O fault; the command has no serialized fault switch."""
+        from applications.bounded_decision_workflow import measurement_runtime as runtime
+        from applications.bounded_decision_workflow.errors import WorkflowInputError
+>       iv,objects,pin=recover_case(tmp_path)
+                       ^^^^^^^^^^^^^^^^^^^^^^
+
+tests/measurement_profile/test_delivery_contract_mapping.py:283: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/measurement_profile/test_delivery_contract_mapping.py:36: in recover_case
+    build = identity()
+            ^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+work = None
+
+    def identity(work=None):
+        # Preserve the maintained clean executable, exact lock/interpreter gate.
+        def git(*args):
+            return subprocess.check_output(['git','--no-optional-locks','-C',str(build.ROOT),*args],timeout=10).decode().strip()
+        if platform.python_implementation()!='CPython' or platform.python_version_tuple()[:2]!=('3','13'):
+            raise build.unavailable()
+        if git('status','--porcelain','--untracked-files=all','--','applications','backend'):
+>           raise build.unavailable()
+E           applications.bounded_decision_workflow.errors.WorkflowInputError: REPLAY_BUILD_UNAVAILABLE
+
+applications/bounded_decision_workflow/measurement_build.py:23: WorkflowInputError
+__________ test_history_guard_precedes_fifth_revision_dependency_work __________
+
+tmp_path = PosixPath('/tmp/nm-slice6-repaired-focused/test_history_guard_precedes_fi0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7ff9f4a459a0>
+
+    def test_history_guard_precedes_fifth_revision_dependency_work(tmp_path,monkeypatch):
+>       iv,objects,pin=recover_case(tmp_path,'CL-Q5-refused')
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/measurement_profile/test_resource_prefix_slice6.py:12: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/measurement_profile/test_delivery_contract_mapping.py:36: in recover_case
+    build = identity()
+            ^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+work = None
+
+    def identity(work=None):
+        # Preserve the maintained clean executable, exact lock/interpreter gate.
+        def git(*args):
+            return subprocess.check_output(['git','--no-optional-locks','-C',str(build.ROOT),*args],timeout=10).decode().strip()
+        if platform.python_implementation()!='CPython' or platform.python_version_tuple()[:2]!=('3','13'):
+            raise build.unavailable()
+        if git('status','--porcelain','--untracked-files=all','--','applications','backend'):
+>           raise build.unavailable()
+E           applications.bounded_decision_workflow.errors.WorkflowInputError: REPLAY_BUILD_UNAVAILABLE
+
+applications/bounded_decision_workflow/measurement_build.py:23: WorkflowInputError
+_ test_eight_contexts_valid_and_ninth_context_refuses_without_partial_success __
+
+tmp_path = PosixPath('/tmp/nm-slice6-repaired-focused/test_eight_contexts_valid_and_0')
+
+    def test_eight_contexts_valid_and_ninth_context_refuses_without_partial_success(tmp_path):
+        for count in [8,9]:
+>           root=tmp_path/str(count);root.mkdir();iv,objects,pin=context_twin(root,count);out=root/'result'
+                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/measurement_profile/test_resource_prefix_slice6.py:37: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/measurement_profile/test_resource_prefix_slice6.py:25: in context_twin
+    iv,objects,pin=recover_case(root)
+                   ^^^^^^^^^^^^^^^^^^
+tests/measurement_profile/test_delivery_contract_mapping.py:36: in recover_case
+    build = identity()
+            ^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+work = None
+
+    def identity(work=None):
+        # Preserve the maintained clean executable, exact lock/interpreter gate.
+        def git(*args):
+            return subprocess.check_output(['git','--no-optional-locks','-C',str(build.ROOT),*args],timeout=10).decode().strip()
+        if platform.python_implementation()!='CPython' or platform.python_version_tuple()[:2]!=('3','13'):
+            raise build.unavailable()
+        if git('status','--porcelain','--untracked-files=all','--','applications','backend'):
+>           raise build.unavailable()
+E           applications.bounded_decision_workflow.errors.WorkflowInputError: REPLAY_BUILD_UNAVAILABLE
+
+applications/bounded_decision_workflow/measurement_build.py:23: WorkflowInputError
+=========================== short test summary info ============================
+FAILED tests/measurement_profile/test_delivery_contract_mapping.py::test_external_pin_substitution_and_safe_path_twins
+FAILED tests/measurement_profile/test_delivery_contract_mapping.py::test_correctly_shaped_build_substitution_and_policy_substitution
+FAILED tests/measurement_profile/test_delivery_contract_mapping.py::test_logical_exact_limit_plus_one_and_shared_history
+FAILED tests/measurement_profile/test_delivery_contract_mapping.py::test_exact_frozen_semantic_fields_and_full_accounting
+FAILED tests/measurement_profile/test_delivery_contract_mapping.py::test_verify_rejects_rehashed_foreign_result_profile
+FAILED tests/measurement_profile/test_delivery_contract_mapping.py::test_prepared_build_cannot_assert_executable_compatibility
+FAILED tests/measurement_profile/test_delivery_contract_mapping.py::test_scoped_shared_edge_work_cannot_bypass_edge_budget
+FAILED tests/measurement_profile/test_delivery_contract_mapping.py::test_measurement_manifest_failure_leaves_honest_incomplete_bundle
+FAILED tests/measurement_profile/test_resource_prefix_slice6.py::test_history_guard_precedes_fifth_revision_dependency_work
+FAILED tests/measurement_profile/test_resource_prefix_slice6.py::test_eight_contexts_valid_and_ninth_context_refuses_without_partial_success
+10 failed, 26 passed in 100.11s (0:01:40)

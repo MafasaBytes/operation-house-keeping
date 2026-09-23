@@ -1,0 +1,57 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+____________ test_recovery_capture_guard_precedes_base64_allocation ____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fb50e654fc0>
+
+    def test_recovery_capture_guard_precedes_base64_allocation(monkeypatch):
+     import base64
+     value=dict(schema='nm.closure.v1',profile=mw.PROFILE,invocation=mw.ref('nm.invocation.v1','0'*64),authority_pin='1'*64,limits_override=None,members=[dict(reference=mw.ref('nm.basis','2'*64),encoding='base64',bytes=base64.b64encode(b'123456789').decode())])
+     payload={'closure.json':mw.canonical_json_bytes(value)}
+     monkeypatch.setattr(rt.base64,'b64decode',lambda *a,**k:pytest.fail('recovery allocated beyond capture budget'))
+>    with pytest.raises(MeasurementContractError) as e:rt.recover(payload,mw.Work({'capture_bytes':8}))
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/measurement_profile/test_final_boundaries_slice6.py:218: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+applications/bounded_decision_workflow/measurement_runtime.py:217: in recover
+    try:wire=base64.b64decode(m['bytes'],validate=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = ('MTIzNDU2Nzg5',), k = {'validate': True}
+
+>   monkeypatch.setattr(rt.base64,'b64decode',lambda *a,**k:pytest.fail('recovery allocated beyond capture budget'))
+                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: recovery allocated beyond capture budget
+
+tests/measurement_profile/test_final_boundaries_slice6.py:217: Failed
+_____________________ test_surrogate_wire_is_input_refusal _____________________
+
+    def test_surrogate_wire_is_input_refusal():
+>    with pytest.raises(MeasurementContractError) as e:mw.decode(b'{"x":"\\ud800"}',mw.Work())
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/measurement_profile/test_final_boundaries_slice6.py:223: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+applications/bounded_decision_workflow/measurement_wire.py:123: in decode
+    value=parse_document(wire,allow_opaque=True)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+applications/bounded_decision_workflow/measurement_contracts.py:67: in parse_document
+    if canonical_json_bytes(value) != wire:
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = {'x': '\ud800'}
+
+    def canonical_json_bytes(value):
+        return json.dumps(value, ensure_ascii=False, sort_keys=True,
+>                         separators=(",", ":"), allow_nan=False).encode("utf-8")
+                                                                  ^^^^^^^^^^^^^^^
+E       UnicodeEncodeError: 'utf-8' codec can't encode character '\ud800' in position 6: surrogates not allowed
+
+applications/bounded_decision_workflow/measurement_contracts.py:44: UnicodeEncodeError
+=========================== short test summary info ============================
+FAILED tests/measurement_profile/test_final_boundaries_slice6.py::test_recovery_capture_guard_precedes_base64_allocation
+FAILED tests/measurement_profile/test_final_boundaries_slice6.py::test_surrogate_wire_is_input_refusal
+2 failed, 24 deselected in 2.72s

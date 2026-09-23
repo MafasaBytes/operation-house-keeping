@@ -1,0 +1,46 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+____________ test_nomination_subcheck_precedence_across_namespaces _____________
+
+tmp_path = PosixPath('/tmp/nm-slice6-order-red/test_nomination_subcheck_prece0')
+
+    def test_nomination_subcheck_precedence_across_namespaces(tmp_path):
+     from tests.measurement_profile.test_delivery_contract_mapping import recover_case,command
+     iv,objects,pin=recover_case(tmp_path)
+     def mutation(q,get,put):
+      q['hypotheses'].reverse();q['measurements']=[q['measurements'][0]]*2
+     pin=amend_request(iv,objects,mutation)
+     run=command('measurement-evaluate','--invocation',iv,'--objects-dir',objects,'--authority-pin',pin,'--output-dir',tmp_path/'refused')
+     d=json.loads(run.stderr)
+>    assert run.returncode==3 and d['code']=='DUPLICATE_NOMINATION_REFERENCE'
+E    assert (3 == 3 and 'NOMINATION_ORDER_INVALID' == 'DUPLICATE_NO...ION_REFERENCE'
+E     +  where 3 = CompletedProcess(args=['/home/mafasa/operation-house-keeping-runtime/bounded-decision-workflow/environments/cp313-bdw0...}],"request":{"kind":"nm.request.v1","sha256":"b086c5254c87c7ae47f959c1d883f44fd5bbd273df75b9eb802f6515ddcd8a0c"}}}\n').returncode
+E      
+E      - DUPLICATE_NOMINATION_REFERENCE
+E      + NOMINATION_ORDER_INVALID)
+
+tests/measurement_profile/test_final_boundaries_slice6.py:117: AssertionError
+___________________ test_decoder_precedes_support_join_error ___________________
+
+tmp_path = PosixPath('/tmp/nm-slice6-order-red/test_decoder_precedes_support_0')
+
+    def test_decoder_precedes_support_join_error(tmp_path):
+     from tests.measurement_profile.test_delivery_contract_mapping import recover_case,command
+     iv,objects,pin=recover_case(tmp_path,'J-gap')
+     def mutation(q,get,put):
+      # Rehash an exact new support object whose context no longer matches Q.
+      s=get(q['support'][0]);s['context']['scenario_label']='other';q['support'][0]=put(s)
+     pin=amend_request(iv,objects,mutation)
+     run=command('measurement-evaluate','--invocation',iv,'--objects-dir',objects,'--authority-pin',pin,'--output-dir',tmp_path/'refused')
+>    assert run.returncode==3 and json.loads(run.stderr)['code']=='DECODER_INVALID'
+E    assert (3 == 3 and 'SUPPORT_SUBJECT_MISMATCH' == 'DECODER_INVALID'
+E     +  where 3 = CompletedProcess(args=['/home/mafasa/operation-house-keeping-runtime/bounded-decision-workflow/environments/cp313-bdw0...[],"request":{"kind":"nm.request.v1","sha256":"3e4d74d2563b3bc03e4e6d6f44b743db83795ff6e85d59b1c477eb6a45c8c311"}}}\n').returncode
+E      
+E      - DECODER_INVALID
+E      + SUPPORT_SUBJECT_MISMATCH)
+
+tests/measurement_profile/test_final_boundaries_slice6.py:130: AssertionError
+=========================== short test summary info ============================
+FAILED tests/measurement_profile/test_final_boundaries_slice6.py::test_nomination_subcheck_precedence_across_namespaces
+FAILED tests/measurement_profile/test_final_boundaries_slice6.py::test_decoder_precedes_support_join_error
+2 failed, 11 deselected in 11.77s

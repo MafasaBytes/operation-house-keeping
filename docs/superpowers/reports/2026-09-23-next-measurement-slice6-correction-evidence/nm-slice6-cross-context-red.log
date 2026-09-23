@@ -1,0 +1,22 @@
+{"code": "SUPPORT_SUBJECT_MISMATCH", "expected": "DECODER_INVALID", "layer": "internal validation-order seam; not public SHA admission"}
+Traceback (most recent call last):
+  File "/tmp/nm-slice6-cross-context-precedence.py", line 15, in <module>
+    try:g._integrity()
+        ~~~~~~~~~~~~^^
+  File "/mnt/d/operation-house-keeping/applications/bounded_decision_workflow/measurement_wire.py", line 374, in _integrity
+    self._joins(q,ref(*qk))
+    ~~~~~~~~~~~^^^^^^^^^^^^
+  File "/tmp/nm-slice6-cross-context-precedence.py", line 13, in joins
+    m.fail('SUPPORT_SUBJECT_MISMATCH' if q['id']=='first' else 'DECODER_INVALID','/measurements/0/decoder','phase_3')
+    ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/d/operation-house-keeping/applications/bounded_decision_workflow/measurement_wire.py", line 36, in fail
+    raise MeasurementContractError(code, target=target, stage=stage, details=details)
+applications.bounded_decision_workflow.measurement_contracts.MeasurementContractError: SUPPORT_SUBJECT_MISMATCH
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/tmp/nm-slice6-cross-context-precedence.py", line 18, in <module>
+    assert e.code=='DECODER_INVALID'
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

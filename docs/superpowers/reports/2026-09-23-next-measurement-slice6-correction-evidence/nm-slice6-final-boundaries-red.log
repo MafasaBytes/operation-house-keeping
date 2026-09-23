@@ -1,0 +1,178 @@
+FFF.FFFF                                                                 [100%]
+=================================== FAILURES ===================================
+_ test_resource_guard_precedes_document_allocation[json_nodes-{"a":[0,0,0]}-4] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7ffbbb4d88a0>
+dimension = 'json_nodes', wire = b'{"a":[0,0,0]}', limit = 4
+
+    @pytest.mark.parametrize('dimension,wire,limit',[
+     ('json_nodes',b'{"a":[0,0,0]}',4),
+     ('string_bytes',b'{"a":"12345"}',4),
+     ('string_bytes',b'{"12345":0}',4),
+     ('json_depth',b'{"a":[[]]}',2),
+    ])
+    def test_resource_guard_precedes_document_allocation(monkeypatch,dimension,wire,limit):
+     def forbidden(*a,**k):pytest.fail('document allocation preceded resource refusal')
+     monkeypatch.setattr(mw,'parse_document',forbidden)
+>    with pytest.raises(MeasurementContractError) as caught:mw.decode(wire,mw.Work({dimension:limit}))
+                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/measurement_profile/test_final_boundaries_slice6.py:22: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+applications/bounded_decision_workflow/measurement_wire.py:85: in decode
+    value=parse_document(wire,allow_opaque=True)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = (b'{"a":[0,0,0]}',), k = {'allow_opaque': True}
+
+>   def forbidden(*a,**k):pytest.fail('document allocation preceded resource refusal')
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: document allocation preceded resource refusal
+
+tests/measurement_profile/test_final_boundaries_slice6.py:20: Failed
+_ test_resource_guard_precedes_document_allocation[string_bytes-{"a":"12345"}-4] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7ffbbb4d8c30>
+dimension = 'string_bytes', wire = b'{"a":"12345"}', limit = 4
+
+    @pytest.mark.parametrize('dimension,wire,limit',[
+     ('json_nodes',b'{"a":[0,0,0]}',4),
+     ('string_bytes',b'{"a":"12345"}',4),
+     ('string_bytes',b'{"12345":0}',4),
+     ('json_depth',b'{"a":[[]]}',2),
+    ])
+    def test_resource_guard_precedes_document_allocation(monkeypatch,dimension,wire,limit):
+     def forbidden(*a,**k):pytest.fail('document allocation preceded resource refusal')
+     monkeypatch.setattr(mw,'parse_document',forbidden)
+>    with pytest.raises(MeasurementContractError) as caught:mw.decode(wire,mw.Work({dimension:limit}))
+                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/measurement_profile/test_final_boundaries_slice6.py:22: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+applications/bounded_decision_workflow/measurement_wire.py:85: in decode
+    value=parse_document(wire,allow_opaque=True)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = (b'{"a":"12345"}',), k = {'allow_opaque': True}
+
+>   def forbidden(*a,**k):pytest.fail('document allocation preceded resource refusal')
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: document allocation preceded resource refusal
+
+tests/measurement_profile/test_final_boundaries_slice6.py:20: Failed
+_ test_resource_guard_precedes_document_allocation[string_bytes-{"12345":0}-4] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7ffbbb4fc950>
+dimension = 'string_bytes', wire = b'{"12345":0}', limit = 4
+
+    @pytest.mark.parametrize('dimension,wire,limit',[
+     ('json_nodes',b'{"a":[0,0,0]}',4),
+     ('string_bytes',b'{"a":"12345"}',4),
+     ('string_bytes',b'{"12345":0}',4),
+     ('json_depth',b'{"a":[[]]}',2),
+    ])
+    def test_resource_guard_precedes_document_allocation(monkeypatch,dimension,wire,limit):
+     def forbidden(*a,**k):pytest.fail('document allocation preceded resource refusal')
+     monkeypatch.setattr(mw,'parse_document',forbidden)
+>    with pytest.raises(MeasurementContractError) as caught:mw.decode(wire,mw.Work({dimension:limit}))
+                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/measurement_profile/test_final_boundaries_slice6.py:22: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+applications/bounded_decision_workflow/measurement_wire.py:85: in decode
+    value=parse_document(wire,allow_opaque=True)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = (b'{"12345":0}',), k = {'allow_opaque': True}
+
+>   def forbidden(*a,**k):pytest.fail('document allocation preceded resource refusal')
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: document allocation preceded resource refusal
+
+tests/measurement_profile/test_final_boundaries_slice6.py:20: Failed
+________________ test_closure_guard_precedes_base64_allocation _________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7ffbbb548050>
+
+    def test_closure_guard_precedes_base64_allocation(monkeypatch):
+     work=mw.Work({'closure_bytes':1})
+     graph=SimpleNamespace(root=mw.ref('nm.invocation.v1','0'*64),objects={('nm.basis','1'*64):b'x'*30},work=work)
+     monkeypatch.setattr(rt.base64,'b64encode',lambda *a:pytest.fail('base64 allocated before closure guard'))
+>    with pytest.raises(MeasurementContractError) as caught:rt.closure_wire(graph,'2'*64,None)
+                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/measurement_profile/test_final_boundaries_slice6.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+applications/bounded_decision_workflow/measurement_runtime.py:56: in closure_wire
+    authority_pin=pin,limits_override=limits,members=[dict(reference=ref(*k),encoding='base64',bytes=base64.b64encode(g.objects[k]).decode()) for k in sorted(g.objects)]))
+                                                                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = (b'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',)
+
+>   monkeypatch.setattr(rt.base64,'b64encode',lambda *a:pytest.fail('base64 allocated before closure guard'))
+                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: base64 allocated before closure guard
+
+tests/measurement_profile/test_final_boundaries_slice6.py:30: Failed
+_________________ test_tight_diagnostic_uses_reserved_fallback _________________
+
+tmp_path = PosixPath('/tmp/nm-slice6-final-boundaries-red/test_tight_diagnostic_uses_res0')
+
+    def test_tight_diagnostic_uses_reserved_fallback(tmp_path):
+     # Trusted child test seam creates an error under a caller-tightened budget.
+     # This does not establish public admission or provide a production callback.
+     source='''from applications.bounded_decision_workflow import measurement_cli as c
+    from applications.bounded_decision_workflow.measurement_wire import Work,fail
+    def refuse(*a):
+     Work({'diagnostic_bytes':1})
+     fail('SUPPORT_SUBJECT_MISMATCH','/support')
+    c.runtime.evaluate=refuse
+    raise SystemExit(c.main(['measurement-evaluate','--invocation','i','--objects-dir','o','--authority-pin','a','--output-dir','r']))
+    '''
+     run=subprocess.run([sys.executable,'-c',source],capture_output=True)
+>    assert run.returncode==4 and run.stdout==b''
+E    assert (3 == 4)
+E     +  where 3 = CompletedProcess(args=['/home/mafasa/operation-house-keeping-runtime/bounded-decision-workflow/environments/cp313-bdw0...":"phase_3","target":{"field":"/support","logical_id":null,"occurrence_count":null,"references":[],"request":null}}\n').returncode
+
+tests/measurement_profile/test_final_boundaries_slice6.py:47: AssertionError
+_________ test_failed_stdout_does_not_trigger_interpreter_flush_retry __________
+
+tmp_path = PosixPath('/tmp/nm-slice6-final-boundaries-red/test_failed_stdout_does_not_tr0')
+
+    def test_failed_stdout_does_not_trigger_interpreter_flush_retry(tmp_path):
+     source='''from applications.bounded_decision_workflow import measurement_cli as c
+    c.runtime.evaluate=lambda *a:dict(schema='nm.receipt.v1',operation='measurement-evaluate',evaluation_permitted=True,disposition='preferred_within_supplied_set',result_sha256='0'*64,bundle_sha256='1'*64)
+    raise SystemExit(c.main(['measurement-evaluate','--invocation','i','--objects-dir','o','--authority-pin','a','--output-dir','r']))
+    '''
+     with open('/dev/full','wb',buffering=0) as sink:
+      run=subprocess.run([sys.executable,'-c',source],stdout=sink,stderr=subprocess.PIPE)
+>    assert run.returncode==7
+E    assert 120 == 7
+E     +  where 120 = CompletedProcess(args=['/home/mafasa/operation-house-keeping-runtime/bounded-decision-workflow/environments/cp313-bdw0...rences":[],"request":null}}\nException ignored on flushing sys.stdout:\nOSError: [Errno 28] No space left on device\n').returncode
+
+tests/measurement_profile/test_final_boundaries_slice6.py:59: AssertionError
+____________ test_failed_stderr_has_bounded_exit_without_traceback _____________
+
+tmp_path = PosixPath('/tmp/nm-slice6-final-boundaries-red/test_failed_stderr_has_bounded0')
+
+    def test_failed_stderr_has_bounded_exit_without_traceback(tmp_path):
+     with open('/dev/full','wb',buffering=0) as sink:
+      run=subprocess.run([sys.executable,'-m','applications.bounded_decision_workflow','measurement-evaluate'],stdout=subprocess.PIPE,stderr=sink)
+>    assert run.returncode==7 and run.stdout==b''
+E    AssertionError: assert (120 == 7)
+E     +  where 120 = CompletedProcess(args=['/home/mafasa/operation-house-keeping-runtime/bounded-decision-workflow/environments/cp313-bdw001/bin/python', '-m', 'applications.bounded_decision_workflow', 'measurement-evaluate'], returncode=120, stdout=b'').returncode
+
+tests/measurement_profile/test_final_boundaries_slice6.py:67: AssertionError
+=========================== short test summary info ============================
+FAILED tests/measurement_profile/test_final_boundaries_slice6.py::test_resource_guard_precedes_document_allocation[json_nodes-{"a":[0,0,0]}-4]
+FAILED tests/measurement_profile/test_final_boundaries_slice6.py::test_resource_guard_precedes_document_allocation[string_bytes-{"a":"12345"}-4]
+FAILED tests/measurement_profile/test_final_boundaries_slice6.py::test_resource_guard_precedes_document_allocation[string_bytes-{"12345":0}-4]
+FAILED tests/measurement_profile/test_final_boundaries_slice6.py::test_closure_guard_precedes_base64_allocation
+FAILED tests/measurement_profile/test_final_boundaries_slice6.py::test_tight_diagnostic_uses_reserved_fallback
+FAILED tests/measurement_profile/test_final_boundaries_slice6.py::test_failed_stdout_does_not_trigger_interpreter_flush_retry
+FAILED tests/measurement_profile/test_final_boundaries_slice6.py::test_failed_stderr_has_bounded_exit_without_traceback
+7 failed, 1 passed in 7.99s

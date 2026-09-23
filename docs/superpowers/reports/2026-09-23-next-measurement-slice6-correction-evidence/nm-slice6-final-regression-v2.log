@@ -1,0 +1,48 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.11, pytest-9.1.1, pluggy-1.6.0
+rootdir: /tmp/nm-slice6-final-clean
+configfile: pyproject.toml
+collected 267 items
+
+tests/measurement_profile/test_admission_slice2.py ....                  [  1%]
+tests/measurement_profile/test_contracts_and_closure.py ..........       [  5%]
+tests/measurement_profile/test_delivery_contract_mapping.py ............ [  9%]
+...........                                                              [ 13%]
+tests/measurement_profile/test_delivery_slice5.py ...                    [ 14%]
+tests/measurement_profile/test_final_boundaries_slice6.py .............. [ 20%]
+............                                                             [ 24%]
+tests/measurement_profile/test_qualification_slice6.py ................. [ 31%]
+.F.                                                                      [ 32%]
+tests/measurement_profile/test_ranking_slice4.py .....                   [ 34%]
+tests/measurement_profile/test_resource_prefix_slice6.py ..              [ 34%]
+tests/measurement_profile/test_slice5_vertical.py .                      [ 35%]
+tests/measurement_profile/test_support_qualification_slice3.py ....      [ 36%]
+tests/applications/bounded_decision_workflow/test_s6_cli.py ............ [ 41%]
+............................                                             [ 51%]
+tests/applications/bounded_decision_workflow/test_governed_cli.py ...... [ 53%]
+.                                                                        [ 54%]
+tests/applications/bounded_decision_workflow/test_s5_retention_recovery.py . [ 54%]
+..........s............................................................. [ 81%]
+.................................................                        [100%]
+
+=================================== FAILURES ===================================
+____________ test_supported_filesystem_and_unsupported_output_twin _____________
+
+tmp_path = PosixPath('/tmp/nm-slice6-final-regression-v2/test_supported_filesystem_and_0')
+
+    def test_supported_filesystem_and_unsupported_output_twin(tmp_path):
+        iv,objects,pin=recover_case(tmp_path)
+        # Existing checkout is on DrvFS; nominate a fresh name but never create it.
+        unsupported=Path.cwd()/('nm-slice6-refused-output-'+tmp_path.name.lower())
+        assert not unsupported.exists()
+        bad=command('measurement-evaluate','--invocation',iv,'--objects-dir',objects,'--authority-pin',pin,'--output-dir',unsupported)
+>       assert bad.returncode==5 and not unsupported.exists(),bad.stderr
+E       AssertionError: b''
+E       assert (0 == 5)
+E        +  where 0 = CompletedProcess(args=['/home/mafasa/operation-house-keeping-runtime/bounded-decision-workflow/environments/cp313-bdw0...lt_sha256":"2ff42f4126f9b1bc7fbcfed1281ff0e194629999b452b4a2e0c00921595cdfe1","schema":"nm.receipt.v1"}\n', stderr=b'').returncode
+
+tests/measurement_profile/test_qualification_slice6.py:141: AssertionError
+=========================== short test summary info ============================
+SKIPPED [1] tests/applications/bounded_decision_workflow/test_s5_retention_recovery.py:112: nominate BDW_UNSUPPORTED_FILE to exercise a real unsupported mount
+FAILED tests/measurement_profile/test_qualification_slice6.py::test_supported_filesystem_and_unsupported_output_twin
+============= 1 failed, 265 passed, 1 skipped in 326.88s (0:05:26) =============
