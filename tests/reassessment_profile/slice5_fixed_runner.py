@@ -20,8 +20,9 @@ def main():
         paths=['tests/applications/bounded_decision_workflow']
         report_mem=20*1048576
     else:raise SystemExit('one approved mode: fixed or legacy')
-    assert not root.exists();q.reserve(charges,files=8,dirs=2)
-    with q.transaction(tag,charges,files=8,dirs=2):
+    local_files,local_dirs=(8,2) if mode=='fixed' else (3000,1000)
+    assert not root.exists();q.reserve(charges,files=local_files,dirs=local_dirs)
+    with q.transaction(tag,charges,files=local_files,dirs=local_dirs):
         q.mkdir(root)
         q.mkdir(root/'tmp')
         collection=root/'collection.jsonl';results=root/'phase-results.jsonl'
