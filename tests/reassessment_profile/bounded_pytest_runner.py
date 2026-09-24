@@ -10,6 +10,7 @@ import os
 import queue
 import threading
 import time
+import sys
 
 import pytest
 
@@ -47,7 +48,8 @@ class Recorder:
             value=dict(value,diagnostic_truncated=True)
             if 'longrepr' in value:value['longrepr']=value['longrepr'][:MAX_EVENT_BYTES//2]
             wire=canonical(value)
-        if self.buffered+len(wire)>MAX_BUFFERED_BYTES:
+        limit=min(MAX_BUFFERED_BYTES,int(os.environ.get('BDW_REPORT_BYTES',str(MAX_BUFFERED_BYTES))))
+        if self.buffered+len(wire)>limit:
             self.error.append('bounded report memory reservation exceeded')
             return
         self.buffered+=len(wire);self.queue.put((stream,wire,durable))
@@ -93,3 +95,9 @@ def main(argv,collection_path,results_path):
     if summary['recorder_errors'] or summary['pending_without_teardown']:
         return 92
     return int(status)
+
+if __name__=='__main__':
+    if '--' not in sys.argv:raise SystemExit('usage: bounded_pytest_runner.py --collection FILE --results FILE -- PYTEST_ARGS...')
+    split=sys.argv.index('--');own=sys.argv[1:split];argv=sys.argv[split+1:]
+    if len(own)!=4 or own[0]!='--collection' or own[2]!='--results':raise SystemExit('invalid runner options')
+    raise SystemExit(main(argv,own[1],own[3]))
