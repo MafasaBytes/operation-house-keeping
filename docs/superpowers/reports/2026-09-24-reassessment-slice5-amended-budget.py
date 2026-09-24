@@ -20,8 +20,8 @@ from contextlib import contextmanager
 ROOT = Path('/home/mafasa/operation-house-keeping-runtime/bounded-decision-workflow/test-workspaces/nr-slice5-qualification-r1')
 REPO = Path('/mnt/d/operation-house-keeping')
 PACKAGE = REPO/'docs/superpowers/reports/2026-09-23-reassessment-preparation/package.zip'
-CAPS = dict(outputs=103809024,inputs=71303168,repairs=268435456,regressions=402653184,
-            checkouts=1275068416,recovery=12582912,logs=8388608,indexes=8388608,exports=134217728)
+CAPS = dict(outputs=103809024,inputs=71303168,repairs=188743680,regressions=335544320,
+            checkouts=620756992,recovery=4194304,logs=8388608,indexes=8388608,exports=134217728)
 ACTIVE = None
 VERIFIED_EXPORTS = {}
 
@@ -69,8 +69,8 @@ def census():
             VERIFIED_EXPORTS[str(p)]=identity
         counts['exports']+=s.st_size;physical+=s.st_blocks*512;files+=1
     assert all(counts[k]<=CAPS[k] for k in counts)
-    assert sum(counts.values())<=2097152000 and physical<=2818572288
-    assert files<=100064 and dirs<=41515
+    assert sum(counts.values())<=1274019840 and physical<=1572864000
+    assert files<=65536 and dirs<=24576
     return dict(categories=counts,total=sum(counts.values()),combined=76560100+sum(counts.values()),physical=physical,files=files,directories=dirs)
 
 def reserve(charges,files=1,dirs=0):
@@ -81,11 +81,10 @@ def reserve(charges,files=1,dirs=0):
         assert now['files']+files<=ACTIVE['baseline']['files']+ACTIVE['files']+2
         assert now['directories']+dirs<=ACTIVE['baseline']['directories']+ACTIVE['dirs']
     assert all(now['categories'][k]+v<=CAPS[k] for k,v in charges.items())
-    assert now['total']+growth<=2097152000
-    assert now['combined']+growth<=2173712100
-    assert now['files']+files<=100064 and now['directories']+dirs<=41515
-    assert now['physical']+growth+files*4096+dirs*8192<=2818572288
-    s=os.statvfs(ROOT);assert s.f_bavail*s.f_frsize>=2818572288-now['physical']
+    assert now['total']+growth<=1274019840
+    assert now['files']+files<=65536 and now['directories']+dirs<=24576
+    assert now['physical']+growth+files*4096+dirs*8192<=1572864000
+    s=os.statvfs(ROOT);assert s.f_bavail*s.f_frsize>=1572864000-now['physical']
 
 def put(p,b):
     reserve({p.relative_to(ROOT).parts[0]:len(b)})
