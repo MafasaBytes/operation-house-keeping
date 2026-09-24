@@ -1,0 +1,35 @@
+{
+  "schema": "slice5-build-carriage-owner-approval.v1",
+  "decision": "APPROVED_BOUNDED_IMPLEMENTATION_AND_REQUALIFICATION",
+  "approved_package": {
+    "archive": "docs/superpowers/reports/2026-09-24-reassessment-slice5-build-carriage-decision/decision-package.zip",
+    "archive_sha256": "ca49082eb39973ca8b93d0036ec6bfe22ca7786a4c97980611b8b5c3d8293111",
+    "manifest": "docs/superpowers/reports/2026-09-24-reassessment-slice5-build-carriage-decision/package-manifest.json",
+    "manifest_sha256": "ec780e61018f99fc1bd5f66f5bb0876f39139a518b999236fe14bd5773283084",
+    "verified_members": 10
+  },
+  "pinned_base_candidate": "40fbb7b0a5ea5251179a9661c782a41cf7356ed6",
+  "administrative_checkpoint": "358d2867db478494ca8b6e6475b83fdd53a9750c",
+  "authorization": {
+    "versioned_v2_build_carriage": true,
+    "test_compatible_reporting_harness": true,
+    "package_exact_retention_amendments": true,
+    "package_exact_finite_execution_schedule": true,
+    "additional_reservation_bytes": 1149239296,
+    "general_retry_allowance": 0,
+    "implicit_repair_allowance": 0,
+    "history_rewrite_or_push_or_merge": false
+  },
+  "required_conditions": [
+    "Recompute the complete source inventory from each actual executable checkout; the package's 48-file inventory is old-candidate reference evidence only.",
+    "Preserve v1 interpretation and exact historical replay; refuse unknown editions and incompatible cross-edition comparison.",
+    "Run targeted checks and affected regressions before replacement-candidate qualification.",
+    "Freeze and bind the repaired executable candidate, fixtures, witnesses and command manifest before its 180-identity matrix.",
+    "Durably reserve and preflight every execution group against all approved ceilings and peak coexistence; stop before launch when demand cannot fit.",
+    "Preserve failures, historical attribution, unrelated artifacts, backend contracts, dependencies, ledger and runtime results."
+  ],
+  "acceptance": {
+    "slice5": "PENDING",
+    "final_milestone": "PENDING"
+  }
+}

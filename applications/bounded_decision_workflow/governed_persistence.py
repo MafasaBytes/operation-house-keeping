@@ -10,7 +10,7 @@ import re
 from types import MappingProxyType
 
 from . import retention, governed_review, governed_build
-from .governed_closure import CAPS, FILES, validate_carried, schemas, shape, decode_file
+from .governed_closure import CAPS, FILES, validate_carried, schemas, shape, decode_file, incompatible
 from .governed_resources import Budget, bounded_json, problem
 from .governed_admission import H
 from .input import canonical_json_bytes as C
@@ -18,30 +18,44 @@ from .build import LOCK,PUBLIC
 from .errors import refusal
 
 
+def _build_edition(edition):
+    if edition=='governed-executable-build.v1':
+        return 'application_source_sha256',governed_build.V1_SCHEMA,governed_build.CONTRACTS_V1
+    if edition=='governed-executable-build.v2':
+        return 'application_source_inventory_sha256',governed_build.V2_SCHEMA,governed_build.CONTRACTS
+    raise incompatible()
+
+
 def _build_record(wire,budget):
     """Historical record shape/policy, NOT availability of that executable."""
-    path='docs/superpowers/reports/2026-09-16-maintained-admissibility-consolidation/build.schema.json'
+    v1_path=governed_build.V1_SCHEMA;v2_path=governed_build.V2_SCHEMA
     try:
-        with (governed_build.ROOT/path).open('rb') as f:sw=f.read(4430)
+        with (governed_build.ROOT/v1_path).open('rb') as f:v1_wire=f.read(65537)
+        with (governed_build.ROOT/v2_path).open('rb') as f:v2_wire=f.read(65537)
         with (governed_build.ROOT/LOCK).open('rb') as f:lock=f.read(4097)
     except OSError as e:raise governed_build.unavailable() from e
-    if len(sw)!=4429 or H(sw)!=governed_build.CONTRACTS[path] or H(lock)!='7c87f0d7a3f12c271311cc0c33e59025e0161c37f16336901a0764b4330c0817':
+    if (H(v1_wire)!=governed_build.CONTRACTS_V1[v1_path] or
+        H(v2_wire)!=governed_build.CONTRACTS[v2_path] or
+        H(lock)!='7c87f0d7a3f12c271311cc0c33e59025e0161c37f16336901a0764b4330c0817'):
         raise governed_build.unavailable()
     v=decode_file(wire,'build.json',budget,schemas(),extra=True)
-    if not shape(v,json.loads(sw),{}):raise retention._error('MANIFEST_INVALID')
-    if (v['contract_source_sha256']!=governed_build.CONTRACTS or
+    source_field,schema_path,expected_contracts=_build_edition(v.get('schema'))
+    schema_wire=v1_wire if schema_path==v1_path else v2_wire
+    if not shape(v,json.loads(schema_wire),{}):raise retention._error('MANIFEST_INVALID')
+    if (v['contract_source_sha256']!=expected_contracts or
         v['policy_file_sha256']!=governed_build.POLICY_SHA or
         v['limit_policy_sha256']!=H(C(dict(budget.caps))) or
         v['dependency_lock_sha256']!=H(lock) or
         v['dependencies']!=dict(line.split('==') for line in lock.decode().splitlines()) or
         set(v['public_module_sha256'])!=set(PUBLIC)):
         raise governed_build.unavailable()
-    for p in v['application_source_sha256']:
-        if not p.startswith('applications/') or any(x in ('','.','..') for x in p.split('/')):
-            raise retention._error('MANIFEST_INVALID')
+    if source_field=='application_source_sha256':
+        for p in v[source_field]:
+            if not p.startswith('applications/') or any(x in ('','.','..') for x in p.split('/')):
+                raise retention._error('MANIFEST_INVALID')
     if budget.observer:
-        try:budget.observer({'phase':'retained_build_contract','files':2,'bytes':len(sw)+len(lock),
-                            'coverage':'record_shape_and_pinned_contract_not_executable_availability'})
+        try:budget.observer({'phase':'retained_build_contract','files':3,'bytes':len(v1_wire)+len(v2_wire)+len(lock),
+                            'coverage':'edition_dispatched_record_shape_and_pinned_contract_not_executable_availability'})
         except Exception as e:
             raise refusal('INTERNAL_ERROR',stage='internal_failure',target='instrumentation',retry='investigate',exit_code=7) from e
 

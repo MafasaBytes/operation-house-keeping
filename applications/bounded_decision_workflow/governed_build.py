@@ -19,11 +19,32 @@ CONTRACTS={
  'docs/superpowers/reports/2026-09-16-maintained-admissibility-amendment/schemas.json':'2485ccc25ac50379886a1a6a8819441991555d2ff8c36a0c2cca8032f2259069',
  'docs/superpowers/reports/2026-09-16-maintained-admissibility-consolidation/CONTRACT-AND-PLAN.md':'90949e1e3340dec1e7130163fa4f024f87bd04f400bc901097cae6c054a2515b',
  'docs/superpowers/reports/2026-09-16-maintained-admissibility-consolidation/build.schema.json':'f4f931a5912b4a7bf7ec321af67713fbbc235fa0319b85804178f16a8f874dc6',
+ 'docs/superpowers/reports/2026-09-24-reassessment-slice5-build-carriage-decision/build-carriage-v2-amendment.md':'60860da74407d8534fd58f8c765ef37c602f0427c15ea755033e2679e59f1365',
+ 'docs/superpowers/reports/2026-09-24-reassessment-slice5-build-carriage-decision/governed-executable-build-v2.schema.json':'6fb4262bdd6eddea0ea9a8b70b0908368e4286abfeb3469c9fcbcd499ddea223',
 }
+CONTRACTS_V1={k:v for k,v in CONTRACTS.items() if not k.startswith('docs/superpowers/reports/2026-09-24-')}
+V1_SCHEMA='docs/superpowers/reports/2026-09-16-maintained-admissibility-consolidation/build.schema.json'
+V2_SCHEMA='docs/superpowers/reports/2026-09-24-reassessment-slice5-build-carriage-decision/governed-executable-build-v2.schema.json'
 
 def _git(*args):
     return subprocess.check_output(['git','--no-optional-locks','-C',str(ROOT),*args],
                                    stderr=subprocess.DEVNULL,timeout=10).decode().strip()
+
+def inventory_commitment(sources):
+    """Commit the complete sorted application path-to-SHA-256 inventory."""
+    return hashlib.sha256(canonical_json_bytes(sources)).hexdigest()
+
+def _application_inventory(paths, digest):
+    paths=tuple(sorted(paths))
+    if len(paths)!=len(set(paths)):raise unavailable()
+    sources={};size=0
+    for p in paths:
+        path=Path(p)
+        if path.is_absolute() or not p.startswith('applications/') or any(x in ('','.','..') for x in path.parts):raise unavailable()
+        size+=len(canonical_json_bytes(p))+68
+        if size>8192:raise problem('OUTPUT_LIMIT_EXCEEDED',resource=True,target='build_bytes')
+        sources[p]=digest(p)
+    return sources,inventory_commitment(sources)
 
 def identity(*, observer=None):
     """Recompute, never accept supplied identity. Observer gets bounded startup totals.
@@ -57,13 +78,7 @@ def identity(*, observer=None):
             name,pinned=line.split('==')
             if version(name)!=pinned:raise unavailable()
             dependencies[name]=pinned
-        sources={};size=0
-        for p in sorted(_git('ls-files','applications').splitlines()):
-            # Bound the retained inventory before adding an entry. Final envelope
-            # is independently bounded below; no 173-entry backend map retained.
-            size+=len(canonical_json_bytes(p))+68
-            if size>8192:raise problem('OUTPUT_LIMIT_EXCEEDED',resource=True,target='build_bytes')
-            sources[p]=digest(p)
+        sources,application_root=_application_inventory(_git('ls-files','applications').splitlines(),digest)
         backend=hashlib.sha256();backend.update(b'{')
         for i,p in enumerate(sorted(_git('ls-files','backend').splitlines())):
             if i:backend.update(b',')
@@ -73,10 +88,10 @@ def identity(*, observer=None):
         if hashlib.sha256(policy_wire).hexdigest()!=POLICY_SHA:raise unavailable()
         counts['contract_files']+=1;counts['contract_bytes']+=len(policy_wire)
         limits=json.loads(policy_wire)['limits']
-        v={'schema':'governed-executable-build.v1','git_commit':commit,
-           'implementation_id':'bdw.governed-application.v1','inner_schema':'bdw001.1',
+        v={'schema':'governed-executable-build.v2','git_commit':commit,
+           'implementation_id':'bdw.governed-application.v2','inner_schema':'bdw001.1',
            'workflow_profile':'hypothetical_enclosure_one_step.v1','build_policy_id':'bdw.governed-resource-policy.v1',
-           'application_source_sha256':sources,'backend_source_inventory_sha256':backend.hexdigest(),
+           'application_source_inventory_sha256':application_root,'backend_source_inventory_sha256':backend.hexdigest(),
            'public_module_sha256':{p:digest(p) for p in PUBLIC},
            'python':{'implementation':'CPython','version':platform.python_version()},
            'dependencies':dependencies,'dependency_lock_sha256':hashlib.sha256(lock).hexdigest(),

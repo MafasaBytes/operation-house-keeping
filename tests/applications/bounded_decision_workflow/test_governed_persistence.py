@@ -11,10 +11,10 @@ from applications.bounded_decision_workflow.governed_resources import policy as 
 # Structural record only, supplied by an explicitly patched unit-test provider.
 # It is NOT an executable witness: the source paths/commit below are synthetic.
 # Real command acceptance always derives the unpatched exact executable identity.
-BUILD=C({'schema':'governed-executable-build.v1','git_commit':'0'*40,
- 'implementation_id':'bdw.governed-application.v1','inner_schema':'bdw001.1',
+BUILD=C({'schema':'governed-executable-build.v2','git_commit':'0'*40,
+ 'implementation_id':'bdw.governed-application.v2','inner_schema':'bdw001.1',
  'workflow_profile':'hypothetical_enclosure_one_step.v1','build_policy_id':'bdw.governed-resource-policy.v1',
- 'application_source_sha256':{'applications/test_only_not_an_executable.py':'0'*64},
+ 'application_source_inventory_sha256':'0'*64,
  'backend_source_inventory_sha256':'0'*64,'public_module_sha256':{p:'0'*64 for p in PUBLIC},
  'python':{'implementation':'CPython','version':'3.13.11'},
  'dependencies':dict(line.split('==') for line in (ROOT/LOCK).read_text().splitlines()),
