@@ -45,7 +45,9 @@ def main(argv=None):
         elif args.operation=='reassessment-verify':answer=runtime.verify(args.bundle)
         else:answer=runtime.replay(args.bundle,args.output_dir,args.limits)
         wire=canonical_json_bytes(answer)+b'\n';defaults.guard('receipt_bytes',len(wire))
-        _emit(1,wire);return 0
+        try:_emit(1,wire)
+        except OSError:fail('OUTPUT_CHANNEL_FAILURE','/stdout','internal')
+        return 0
     except MeasurementContractError as error:
         code=error.code;stage=error.stage;field=error.target;details=error.details
         status=2 if stage=='usage' else 4 if code=='RESOURCE_LIMIT_EXCEEDED' else 5 if stage=='path' else 6 if stage=='retention' else 7 if stage=='internal' else 3

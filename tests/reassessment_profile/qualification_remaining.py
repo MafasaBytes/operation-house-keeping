@@ -3,17 +3,18 @@ import json
 import base64
 import sys
 import zipfile
+import os
 import qualification as q
 from test_capture import actual_case,case,key,wire,sha,ref,replace
 
-def evaluate(row,c,p,*,extra=()):
+def evaluate(row,c,p,*,extra=(),file_attack=None):
     tag=row['id'];repair=tag.startswith('K-')
     root=q.ROOT/('repairs' if repair else 'inputs')/tag.lower()
     out=root/'bundle' if repair else q.ROOT/'outputs'/tag.lower()
     raw=p[key(c['invocation'])]
     assert sum(map(len,p.values()))+len(raw)<=1048576
     charges={'repairs':2097152,'logs':32768} if repair else {'inputs':1048576,'outputs':1048576,'logs':32768}
-    with q.transaction(tag,charges,files=len(p)+16,dirs=3):
+    with q.transaction(tag,charges,files=len(p)+18,dirs=4):
         if root.exists():
             assert (root/'invocation.json').read_bytes()==raw
             assert {x.name for x in (root/'objects').iterdir()}=={digest+'.'+kind for kind,digest in p}
@@ -23,10 +24,19 @@ def evaluate(row,c,p,*,extra=()):
             q.mkdir(root);q.mkdir(root/'objects')
             for (kind,digest),b in sorted(p.items()):q.put(root/'objects'/(digest+'.'+kind),b)
             q.put(root/'invocation.json',raw)
-        a,so,se=q.command(tag,['reassessment-evaluate','--invocation',root/'invocation.json','--objects-dir',root/'objects','--authority-pin',c['authority_pin'],'--output-dir',out,*extra],out)
+        object_dir=root/'objects'
+        if file_attack in ('symlink','fifo','directory'):
+            iv=json.loads(raw);request=json.loads(p[key(iv['request'])]);k=key(request['observation'])
+            target=object_dir/(k[1]+'.'+k[0]);saved=root/'original-member';target.rename(saved)
+            if file_attack=='symlink':target.symlink_to(saved)
+            elif file_attack=='fifo':os.mkfifo(target)
+            else:q.mkdir(target)
+        elif file_attack=='escape':object_dir=str(q.ROOT)+'/../outside-qualification/objects'
+        elif file_attack=='collision':q.mkdir(out);q.put(out/'sentinel',b'preserve')
+        a,so,se=q.command(tag,['reassessment-evaluate','--invocation',root/'invocation.json','--objects-dir',object_dir,'--authority-pin',c['authority_pin'],'--output-dir',out,*extra],None if file_attack=='collision' else out)
         expected=row['expected'];d=json.loads(se) if se else {}
         checks=dict(exit=a['exit']==expected['exit'],code=d.get('code')==expected['code'],
-            stdout=so==b'',canonical_stderr=se==wire(d)+b'\n',no_success=not out.exists(),termination=a['termination'] is None)
+            stdout=so==b'',canonical_stderr=se==wire(d)+b'\n',no_success=(not out.exists() if file_attack!='collision' else (out/'sentinel').read_bytes()==b'preserve' and list(out.iterdir())==[out/'sentinel']),termination=a['termination'] is None)
         q.record(dict(event='remaining_matrix_comparison',id=tag,checks=checks,expected=expected,actual=d))
         print(tag,checks,flush=True)
     return checks
@@ -86,7 +96,13 @@ def graph_controls():
                 k=next(k for k in p if k[0]=='nr.retained-bundle.v2');replace(c,p,k,json.loads(raw))
             evaluate(row,c,p)
 
+def file_controls():
+    with zipfile.ZipFile(q.PACKAGE) as z:rows={r['id']:r for r in json.loads(z.read('command-matrix.json'))['commands']}
+    for attack in ('escape','symlink','fifo','directory','collision'):
+        row=rows['D-'+attack];evaluate(row,*actual_case(row['case']),file_attack=attack)
+
 if __name__=='__main__':
     if '--carriage' in sys.argv:carriage_controls()
     elif '--graph' in sys.argv:graph_controls()
+    elif '--files' in sys.argv:file_controls()
     else:dispatch_controls()
