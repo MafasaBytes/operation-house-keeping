@@ -57,8 +57,9 @@ class RootAdapter:
             calls.append(root)
             return root
 
+        expected_calls = 2 if item.name.startswith('test_two_') else 1
         module._slice5_root_adapter_active = True
-        module._slice5_root_adapter_restore = (original, calls, len(expected))
+        module._slice5_root_adapter_restore = (original, calls, expected_calls)
         module.clone = selected_root
 
     def pytest_runtest_teardown(self, item):
