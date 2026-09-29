@@ -223,4 +223,4 @@ def test_prepared_build_remains_nonexecutable():
 def test_legacy_dispatch_usage_is_unchanged():
     for operation in ['evaluate','governed-evaluate','measurement-evaluate']:
         r=cli(operation)
-        assert r.returncode==2 and r.stdout==b'' and json.loads(r.stderr)['code']=='USAGE_ERROR'
+        assert r.returncode==2 and r.stdout==b'' and json.loads(r.stderr)['code']=='CLI_USAGE'
