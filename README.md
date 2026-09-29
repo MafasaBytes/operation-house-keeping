@@ -8,6 +8,18 @@ contains the binding project guidance.
 
 ## Current status
 
+Maintained measurement-result reassessment has separate
+[Slice 5 and final milestone owner acceptance](docs/superpowers/reports/2026-09-30-reassessment-slice5-and-final-owner-acceptance.md).
+The accepted application candidate is `c321f2e096a71a43bf65787f6f1605c4031266e7`;
+FINAL executed at `f28de9e900c700d910eb5edf2b0e6f8c336472fe`.
+The claim is bounded reassessment of supplied scalar observations against
+nominated hypotheses and qualified support, with explicit uncertainty,
+provenance, manual adoption and independently recomputing replay. It establishes
+no empirical accuracy, causal diagnosis, automatic hypothesis generation,
+automatic adoption or general robustness. Historical failures and exceptions
+remain disclosed. IN-001 and CI-001 remain open and unselected; no successor
+milestone is selected.
+
 Maintained bounded [next-measurement selection](docs/next-measurement/README.md)
 has owner-accepted Slices 1–6. It adds qualified supplied predictions, prior-free
 minimax over nominated procedures, explicit whole-set withholding and standalone

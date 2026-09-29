@@ -25,6 +25,18 @@ must remain authoritative.
 
 ## Status (added 2026-08-07 — historical guidance below is preserved)
 
+Application update (2026-09-30): maintained measurement-result reassessment has
+separate [Slice 5 and final milestone owner acceptance](docs/superpowers/reports/2026-09-30-reassessment-slice5-and-final-owner-acceptance.md).
+Accepted application candidate: `c321f2e096a71a43bf65787f6f1605c4031266e7`;
+FINAL execution revision: `f28de9e900c700d910eb5edf2b0e6f8c336472fe`.
+The accepted scope is bounded reassessment of supplied scalar observations
+against nominated hypotheses and qualified support, with explicit uncertainty,
+provenance, manual adoption and independently recomputing replay. No empirical
+accuracy, causal diagnosis, automatic hypothesis generation, automatic adoption
+or general robustness is claimed. Historical failed/noncompliant attempts,
+unauthorized-probe disclosure and evidence corrections remain preserved.
+IN-001 and CI-001 remain open and unselected. No successor is authorized.
+
 Application update (2026-09-23): next-measurement Slices 1–6 are owner accepted;
 [final milestone acceptance](docs/superpowers/reports/2026-09-23-next-measurement-final-owner-acceptance.md)
 is recorded at tested implementation `23b60a42c2279fc228168967d47491b8983658fb`.
