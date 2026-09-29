@@ -1,0 +1,1 @@
+{"domain":{"kind":"literal_codes","unit":"code","values":["code_a","code_b"]},"id":"O2","outcomes":[{"id":"code_a","region":{"kind":"literal_set","values":["code_a"]}},{"id":"code_b","region":{"kind":"literal_set","values":["code_b"]}}],"profile":"bdw.measurement.supplied.v1","revision":1,"schema":"nm.decoder.v1"}

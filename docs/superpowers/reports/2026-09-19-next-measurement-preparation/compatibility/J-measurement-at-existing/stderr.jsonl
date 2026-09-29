@@ -1,0 +1,1 @@
+{"bundle_state":"absent","code":"AUTHORITY_REFERENCE_MISMATCH","exit_code":3,"message_key":"authority_reference_mismatch","retry_class":"correct_input","stage":"commitment_public_reconstruction","target":"invocation"}
