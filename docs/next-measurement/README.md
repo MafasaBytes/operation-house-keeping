@@ -9,6 +9,12 @@ those hypotheses under justified supplied predictions, or why must ranking be
 withheld? This is the bounded objective-4 contribution. Archived experimental
 selectors are not production dependencies.
 
+The [selection and reassessment user guide](../reassessment/README.md) explains
+the seven-objective scope, exact cross-profile handoff and authority boundaries.
+Selection permits ext4/XFS; reassessment is ext4-only. A fresh selection-to-result
+workflow needs manual artifact composition and new request-bound reassessment
+authority; the example below does not supply that grant.
+
 Permission under D/A/T, prediction qualification under supplied S premises, and
 ranking under K are separate authorities. Admissibility is not predictive validity;
 positive support cannot imply exhaustive coverage or complement exclusions.
@@ -36,10 +42,13 @@ Reinstalling the same wheels at another environment prefix can change installed
 script hashes and therefore the actual build identity. A freshly bound invocation
 is not evidence of compatibility with an older retained environment witness.
 
+Here `PY` denotes the absolute path to the intended interpreter; shell activation
+is not an identity check. These signatures require already valid, authorized inputs.
+
 ```text
-python -m applications.bounded_decision_workflow measurement-evaluate --invocation FILE --objects-dir DIR --authority-pin SHA --output-dir NEWDIR [--limits FILE]
-python -m applications.bounded_decision_workflow measurement-verify --bundle DIR
-python -m applications.bounded_decision_workflow measurement-replay --bundle DIR --output-dir NEWDIR [--limits FILE]
+PY -m applications.bounded_decision_workflow measurement-evaluate --invocation FILE --objects-dir DIR --authority-pin SHA --output-dir NEWDIR [--limits FILE]
+PY -m applications.bounded_decision_workflow measurement-verify --bundle DIR
+PY -m applications.bounded_decision_workflow measurement-replay --bundle DIR --output-dir NEWDIR [--limits FILE]
 ```
 
 I references Q; Q explicitly nominates H/P/S; E carries the owning public snapshot
@@ -99,15 +108,20 @@ generated hypotheses/tests, probabilistic model or multi-step planning is claime
 
 ## Recoverable synthetic example from committed material
 
-From a clean checkout at the selected tested candidate, with the approved
-interpreter as `python`, create a new private ext4 parent and use absolute paths:
+This route uses committed example inputs plus the approved external environment;
+Git alone does not supply its runtime prerequisites. Use a checkout containing
+this guide/helper with clean application/backend sources, and a new private ext4
+parent. Binding records that checkout's actual HEAD; it does not reproduce the
+identity of an older selection merely because the source is equal. For a separately
+authorized example execution, substitute the approved interpreter's absolute path:
 
 ```bash
-python -c "import runpy; runpy.run_path('docs/next-measurement/recover.py', run_name='__main__')" --example-dir /absolute/ext4/new-input
+PY=/absolute/path/to/approved/python
+"$PY" -c "import runpy; runpy.run_path('docs/next-measurement/recover.py', run_name='__main__')" --example-dir /absolute/ext4/new-input
 NM_PIN=$(cat /absolute/ext4/new-input/authority-pin.txt)
-python -m applications.bounded_decision_workflow measurement-evaluate --invocation /absolute/ext4/new-input/invocation.json --objects-dir /absolute/ext4/new-input/objects --authority-pin "$NM_PIN" --output-dir /absolute/ext4/new-result
-python -m applications.bounded_decision_workflow measurement-verify --bundle /absolute/ext4/new-result
-python -m applications.bounded_decision_workflow measurement-replay --bundle /absolute/ext4/new-result --output-dir /absolute/ext4/new-replay
+"$PY" -m applications.bounded_decision_workflow measurement-evaluate --invocation /absolute/ext4/new-input/invocation.json --objects-dir /absolute/ext4/new-input/objects --authority-pin "$NM_PIN" --output-dir /absolute/ext4/new-result
+"$PY" -m applications.bounded_decision_workflow measurement-verify --bundle /absolute/ext4/new-result
+"$PY" -m applications.bounded_decision_workflow measurement-replay --bundle /absolute/ext4/new-result --output-dir /absolute/ext4/new-replay
 ```
 
 [recover.py](recover.py) is documentation/fixture recovery, not a production command
@@ -121,19 +135,44 @@ files present in a directory. New destinations are mandatory. Recovery is not a
 replacement for production safe file admission. The example is synthetic, not an
 empirical claim. Keep its material immutable after binding.
 
+This P example and historical reassessment P8-before are separate recovery routes.
+Changing P's build changes its invocation digest. Using that new selection in NR
+changes request/exposure references and requires a newly attested NR authority;
+the helper neither creates nor authorizes that handoff. See the
+[example/recovery distinctions](../reassessment/README.md#examples-and-recovery-routes).
+
 For offline contract/test review, the same helper's `--package-dir NEWDIR` restores
 all 1,191 exact manifest-bound members plus the original archive, manifest and
-receipt. Use `docs/superpowers/reports/2026-09-19-next-measurement-preparation` in a
-clean checkout (absent initially) when running the measurement tests. This restores
-schemas, contracts, policy, explicit authority, fixtures and original oracles
-without unrelated working-tree artifacts. The two approved qualification overlays
-remain separately committed; recovery does not rewrite the original package.
+receipt. At the current accepted checkpoint,
+`docs/superpowers/reports/2026-09-19-next-measurement-preparation` is already
+committed and byte-identical to those 1,194 recovered files. It was added by
+`b085e0ee65cefd770bb2cba82e834aebb82c50e4`, after the older 23b60a4/c321 candidates
+where it was absent. Do not recover over that existing directory:
+`mkdir(exist_ok=False)` raises an uncaught `FileExistsError`. For an older checkout
+that needs recovery, use an absent destination under a separately approved setup.
+The two qualification overlays remain separately committed; recovery never
+rewrites the original package or supplies new authority.
 
-Run the full repository suite and application release gates with bytecode/cache
-writes disabled and a new ext4 `--basetemp`. Explicitly set `BDW_UNSUPPORTED_FILE`
-and `BDW_UNSUPPORTED_OUTPUT_PARENT` to nominated read-only/isolated paths on an
-unsupported mount for those tests. Optional CAD/PDF dependencies are separate
-prerequisites; skips are not coverage. No dependency acquisition is implied.
+## Repository test setup is not portable by default
+
+The full suite also collects 19 reassessment delivery tests whose accounting
+module hard-codes a historical host corpus. Do not use that corpus. A separately
+authorized full-coverage setup needs a fresh private ext4 corpus with all seven
+categories, a valid genesis and complete accounting; make
+`tests/reassessment_profile` importable, set `REL5_CORPUS_ROOT`, and load
+`-p slice5_delivery_root_adapter` before collection. Setting the environment
+variable, TMPDIR or `--basetemp` alone does not substitute the imported ROOT.
+Alternatively, explicitly exclude `tests/reassessment_profile/test_delivery.py`
+with `--ignore=tests/reassessment_profile/test_delivery.py`, disclosing the
+19-node coverage loss; this is not equivalent to full qualification.
+See the [complete boundary and prerequisites](../reassessment/README.md#application-paths-versus-existing-test-requirements).
+
+Other application release gates still need disabled bytecode/cache writes, a new
+ext4 `--basetemp`, and nominated read-only/isolated unsupported-mount paths for
+`BDW_UNSUPPORTED_FILE` and `BDW_UNSUPPORTED_OUTPUT_PARENT`. Historical source,
+archive and environment prerequisites also remain. Optional CAD/PDF dependencies
+are separate; skips are not coverage. These are setup requirements, not an
+instruction or authorization to launch tests during documentation work.
 
 Authority and qualification: [Slice 6 acceptance](../superpowers/reports/2026-09-23-next-measurement-slice6-owner-acceptance.md),
 [closure report](../superpowers/reports/2026-09-23-next-measurement-slice6-oracle-closure.md),

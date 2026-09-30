@@ -20,6 +20,16 @@ automatic adoption or general robustness. Historical failures and exceptions
 remain disclosed. IN-001 and CI-001 remain open and unselected; no successor
 milestone is selected.
 
+For practical scope, handoff artifacts, authority and recovery, start with the
+[selection and reassessment user guide](docs/reassessment/README.md).
+The [accepted corrected reconciliation](docs/superpowers/reports/2026-09-30-post-reassessment-corrected-reconciliation.md)
+is retained with this documentation as the current seven-objective assessment.
+Its documentation-only delivery is [accepted for local retention](docs/reassessment/delivery-status.md);
+complete qualification recovery still requires the disclosed external/local
+material. Helper, test-portability,
+diagnostic, export and publication work remain deferred. Publication readiness
+is not established while recovery and disclosure decisions remain unresolved.
+
 Maintained bounded [next-measurement selection](docs/next-measurement/README.md)
 has owner-accepted Slices 1–6. It adds qualified supplied predictions, prior-free
 minimax over nominated procedures, explicit whole-set withholding and standalone
@@ -45,8 +55,9 @@ before numerical evaluation, adds a 23-row dependency review, and retains
 verification and recomputing replay. A completed gate is not necessarily granted
 permission: denied scenarios cannot reach prohibited numerical work. Legacy
 commands retain their original meaning and do not enforce admissibility.
-The [current reconciliation](docs/superpowers/reports/2026-09-17-post-admissibility-reconciliation.md)
-maps all seven objectives, recovery and publication boundaries; the
+The [post-admissibility reconciliation](docs/superpowers/reports/2026-09-17-post-admissibility-reconciliation.md)
+is the historical objective/recovery assessment before maintained selection and
+reassessment; the
 [earlier reconciliation](docs/superpowers/reports/2026-09-16-bounded-decision-workflow-post-delivery-reconciliation.md)
 is historical. Local attestation is not authentication, declared validity is not
 physical truth, and historical replay does not establish current adoption.
@@ -113,7 +124,7 @@ source or sensor authority, trusted time, global atomicity, or physical truth.
 | `backend/constraint_evaluation` | Read-only evidence-gated evaluation of explicit variable constraints. |
 | `backend/behavior_evaluation` | Read-only evaluation of the bounded explicit BH-001 behavior declaration. |
 | `backend/state_classification` | Read-only evidence-gated classification of an explicit state declaration. |
-| `applications/bounded_decision_workflow` | Accepted supplied-alternative workflow plus explicit governed finite-world admission before projection; application-owned authority/build binding, 23-row review and retained recomputing replay. Legacy routing remains distinct; no backend ledger or contract extension. |
+| `applications/bounded_decision_workflow` | Accepted supplied-action projection/selection and governed finite-world admission with 23-row review; bounded next-measurement ranking over nominated procedures and qualified support; supplied-result reassessment of nominated hypotheses with explicit uncertainty, authority and provenance. Retained verification/recomputing replay and manual adoption; no generated alternatives, automatic acquisition/adoption or backend ledger/contract extension. |
 
 Dependencies point from upper composition layers toward accepted lower
 contracts. `system_identity` has no backend dependency; `model_kernel` depends
@@ -211,10 +222,13 @@ decision: ingress/invocation, authentication/authorization, policy authority,
 policy schema/version/retention, decision-result retention, application/user
 identity, confidentiality, capacity/latency, error presentation,
 deployment/resource ownership, and scope completeness. Further backend abstraction
-must not begin without a demonstrated integrity gap. General causal diagnosis,
-maintained next-test ranking, complete impact discovery and multi-step planning
-remain undelivered and unauthorized. The accepted application does deliver its
-fixed named-decision review and supplied-action one-step projections.
+must not begin without a demonstrated integrity gap. The accepted application
+delivers bounded next-measurement ranking over nominated procedures with qualified
+supplied support, plus reassessment of supplied results against the original
+nominated hypotheses. It also retains fixed named-decision review and
+supplied-action one-step projections. General causal diagnosis, generated
+measurements/tests, global optimization, complete impact discovery and multi-step
+planning remain absent; none is selected by these accepted bounded workflows.
 No successor milestone has been approved.
 ADR-0023 remains absent, unallocated, and unreserved.
 
@@ -244,25 +258,43 @@ answer, is: “Given a complete explicitly supplied hypothetical system model,
 which missing semantics or reasoning operations still prevent the backend from
 answering the original objectives?”
 
-Physical-flow occurrence, generated candidates, causal identification,
-maintained next-test recommendation, general impact propagation, multi-step
-desired-state planning and safety or health verdicts remain absent. Finite-set
-action selection is delivered only within the accepted application profile;
-it establishes no global optimality. Occurrence/history needs explicit
-time-window, continuity, and authenticity semantics; graph traversal, ranking,
-reasoning, and optimization each need an identified consumer and explicit rules.
+Physical-flow occurrence, generated candidates or measurements, causal
+identification, general impact propagation, multi-step desired-state planning
+and safety or health verdicts remain absent. Finite-set action selection and
+bounded next-measurement recommendation are delivered within their accepted
+application profiles; neither establishes global optimality. Supplied-result
+reassessment establishes model-relative compatibility, not causal diagnosis or
+automatic adoption. Occurrence/history needs explicit
+time-window, continuity, and authenticity semantics. Further work on graph
+traversal, ranking, reasoning or optimization requires an identified consumer
+and explicit rules.
 
 ## Verification
 
-Application acceptance retains 4,648 full-repository passes, 35 optional CAD/PDF
-skips and one sandbox socket setup error, followed by that case passing in a
-permitted isolated rerun; no product failures were recorded. Earlier command,
-clean-build, recovery, replay, determinism and 27-row evidence remains applicable.
+**Historical S1–S7 bounded-decision-workflow evidence:** the
+[2026-09-16 acceptance](docs/superpowers/reports/2026-09-16-bounded-decision-workflow-final-owner-acceptance.md)
+at `64f4389b6d93484339afa29cbb7f7f21f6ef2758` retains 4,648 full-repository
+passes, 35 optional CAD/PDF skips and one sandbox socket setup error. The original
+invocation remains exit 1; that case separately passed in a permitted isolated
+rerun. Earlier command, clean-build, recovery, replay, determinism and 27-row
+evidence belongs to that milestone, not the latest reassessment execution.
+
+**Latest accepted reassessment evidence:** FINAL at execution revision
+`f28de9e900c700d910eb5edf2b0e6f8c336472fe` records **5,269 passed and 35 expected
+skips**, accounting for all 5,304 collected nodes, including all 19 delivery tests.
+There were no failed, errored, incomplete or never-executed nodes. The
+[Slice 5 and final milestone acceptance record](docs/superpowers/reports/2026-09-30-reassessment-slice5-and-final-owner-acceptance.md)
+retains the distinct source/build identities, accounting and historical exceptions.
+These are retained results; this documentation update runs no verification campaign.
+
 Observed platform evidence is locked CPython 3.13.11 on ext4; XFS, reboot and
 power-loss durability remain unverified. Integration documentation does not
 change the accepted implementation or its exact-build replay requirement.
 
-```
-.venv/bin/python -m pytest        # base-only: CAD/PDF-marked tests skip
-# all-extras: install requirements-cad.txt + requirements-pdf.txt first
-```
+For any separately authorized test execution, follow the
+[isolated setup requirements and coverage choices](docs/reassessment/README.md#application-paths-versus-existing-test-requirements).
+The full suite is not ready to run from a bare checkout: delivery tests bind a
+machine-specific historical corpus unless explicitly configured otherwise.
+**Never run tests against the historical delivery corpus.** The linked guidance
+distinguishes fresh, accounted isolation from explicit reduced coverage and
+records the other environment/recovery prerequisites.
