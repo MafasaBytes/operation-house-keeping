@@ -146,8 +146,8 @@ and NR P8-before are two recovery descriptions, not one fresh continuous run.
 |---|---|---|
 | Selection P | Committed [guide and existing fixture helper](../next-measurement/README.md#recoverable-synthetic-example-from-committed-material); frozen package input premises. | Approved external environment and new private supported destinations. The helper binds the actual NM build/invocation while preserving fixture authority. It never supplies expected outputs to production. This creates a new invocation, not P8-before's historical selection. |
 | NR P8-before: static inspection/recovery | Committed [preparation package](../superpowers/reports/2026-09-23-reassessment-preparation/package.zip). Inside: `README.md`, `READINESS.md`, `MANIFEST.json`, `CONTRACTS.md`, `wire-catalog.json`, `recover_static.py`, `cases/P8-before/input.json`, `objects/` and `authority/`. | Archive instructions/helper become accessible after extracting them to a new destination. Static recovery needs an external standard-library Python; it is not an application run. Prepared NR builds are deliberately nonexecutable. No maintained NR example-binding helper is provided. |
-| Historical NR execution/replay | **Retained-local-material route only:** complete accepted NR bundle, recorded source checkpoint and matching environment. | For P8-before, the c321 execution bundle is under the retained R root's `outputs/m180-e-p8-before/`. This runtime bundle is not supplied by Git. Verify/replay use the command interfaces above only after those prerequisites are available. |
-| Complete qualification audit | **Retained-local-material route only:** acceptance/completion reports, launch chain, manifests, ledger, streams, provisioning material and external destinations. | The repository alone cannot recover the complete latest Slice 5 chain. Use the classified inventory below; receipts alone do not replace the evidence. |
+| Historical NR execution/replay | The [local evidence supplement and exact Git history](evidence/v1/README.md) retain manifest-selected bundle bytes, including the c321 P8-before bundle historically at R's `outputs/m180-e-p8-before/`. | Static recovery is separate from execution. Verify/replay still require matching historical source/build and external environment, fresh supported destinations and authority/accounting. No clean-clone execution recipe is implied. |
+| Qualification evidence audit | The [recovery index](evidence/v1/README.md) identifies committed acceptance/completion records, launch chain, manifests, ledger, streams, provisioning records and selected external-destination evidence. | The supplement plus required Git providers support manifest-selected static recovery; receipts alone or a shallow/source-only export are insufficient. Missing raw probe output and V1 peak evidence remain disclosed gaps. |
 
 For P8-before, `input.json.members` selects the required objects; do not use every
 object in the pool or repair a negative case. Its original selection is at
@@ -162,11 +162,12 @@ The [accepted recovery inventory, §§6 and Appendices A–D](../superpowers/rep
 provides exact digests, archive-member locators and the absolute retained R root.
 That inventory is retained with this documentation. Its historical “untracked”
 observations describe its recorded checkpoint, not the report's current status.
-It distinguishes committed authority/source, archived recovery, untracked files
-and runtime-only material. Original design and nine carriage files have committed
-archive recovery; the local carriage receipt, latest launch-chain material and
-FINAL streams are not all committed. The environment-stop report exists and
-hash-matches under R but is not in the searched committed archives.
+It distinguishes authority/source, archived recovery and material that was then
+untracked or runtime-only. The [retention supplement](evidence/v1/README.md) now
+supplies the selected additional bytes, including launch/FINAL evidence and the
+recovered environment-stop report, while referencing sufficient existing Git
+and archive providers. Its canonical manifest defines the precise closure;
+historical inventories are not rewritten to describe the later retention.
 [Acceptance](../superpowers/reports/2026-09-30-reassessment-slice5-and-final-owner-acceptance.md)
 retains exact source/execution identities, failures, exceptions and accounting.
 Do not relabel older runs as FINAL or turn preserved failed attempts compliant.
@@ -202,7 +203,8 @@ defect only; they are not a clean-clone full-suite recipe. No test is authorized
 or executed by this documentation delivery.
 
 A maintained helper, test-portability implementation, diagnostic correction and
-evidence export/publication remain [distinct deferred delivery items](delivery-status.md).
-Complete qualification recovery still requires the disclosed external/local
-material. Publication and external disclosure remain deferred; publication
-readiness is not established.
+publication remain [distinct deferred delivery items](delivery-status.md).
+Local evidence retention supplies the manifest-selected static recovery route;
+execution still requires the disclosed external environment and owner decisions.
+Publication and external disclosure remain unauthorized; publication readiness
+is not established.
