@@ -1,0 +1,495 @@
+{
+ "acyclicity_check": [
+  {
+   "record": "X",
+   "references_self_or_later": [],
+   "unknown_refs": []
+  },
+  {
+   "record": "E",
+   "references_self_or_later": [],
+   "unknown_refs": []
+  },
+  {
+   "record": "R",
+   "references_self_or_later": [],
+   "unknown_refs": []
+  },
+  {
+   "record": "A",
+   "references_self_or_later": [],
+   "unknown_refs": []
+  }
+ ],
+ "closure_roots": {
+  "evaluation_authority": {
+   "kind": "ct.authority.v1",
+   "sha256": "2c25730a20a27d5755f19e51bd0fcc148903dbefb76b183e0395d02f4f60509d"
+  },
+  "request": {
+   "kind": "ct.request.v1",
+   "sha256": "9b8bd27e069df3c86f860cd7c1d43b1d75be1e9b8a9cc188b468a0e90eb6e6cf"
+  },
+  "retained_selection": {
+   "kind": "ct.retained-selection.v1",
+   "sha256": "709fd8a3fced26d7d154261e778e42e61f0e1c194f2dda43d1e31a326761a927"
+  }
+ },
+ "construction_order": [
+  "1 prior selection bundle FX1 (placeholders)",
+  "2 X execution target",
+  "3 E execution authority -> X",
+  "4 acquisition -> public evidence O (placeholder)",
+  "5 R reassessment request -> X, E, O",
+  "6 A evaluation authority -> R",
+  "7 external pins digest(R), digest(A)",
+  "8 evaluate computes D and closure roots {R, A, D}"
+ ],
+ "digests": {
+  "A": {
+   "canonical_bytes": 557,
+   "schema": "ct.authority.v1",
+   "schema_errors": 0,
+   "sha256": "2c25730a20a27d5755f19e51bd0fcc148903dbefb76b183e0395d02f4f60509d"
+  },
+  "D": {
+   "canonical_bytes": 1907,
+   "schema": "ct.retained-selection.v1",
+   "schema_errors": 0,
+   "sha256": "709fd8a3fced26d7d154261e778e42e61f0e1c194f2dda43d1e31a326761a927"
+  },
+  "E": {
+   "canonical_bytes": 562,
+   "schema": "ct.authority.v1",
+   "schema_errors": 0,
+   "sha256": "6492c6f1dc4851b2a853bf9a78005cda6b2787cf5e4851f75650c6fa8832e01e"
+  },
+  "R": {
+   "canonical_bytes": 3349,
+   "schema": "ct.request.v1",
+   "schema_errors": 0,
+   "sha256": "9b8bd27e069df3c86f860cd7c1d43b1d75be1e9b8a9cc188b468a0e90eb6e6cf"
+  },
+  "X": {
+   "canonical_bytes": 925,
+   "schema": "ct.execution-target.v1",
+   "schema_errors": 0,
+   "sha256": "44f43d6b8ee5610a8ef21c6746b6eeb26e0958f844b402c2974eebadd0f0a155"
+  }
+ },
+ "external_pins": {
+  "expected_authority_pin": "2c25730a20a27d5755f19e51bd0fcc148903dbefb76b183e0395d02f4f60509d",
+  "expected_request_pin": "9b8bd27e069df3c86f860cd7c1d43b1d75be1e9b8a9cc188b468a0e90eb6e6cf"
+ },
+ "placeholders": {
+  "claims": [
+   {
+    "kind": "ct.claim.v1",
+    "sha256": "0c5435fb0f380c1ca97a85f8c23830fdb842e2f505c2e4a8a7aba2e1dd3e0259"
+   },
+   {
+    "kind": "ct.claim.v1",
+    "sha256": "8c914408f90313cc481aa37db83a99571496ebe7cafd85e2d5bfc259ff07f52a"
+   },
+   {
+    "kind": "ct.claim.v1",
+    "sha256": "aeeb7fdf4c3a2d9724885106edb9840f1aee441ffc2ab3d731bef3b23009e1d5"
+   },
+   {
+    "kind": "ct.claim.v1",
+    "sha256": "09793334c774c26a7509e5820744426320a734b043a9958128b9bb085db7e295"
+   }
+  ],
+  "declarations": [
+   {
+    "kind": "ct.condition-declaration.v1",
+    "sha256": "72903074dbc955c6259d2755e4f9cfe5319e8e3386bbad1150f01c1559bc93c1"
+   },
+   {
+    "kind": "ct.condition-declaration.v1",
+    "sha256": "57d2c9099b65245bdbe355d75fd6b221981496f8598d0f7d5fc1435f18ac93dc"
+   },
+   {
+    "kind": "ct.condition-declaration.v1",
+    "sha256": "898652bef862404b3ff9248eacb49fc2068880097acbf82921d8848dda855fd3"
+   },
+   {
+    "kind": "ct.condition-declaration.v1",
+    "sha256": "3e8fc18fdcac344c47aab33b837f1c2d13ec0124f901b3e09056143230a5abec"
+   }
+  ],
+  "evidence_items": [
+   {
+    "kind": "ct.evidence-item.v1",
+    "sha256": "193c33ec746607007c9e3074376259c41f12d24ec7532258d5465138a6a3d492"
+   },
+   {
+    "kind": "ct.evidence-item.v1",
+    "sha256": "3bd668ce00415948b6c1a6ca6d327a24de7df6e30f87e32d51d406a6a2755d3c"
+   },
+   {
+    "kind": "ct.evidence-item.v1",
+    "sha256": "8f0a464566745dddf97991e86dc5627b2218babfed0c6c0c646d0d9528878446"
+   },
+   {
+    "kind": "ct.evidence-item.v1",
+    "sha256": "d57c109fee9695aee523cbfbfea5848f444f521efaeedfaab996b64abce35966"
+   }
+  ],
+  "model": {
+   "kind": "ct.model.v1",
+   "sha256": "8cbd2c5df660043d42df80954bd890b4fdd27e396ab8c09943d9bb65bdfe57b6"
+  },
+  "plan_P0": {
+   "kind": "ct.interpretation-plan.v1",
+   "sha256": "a4bd81a74b20046dc70fec418c9cfcdc6957fce76bf5adb9dd34c468d7c9cb7d"
+  },
+  "policy": {
+   "kind": "ct.policy.v1",
+   "sha256": "b37ce965fd81173263ed963bf669175d6d8b98e844a2a99852ff15601a22445b"
+  },
+  "prior_authority_As": {
+   "kind": "ct.authority.v1",
+   "sha256": "8419fae3cd3cd224f389fa148b5b2aa723bf7b68f863d70d8c99151278996935"
+  },
+  "prior_manifest": {
+   "kind": "ct.bundle-manifest.v1",
+   "sha256": "0f2f8a40d9e968c3ac1a5b062d4593d123500a17874363c8bb2b3a5791e10f63"
+  },
+  "prior_request_S": {
+   "kind": "ct.request.v1",
+   "sha256": "721aec2ea7a11e47b404ea46d8dbf98fdac0ce6d9f487261da2647d42a7d2b5f"
+  },
+  "prior_selection": {
+   "kind": "ct.selection.v1",
+   "sha256": "172c4f94970094918dd7f5a1d5d6a01a2e58e24f300a162eaa6f700b0f03ba20"
+  },
+  "public_evidence_O": {
+   "kind": "nm.evidence.v1",
+   "sha256": "6bf508bb0691cc53e9b17e6d85bde4783b0d7bdd3771bba5de992df12c8c9321"
+  },
+  "reviews": [
+   {
+    "kind": "ct.evidence-review.v1",
+    "sha256": "380bc7c6b0b4de32fb2b3c853170c744de5993d4510d291a8d33dc849e195882"
+   },
+   {
+    "kind": "ct.evidence-review.v1",
+    "sha256": "877b924a9c8829f634e8d678b57f22c8ceced54b667d6fdf7c9c3b2a561963a0"
+   },
+   {
+    "kind": "ct.evidence-review.v1",
+    "sha256": "1d8387cd41297316935a7debea86c27d89e202942850a0904eea10f24611e0ca"
+   },
+   {
+    "kind": "ct.evidence-review.v1",
+    "sha256": "e13d58afb36da2c9aa660e95bb6c6e9d441fc2bedbfa60461133ea06c24f2ca0"
+   }
+  ]
+ },
+ "records": {
+  "A": {
+   "id": "auth-eval-un1",
+   "plan_change": null,
+   "predecessor": null,
+   "profile": "bdw.checked-temperature.v1",
+   "provenance": {
+    "authenticated": false,
+    "basis": "permits evaluating request R",
+    "label": "example local issuer",
+    "role": "local_evaluation_issuer"
+   },
+   "purpose": "evaluation",
+   "revision": 1,
+   "schema": "ct.authority.v1",
+   "scope": {
+    "phase": "reassessment",
+    "procedure_editions": [
+     "ct.procedure.T1.v1"
+    ]
+   },
+   "target": {
+    "kind": "ct.request.v1",
+    "sha256": "9b8bd27e069df3c86f860cd7c1d43b1d75be1e9b8a9cc188b468a0e90eb6e6cf"
+   },
+   "valid": {
+    "from": "2026-10-05T08:00:00Z",
+    "to": "2026-10-06T08:00:00Z"
+   }
+  },
+  "D": {
+   "applicability": {
+    "kind": "ct.applicability.v1",
+    "sha256": "d2018d7282740042936645bbe1b3d70f36f78991d61a4ea9b5373e8627c075fb"
+   },
+   "build": {
+    "kind": "ct.build.v1",
+    "sha256": "e2c29bffea003e7433126c1d25b0428ace9632d91eb02ab0d435d74a7289c790"
+   },
+   "derivation": {
+    "kind": "ct.derivation.v1",
+    "sha256": "0d9446a96526b8993bd5de207882023756365fb4c840b2544017a44d55d5f71a"
+   },
+   "invocation": {
+    "kind": "ct.invocation.v1",
+    "sha256": "dfbf44fa193bb8b1c8b758b1bca64afe9fc6948558b4e856e552fa1bb4cca641"
+   },
+   "policy": {
+    "kind": "ct.policy.v1",
+    "sha256": "b37ce965fd81173263ed963bf669175d6d8b98e844a2a99852ff15601a22445b"
+   },
+   "prior_closure": {
+    "bytes": 196480,
+    "members": [
+     {
+      "kind": "ct.authority.v1",
+      "sha256": "8419fae3cd3cd224f389fa148b5b2aa723bf7b68f863d70d8c99151278996935"
+     },
+     {
+      "kind": "ct.interpretation-plan.v1",
+      "sha256": "a4bd81a74b20046dc70fec418c9cfcdc6957fce76bf5adb9dd34c468d7c9cb7d"
+     },
+     {
+      "kind": "ct.model.v1",
+      "sha256": "8cbd2c5df660043d42df80954bd890b4fdd27e396ab8c09943d9bb65bdfe57b6"
+     },
+     {
+      "kind": "ct.policy.v1",
+      "sha256": "b37ce965fd81173263ed963bf669175d6d8b98e844a2a99852ff15601a22445b"
+     },
+     {
+      "kind": "ct.request.v1",
+      "sha256": "721aec2ea7a11e47b404ea46d8dbf98fdac0ce6d9f487261da2647d42a7d2b5f"
+     }
+    ],
+    "roots": {
+     "evaluation_authority": {
+      "kind": "ct.authority.v1",
+      "sha256": "8419fae3cd3cd224f389fa148b5b2aa723bf7b68f863d70d8c99151278996935"
+     },
+     "request": {
+      "kind": "ct.request.v1",
+      "sha256": "721aec2ea7a11e47b404ea46d8dbf98fdac0ce6d9f487261da2647d42a7d2b5f"
+     },
+     "retained_selection": null
+    },
+    "sha256": "2a443a44a45a45195fe6c9722cef49cbd4e0c94024cb4b0172fabcbbac0038ae"
+   },
+   "prior_manifest": {
+    "kind": "ct.bundle-manifest.v1",
+    "sha256": "0f2f8a40d9e968c3ac1a5b062d4593d123500a17874363c8bb2b3a5791e10f63"
+   },
+   "profile": "bdw.checked-temperature.v1",
+   "schema": "ct.retained-selection.v1",
+   "selection": {
+    "kind": "ct.selection.v1",
+    "sha256": "172c4f94970094918dd7f5a1d5d6a01a2e58e24f300a162eaa6f700b0f03ba20"
+   },
+   "trace": {
+    "kind": "ct.trace.v1",
+    "sha256": "35286ad7d6b2acdfcf7ddcb0b161b1e32537b43c5818e08b4471b7b990dc8730"
+   }
+  },
+  "E": {
+   "id": "auth-exec-un1",
+   "plan_change": null,
+   "predecessor": null,
+   "profile": "bdw.checked-temperature.v1",
+   "provenance": {
+    "authenticated": false,
+    "basis": "permits executing target X",
+    "label": "example local issuer",
+    "role": "local_execution_issuer"
+   },
+   "purpose": "execution",
+   "revision": 1,
+   "schema": "ct.authority.v1",
+   "scope": {
+    "phase": "reassessment",
+    "procedure_editions": [
+     "ct.procedure.T1.v1"
+    ]
+   },
+   "target": {
+    "kind": "ct.execution-target.v1",
+    "sha256": "44f43d6b8ee5610a8ef21c6746b6eeb26e0958f844b402c2974eebadd0f0a155"
+   },
+   "valid": {
+    "from": "2026-10-05T08:00:00Z",
+    "to": "2026-10-05T18:00:00Z"
+   }
+  },
+  "R": {
+   "claims": [
+    {
+     "kind": "ct.claim.v1",
+     "sha256": "0c5435fb0f380c1ca97a85f8c23830fdb842e2f505c2e4a8a7aba2e1dd3e0259"
+    },
+    {
+     "kind": "ct.claim.v1",
+     "sha256": "8c914408f90313cc481aa37db83a99571496ebe7cafd85e2d5bfc259ff07f52a"
+    },
+    {
+     "kind": "ct.claim.v1",
+     "sha256": "aeeb7fdf4c3a2d9724885106edb9840f1aee441ffc2ab3d731bef3b23009e1d5"
+    },
+    {
+     "kind": "ct.claim.v1",
+     "sha256": "09793334c774c26a7509e5820744426320a734b043a9958128b9bb085db7e295"
+    }
+   ],
+   "declarations": [
+    {
+     "kind": "ct.condition-declaration.v1",
+     "sha256": "72903074dbc955c6259d2755e4f9cfe5319e8e3386bbad1150f01c1559bc93c1"
+    },
+    {
+     "kind": "ct.condition-declaration.v1",
+     "sha256": "57d2c9099b65245bdbe355d75fd6b221981496f8598d0f7d5fc1435f18ac93dc"
+    },
+    {
+     "kind": "ct.condition-declaration.v1",
+     "sha256": "898652bef862404b3ff9248eacb49fc2068880097acbf82921d8848dda855fd3"
+    },
+    {
+     "kind": "ct.condition-declaration.v1",
+     "sha256": "3e8fc18fdcac344c47aab33b837f1c2d13ec0124f901b3e09056143230a5abec"
+    }
+   ],
+   "evidence_items": [
+    {
+     "kind": "ct.evidence-item.v1",
+     "sha256": "193c33ec746607007c9e3074376259c41f12d24ec7532258d5465138a6a3d492"
+    },
+    {
+     "kind": "ct.evidence-item.v1",
+     "sha256": "3bd668ce00415948b6c1a6ca6d327a24de7df6e30f87e32d51d406a6a2755d3c"
+    },
+    {
+     "kind": "ct.evidence-item.v1",
+     "sha256": "8f0a464566745dddf97991e86dc5627b2218babfed0c6c0c646d0d9528878446"
+    },
+    {
+     "kind": "ct.evidence-item.v1",
+     "sha256": "d57c109fee9695aee523cbfbfea5848f444f521efaeedfaab996b64abce35966"
+    }
+   ],
+   "execution_target": {
+    "kind": "ct.execution-target.v1",
+    "sha256": "44f43d6b8ee5610a8ef21c6746b6eeb26e0958f844b402c2974eebadd0f0a155"
+   },
+   "id": "req-un1",
+   "model": {
+    "kind": "ct.model.v1",
+    "sha256": "8cbd2c5df660043d42df80954bd890b4fdd27e396ab8c09943d9bb65bdfe57b6"
+   },
+   "plan_change": null,
+   "policy": {
+    "kind": "ct.policy.v1",
+    "sha256": "b37ce965fd81173263ed963bf669175d6d8b98e844a2a99852ff15601a22445b"
+   },
+   "predecessor": null,
+   "prior_selection": {
+    "manifest": {
+     "kind": "ct.bundle-manifest.v1",
+     "sha256": "0f2f8a40d9e968c3ac1a5b062d4593d123500a17874363c8bb2b3a5791e10f63"
+    },
+    "selection": {
+     "kind": "ct.selection.v1",
+     "sha256": "172c4f94970094918dd7f5a1d5d6a01a2e58e24f300a162eaa6f700b0f03ba20"
+    }
+   },
+   "profile": "bdw.checked-temperature.v1",
+   "provenance": {
+    "authenticated": false,
+    "basis": "completed request after acquisition",
+    "label": "example local issuer",
+    "role": "local_model_proposer"
+   },
+   "purpose": "reassessment",
+   "result": {
+    "acquisition": {
+     "ended": "2026-10-05T09:05:00Z",
+     "instrument_id": "inst_00000000000000000000000000000001",
+     "public_evidence": {
+      "kind": "nm.evidence.v1",
+      "sha256": "6bf508bb0691cc53e9b17e6d85bde4783b0d7bdd3771bba5de992df12c8c9321"
+     },
+     "started": "2026-10-05T09:00:00Z"
+    },
+    "execution_authority": {
+     "kind": "ct.authority.v1",
+     "sha256": "6492c6f1dc4851b2a853bf9a78005cda6b2787cf5e4851f75650c6fa8832e01e"
+    },
+    "interpretation_plan": {
+     "kind": "ct.interpretation-plan.v1",
+     "sha256": "a4bd81a74b20046dc70fec418c9cfcdc6957fce76bf5adb9dd34c468d7c9cb7d"
+    },
+    "observation": {
+     "kind": "scalar",
+     "scalar": "60.0",
+     "unit": "degree_celsius"
+    },
+    "procedure_edition": "ct.procedure.T1.v1"
+   },
+   "reviews": [
+    {
+     "kind": "ct.evidence-review.v1",
+     "sha256": "380bc7c6b0b4de32fb2b3c853170c744de5993d4510d291a8d33dc849e195882"
+    },
+    {
+     "kind": "ct.evidence-review.v1",
+     "sha256": "877b924a9c8829f634e8d678b57f22c8ceced54b667d6fdf7c9c3b2a561963a0"
+    },
+    {
+     "kind": "ct.evidence-review.v1",
+     "sha256": "1d8387cd41297316935a7debea86c27d89e202942850a0904eea10f24611e0ca"
+    },
+    {
+     "kind": "ct.evidence-review.v1",
+     "sha256": "e13d58afb36da2c9aa660e95bb6c6e9d441fc2bedbfa60461133ea06c24f2ca0"
+    }
+   ],
+   "revision": 1,
+   "schema": "ct.request.v1",
+   "selection_basis": "inherited"
+  },
+  "X": {
+   "id": "xt-un1",
+   "instrument_id": "inst_00000000000000000000000000000001",
+   "interpretation_plan": {
+    "kind": "ct.interpretation-plan.v1",
+    "sha256": "a4bd81a74b20046dc70fec418c9cfcdc6957fce76bf5adb9dd34c468d7c9cb7d"
+   },
+   "model": {
+    "kind": "ct.model.v1",
+    "sha256": "8cbd2c5df660043d42df80954bd890b4fdd27e396ab8c09943d9bb65bdfe57b6"
+   },
+   "plan_change": null,
+   "predecessor": null,
+   "prior_selection": {
+    "manifest": {
+     "kind": "ct.bundle-manifest.v1",
+     "sha256": "0f2f8a40d9e968c3ac1a5b062d4593d123500a17874363c8bb2b3a5791e10f63"
+    },
+    "selection": {
+     "kind": "ct.selection.v1",
+     "sha256": "172c4f94970094918dd7f5a1d5d6a01a2e58e24f300a162eaa6f700b0f03ba20"
+    }
+   },
+   "procedure_edition": "ct.procedure.T1.v1",
+   "profile": "bdw.checked-temperature.v1",
+   "provenance": {
+    "authenticated": false,
+    "basis": "drafted from the FX1 selection before any acquisition",
+    "label": "example local issuer",
+    "role": "local_model_proposer"
+   },
+   "revision": 1,
+   "schema": "ct.execution-target.v1",
+   "selection_basis": "inherited"
+  }
+ },
+ "schema": "ct.construction-example.v1",
+ "status": "illustrative; upstream digests are placeholders = SHA-256(\"placeholder:\" + label); X, E, R, A, D digests are computed from canonical bytes"
+}

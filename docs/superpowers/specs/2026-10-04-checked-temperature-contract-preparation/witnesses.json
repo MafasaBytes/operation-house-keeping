@@ -1,0 +1,423 @@
+{
+ "baseline": "baseline 60.1; H1 b_suspect [0,0]; H2 [5,15]; b_ref [0,0]; T1 decoder low(-inf,56] gap(56,59] high(59,inf); T2 target 60",
+ "schema": "ct.witness-matrix.v1",
+ "status": "hand-derived expected outcomes; not passing evidence; arithmetic cross-checked with a standalone exact-rational calculation (no repository code imported)",
+ "witnesses": [
+  {
+   "expected": "selection ranked: T1 ideal sets H1 {60.1}->high, H2 [45.1,55.1]->low; T1 survivor sets {H2},{},{H1} score 1; T2 heater_off {H1,H2}, heater_on {} score 2; best [T1]; score_domain ideal_measurand_decoder_branches; post_measurement_elimination_guaranteed false; observation_uncertainty_not_in_score lists w=1/2",
+   "group": "score_vs_uncertainty",
+   "id": "A1",
+   "inputs": "baseline 60.1; H1 b_suspect [0,0]; H2 [5,15]; b_ref [0,0]; T1 decoder low(-inf,56] gap(56,59] high(59,inf); T2 target 60; plan T1 w=1/2; all conditions declared true and supported",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": null
+  },
+  {
+   "expected": "interval [59.5,60.5] reaches high only; H1 compatible_under_declared_model; H2 conditionally_incompatible; disposition one_compatible; adoption derived_not_adopted",
+   "group": "score_vs_uncertainty",
+   "id": "A2",
+   "inputs": "A1 selection; T1 result 60.0, plan w=1/2",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": "A3"
+  },
+  {
+   "expected": "selection unchanged ideal score 1 (plan not scored); interval [55.1,60.1] reaches low,gap,high; H1 unresolved (mixed), H2 unresolved (mixed); disposition incomplete_assessment; no hypothesis described as eliminated",
+   "group": "score_vs_uncertainty",
+   "id": "A3",
+   "inputs": "A1 inputs but plan w=5/2 (successor request); result 57.6",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": "A2"
+  },
+  {
+   "expected": "interval [55.1,56.1] reaches low,gap; H1 conditionally_incompatible; H2 unresolved; disposition incomplete_assessment",
+   "group": "score_vs_uncertainty",
+   "id": "A4",
+   "inputs": "A1; result 55.6, w=1/2",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": "A4b"
+  },
+  {
+   "expected": "interval [55,56] reaches low only (gap open at 56); H2 compatible; H1 incompatible; one_compatible",
+   "group": "score_vs_uncertainty",
+   "id": "A4b",
+   "inputs": "A1; result 55.5, w=1/2",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": "A4"
+  },
+  {
+   "expected": "H2 T1 set [45.1,57.1] permits low and gap; T1 survivor sets {H2},{H2},{H1} score 1; ranking unchanged",
+   "group": "score_vs_uncertainty",
+   "id": "A5",
+   "inputs": "A1 but H2 b_suspect [3,15]",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": null
+  },
+  {
+   "expected": "selection withheld for the whole nominated set: observation_interpretation_plan_missing; derivation cells remain inspectable; no default plan supplied",
+   "group": "interpretation_plan",
+   "id": "B1",
+   "inputs": "A1 but T1 interpretation_plan null",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": "A1"
+  },
+  {
+   "expected": "refuse INTERPRETATION_PLAN_MISMATCH exit 3; no compatibility computed",
+   "group": "interpretation_plan",
+   "id": "B2",
+   "inputs": "A1 selection (w=1/2); reassessment request result references plan w=5/2 without successor",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": "B2b"
+  },
+  {
+   "expected": "accepted as a new declared assessment; reports plan_changed with former selection reference; does not claim execution of the original plan; no automatic rerank or adoption",
+   "group": "interpretation_plan",
+   "id": "B2b",
+   "inputs": "immutable successor request with plan w=5/2 and newly scoped authority/pin, prior selection referenced historically",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": "B2"
+  },
+  {
+   "expected": "refuse INTERPRETATION_POINT_UNSUPPORTED",
+   "group": "interpretation_plan",
+   "id": "B3",
+   "inputs": "plan w=0",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": null
+  },
+  {
+   "expected": "axes support_only / complete / supported; use permitted subject to other gates",
+   "group": "aggregation",
+   "id": "C1",
+   "inputs": "one applicable completed supporting review",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": null
+  },
+  {
+   "expected": "axes support_only / pending / unresolved; blocked: unresolved_not_permitted (selection withheld whole set)",
+   "group": "aggregation",
+   "id": "C2",
+   "inputs": "C1 + unreviewed bound attachment",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": null
+  },
+  {
+   "expected": "axes support_only / pending / unresolved; conditional_use_with_unresolved_conditions listing pending attachment",
+   "group": "aggregation",
+   "id": "C3",
+   "inputs": "C2 with synthetic allowlist permitting reference_calibration/selection",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": null
+  },
+  {
+   "expected": "axes opposition_only / pending / contradicted; blocked regardless of allowlist",
+   "group": "aggregation",
+   "id": "C4",
+   "inputs": "opposition + unreviewed attachment",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": null
+  },
+  {
+   "expected": "axes support_and_opposition / pending / conflicting; blocked regardless of allowlist",
+   "group": "aggregation",
+   "id": "C5",
+   "inputs": "support + opposition + unreviewed attachment",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": null
+  },
+  {
+   "expected": "axes support_only / pending / unresolved; blocked; irrelevant cannot suppress unresolved",
+   "group": "aggregation",
+   "id": "C6",
+   "inputs": "support on A; B has completed irrelevant + completed unresolved-relevance reviews",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": null
+  },
+  {
+   "expected": "axes support_only / pending / unresolved; blocked; support retained in relation axis",
+   "group": "aggregation",
+   "id": "C7",
+   "inputs": "same item: completed relevant support + completed irrelevant",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": null
+  },
+  {
+   "expected": "axes opposition_only / pending / contradicted; blocked",
+   "group": "aggregation",
+   "id": "C8",
+   "inputs": "same item: completed relevant opposition + completed irrelevant",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": null
+  },
+  {
+   "expected": "axes support_only / complete / supported; use permitted; B retained with exclusion reason",
+   "group": "aggregation",
+   "id": "C9",
+   "inputs": "support on A; B only unopposed completed irrelevant review",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": null
+  },
+  {
+   "expected": "axes support_only / complete / supported; use permitted; B conclusive-exclusion basis explicit",
+   "group": "aggregation",
+   "id": "C10",
+   "inputs": "support on A; B validity interval entirely outside assessment window (conclusive), unresolved review retained",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": null
+  },
+  {
+   "expected": "axes support_only / pending / unresolved; blocked; partial overlap is not exclusion",
+   "group": "aggregation",
+   "id": "C11",
+   "inputs": "C10 but B validity interval partially overlaps the window",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": null
+  },
+  {
+   "expected": "axes none / complete / unresolved; blocked; historical support readable",
+   "group": "aggregation",
+   "id": "C12",
+   "inputs": "only expired support (conclusively non-overlapping)",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": null
+  },
+  {
+   "expected": "axes none / pending / unresolved; blocked; no support invented",
+   "group": "aggregation",
+   "id": "C13",
+   "inputs": "sole completed unresolved relation on applicable item",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": null
+  },
+  {
+   "expected": "axes support_and_opposition / pending / conflicting; blocked",
+   "group": "aggregation",
+   "id": "C14",
+   "inputs": "same item: support + opposition + irrelevant review",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": null
+  },
+  {
+   "expected": "conflicting_declarations; blocked; both retained",
+   "group": "declarations",
+   "id": "E1",
+   "inputs": "reference_calibration selection declared true and false (two declarations)",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": null
+  },
+  {
+   "expected": "declaration_missing; blocked",
+   "group": "declarations",
+   "id": "E2",
+   "inputs": "state_hold selection declaration absent",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": null
+  },
+  {
+   "expected": "governing_state contradicted; blocked; declaration cannot erase opposition",
+   "group": "declarations",
+   "id": "E3",
+   "inputs": "calibration declared true + completed applicable opposition review",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": null
+  },
+  {
+   "expected": "refuse CACHED_DERIVATION_MISMATCH exit 3",
+   "group": "integrity",
+   "id": "D1",
+   "inputs": "evaluate with submitted cached derivation whose H2 set altered to [45.1,56.1], correctly rehashed",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": null
+  },
+  {
+   "expected": "verify refuses DERIVATION_MISMATCH (fresh recomputation)",
+   "group": "integrity",
+   "id": "D2",
+   "inputs": "retained bundle with altered derivation, all digests and manifest rehashed",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": null
+  },
+  {
+   "expected": "verify completes reporting downstream_result_not_replayed (does not claim ranking checked)",
+   "group": "integrity",
+   "id": "D3",
+   "inputs": "retained bundle with altered downstream score (T1 worst 2), rehashed",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": "D4"
+  },
+  {
+   "expected": "replay refuses DOWNSTREAM_REPLAY_MISMATCH",
+   "group": "integrity",
+   "id": "D4",
+   "inputs": "same bundle as D3",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": "D3"
+  },
+  {
+   "expected": "verify refuses SCORE_METADATA_INVALID",
+   "group": "integrity",
+   "id": "D5",
+   "inputs": "retained selection with post_measurement_elimination_guaranteed true, rehashed",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": null
+  },
+  {
+   "expected": "refuse REFERENCE_DIGEST_MISMATCH",
+   "group": "integrity",
+   "id": "D6",
+   "inputs": "request references model revision 1 digest; closure supplies revision 2",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": null
+  },
+  {
+   "expected": "refuse AUTHORITY_PIN_MISMATCH before computation",
+   "group": "integrity",
+   "id": "D7",
+   "inputs": "authority record changed and rehashed; external --expected-authority-pin unchanged",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": "D7b"
+  },
+  {
+   "expected": "accepted as a new declared assessment; not authenticated; prior history untouched",
+   "group": "integrity",
+   "id": "D7b",
+   "inputs": "fresh request and fresh authority with matching fresh external pins",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": "D7"
+  },
+  {
+   "expected": "refuse AUTHORITY_SCOPE_MISMATCH",
+   "group": "integrity",
+   "id": "D8",
+   "inputs": "authority scope phase selection used for reassessment",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": null
+  },
+  {
+   "expected": "both hypotheses baseline_ineligible; retained; selection withheld whole set (baseline_ineligible); not pruned",
+   "group": "baseline",
+   "id": "G1",
+   "inputs": "baseline evidence scalar 60.2 while model baseline 60.1",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": null
+  },
+  {
+   "expected": "boundary: admitted; plus-one: refuse RESOURCE_LIMIT_EXCEEDED/ hypotheses",
+   "group": "boundary",
+   "id": "F1",
+   "inputs": "2 hypotheses (one per kind) | plus-one: 3 hypotheses",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": null
+  },
+  {
+   "expected": "boundary: admitted; plus-one: refuse SCHEMA_INVALID (edition at most once)",
+   "group": "boundary",
+   "id": "F2",
+   "inputs": "T1 and T2 once each | plus-one: T1 twice",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": null
+  },
+  {
+   "expected": "boundary: admitted; plus-one: refuse EDITION_CONTENT_MISMATCH",
+   "group": "boundary",
+   "id": "F3",
+   "inputs": "decoder content equal to ct.decoder.T1.v1 | plus-one: 4 regions or cut point 56.5 under same edition",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": null
+  },
+  {
+   "expected": "boundary: admitted; plus-one: refuse SCALAR_OUT_OF_ADMISSION_DOMAIN",
+   "group": "boundary",
+   "id": "F4",
+   "inputs": "scalar 1000 | plus-one: 1000.000001",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": null
+  },
+  {
+   "expected": "boundary: admitted; plus-one: refuse RATIONAL_INVALID",
+   "group": "boundary",
+   "id": "F5",
+   "inputs": "6 fractional digits | plus-one: 7 fractional digits",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": null
+  },
+  {
+   "expected": "boundary: admitted (then bounds checked); plus-one: refuse RESOURCE_LIMIT_EXCEEDED/ integer_digits",
+   "group": "boundary",
+   "id": "F6",
+   "inputs": "32-digit numerator | plus-one: 33-digit numerator",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": null
+  },
+  {
+   "expected": "boundary: admitted; plus-one: refuse INTERPRETATION_HALF_WIDTH_OUT_OF_RANGE",
+   "group": "boundary",
+   "id": "F7",
+   "inputs": "w=5 | plus-one: w=5.000001",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": null
+  },
+  {
+   "expected": "boundary: admitted; plus-one: refuse ACCOUNT_KIND_CONSTRAINT_VIOLATED",
+   "group": "boundary",
+   "id": "F8",
+   "inputs": "H2 b_suspect hi 50 | plus-one: hi 50.000001 or lo 0",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": null
+  },
+  {
+   "expected": "boundary: admitted; plus-one: refuse ACCOUNT_KIND_CONSTRAINT_VIOLATED",
+   "group": "boundary",
+   "id": "F9",
+   "inputs": "b_ref [-10,10] | plus-one: b_ref hi 10.000001",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": null
+  },
+  {
+   "expected": "boundary: admitted; plus-one: refuse RESOURCE_LIMIT_EXCEEDED/ evidence_items_per_condition_key",
+   "group": "boundary",
+   "id": "F10",
+   "inputs": "8 evidence items on one condition key | plus-one: 9",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": null
+  },
+  {
+   "expected": "boundary: admitted; plus-one: refuse RESOURCE_LIMIT_EXCEEDED/ reviews_per_item",
+   "group": "boundary",
+   "id": "F11",
+   "inputs": "4 reviews on one item | plus-one: 5",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": null
+  },
+  {
+   "expected": "boundary: admitted; plus-one: refuse RESOURCE_LIMIT_EXCEEDED/ reviews",
+   "group": "boundary",
+   "id": "F12",
+   "inputs": "64 reviews total | plus-one: 65",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": null
+  },
+  {
+   "expected": "boundary: admitted; plus-one: refuse RESOURCE_LIMIT_EXCEEDED/ closure_bytes before aggregation",
+   "group": "boundary",
+   "id": "F13",
+   "inputs": "decoded closure 1,048,576 B | plus-one: 1,048,577 B",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": null
+  },
+  {
+   "expected": "heater_off for both (equality off); T2 survivor sets {H1,H2},{} score 2",
+   "group": "t2_rule",
+   "id": "T2a",
+   "inputs": "target 60.1 equal to baseline 60.1",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": null
+  },
+  {
+   "expected": "heater_on for both; survivor sets {},{H1,H2}; score 2; T2 never preferred over T1 in A1",
+   "group": "t2_rule",
+   "id": "T2b",
+   "inputs": "target 60.2",
+   "status": "hand-derived expected outcome; not executed",
+   "twin_of": null
+  }
+ ]
+}

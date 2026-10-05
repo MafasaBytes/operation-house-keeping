@@ -1,0 +1,124 @@
+{
+ "amends": "v4 witnesses.json (v4 MANIFEST 9e0afa32...)",
+ "schema": "ct.witness-matrix.c1",
+ "status": "hand-derived expected outcomes; not passing evidence",
+ "witnesses": [
+  {
+   "cases": [
+    {
+     "case": "TC1",
+     "expected": "completes as UN1; verify and replay complete standalone",
+     "inputs": "CO1 with later-chain T1 evidence (receipt within 2026-10-05T09:00-09:05, value 60)",
+     "invocations": [
+      "checked-reassessment-evaluate",
+      "checked-reassessment-verify",
+      "checked-reassessment-replay"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "new"
+    },
+    {
+     "case": "TC2a",
+     "expected": "completes",
+     "inputs": "acquisition.started equal to the occurrence finished_at",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "new"
+    },
+    {
+     "case": "TC2b",
+     "expected": "completes",
+     "inputs": "acquisition.ended equal to the occurrence finished_at",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "new"
+    },
+    {
+     "case": "TC3",
+     "expected": "refuse RESULT_EVIDENCE_MISMATCH /acquisition_window",
+     "inputs": "value-distinct evidence at the retained 2026-08-07 instant with an October acquisition window",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "new"
+    },
+    {
+     "case": "TC4",
+     "expected": "refuse SCHEMA_INVALID /result/acquisition/started_before_baseline",
+     "inputs": "acquisition.started before model.context.as_of",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "new"
+    },
+    {
+     "case": "TC5a",
+     "expected": "refuse; the owning validator rejects the inconsistent chain (SCHEMA_INVALID /nm.evidence.v1) or, failing that, never accepted",
+     "inputs": "baseline evidence with every snapshot timestamp naively shifted into the acquisition window (no rebuild)",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "new"
+    },
+    {
+     "case": "TC5b",
+     "expected": "refuse; never accepted",
+     "inputs": "value-distinct evidence at the retained 2026-08-07 instant with only every occurrence finished_at substituted into the October acquisition window (no rebuild)",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "observed": "ACCEPTED by the existing validators (strict xfail); unresolved, see AMENDMENT C1.5",
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "new"
+    },
+    {
+     "case": "TC6",
+     "expected": "refuse RESULT_EVIDENCE_MISMATCH /baseline_reuse, /occurrence",
+     "inputs": "baseline evidence reuse; baseline occurrence reuse",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "new"
+    },
+    {
+     "case": "TC5c",
+     "expected": "refuse SCHEMA_INVALID /nm.evidence.v1 by the owning validator",
+     "inputs": "retained-instant evidence with received_at and finished_at (every copy) substituted into the window (probe)",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "new"
+    }
+   ],
+   "property": "T1 acquisition-time binding (amendment C1)",
+   "witness": "W28"
+  }
+ ]
+}

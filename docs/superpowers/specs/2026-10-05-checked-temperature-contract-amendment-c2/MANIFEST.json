@@ -1,0 +1,26 @@
+{
+ "amends": {
+  "c1_manifest_sha256": "791b4035807ce032f7852447df0e0b7d9324c8cb90d52bc8a1b6ebac42ab9d1a",
+  "clauses": "C1.1 rule 1; C1.5"
+ },
+ "base": {
+  "v4_manifest_sha256": "9e0afa328c3281fd468be21911f7840a74a35cdafd616b3f79605eaebd5df529"
+ },
+ "date": "2026-10-05",
+ "members": {
+  "AMENDMENT.md": {
+   "bytes": 2246,
+   "sha256": "98253c479b5a04242a2c9ffc327193b2bfc1d851fe786baaf9ac04180ddb2ad1"
+  },
+  "witnesses-c2.json": {
+   "bytes": 3451,
+   "sha256": "2a5a91c45e606ee49984547a07635f9e3fb62eff94cb2d9fa93d4afa9570ca4a"
+  }
+ },
+ "schema": "ct.amendment-manifest.c2",
+ "status": "owner-approved successor amendment (receipt-time closure); implementation evidence is Gate 1 unit-test evidence",
+ "unchanged": {
+  "policy_sha256": "46df039bff18ab0ccb8a31262e42f1f0d40a828ede6e797953b769ecb49e8c15",
+  "schemas_sha256": "43c2af0b7bc3be137a0576e51b281be1ea53854c5e13d5d0a2c807f7611ac570"
+ }
+}

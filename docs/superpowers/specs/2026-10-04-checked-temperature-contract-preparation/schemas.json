@@ -1,0 +1,1322 @@
+{
+ "$id": "bdw.checked-temperature.v1/schemas",
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "definitions": {
+  "attestation": {
+   "additionalProperties": false,
+   "properties": {
+    "authenticated": {
+     "const": false
+    },
+    "basis": {
+     "maxLength": 1024,
+     "type": "string"
+    },
+    "label": {
+     "maxLength": 128,
+     "minLength": 1,
+     "type": "string"
+    },
+    "role": {
+     "enum": [
+      "local_model_proposer",
+      "local_evidence_reviewer",
+      "local_condition_declarer",
+      "local_evaluation_issuer",
+      "local_execution_issuer",
+      "local_adoption_decider"
+     ]
+    }
+   },
+   "required": [
+    "role",
+    "label",
+    "authenticated",
+    "basis"
+   ],
+   "type": "object"
+  },
+  "condition_id": {
+   "enum": [
+    "reference_calibration",
+    "reference_mapping",
+    "state_hold",
+    "indicator_fidelity"
+   ]
+  },
+  "context": {
+   "additionalProperties": false,
+   "properties": {
+    "as_of": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "assertion_context": {
+     "additionalProperties": false,
+     "properties": {
+      "kind": {
+       "const": "lifecycle_view"
+      },
+      "view": {
+       "enum": [
+        "as_operated"
+       ]
+      }
+     },
+     "required": [
+      "kind",
+      "view"
+     ],
+     "type": "object"
+    },
+    "scenario_label": {
+     "$ref": "#/definitions/id"
+    },
+    "subject_entity_anchor_id": {
+     "pattern": "^ent_[0-9a-f]{32}$",
+     "type": "string"
+    },
+    "variable_anchor_id": {
+     "pattern": "^var_[0-9a-f]{32}$",
+     "type": "string"
+    }
+   },
+   "required": [
+    "as_of",
+    "scenario_label",
+    "assertion_context",
+    "subject_entity_anchor_id",
+    "variable_anchor_id"
+   ],
+   "type": "object"
+  },
+  "decimal": {
+   "pattern": "^-?(0|[1-9][0-9]{0,3})(\\.[0-9]{1,6})?$",
+   "type": "string",
+   "x-constraints": [
+    "value in [-200, 1000]",
+    "no exponent, no leading plus, no trailing-dot"
+   ]
+  },
+  "id": {
+   "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$",
+   "type": "string"
+  },
+  "interval": {
+   "additionalProperties": false,
+   "properties": {
+    "hi": {
+     "$ref": "#/definitions/rational"
+    },
+    "lo": {
+     "$ref": "#/definitions/rational"
+    }
+   },
+   "required": [
+    "lo",
+    "hi"
+   ],
+   "type": "object",
+   "x-constraints": [
+    "lo <= hi",
+    "closed both ends"
+   ]
+  },
+  "phase": {
+   "enum": [
+    "selection",
+    "reassessment"
+   ]
+  },
+  "rational": {
+   "additionalProperties": false,
+   "properties": {
+    "denominator": {
+     "pattern": "^[1-9][0-9]{0,31}$",
+     "type": "string"
+    },
+    "numerator": {
+     "pattern": "^(0|-?[1-9][0-9]{0,31})$",
+     "type": "string"
+    }
+   },
+   "required": [
+    "numerator",
+    "denominator"
+   ],
+   "type": "object",
+   "x-constraints": [
+    "reduced (gcd 1)",
+    "denominator divides 1000000"
+   ]
+  },
+  "ref": {
+   "additionalProperties": false,
+   "properties": {
+    "kind": {
+     "pattern": "^ct\\.[a-z-]+\\.v1$|^nm\\.evidence\\.v1$|^nm\\.basis$",
+     "type": "string"
+    },
+    "sha256": {
+     "$ref": "#/definitions/sha256"
+    }
+   },
+   "required": [
+    "kind",
+    "sha256"
+   ],
+   "type": "object"
+  },
+  "sha256": {
+   "pattern": "^[0-9a-f]{64}$",
+   "type": "string"
+  }
+ },
+ "records": {
+  "ct.adoption.v1": {
+   "additionalProperties": false,
+   "properties": {
+    "decider": {
+     "$ref": "#/definitions/attestation"
+    },
+    "decision": {
+     "enum": [
+      "adopted",
+      "rejected",
+      "deferred"
+     ]
+    },
+    "id": {
+     "$ref": "#/definitions/id"
+    },
+    "predecessor": {
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "$ref": "#/definitions/ref"
+      }
+     ]
+    },
+    "profile": {
+     "const": "bdw.checked-temperature.v1"
+    },
+    "reassessment": {
+     "$ref": "#/definitions/ref"
+    },
+    "revision": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "schema": {
+     "const": "ct.adoption.v1"
+    }
+   },
+   "required": [
+    "schema",
+    "profile",
+    "id",
+    "revision",
+    "predecessor",
+    "reassessment",
+    "decision",
+    "decider"
+   ],
+   "type": "object"
+  },
+  "ct.applicability.v1": {
+   "properties": {
+    "conditions": {
+     "x-note": "per condition key: declaration state(s), reviewed_relation, review_completeness, governing_state, pending_items, excluded_items with basis, use_effect"
+    },
+    "schema": {
+     "const": "ct.applicability.v1"
+    },
+    "use_disposition": {
+     "enum": [
+      "use_permitted",
+      "conditional_use_with_unresolved_conditions",
+      "blocked"
+     ]
+    }
+   },
+   "required": [
+    "schema",
+    "conditions"
+   ],
+   "type": "object",
+   "x-computed": true
+  },
+  "ct.authority.v1": {
+   "additionalProperties": false,
+   "properties": {
+    "id": {
+     "$ref": "#/definitions/id"
+    },
+    "issuer": {
+     "$ref": "#/definitions/attestation"
+    },
+    "predecessor": {
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "$ref": "#/definitions/ref"
+      }
+     ]
+    },
+    "profile": {
+     "const": "bdw.checked-temperature.v1"
+    },
+    "purpose": {
+     "enum": [
+      "evaluation",
+      "execution"
+     ]
+    },
+    "revision": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "schema": {
+     "const": "ct.authority.v1"
+    },
+    "scope": {
+     "additionalProperties": false,
+     "properties": {
+      "phase": {
+       "$ref": "#/definitions/phase"
+      },
+      "procedure_editions": {
+       "items": {
+        "enum": [
+         "ct.procedure.T1.v1",
+         "ct.procedure.T2.v1"
+        ]
+       },
+       "maxItems": 2,
+       "type": "array"
+      }
+     },
+     "required": [
+      "procedure_editions",
+      "phase"
+     ],
+     "type": "object"
+    },
+    "target_request_sha256": {
+     "$ref": "#/definitions/sha256"
+    },
+    "valid": {
+     "additionalProperties": false,
+     "properties": {
+      "from": {
+       "format": "date-time",
+       "type": "string"
+      },
+      "to": {
+       "format": "date-time",
+       "type": "string"
+      }
+     },
+     "required": [
+      "from",
+      "to"
+     ],
+     "type": "object"
+    }
+   },
+   "required": [
+    "schema",
+    "profile",
+    "id",
+    "revision",
+    "predecessor",
+    "purpose",
+    "target_request_sha256",
+    "scope",
+    "valid",
+    "issuer"
+   ],
+   "type": "object"
+  },
+  "ct.build.v1": {
+   "properties": {
+    "calculator_edition": {
+     "const": "ct.calculator.v1"
+    },
+    "checkpoint": {
+     "pattern": "^[0-9a-f]{40}$",
+     "type": "string"
+    },
+    "contract_editions": {
+     "required": [
+      "schemas_sha256",
+      "policy_sha256"
+     ],
+     "type": "object"
+    },
+    "schema": {
+     "const": "ct.build.v1"
+    }
+   },
+   "required": [
+    "schema",
+    "checkpoint",
+    "source_manifest",
+    "environment_manifest",
+    "contract_editions",
+    "calculator_edition"
+   ],
+   "type": "object"
+  },
+  "ct.bundle-manifest.v1": {
+   "properties": {
+    "files": {
+     "x-note": "invocation, closure, derivation, applicability, result, trace, build, policy; manifest written last"
+    },
+    "schema": {
+     "const": "ct.bundle-manifest.v1"
+    }
+   },
+   "required": [
+    "schema",
+    "files"
+   ],
+   "type": "object"
+  },
+  "ct.condition-declaration.v1": {
+   "additionalProperties": false,
+   "properties": {
+    "catalogue": {
+     "const": "ct.conditions.v1"
+    },
+    "condition": {
+     "$ref": "#/definitions/condition_id"
+    },
+    "context": {
+     "$ref": "#/definitions/context"
+    },
+    "declarer": {
+     "$ref": "#/definitions/attestation"
+    },
+    "id": {
+     "$ref": "#/definitions/id"
+    },
+    "phase": {
+     "$ref": "#/definitions/phase"
+    },
+    "predecessor": {
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "$ref": "#/definitions/ref"
+      }
+     ]
+    },
+    "procedure_edition": {
+     "enum": [
+      "ct.procedure.T1.v1",
+      "ct.procedure.T2.v1"
+     ]
+    },
+    "profile": {
+     "const": "bdw.checked-temperature.v1"
+    },
+    "revision": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "schema": {
+     "const": "ct.condition-declaration.v1"
+    },
+    "state": {
+     "enum": [
+      "true",
+      "false",
+      "unknown"
+     ]
+    }
+   },
+   "required": [
+    "schema",
+    "profile",
+    "id",
+    "revision",
+    "predecessor",
+    "catalogue",
+    "condition",
+    "procedure_edition",
+    "phase",
+    "context",
+    "state",
+    "declarer"
+   ],
+   "type": "object"
+  },
+  "ct.derivation.v1": {
+   "properties": {
+    "baseline": {
+     "x-note": "per hypothesis: baseline_eligible | baseline_ineligible | baseline_unknown with check details"
+    },
+    "cells": {
+     "x-note": "per (hypothesis, procedure, outcome): permit | exclude | unavailable, with intersection and exclusion basis"
+    },
+    "intervals": {
+     "x-note": "per (hypothesis, procedure): exact closed rational predicted set or code"
+    },
+    "schema": {
+     "const": "ct.derivation.v1"
+    }
+   },
+   "required": [
+    "schema",
+    "profile",
+    "model",
+    "calculator_edition",
+    "build",
+    "cells",
+    "baseline",
+    "intervals"
+   ],
+   "type": "object",
+   "x-computed": true
+  },
+  "ct.evidence-item.v1": {
+   "additionalProperties": false,
+   "properties": {
+    "attached_by": {
+     "$ref": "#/definitions/attestation"
+    },
+    "condition_keys": {
+     "items": {
+      "additionalProperties": false,
+      "properties": {
+       "condition": {
+        "$ref": "#/definitions/condition_id"
+       },
+       "phase": {
+        "$ref": "#/definitions/phase"
+       },
+       "procedure_edition": {
+        "enum": [
+         "ct.procedure.T1.v1",
+         "ct.procedure.T2.v1"
+        ]
+       }
+      },
+      "required": [
+       "condition",
+       "procedure_edition",
+       "phase"
+      ],
+      "type": "object"
+     },
+     "maxItems": 4,
+     "minItems": 1,
+     "type": "array"
+    },
+    "content": {
+     "$ref": "#/definitions/ref"
+    },
+    "id": {
+     "$ref": "#/definitions/id"
+    },
+    "predecessor": {
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "$ref": "#/definitions/ref"
+      }
+     ]
+    },
+    "profile": {
+     "const": "bdw.checked-temperature.v1"
+    },
+    "revision": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "schema": {
+     "const": "ct.evidence-item.v1"
+    },
+    "subject_entity_anchor_id": {
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "pattern": "^ent_[0-9a-f]{32}$",
+       "type": "string"
+      }
+     ]
+    },
+    "validity": {
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "additionalProperties": false,
+       "properties": {
+        "valid_from": {
+         "format": "date-time",
+         "type": "string"
+        },
+        "valid_to": {
+         "format": "date-time",
+         "type": "string"
+        }
+       },
+       "required": [
+        "valid_from",
+        "valid_to"
+       ],
+       "type": "object"
+      }
+     ],
+     "x-note": "declared applicability-validity interval; null => cannot conclusively exclude"
+    },
+    "variable_anchor_id": {
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "pattern": "^var_[0-9a-f]{32}$",
+       "type": "string"
+      }
+     ]
+    }
+   },
+   "required": [
+    "schema",
+    "profile",
+    "id",
+    "revision",
+    "predecessor",
+    "condition_keys",
+    "content",
+    "validity",
+    "subject_entity_anchor_id",
+    "variable_anchor_id",
+    "attached_by"
+   ],
+   "type": "object"
+  },
+  "ct.evidence-review.v1": {
+   "additionalProperties": false,
+   "properties": {
+    "completion": {
+     "enum": [
+      "completed",
+      "incomplete"
+     ]
+    },
+    "condition": {
+     "$ref": "#/definitions/condition_id"
+    },
+    "context": {
+     "$ref": "#/definitions/context"
+    },
+    "id": {
+     "$ref": "#/definitions/id"
+    },
+    "item": {
+     "$ref": "#/definitions/ref"
+    },
+    "phase": {
+     "$ref": "#/definitions/phase"
+    },
+    "predecessor": {
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "$ref": "#/definitions/ref"
+      }
+     ]
+    },
+    "procedure_edition": {
+     "enum": [
+      "ct.procedure.T1.v1",
+      "ct.procedure.T2.v1"
+     ]
+    },
+    "profile": {
+     "const": "bdw.checked-temperature.v1"
+    },
+    "rationale": {
+     "maxLength": 2048,
+     "type": "string"
+    },
+    "relation": {
+     "enum": [
+      "support",
+      "opposition",
+      "unresolved",
+      "not_applicable"
+     ]
+    },
+    "relevance": {
+     "enum": [
+      "relevant",
+      "irrelevant",
+      "unresolved"
+     ]
+    },
+    "reviewer": {
+     "$ref": "#/definitions/attestation"
+    },
+    "revision": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "schema": {
+     "const": "ct.evidence-review.v1"
+    }
+   },
+   "required": [
+    "schema",
+    "profile",
+    "id",
+    "revision",
+    "predecessor",
+    "item",
+    "condition",
+    "procedure_edition",
+    "phase",
+    "context",
+    "completion",
+    "relevance",
+    "relation",
+    "rationale",
+    "reviewer"
+   ],
+   "type": "object"
+  },
+  "ct.explanation.v1": {
+   "additionalProperties": false,
+   "properties": {
+    "account_kind": {
+     "enum": [
+      "high_underlying_faithful_baseline",
+      "low_underlying_positive_offset"
+     ]
+    },
+    "context": {
+     "$ref": "#/definitions/context"
+    },
+    "id": {
+     "$ref": "#/definitions/id"
+    },
+    "predecessor": {
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "$ref": "#/definitions/ref"
+      }
+     ]
+    },
+    "profile": {
+     "const": "bdw.checked-temperature.v1"
+    },
+    "proposer": {
+     "$ref": "#/definitions/attestation"
+    },
+    "rationale": {
+     "maxLength": 2048,
+     "type": "string"
+    },
+    "revision": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "schema": {
+     "const": "ct.explanation.v1"
+    },
+    "statement": {
+     "maxLength": 2048,
+     "type": "string"
+    }
+   },
+   "required": [
+    "schema",
+    "profile",
+    "id",
+    "revision",
+    "predecessor",
+    "account_kind",
+    "statement",
+    "rationale",
+    "proposer",
+    "context"
+   ],
+   "type": "object"
+  },
+  "ct.interpretation-plan.v1": {
+   "additionalProperties": false,
+   "properties": {
+    "edition": {
+     "const": "ct.interpretation.hard-interval.v1"
+    },
+    "half_width": {
+     "$ref": "#/definitions/rational"
+    },
+    "id": {
+     "$ref": "#/definitions/id"
+    },
+    "predecessor": {
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "$ref": "#/definitions/ref"
+      }
+     ]
+    },
+    "profile": {
+     "const": "bdw.checked-temperature.v1"
+    },
+    "revision": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "schema": {
+     "const": "ct.interpretation-plan.v1"
+    },
+    "unit": {
+     "const": "degree_celsius"
+    }
+   },
+   "required": [
+    "schema",
+    "profile",
+    "id",
+    "revision",
+    "predecessor",
+    "edition",
+    "half_width",
+    "unit"
+   ],
+   "type": "object"
+  },
+  "ct.model.v1": {
+   "additionalProperties": false,
+   "properties": {
+    "b_ref": {
+     "$ref": "#/definitions/interval"
+    },
+    "baseline": {
+     "$ref": "#/definitions/rational"
+    },
+    "baseline_evidence": {
+     "$ref": "#/definitions/ref"
+    },
+    "baseline_verdict": {
+     "enum": [
+      "violated",
+      "satisfied"
+     ]
+    },
+    "calculator_edition": {
+     "const": "ct.calculator.v1"
+    },
+    "context": {
+     "$ref": "#/definitions/context"
+    },
+    "hypotheses": {
+     "items": {
+      "additionalProperties": false,
+      "properties": {
+       "b_suspect": {
+        "$ref": "#/definitions/interval"
+       },
+       "explanation": {
+        "$ref": "#/definitions/ref"
+       }
+      },
+      "required": [
+       "explanation",
+       "b_suspect"
+      ],
+      "type": "object"
+     },
+     "maxItems": 2,
+     "minItems": 1,
+     "type": "array",
+     "x-constraints": [
+      "at most one per account kind",
+      "H1 b_suspect == [0,0]",
+      "H2 0 < lo <= hi <= 50"
+     ]
+    },
+    "id": {
+     "$ref": "#/definitions/id"
+    },
+    "predecessor": {
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "$ref": "#/definitions/ref"
+      }
+     ]
+    },
+    "procedures": {
+     "items": {
+      "oneOf": [
+       {
+        "additionalProperties": false,
+        "properties": {
+         "edition": {
+          "const": "ct.procedure.T1.v1"
+         },
+         "interpretation_plan": {
+          "oneOf": [
+           {
+            "type": "null"
+           },
+           {
+            "$ref": "#/definitions/ref"
+           }
+          ]
+         }
+        },
+        "required": [
+         "edition",
+         "interpretation_plan"
+        ],
+        "type": "object"
+       },
+       {
+        "additionalProperties": false,
+        "properties": {
+         "edition": {
+          "const": "ct.procedure.T2.v1"
+         },
+         "target": {
+          "$ref": "#/definitions/rational"
+         }
+        },
+        "required": [
+         "edition",
+         "target"
+        ],
+        "type": "object"
+       }
+      ]
+     },
+     "maxItems": 2,
+     "minItems": 1,
+     "type": "array",
+     "x-constraints": [
+      "each edition at most once",
+      "T1 interpretation_plan null => selection withheld (observation_interpretation_plan_missing)"
+     ]
+    },
+    "profile": {
+     "const": "bdw.checked-temperature.v1"
+    },
+    "proposer": {
+     "$ref": "#/definitions/attestation"
+    },
+    "revision": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "schema": {
+     "const": "ct.model.v1"
+    },
+    "template_edition": {
+     "const": "ct.template.two-account-temperature.v1"
+    }
+   },
+   "required": [
+    "schema",
+    "profile",
+    "id",
+    "revision",
+    "predecessor",
+    "template_edition",
+    "calculator_edition",
+    "baseline",
+    "baseline_verdict",
+    "baseline_evidence",
+    "hypotheses",
+    "b_ref",
+    "procedures",
+    "context",
+    "proposer"
+   ],
+   "type": "object"
+  },
+  "ct.policy.v1": {
+   "additionalProperties": false,
+   "properties": {
+    "id": {
+     "$ref": "#/definitions/id"
+    },
+    "limits": {
+     "type": "object"
+    },
+    "permitted_builds": {
+     "items": {
+      "$ref": "#/definitions/sha256"
+     },
+     "maxItems": 8,
+     "type": "array"
+    },
+    "predecessor": {
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "$ref": "#/definitions/ref"
+      }
+     ]
+    },
+    "profile": {
+     "const": "bdw.checked-temperature.v1"
+    },
+    "required_reviews_per_item": {
+     "maximum": 4,
+     "minimum": 1,
+     "type": "integer"
+    },
+    "revision": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "schema": {
+     "const": "ct.policy.v1"
+    },
+    "unresolved_allowlist": {
+     "items": {
+      "additionalProperties": false,
+      "properties": {
+       "condition": {
+        "$ref": "#/definitions/condition_id"
+       },
+       "phase": {
+        "$ref": "#/definitions/phase"
+       }
+      },
+      "required": [
+       "condition",
+       "phase"
+      ],
+      "type": "object"
+     },
+     "maxItems": 8,
+     "type": "array",
+     "x-constraints": [
+      "omitted => forbidden",
+      "cannot reference contradicted/conflicting (not representable)"
+     ]
+    }
+   },
+   "required": [
+    "schema",
+    "profile",
+    "id",
+    "revision",
+    "predecessor",
+    "unresolved_allowlist",
+    "permitted_builds",
+    "limits",
+    "required_reviews_per_item"
+   ],
+   "type": "object"
+  },
+  "ct.reassessment.v1": {
+   "properties": {
+    "adoption": {
+     "const": "derived_not_adopted"
+    },
+    "disposition": {
+     "enum": [
+      "one_compatible",
+      "multiple_compatible",
+      "model_prediction_mismatch",
+      "incomplete_assessment",
+      "applicability_blocked"
+     ]
+    },
+    "hypotheses": {
+     "x-note": "per hypothesis: compatible_under_declared_model | conditionally_incompatible | unresolved | baseline_ineligible | not_assessed"
+    },
+    "presentation": {
+     "const": "One or more supplied hypotheses are compatible under this model and these conditions; actual cause is not established."
+    },
+    "schema": {
+     "const": "ct.reassessment.v1"
+    }
+   },
+   "required": [
+    "schema",
+    "prior_selection",
+    "interval",
+    "branches",
+    "hypotheses",
+    "disposition",
+    "adoption"
+   ],
+   "type": "object",
+   "x-computed": true
+  },
+  "ct.request.v1": {
+   "additionalProperties": false,
+   "properties": {
+    "conditions": {
+     "items": {
+      "$ref": "#/definitions/ref"
+     },
+     "maxItems": 32,
+     "type": "array"
+    },
+    "evidence": {
+     "items": {
+      "$ref": "#/definitions/ref"
+     },
+     "maxItems": 32,
+     "type": "array"
+    },
+    "id": {
+     "$ref": "#/definitions/id"
+    },
+    "model": {
+     "$ref": "#/definitions/ref"
+    },
+    "policy": {
+     "$ref": "#/definitions/ref"
+    },
+    "predecessor": {
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "$ref": "#/definitions/ref"
+      }
+     ]
+    },
+    "prior_selection": {
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "$ref": "#/definitions/ref"
+      }
+     ],
+     "x-constraints": [
+      "required iff purpose == reassessment"
+     ]
+    },
+    "profile": {
+     "const": "bdw.checked-temperature.v1"
+    },
+    "purpose": {
+     "enum": [
+      "selection",
+      "reassessment"
+     ]
+    },
+    "result": {
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "additionalProperties": false,
+       "properties": {
+        "acquisition": {
+         "additionalProperties": false,
+         "properties": {
+          "ended": {
+           "format": "date-time",
+           "type": "string"
+          },
+          "public_evidence": {
+           "$ref": "#/definitions/ref"
+          },
+          "started": {
+           "format": "date-time",
+           "type": "string"
+          }
+         },
+         "required": [
+          "started",
+          "ended",
+          "public_evidence"
+         ],
+         "type": "object"
+        },
+        "interpretation_plan": {
+         "oneOf": [
+          {
+           "type": "null"
+          },
+          {
+           "$ref": "#/definitions/ref"
+          }
+         ],
+         "x-constraints": [
+          "must equal the prior selection's captured plan, else INTERPRETATION_PLAN_MISMATCH"
+         ]
+        },
+        "observation": {
+         "oneOf": [
+          {
+           "additionalProperties": false,
+           "properties": {
+            "kind": {
+             "const": "scalar"
+            },
+            "scalar": {
+             "$ref": "#/definitions/decimal"
+            },
+            "unit": {
+             "const": "degree_celsius"
+            }
+           },
+           "required": [
+            "kind",
+            "scalar",
+            "unit"
+           ],
+           "type": "object"
+          },
+          {
+           "additionalProperties": false,
+           "properties": {
+            "code": {
+             "enum": [
+              "heater_off",
+              "heater_on"
+             ]
+            },
+            "kind": {
+             "const": "code"
+            }
+           },
+           "required": [
+            "kind",
+            "code"
+           ],
+           "type": "object"
+          }
+         ]
+        },
+        "procedure_edition": {
+         "enum": [
+          "ct.procedure.T1.v1",
+          "ct.procedure.T2.v1"
+         ]
+        }
+       },
+       "required": [
+        "procedure_edition",
+        "observation",
+        "acquisition",
+        "interpretation_plan"
+       ],
+       "type": "object"
+      }
+     ]
+    },
+    "reviews": {
+     "items": {
+      "$ref": "#/definitions/ref"
+     },
+     "maxItems": 64,
+     "type": "array"
+    },
+    "revision": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "schema": {
+     "const": "ct.request.v1"
+    }
+   },
+   "required": [
+    "schema",
+    "profile",
+    "id",
+    "revision",
+    "predecessor",
+    "purpose",
+    "model",
+    "conditions",
+    "evidence",
+    "reviews",
+    "policy",
+    "prior_selection",
+    "result"
+   ],
+   "type": "object"
+  },
+  "ct.selection.v1": {
+   "properties": {
+    "best": {
+     "x-note": "tied preferred procedure editions or null"
+    },
+    "disposition": {
+     "enum": [
+      "ranked",
+      "withheld"
+     ]
+    },
+    "observation_uncertainty_not_in_score": {
+     "type": "object",
+     "x-note": "plan reference, half-width, unit, governing conditions per scalar procedure"
+    },
+    "post_measurement_elimination_guaranteed": {
+     "const": false
+    },
+    "presentation": {
+     "const": "Preferred for worst-case separation of ideal modelled decoder branches among these supplied hypotheses. Measurement uncertainty can leave multiple hypotheses unresolved; this score does not guarantee elimination, a settled reassessment or the actual cause."
+    },
+    "schema": {
+     "const": "ct.selection.v1"
+    },
+    "score_domain": {
+     "const": "ideal_measurand_decoder_branches"
+    }
+   },
+   "required": [
+    "schema",
+    "score_domain",
+    "post_measurement_elimination_guaranteed",
+    "observation_uncertainty_not_in_score",
+    "disposition",
+    "derivation",
+    "applicability",
+    "plans"
+   ],
+   "type": "object",
+   "x-computed": true
+  }
+ },
+ "status": "proposed",
+ "title": "PROPOSED checked-temperature record schemas (preparation; not frozen)",
+ "x-common": {
+  "canonical_bytes": "UTF-8 JSON, sorted keys, separators (',',':'), no NaN, duplicate keys refused",
+  "computed_records_note": "x-computed records are produced by the application only; caller-submitted copies are comparison artifacts and refuse on mismatch",
+  "reference_digest": "SHA-256 of canonical bytes"
+ }
+}

@@ -256,6 +256,9 @@ def main(argv=None, *, fault=None, observer=None):
     if supplied and supplied[0].startswith('reassessment-'):
         from .reassessment_cli import main as reassessment_main
         return reassessment_main(supplied)
+    if supplied and supplied[0].startswith('checked-'):
+        from .checked_cli import main as checked_main
+        return checked_main(supplied)
     if supplied and supplied[0].startswith('measurement-'):
         from .measurement_cli import main as measurement_main
         return measurement_main(supplied)

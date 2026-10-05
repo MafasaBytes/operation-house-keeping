@@ -1,0 +1,52 @@
+{
+ "governing": {
+  "checkpoint": "2f0afbd368105b99f0b8548ffece107918386e3d",
+  "confirmation_v2": "f0259702892f52f3e61dda3f665bb6c31298e276f9fdd86b10cd9e685f8fcc55",
+  "design_v2": "68da70f2cc64d837e45e8534da0eba7d95d94686ab40806099c5f06a0e4a02da"
+ },
+ "members": [
+  {
+   "bytes": 21638,
+   "path": "CONTRACT.md",
+   "sha256": "e1e1b686d3924223d3eb131ec8dc691c0c2d266cdaec5f5889379f5c8aa0eedc"
+  },
+  {
+   "bytes": 3705,
+   "path": "PLAN.md",
+   "sha256": "6bf53abab1b0c0d8857f28f5abbf83a4e0f77c9695c009ace715cc131625063b"
+  },
+  {
+   "bytes": 4501,
+   "path": "README.md",
+   "sha256": "9cc96c89c9e1be1b3a3e59eadf914cb5a6161f60c34a30861f264865193aae81"
+  },
+  {
+   "bytes": 5373,
+   "path": "RESOURCES.md",
+   "sha256": "8495777cc1d5b113d042258bf4254665f5a28e98fe381cdd0ab26699a5147ff2"
+  },
+  {
+   "bytes": 9691,
+   "path": "WITNESSES.md",
+   "sha256": "0cb7e1771da6990ee0ad954a4db73f6584af0a5373aa634dfb7025a5978c6ef5"
+  },
+  {
+   "bytes": 9329,
+   "path": "policy.json",
+   "sha256": "0584b900c9ddc82d0aea1c6d6364e903e7ed50644441667cc9b320f75874c0cf"
+  },
+  {
+   "bytes": 25684,
+   "path": "schemas.json",
+   "sha256": "e5b2602b4ec3d6aff0c982866811abe0b554a3a171dd02460c90286fa1fdb689"
+  },
+  {
+   "bytes": 16349,
+   "path": "witnesses.json",
+   "sha256": "9bf5f51a856a26d2aa42651b569d206524177c651bed3a662d0f387c5bc9d5fc"
+  }
+ ],
+ "package": "docs/superpowers/specs/2026-10-04-checked-temperature-contract-preparation",
+ "schema": "ct.preparation-manifest.v1",
+ "status": "proposed; not frozen"
+}

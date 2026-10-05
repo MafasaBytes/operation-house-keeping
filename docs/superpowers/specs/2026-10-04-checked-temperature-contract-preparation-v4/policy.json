@@ -1,0 +1,481 @@
+{
+ "account_kinds": {
+  "high_underlying_faithful_baseline": {
+   "b_suspect": "exactly [0,0]"
+  },
+  "low_underlying_positive_offset": {
+   "b_suspect": "0 < lo <= hi <= 50"
+  }
+ },
+ "conclusive_exclusion_predicate": "validity window entirely outside the assessment time scope, OR a declared subject/variable anchor or instrument differing exactly from the claim's; null, partial or missing => pending",
+ "condition_catalogue": {
+  "indicator_fidelity": {
+   "binding": [
+    "instrument_id",
+    "target"
+   ],
+   "governs": [
+    "ct.procedure.T2.v1"
+   ],
+   "proposition": "The bound heater indicator implements the ct.procedure.T2.v1 rule for the bound target."
+  },
+  "observation_error_bound": {
+   "binding": [
+    "instrument_id",
+    "plan",
+    "half_width"
+   ],
+   "governs": [
+    "ct.procedure.T1.v1"
+   ],
+   "phases_note": "governs selection (plan capture) and reassessment (interpretation); owner choice O3 may restrict to reassessment",
+   "proposition": "Each T1 reading of the bound instrument lies within the bound half-width of its measurand over the assessment time scope (CONTRACT §4.2) (random reading error; distinct from systematic b_ref)."
+  },
+  "reference_calibration": {
+   "binding": [
+    "instrument_id",
+    "b_ref"
+   ],
+   "governs": [
+    "ct.procedure.T1.v1"
+   ],
+   "proposition": "The T1 reference instrument's systematic bias lies within the bound b_ref interval over the assessment time scope (CONTRACT §4.2)."
+  },
+  "reference_mapping": {
+   "binding": [
+    "instrument_id",
+    "structural_model_revision",
+    "subject_entity_anchor_id",
+    "variable_anchor_id"
+   ],
+   "governs": [
+    "ct.procedure.T1.v1"
+   ],
+   "proposition": "The T1 reference instrument observes the bound subject entity and variable anchor under the bound structural model revision."
+  },
+  "state_hold": {
+   "binding": [
+    "baseline_as_of",
+    "b_suspect"
+   ],
+   "governs": [
+    "ct.procedure.T1.v1",
+    "ct.procedure.T2.v1"
+   ],
+   "proposition": "T_true and b_suspect are unchanged from the bound baseline as-of over the assessment time scope (CONTRACT §4.2), for the bound per-hypothesis b_suspect intervals."
+  }
+ },
+ "editions": {
+  "calculator": "ct.calculator.v1",
+  "catalogue": "ct.conditions.v2",
+  "decoders": {
+   "ct.decoder.T1.v1": {
+    "regions": [
+     {
+      "hi": {
+       "denominator": "1",
+       "numerator": "56"
+      },
+      "hi_closed": true,
+      "id": "low",
+      "lo": null,
+      "lo_closed": false
+     },
+     {
+      "hi": {
+       "denominator": "1",
+       "numerator": "59"
+      },
+      "hi_closed": true,
+      "id": "gap",
+      "lo": {
+       "denominator": "1",
+       "numerator": "56"
+      },
+      "lo_closed": false
+     },
+     {
+      "hi": null,
+      "hi_closed": false,
+      "id": "high",
+      "lo": {
+       "denominator": "1",
+       "numerator": "59"
+      },
+      "lo_closed": false
+     }
+    ],
+    "unit": "degree_celsius"
+   },
+   "ct.decoder.T2.v1": {
+    "regions": [
+     {
+      "id": "heater_off"
+     },
+     {
+      "id": "heater_on"
+     }
+    ],
+    "unit": "code"
+   }
+  },
+  "interpretations": {
+   "ct.interpretation.exact-code.v1": {
+    "rule": "code must equal exactly one decoder literal"
+   },
+   "ct.interpretation.hard-interval.v1": {
+    "half_width": {
+     "max_inclusive": "5",
+     "min_exclusive": "0"
+    },
+    "interval": "[r - w, r + w], closed, applied once at reassessment only"
+   }
+  },
+  "procedures": {
+   "ct.procedure.T1.v1": {
+    "conditions": [
+     "reference_calibration",
+     "reference_mapping",
+     "state_hold",
+     "observation_error_bound"
+    ],
+    "decoder": "ct.decoder.T1.v1",
+    "interpretation": "ct.interpretation.hard-interval.v1",
+    "measurand": "T_true + b_ref",
+    "method": "reference_scalar"
+   },
+   "ct.procedure.T2.v1": {
+    "conditions": [
+     "state_hold",
+     "indicator_fidelity"
+    ],
+    "decoder": "ct.decoder.T2.v1",
+    "interpretation": "ct.interpretation.exact-code.v1",
+    "method": "nonspecific_code",
+    "rule": "heater_on iff held suspect baseline < target, else heater_off (equality off)"
+   }
+  },
+  "template": "ct.template.two-account-temperature.v1"
+ },
+ "exit_classes": {
+  "0": "completed (including withheld or blocked)",
+  "2": "CLI_USAGE",
+  "3": "integrity/input refusals, including BUILD_NOT_PERMITTED and BUILD_IDENTITY_UNAVAILABLE",
+  "4": "RESOURCE_LIMIT_EXCEEDED",
+  "5": "filesystem",
+  "6": "retention (OUTPUT_COLLISION, bundle output caps)",
+  "7": "output channel or INTERNAL_ERROR"
+ },
+ "limits": {
+  "applicability_bytes": {
+   "basis": "engineering",
+   "derivation": "measured analogue far below; see RESOURCES §1",
+   "value": 131072
+  },
+  "build_bytes": {
+   "basis": "engineering",
+   "derivation": "measured analogue far below; see RESOURCES §1",
+   "value": 65536
+  },
+  "bundle_bytes_reassessment": {
+   "basis": "engineering_derived",
+   "derivation": "reassessment closure file 3,670,016 + other files 507,904 = 4,177,920; rounded up",
+   "value": 4194304
+  },
+  "bundle_bytes_selection": {
+   "basis": "engineering_derived",
+   "derivation": "selection closure file 1,474,560 + other files 507,904 = 1,982,464; rounded up",
+   "value": 2097152
+  },
+  "claims": {
+   "basis": "engineering",
+   "derivation": "required claims per request = 6 (T1: calibration, mapping, hold, observation_error_bound; T2: hold, indicator_fidelity); 24 lets unbound historical claims be carried",
+   "value": 24
+  },
+  "condition_declarations": {
+   "basis": "engineering",
+   "derivation": "",
+   "value": 32
+  },
+  "declarations_per_claim": {
+   "basis": "engineering",
+   "derivation": "",
+   "value": 8
+  },
+  "derivation_bytes": {
+   "basis": "engineering",
+   "derivation": "measured analogue far below; see RESOURCES §1",
+   "value": 65536
+  },
+  "derivation_cells": {
+   "basis": "analytical",
+   "derivation": "2 hypotheses x (3 + 2) outcomes; follows from fixed profile limits",
+   "value": 10
+  },
+  "diagnostic_bytes": {
+   "basis": "engineering",
+   "derivation": "",
+   "value": 2048
+  },
+  "evidence_items": {
+   "basis": "engineering",
+   "derivation": "",
+   "value": 32
+  },
+  "evidence_items_per_claim": {
+   "basis": "engineering",
+   "derivation": "",
+   "value": 8
+  },
+  "fractional_digits": {
+   "basis": "proposed_semantic",
+   "derivation": "denominator divides 10^6",
+   "value": 6
+  },
+  "hypotheses": {
+   "basis": "fixed_profile",
+   "derivation": "design §2",
+   "value": 2
+  },
+  "integer_digits": {
+   "basis": "engineering",
+   "derivation": "new; legacy 128 not inherited",
+   "value": 32
+  },
+  "invocation_bytes": {
+   "basis": "engineering",
+   "derivation": "measured analogue far below; see RESOURCES §1",
+   "value": 16384
+  },
+  "json_depth": {
+   "basis": "engineering",
+   "derivation": "deepest schema nesting is 8 levels; margin",
+   "value": 24
+  },
+  "json_nodes": {
+   "basis": "engineering",
+   "derivation": "",
+   "value": 65536
+  },
+  "manifest_bytes": {
+   "basis": "engineering",
+   "derivation": "measured analogue far below; see RESOURCES §1",
+   "value": 16384
+  },
+  "object_bytes": {
+   "basis": "engineering",
+   "derivation": "measured largest existing object 86,313 B (public evidence) x ~2.3",
+   "value": 196608
+  },
+  "outcomes_per_procedure": {
+   "basis": "fixed_profile",
+   "derivation": "design §2",
+   "value": 3
+  },
+  "policy_bytes": {
+   "basis": "engineering",
+   "derivation": "measured analogue far below; see RESOURCES §1",
+   "value": 16384
+  },
+  "procedures": {
+   "basis": "fixed_profile",
+   "derivation": "design §2",
+   "value": 2
+  },
+  "rational_operations": {
+   "basis": "engineering",
+   "derivation": "accounting (CONTRACT §12.9): one unit per exact rational addition, subtraction or comparison performed by derivation, decoder intersection, selection and reassessment interpretation; fixed profile maximum well below 1,024",
+   "value": 1024
+  },
+  "reassessment_closure_decoded_bytes": {
+   "basis": "engineering_derived",
+   "derivation": "prior closure 1,048,576 + carried prior computed records at their file caps 491,520 (invocation 16,384, derivation 65,536, applicability 131,072, result 65,536, trace 131,072, build 65,536, manifest 16,384) + descriptor 32,768 + own objects 1,048,576 = 2,621,440 (allocation; only the total is enforced)",
+   "value": 2621440
+  },
+  "reassessment_closure_file_bytes": {
+   "basis": "engineering_derived",
+   "derivation": "ceil(2,621,440 x 4/3) + 400 members x 160 B = 3,559,254; rounded up",
+   "value": 3670016
+  },
+  "reassessment_unique_objects": {
+   "basis": "engineering_derived",
+   "derivation": "prior selection closure <= 192 (includes prior request and prior evaluation authority) + carried prior computed records 7 (invocation, selection, derivation, applicability, trace, build, bundle manifest; the prior captured policy is already a prior closure member) + retained-selection descriptor 1 + own objects with no deduplication assumed: explanations 2, model 1, baseline public evidence 1, plan 1, policy 1, request 1, evaluation authority 1, execution authority 1, execution target 1, result public evidence 1, claims 24, declarations 32, items 32, contents 32, reviews 64 (= 195) = 395 <= 400. (v2 text stated 389 for a sum of 388; corrected.)",
+   "value": 400
+  },
+  "receipt_bytes": {
+   "basis": "engineering",
+   "derivation": "",
+   "value": 1024
+  },
+  "result_bytes": {
+   "basis": "engineering",
+   "derivation": "measured analogue far below; see RESOURCES §1",
+   "value": 65536
+  },
+  "retained_selection_bytes": {
+   "basis": "engineering",
+   "derivation": "schema-derived maximum canonical size of ct.retained-selection.v1 is 23,472 B (192 prior member references of the longest selection-closure kind, 7-digit prior closure length); rounded up",
+   "value": 32768
+  },
+  "reviews": {
+   "basis": "engineering",
+   "derivation": "",
+   "value": 64
+  },
+  "reviews_per_item": {
+   "basis": "engineering",
+   "derivation": "",
+   "value": 4
+  },
+  "selection_closure_decoded_bytes": {
+   "basis": "engineering",
+   "derivation": "measured decoded analogues 144,491 B (selection) and 309,593 B (reassessment)",
+   "value": 1048576
+  },
+  "selection_closure_file_bytes": {
+   "basis": "engineering_derived",
+   "derivation": "ceil(decoded x 4/3) + 192 members x 160 B JSON overhead = 1428822; rounded up",
+   "value": 1474560
+  },
+  "selection_unique_objects": {
+   "basis": "engineering_derived",
+   "derivation": "sum of per-kind engineering caps: explanations 2, model 1, plan 1, policy 1, request 1, evaluation authority 1, claims 24, declarations 32, evidence items 32, evidence contents 32, reviews 64, baseline public evidence 1",
+   "value": 192
+  },
+  "string_bytes": {
+   "basis": "engineering",
+   "derivation": "longest free-text field 2048",
+   "value": 4096
+  },
+  "successor_chain": {
+   "basis": "engineering",
+   "derivation": "revision <= 4",
+   "value": 4
+  },
+  "trace_bytes": {
+   "basis": "engineering",
+   "derivation": "measured analogue far below; see RESOURCES §1",
+   "value": 131072
+  },
+  "trace_entries": {
+   "basis": "engineering",
+   "derivation": "entries in the computed ct.trace.v1 record (CONTRACT §12.9)",
+   "value": 512
+  }
+ },
+ "note": "PROPOSED edition content; a deployment captures a ct.policy.v1 record referencing this edition. A missing or invalid captured policy refuses; nothing here is a default for an absent policy.",
+ "parameter_bounds": {
+  "b_ref": [
+   "-10",
+   "10"
+  ],
+  "half_width": "0 < w <= 5",
+  "scalar_admission_domain": [
+   "-200",
+   "1000"
+  ]
+ },
+ "profile": "bdw.checked-temperature.v1",
+ "refusal_codes": [
+  "ACCOUNT_KIND_CONSTRAINT_VIOLATED",
+  "APPLICABILITY_MISMATCH",
+  "AUTHORITY_PIN_MISMATCH",
+  "AUTHORITY_SCOPE_MISMATCH",
+  "AUTHORITY_TARGET_MISMATCH",
+  "BUILD_IDENTITY_UNAVAILABLE",
+  "BUILD_NOT_PERMITTED",
+  "CACHED_DERIVATION_MISMATCH",
+  "CLI_USAGE",
+  "CODE_NOT_IN_DECODER",
+  "DERIVATION_MISMATCH",
+  "DOWNSTREAM_REPLAY_MISMATCH",
+  "EDITION_CONTENT_MISMATCH",
+  "EXECUTION_TARGET_MISMATCH",
+  "HISTORICAL_BUILD_UNAVAILABLE",
+  "INTERNAL_ERROR",
+  "INTERPRETATION_HALF_WIDTH_OUT_OF_RANGE",
+  "INTERPRETATION_PLAN_MISMATCH",
+  "INTERPRETATION_POINT_UNSUPPORTED",
+  "OUTPUT_COLLISION",
+  "PLAN_CHANGE_INVALID",
+  "POLICY_EDITION_MISMATCH",
+  "POLICY_LIMIT_INVALID",
+  "PREDECESSOR_INVALID",
+  "PRIOR_BUNDLE_MISMATCH",
+  "RATIONAL_INVALID",
+  "REFERENCE_DIGEST_MISMATCH",
+  "REFERENCE_KIND_MISMATCH",
+  "REFERENCE_MISSING",
+  "REQUEST_PIN_MISMATCH",
+  "RESOURCE_LIMIT_EXCEEDED",
+  "RESULT_EVIDENCE_MISMATCH",
+  "ROLE_MISMATCH",
+  "SCALAR_OUT_OF_ADMISSION_DOMAIN",
+  "SCHEMA_INVALID",
+  "SCORE_METADATA_INVALID",
+  "UNIT_UNSUPPORTED",
+  "UNREFERENCED_MEMBER"
+ ],
+ "required_claim_rule": "for each nominated procedure edition, each governing condition, and the request phase: one required claim core bound to the request's model revision, subject/variable anchors, instrument and condition parameters including plan references; the assessment time scope is computed per phase and matched by declaration/review covers windows, not bound into the claim (CONTRACT §4.2-4.3)",
+ "roles": [
+  "local_model_proposer",
+  "local_evidence_reviewer",
+  "local_condition_declarer",
+  "local_policy_owner",
+  "local_evaluation_issuer",
+  "local_execution_issuer",
+  "local_adoption_decider"
+ ],
+ "schema": "ct.policy-edition.v4",
+ "status": "proposed",
+ "supersedes_proposal": "ct.policy-edition.v3 (v3 package policy.json b72d662e...); v3 preserved unchanged",
+ "unresolved_allowlist_examples": {
+  "explicit_empty": {
+   "entries": [],
+   "label": "policy choice: forbid every unresolved use"
+  },
+  "synthetic_example": {
+   "entries": [
+    {
+     "condition": "reference_calibration",
+     "phase": "selection"
+    },
+    {
+     "condition": "reference_calibration",
+     "phase": "reassessment"
+    },
+    {
+     "condition": "reference_mapping",
+     "phase": "selection"
+    },
+    {
+     "condition": "reference_mapping",
+     "phase": "reassessment"
+    },
+    {
+     "condition": "state_hold",
+     "phase": "selection"
+    },
+    {
+     "condition": "state_hold",
+     "phase": "reassessment"
+    }
+   ],
+   "label": "SYNTHETIC EXAMPLE - owner must select; not a deployment policy"
+  }
+ },
+ "withholding_and_blocking_reasons": [
+  "observation_interpretation_plan_missing",
+  "baseline_ineligible",
+  "baseline_unknown",
+  "derivation_unavailable",
+  "applicability_blocked",
+  "declaration_missing",
+  "conflicting_declarations",
+  "declaration_false",
+  "declaration_unknown",
+  "governing_state_contradicted",
+  "governing_state_conflicting",
+  "unresolved_not_permitted"
+ ]
+}

@@ -1,0 +1,57 @@
+{
+ "checkpoint": {
+  "head": "2f0afbd368105b99f0b8548ffece107918386e3d"
+ },
+ "date": "2026-10-04",
+ "gate1_report": {
+  "path": "docs/superpowers/reports/2026-10-04-checked-temperature-gate1-tdd-report.md",
+  "sha256": "02e3b29f866fa8ab7af1ada3c9bab2eaa52434cd72e01e3b46ce51220354e6a1"
+ },
+ "governing_commitments": {
+  "corrected_design_v2": "68da70f2cc64d837e45e8534da0eba7d95d94686ab40806099c5f06a0e4a02da",
+  "focused_confirmation_v2": "f0259702892f52f3e61dda3f665bb6c31298e276f9fdd86b10cd9e685f8fcc55"
+ },
+ "members": {
+  "AMENDMENTS.md": {
+   "bytes": 4112,
+   "sha256": "ef6e3e92ecf173f8ef0c35955dd9b7e278f1d37c05345d7809a58a1785c1db4a"
+  },
+  "CONTRACT.md": {
+   "bytes": 38699,
+   "sha256": "a239b14af5456364b62c2cb3d5602f3ba761b3db4cd072ed3e9004f8cbd61111"
+  },
+  "README.md": {
+   "bytes": 2083,
+   "sha256": "6a13f39a6796b36bf6d7739098c3e3b9c717a62d45fb68948ec61a045581c6cc"
+  },
+  "policy.json": {
+   "bytes": 14554,
+   "sha256": "46df039bff18ab0ccb8a31262e42f1f0d40a828ede6e797953b769ecb49e8c15"
+  },
+  "schemas.json": {
+   "bytes": 92493,
+   "sha256": "43c2af0b7bc3be137a0576e51b281be1ea53854c5e13d5d0a2c807f7611ac570"
+  },
+  "witnesses.json": {
+   "bytes": 58201,
+   "sha256": "99bb911efbfa23b017fa9a1c8bf6926c9e0ff64ae1014130efe7207b30973cb5"
+  }
+ },
+ "package": "checked-temperature contract preparation v4 (successor; consolidated correction)",
+ "predecessors": {
+  "original": {
+   "preserved_unchanged": true,
+   "sha256": "c3de4cb9d5868454e8d666267d9dd9cf58f33d69500065c1f648005bf3da48c2"
+  },
+  "v2": {
+   "preserved_unchanged": true,
+   "sha256": "e7dbccec4c7fc65947cd1847f36b6306daed10597399bec8106a82660c2b0811"
+  },
+  "v3": {
+   "preserved_unchanged": true,
+   "sha256": "1a9eccbd8b0191eac08b4677a087f7503ee934845425985b05686c179e1e5572"
+  }
+ },
+ "schema": "ct.preparation-manifest.v4",
+ "status": "successor contract recording amendments; not acceptance; Gate 1 acceptance and commit/build binding remain owner-gated; pending owner choice C1"
+}

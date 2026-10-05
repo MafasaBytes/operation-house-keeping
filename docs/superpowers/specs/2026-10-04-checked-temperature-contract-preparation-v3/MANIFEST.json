@@ -1,0 +1,77 @@
+{
+ "checkpoint": {
+  "head": "2f0afbd368105b99f0b8548ffece107918386e3d"
+ },
+ "corrections": [
+  "A: acyclic execution/evaluation authority binding (v2 CONTRACT 6.2)",
+  "B: closure roots, reachability edges and prior-material carriage (v2 CONTRACT 7.3)"
+ ],
+ "date": "2026-10-04",
+ "governing_commitments": {
+  "corrected_design_v2": {
+   "path": "docs/superpowers/proposals/2026-10-04-checked-derivation-and-applicability-corrected-design-v2.md",
+   "sha256": "68da70f2cc64d837e45e8534da0eba7d95d94686ab40806099c5f06a0e4a02da"
+  },
+  "focused_confirmation_v2": {
+   "path": "docs/superpowers/reports/2026-10-04-checked-derivation-and-applicability-focused-confirmation-v2.md",
+   "sha256": "f0259702892f52f3e61dda3f665bb6c31298e276f9fdd86b10cd9e685f8fcc55"
+  }
+ },
+ "members": {
+  "CONTRACT.md": {
+   "bytes": 31163,
+   "sha256": "0fd9c4e57698342b1ce77fa39f7f32fdca1c490057b4e74fae7edac5b199895f"
+  },
+  "CORRECTIONS.md": {
+   "bytes": 6056,
+   "sha256": "a51d6105e4012fb975b90b9987e0a008c488f9271aad444469f4a5d4b74d5aeb"
+  },
+  "PLAN.md": {
+   "bytes": 5644,
+   "sha256": "af55cd556dd591a8c43d0401a02856e99372caa0057eb8c2967e3fe036c98125"
+  },
+  "README.md": {
+   "bytes": 7048,
+   "sha256": "7587c8fd56b6f51647d0b4be99287304206ff4b0df97aeb44b5982423f4a4573"
+  },
+  "RESOURCES.md": {
+   "bytes": 7649,
+   "sha256": "5aa2a9619c0fec57e1834e766d1b533927c90d23563875aea118125ef9319020"
+  },
+  "WITNESSES.md": {
+   "bytes": 19491,
+   "sha256": "6176d2f7a57bdff821fee28c69880173772da4e895c7be18927a7a2c115093d0"
+  },
+  "construction-example.json": {
+   "bytes": 14770,
+   "sha256": "c85b8fad56fae0b2a7e9249393fcd0d214f9ad44fbb61939a8c531ff34530f2d"
+  },
+  "policy.json": {
+   "bytes": 13950,
+   "sha256": "b72d662e3ed4452d86d7143f1b1a53216aa1285ebde022d32de8c31693a51162"
+  },
+  "schemas.json": {
+   "bytes": 89557,
+   "sha256": "e1cafb83e9088c7b1396f798f1a684e2141637a000e6913eea0c5bebdca39910"
+  },
+  "witnesses.json": {
+   "bytes": 43705,
+   "sha256": "bc7a5f05d732a080841272e92e4e43a2b82ba56dd5c952d6f7501175d78dee92"
+  }
+ },
+ "package": "checked-temperature contract preparation v3 (successor)",
+ "predecessors": {
+  "original": {
+   "path": "docs/superpowers/specs/2026-10-04-checked-temperature-contract-preparation/MANIFEST.json",
+   "preserved_unchanged": true,
+   "sha256": "c3de4cb9d5868454e8d666267d9dd9cf58f33d69500065c1f648005bf3da48c2"
+  },
+  "v2": {
+   "path": "docs/superpowers/specs/2026-10-04-checked-temperature-contract-preparation-v2/MANIFEST.json",
+   "preserved_unchanged": true,
+   "sha256": "e7dbccec4c7fc65947cd1847f36b6306daed10597399bec8106a82660c2b0811"
+  }
+ },
+ "schema": "ct.preparation-manifest.v3",
+ "status": "documentation-only proposal; not executable readiness; authorizes no implementation, test or execution; owner choices D1-D10, O3, O5, A1, G1, G2 pending"
+}

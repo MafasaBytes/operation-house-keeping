@@ -1,0 +1,2024 @@
+{
+ "common": "FX1 = selection of the common baseline (plan w=1/2, every required claim declared true and supported by one completed applicable review); baseline 60.1; H1 [0,0]; H2 [5,15]; b_ref [0,0]; T1 decoder low(-inf,56] gap(56,59] high(59,inf); T2 target 60. CO1 = construction order of every reassessment case unless stated: (1) prior selection bundle FX1 exists; (2) execution target X authored (prior manifest and selection refs, selection_basis, plan_change, model, procedure, instrument, plan); (3) execution authority E authored with target X; (4) acquisition yields public evidence O; (5) request R authored referencing X, E and O; (6) evaluation authority A authored with target R; (7) external pins digest(R) and digest(A) supplied. Each digest depends only on earlier steps.",
+ "schema": "ct.witness-matrix.v4",
+ "status": "hand-derived expected outcomes; original v3 expectations retained; amended and new cases labelled; not passing evidence",
+ "summary": {
+  "cases": 135,
+  "harness_mutations": "as v3 (10 copies) plus EC2 (1 selection copy)",
+  "invocations_by_command": {
+   "checked-reassessment-evaluate": 44,
+   "checked-reassessment-replay": 12,
+   "checked-reassessment-verify": 19,
+   "checked-selection-evaluate": 78,
+   "checked-selection-replay": 30,
+   "checked-selection-verify": 34
+  },
+  "invocations_total": 217,
+  "polarity": {
+   "adverse": 95,
+   "positive": 40
+  },
+  "status": {
+   "amended": 1,
+   "new": 31,
+   "original": 103
+  },
+  "witnesses": 27
+ },
+ "witnesses": [
+  {
+   "cases": [
+    {
+     "case": "FX1",
+     "expected": "ranked; produces the shared prior selection bundle",
+     "inputs": "FX1 = selection of the common baseline (plan w=1/2, every required claim declared true and supported by one completed applicable review)",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [],
+     "prior_bundle": null,
+     "status": "original"
+    }
+   ],
+   "property": "fixture",
+   "witness": "W01"
+  },
+  {
+   "cases": [
+    {
+     "case": "SC1",
+     "expected": "ranked; T1 branches low{H2} gap{} high{H1} worst 1; T2 heater_off{H1,H2} heater_on{} worst 2; best [T1]; score_domain ideal_measurand_decoder_branches; post_measurement_elimination_guaranteed false; observation_uncertainty_not_in_score [T1 plan w=1/2, plan_state captured]",
+     "inputs": "FX1 inputs",
+     "invocations": [
+      "checked-selection-verify",
+      "checked-selection-replay"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [
+      "A1"
+     ],
+     "prior_bundle": "FX1",
+     "status": "original"
+    }
+   ],
+   "property": "ideal score domain",
+   "witness": "W02"
+  },
+  {
+   "cases": [
+    {
+     "case": "UN1",
+     "expected": "interval [59.5,60.5]; branches high; H1 compatible_under_declared_model; H2 conditionally_incompatible; one_compatible; ranking not_reassessed; adoption derived_not_adopted; no adoption record produced",
+     "inputs": "reassessment of FX1, inherited plan, T1 scalar 60.0",
+     "invocations": [
+      "checked-reassessment-evaluate",
+      "checked-reassessment-verify",
+      "checked-reassessment-replay"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [
+      "A2"
+     ],
+     "prior_bundle": "FX1",
+     "status": "original"
+    },
+    {
+     "case": "UN3",
+     "expected": "[55.1,56.1] low+gap; H1 incompatible; H2 unresolved (mixed_permit_exclude); incomplete_assessment",
+     "inputs": "reassessment of FX1, scalar 55.6",
+     "invocations": [
+      "checked-reassessment-evaluate",
+      "checked-reassessment-verify",
+      "checked-reassessment-replay"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [
+      "A4"
+     ],
+     "prior_bundle": "FX1",
+     "status": "original"
+    },
+    {
+     "case": "UN4",
+     "expected": "[55,56] low only (gap open at 56); H2 compatible; H1 incompatible; one_compatible",
+     "inputs": "reassessment of FX1, scalar 55.5",
+     "invocations": [
+      "checked-reassessment-evaluate",
+      "checked-reassessment-verify",
+      "checked-reassessment-replay"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [
+      "A4b"
+     ],
+     "prior_bundle": "FX1",
+     "status": "original"
+    }
+   ],
+   "property": "ideal discrimination vs uncertainty-driven unresolved",
+   "witness": "W03"
+  },
+  {
+   "cases": [
+    {
+     "case": "LB1",
+     "expected": "H2 T1 set [45.1,57.1] permits low and gap; T1 branches low{H2} gap{H2} high{H1}; worst 1; ranked",
+     "inputs": "FX1 with H2 b_suspect [3,15]",
+     "invocations": [
+      "checked-selection-evaluate",
+      "checked-selection-verify",
+      "checked-selection-replay"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [
+      "A5"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    }
+   ],
+   "property": "H2 lower offset bound",
+   "witness": "W04"
+  },
+  {
+   "cases": [
+    {
+     "case": "PM1",
+     "expected": "withheld (observation_interpretation_plan_missing); scores []; best null; derivation cells retained; no default plan",
+     "inputs": "FX1 with T1 interpretation_plan null",
+     "invocations": [
+      "checked-selection-evaluate",
+      "checked-selection-verify",
+      "checked-selection-replay"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [
+      "B1"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    }
+   ],
+   "property": "missing interpretation plan",
+   "witness": "W05"
+  },
+  {
+   "cases": [
+    {
+     "case": "PS1",
+     "expected": "refuse INTERPRETATION_PLAN_MISMATCH exit 3 before interpretation (plan admission precedes execution-target agreement)",
+     "inputs": "reassessment of FX1, selection_basis inherited, plan_change null, result interpretation_plan = w=5/2; X is the honest inherited target (plan w=1/2), E targets X",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [
+      "B2"
+     ],
+     "prior_bundle": "FX1",
+     "status": "original"
+    }
+   ],
+   "property": "unauthorized plan substitution",
+   "witness": "W06"
+  },
+  {
+   "cases": [
+    {
+     "case": "PS2",
+     "expected": "completes: plan_changed true; original_plan_executed false; former_plan w=1/2; executed_plan w=5/2; prior_selection FX1 (historical); [55.1,60.1] low+gap+high; H1 and H2 unresolved; incomplete_assessment; ranking not_reassessed; no rerank; adoption derived_not_adopted",
+     "inputs": "selection_basis historical_reference_with_plan_change; plan_change {former w=1/2 (FX1 captured plan), new w=5/2, reason}; result plan w=5/2; evaluation authority plan_change {former, new} digests equal; fresh observation_error_bound claim for w=5/2 declared and supported; scalar 57.6; X carries the same selection_basis and plan_change and plan w=5/2; E targets X with the same plan_change digests",
+     "invocations": [
+      "checked-reassessment-evaluate",
+      "checked-reassessment-verify",
+      "checked-reassessment-replay"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [
+      "A3",
+      "B2b"
+     ],
+     "prior_bundle": "FX1",
+     "status": "original"
+    },
+    {
+     "case": "PS3",
+     "expected": "refuse AUTHORITY_SCOPE_MISMATCH",
+     "inputs": "PS2 but evaluation authority A.plan_change null (X and E correct)",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "original"
+    },
+    {
+     "case": "PS4",
+     "expected": "refuse PLAN_CHANGE_INVALID",
+     "inputs": "PS2 but plan_change.new_plan equals former_plan",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "original"
+    },
+    {
+     "case": "PS5",
+     "expected": "refuse PLAN_CHANGE_INVALID",
+     "inputs": "PS2 but result interpretation_plan differs from plan_change.new_plan",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "original"
+    },
+    {
+     "case": "PB1",
+     "expected": "old review listed in applicability.unbound; new plan claim none/complete/unresolved; blocked (unresolved_not_permitted); disposition applicability_blocked; hypotheses not_assessed",
+     "inputs": "PS2 but the only observation_error_bound review is the old one bound to w=1/2",
+     "invocations": [
+      "checked-reassessment-evaluate",
+      "checked-reassessment-verify",
+      "checked-reassessment-replay"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "original"
+    }
+   ],
+   "property": "newly scoped changed-plan successor",
+   "witness": "W07"
+  },
+  {
+   "cases": [
+    {
+     "case": "HW0",
+     "expected": "refuse INTERPRETATION_POINT_UNSUPPORTED",
+     "inputs": "plan w=0",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [
+      "B3"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "HW5",
+     "expected": "admitted; ranked as SC1",
+     "inputs": "plan w=5",
+     "invocations": [
+      "checked-selection-evaluate",
+      "checked-selection-verify",
+      "checked-selection-replay"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [
+      "F7"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "HW5p",
+     "expected": "refuse INTERPRETATION_HALF_WIDTH_OUT_OF_RANGE",
+     "inputs": "plan w=5.000001",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [
+      "F7"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    }
+   ],
+   "property": "half-width admission",
+   "witness": "W08"
+  },
+  {
+   "cases": [
+    {
+     "case": "OB2",
+     "expected": "governing_state contradicted; applicability_blocked; hypotheses not_assessed; interval not applied",
+     "inputs": "reassessment of FX1, scalar 60.0; completed applicable review opposing the observation_error_bound claim (w=1/2)",
+     "invocations": [
+      "checked-reassessment-evaluate",
+      "checked-reassessment-verify",
+      "checked-reassessment-replay"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "original"
+    },
+    {
+     "case": "OB3",
+     "expected": "unresolved; blocked (unresolved_not_permitted)",
+     "inputs": "as OB2 but only an unreviewed bound attachment; allowlist omits observation_error_bound",
+     "invocations": [
+      "checked-reassessment-evaluate",
+      "checked-reassessment-verify",
+      "checked-reassessment-replay"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "original"
+    },
+    {
+     "case": "OB4",
+     "expected": "derivation: H1 T1 [59.6,60.6], H2 [44.6,55.6] (b_ref applied once, w absent); selection ranked worst 1; reassessment interval [59.5,60.5] (w applied once, b_ref absent); H1 compatible; H2 incompatible",
+     "inputs": "model b_ref [-1/2,1/2], plan w=1/2, all claims supported; then reassessment scalar 60.0",
+     "invocations": [
+      "checked-selection-evaluate",
+      "checked-selection-verify",
+      "checked-selection-replay",
+      "checked-reassessment-evaluate",
+      "checked-reassessment-verify",
+      "checked-reassessment-replay"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [],
+     "prior_bundle": null,
+     "status": "original"
+    }
+   ],
+   "property": "observation-error-bound applicability (reading uncertainty, distinct from b_ref)",
+   "witness": "W09"
+  },
+  {
+   "cases": [
+    {
+     "case": "CB1",
+     "expected": "old declaration/review in applicability.unbound; new calibration claim declaration_missing; selection withheld (applicability_blocked)",
+     "inputs": "model revision 2 changes b_ref [0,0]->[-1/2,1/2]; old calibration declaration and review bound to the revision-1 claim are retained; no new declaration",
+     "invocations": [
+      "checked-selection-evaluate",
+      "checked-selection-verify",
+      "checked-selection-replay"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "CB2",
+     "expected": "new claim none/complete/unresolved; blocked (unresolved_not_permitted); the old review does not support the changed claim",
+     "inputs": "CB1 plus a new declaration true for the revision-2 claim; still only the old review",
+     "invocations": [
+      "checked-selection-evaluate",
+      "checked-selection-verify",
+      "checked-selection-replay"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "CB3",
+     "expected": "supported; ranked; old review remains listed unbound",
+     "inputs": "CB2 plus a completed applicable supporting review of the revision-2 claim",
+     "invocations": [
+      "checked-selection-evaluate",
+      "checked-selection-verify",
+      "checked-selection-replay"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [],
+     "prior_bundle": null,
+     "status": "original"
+    }
+   ],
+   "property": "claim binding: changed b_ref with retained old calibration review",
+   "witness": "W10"
+  },
+  {
+   "cases": [
+    {
+     "case": "AG1",
+     "expected": "support_only/complete/supported; permitted",
+     "inputs": "one applicable completed supporting review",
+     "invocations": [
+      "checked-selection-evaluate",
+      "checked-selection-verify",
+      "checked-selection-replay"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [
+      "C1"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "AG2",
+     "expected": "support_only/pending/unresolved; blocked",
+     "inputs": "AG1 + unreviewed bound attachment",
+     "invocations": [
+      "checked-selection-evaluate",
+      "checked-selection-verify",
+      "checked-selection-replay"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [
+      "C2"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "AG3",
+     "expected": "support_only/pending/unresolved; conditional_use_with_unresolved_conditions; assumed and pending listed",
+     "inputs": "AG2 + synthetic allowlist permitting reference_calibration/selection",
+     "invocations": [
+      "checked-selection-evaluate",
+      "checked-selection-verify",
+      "checked-selection-replay"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [
+      "C3"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "AG4",
+     "expected": "opposition_only/pending/contradicted; blocked regardless of allowlist",
+     "inputs": "opposition + unreviewed attachment",
+     "invocations": [
+      "checked-selection-evaluate",
+      "checked-selection-verify",
+      "checked-selection-replay"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [
+      "C4"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "AG5",
+     "expected": "support_and_opposition/pending/conflicting; blocked regardless of allowlist",
+     "inputs": "support + opposition + unreviewed attachment",
+     "invocations": [
+      "checked-selection-evaluate",
+      "checked-selection-verify",
+      "checked-selection-replay"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [
+      "C5"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "AG6",
+     "expected": "support_only/pending/unresolved; blocked; B pending_reasons irrelevant_with_unresolved",
+     "inputs": "support on A; B completed irrelevant + completed unresolved-relevance",
+     "invocations": [
+      "checked-selection-evaluate",
+      "checked-selection-verify",
+      "checked-selection-replay"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [
+      "C6"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "AG7",
+     "expected": "support_only/pending/unresolved; disputed_relevance; blocked",
+     "inputs": "same item relevant support + irrelevant",
+     "invocations": [
+      "checked-selection-evaluate",
+      "checked-selection-verify",
+      "checked-selection-replay"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [
+      "C7"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "AG8",
+     "expected": "opposition_only/pending/contradicted; blocked",
+     "inputs": "same item relevant opposition + irrelevant",
+     "invocations": [
+      "checked-selection-evaluate",
+      "checked-selection-verify",
+      "checked-selection-replay"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [
+      "C8"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "AG9",
+     "expected": "support_only/complete/supported; B excluded_reviewed",
+     "inputs": "support on A; B only unopposed completed irrelevant",
+     "invocations": [
+      "checked-selection-evaluate",
+      "checked-selection-verify",
+      "checked-selection-replay"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [
+      "C9"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "AG10",
+     "expected": "support_only/complete/supported; B excluded_conclusive validity_non_overlapping",
+     "inputs": "support on A; B validity entirely outside time scope",
+     "invocations": [
+      "checked-selection-evaluate",
+      "checked-selection-verify",
+      "checked-selection-replay"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [
+      "C10"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "AG11",
+     "expected": "support_only/pending/unresolved; partial_or_unknown_scope; blocked",
+     "inputs": "AG10 but B validity partially overlaps",
+     "invocations": [
+      "checked-selection-evaluate",
+      "checked-selection-verify",
+      "checked-selection-replay"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [
+      "C11"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "AG12",
+     "expected": "none/complete/unresolved; blocked",
+     "inputs": "only expired support, conclusively non-overlapping",
+     "invocations": [
+      "checked-selection-evaluate",
+      "checked-selection-verify",
+      "checked-selection-replay"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [
+      "C12"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "AG13",
+     "expected": "none/pending/unresolved; blocked",
+     "inputs": "sole completed unresolved relation",
+     "invocations": [
+      "checked-selection-evaluate",
+      "checked-selection-verify",
+      "checked-selection-replay"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [
+      "C13"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "AG14",
+     "expected": "support_and_opposition/pending/conflicting; blocked",
+     "inputs": "same item support + opposition + irrelevant",
+     "invocations": [
+      "checked-selection-evaluate",
+      "checked-selection-verify",
+      "checked-selection-replay"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [
+      "C14"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    }
+   ],
+   "property": "evidence aggregation precedence (design §5; reference_calibration, selection phase; empty allowlist unless stated)",
+   "witness": "W11"
+  },
+  {
+   "cases": [
+    {
+     "case": "DC1",
+     "expected": "conflicting_declarations; blocked; both retained",
+     "inputs": "calibration claim declared true and false",
+     "invocations": [
+      "checked-selection-evaluate",
+      "checked-selection-verify",
+      "checked-selection-replay"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [
+      "E1"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "DC2",
+     "expected": "declaration_missing; blocked",
+     "inputs": "state_hold claim undeclared",
+     "invocations": [
+      "checked-selection-evaluate",
+      "checked-selection-verify",
+      "checked-selection-replay"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [
+      "E2"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "DC3",
+     "expected": "contradicted; blocked",
+     "inputs": "calibration declared true + completed applicable opposing review",
+     "invocations": [
+      "checked-selection-evaluate",
+      "checked-selection-verify",
+      "checked-selection-replay"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [
+      "E3"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    }
+   ],
+   "property": "declarations",
+   "witness": "W12"
+  },
+  {
+   "cases": [
+    {
+     "case": "PO1",
+     "expected": "refuse REFERENCE_MISSING; no default policy applied",
+     "inputs": "request.policy referenced but absent from closure",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "PO2",
+     "expected": "completes; blocked (unresolved_not_permitted); empty allowlist honoured as a recorded choice",
+     "inputs": "captured policy with explicit empty allowlist; AG2 graph",
+     "invocations": [
+      "checked-selection-evaluate",
+      "checked-selection-verify",
+      "checked-selection-replay"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "PO3",
+     "expected": "refuse SCHEMA_INVALID",
+     "inputs": "captured policy permitted_builds []",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "PO4",
+     "expected": "refuse POLICY_LIMIT_INVALID",
+     "inputs": "captured policy loosens a limit above the edition value",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "PO5",
+     "expected": "refuse POLICY_EDITION_MISMATCH",
+     "inputs": "captured policy edition ct.policy-edition.v1",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": null,
+     "status": "original"
+    }
+   ],
+   "property": "captured policy material",
+   "witness": "W13"
+  },
+  {
+   "cases": [
+    {
+     "case": "IN1",
+     "expected": "refuse CACHED_DERIVATION_MISMATCH",
+     "inputs": "evaluate with submitted cached derivation, H2 set altered to [45.1,56.1], rehashed",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [
+      "D1"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "IN2",
+     "expected": "verify refuses DERIVATION_MISMATCH",
+     "inputs": "copy of FX1 bundle with altered derivation.json, all digests rehashed",
+     "invocations": [
+      "checked-selection-verify"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [
+      "D2"
+     ],
+     "prior_bundle": "FX1",
+     "status": "original"
+    },
+    {
+     "case": "IN3",
+     "expected": "verify completes reporting derivation_checked, applicability_policy_checked, downstream_result_not_replayed",
+     "inputs": "copy of FX1 bundle with altered T1 worst_survivors 2 in result.json, rehashed",
+     "invocations": [
+      "checked-selection-verify"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [
+      "D3"
+     ],
+     "prior_bundle": "FX1",
+     "status": "original"
+    },
+    {
+     "case": "IN4",
+     "expected": "replay refuses DOWNSTREAM_REPLAY_MISMATCH",
+     "inputs": "same mutated copy as IN3",
+     "invocations": [
+      "checked-selection-replay"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [
+      "D4"
+     ],
+     "prior_bundle": "FX1",
+     "status": "original"
+    },
+    {
+     "case": "IN5",
+     "expected": "verify refuses SCORE_METADATA_INVALID",
+     "inputs": "copy of FX1 with post_measurement_elimination_guaranteed true, rehashed",
+     "invocations": [
+      "checked-selection-verify"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [
+      "D5"
+     ],
+     "prior_bundle": "FX1",
+     "status": "original"
+    },
+    {
+     "case": "IN6",
+     "expected": "refuse REFERENCE_MISSING",
+     "inputs": "request references model revision 1 digest; closure supplies revision 2 only",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [
+      "D6"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "IN7",
+     "expected": "refuse AUTHORITY_PIN_MISMATCH before computation",
+     "inputs": "authority changed and rehashed; external expected authority pin unchanged",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [
+      "D7"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "IN8",
+     "expected": "completes as a new declared assessment; unauthenticated",
+     "inputs": "fresh request + fresh authority with matching fresh external pins",
+     "invocations": [
+      "checked-selection-evaluate",
+      "checked-selection-verify",
+      "checked-selection-replay"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [
+      "D7b"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "IN9",
+     "expected": "refuse AUTHORITY_SCOPE_MISMATCH",
+     "inputs": "evaluation authority A (target R) with scope phase selection used for reassessment",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [
+      "D8"
+     ],
+     "prior_bundle": "FX1",
+     "status": "original"
+    },
+    {
+     "case": "IN10",
+     "expected": "refuse PRIOR_BUNDLE_MISMATCH",
+     "inputs": "reassessment prior_selection.manifest references a digest different from the supplied prior bundle manifest file",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "original"
+    },
+    {
+     "case": "IN11",
+     "expected": "refuse UNREFERENCED_MEMBER",
+     "inputs": "closure carries an unreferenced extra member",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": null,
+     "status": "original"
+    }
+   ],
+   "property": "integrity and authority",
+   "witness": "W14"
+  },
+  {
+   "cases": [
+    {
+     "case": "BE1",
+     "expected": "both baseline_ineligible, retained; withheld (baseline_ineligible); not pruned",
+     "inputs": "baseline evidence scalar 60.2, model baseline 60.1",
+     "invocations": [
+      "checked-selection-evaluate",
+      "checked-selection-verify",
+      "checked-selection-replay"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [
+      "G1"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    }
+   ],
+   "property": "baseline eligibility",
+   "witness": "W15"
+  },
+  {
+   "cases": [
+    {
+     "case": "F1a",
+     "expected": "admitted (evaluate completes; content checked as in SC1)",
+     "inputs": "2 hypotheses",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [
+      "F1"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "F1b",
+     "expected": "refuse SCHEMA_INVALID",
+     "inputs": "3 hypotheses",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [
+      "F1"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "F2a",
+     "expected": "admitted (evaluate completes; content checked as in SC1)",
+     "inputs": "T1 and T2 once each",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [
+      "F2"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "F2b",
+     "expected": "refuse SCHEMA_INVALID",
+     "inputs": "T1 twice",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [
+      "F2"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "F3a",
+     "expected": "admitted (evaluate completes; content checked as in SC1)",
+     "inputs": "decoder content equal to edition",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [
+      "F3"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "F3b",
+     "expected": "refuse EDITION_CONTENT_MISMATCH",
+     "inputs": "4 regions or cut 56.5 under same edition",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [
+      "F3"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "F4a",
+     "expected": "admitted (evaluate completes; content checked as in SC1)",
+     "inputs": "scalar 1000",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [
+      "F4"
+     ],
+     "prior_bundle": "FX1",
+     "status": "original"
+    },
+    {
+     "case": "F4b",
+     "expected": "refuse SCALAR_OUT_OF_ADMISSION_DOMAIN",
+     "inputs": "scalar 1000.000001",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [
+      "F4"
+     ],
+     "prior_bundle": "FX1",
+     "status": "original"
+    },
+    {
+     "case": "F5a",
+     "expected": "admitted (evaluate completes; content checked as in SC1)",
+     "inputs": "6 fractional digits",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [
+      "F5"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "F5b",
+     "expected": "refuse RATIONAL_INVALID",
+     "inputs": "7 fractional digits",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [
+      "F5"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "F6a",
+     "expected": "admitted (evaluate completes; content checked as in SC1)",
+     "inputs": "32-digit numerator (in bounds after reduction checks)",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [
+      "F6"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "F6b",
+     "expected": "refuse RESOURCE_LIMIT_EXCEEDED",
+     "inputs": "33-digit numerator",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [
+      "F6"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "F8a",
+     "expected": "admitted (evaluate completes; content checked as in SC1)",
+     "inputs": "H2 hi 50",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [
+      "F8"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "F8b",
+     "expected": "refuse ACCOUNT_KIND_CONSTRAINT_VIOLATED",
+     "inputs": "H2 hi 50.000001 or lo 0",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [
+      "F8"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "F9a",
+     "expected": "admitted (evaluate completes; content checked as in SC1)",
+     "inputs": "b_ref hi 10",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [
+      "F9"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "F9b",
+     "expected": "refuse ACCOUNT_KIND_CONSTRAINT_VIOLATED",
+     "inputs": "b_ref hi 10.000001",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [
+      "F9"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "F10a",
+     "expected": "admitted (evaluate completes; content checked as in SC1)",
+     "inputs": "8 evidence items on one claim",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [
+      "F10"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "F10b",
+     "expected": "refuse RESOURCE_LIMIT_EXCEEDED",
+     "inputs": "9",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [
+      "F10"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "F11a",
+     "expected": "admitted (evaluate completes; content checked as in SC1)",
+     "inputs": "4 reviews on one item",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [
+      "F11"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "F11b",
+     "expected": "refuse RESOURCE_LIMIT_EXCEEDED",
+     "inputs": "5",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [
+      "F11"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "F12a",
+     "expected": "admitted (evaluate completes; content checked as in SC1)",
+     "inputs": "64 reviews",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [
+      "F12"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "F12b",
+     "expected": "refuse SCHEMA_INVALID at stage 2 (request.reviews maxItems 64 precedes the stage-4 count; CONTRACT §12.2)",
+     "inputs": "65",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "original_expected": "refuse RESOURCE_LIMIT_EXCEEDED",
+     "polarity": "adverse",
+     "predecessor_ids": [
+      "F12"
+     ],
+     "prior_bundle": null,
+     "status": "amended"
+    },
+    {
+     "case": "F13a",
+     "expected": "admitted (evaluate completes; content checked as in SC1)",
+     "inputs": "decoded selection closure 1,048,576 B",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [
+      "F13"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "F13b",
+     "expected": "refuse RESOURCE_LIMIT_EXCEEDED",
+     "inputs": "1,048,577 B",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [
+      "F13"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    }
+   ],
+   "property": "boundary-sized inputs and plus-one refusals",
+   "witness": "W16"
+  },
+  {
+   "cases": [
+    {
+     "case": "T2a",
+     "expected": "heater_off for both; T2 worst 2",
+     "inputs": "target 60.1 equal to baseline",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [
+      "T2a"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    },
+    {
+     "case": "T2b",
+     "expected": "heater_on for both; T2 worst 2; best [T1]",
+     "inputs": "target 60.2",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [
+      "T2b"
+     ],
+     "prior_bundle": null,
+     "status": "original"
+    }
+   ],
+   "property": "T2 held-suspect rule",
+   "witness": "W17"
+  },
+  {
+   "cases": [
+    {
+     "case": "EO1",
+     "expected": "completes as UN1; request.execution_target = X; E.target = X; A.target = R; verify and replay complete standalone",
+     "inputs": "CO1 with the UN1 observation; check that every reference in X, E, R and A points only to a record constructed at an earlier step",
+     "invocations": [
+      "checked-reassessment-evaluate",
+      "checked-reassessment-verify",
+      "checked-reassessment-replay"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "original"
+    },
+    {
+     "case": "EO2",
+     "expected": "refuse REFERENCE_KIND_MISMATCH",
+     "inputs": "CO1 but E (purpose execution) has target {kind ct.request.v1} = the prior selection request",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "original"
+    },
+    {
+     "case": "EO3",
+     "expected": "refuse REFERENCE_KIND_MISMATCH",
+     "inputs": "CO1 but A (purpose evaluation) has target {kind ct.execution-target.v1} = X; external pins digest(R), digest(A)",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "original"
+    },
+    {
+     "case": "EO4",
+     "expected": "refuse AUTHORITY_TARGET_MISMATCH (X2 is reachable via E, so not REFERENCE_MISSING)",
+     "inputs": "CO1 but E targets X2, a second target identical to X except instrument_id; R.execution_target = X",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "original"
+    },
+    {
+     "case": "EO5",
+     "expected": "refuse AUTHORITY_TARGET_MISMATCH",
+     "inputs": "CO1 but A targets R2 (same as R with scalar 60.2); external request pin digest(R), authority pin digest(A)",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "original"
+    },
+    {
+     "case": "EO6",
+     "expected": "refuse EXECUTION_TARGET_MISMATCH",
+     "inputs": "CO1 but R.result.acquisition.instrument_id differs from X.instrument_id (instrument substitution after authorization)",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "original"
+    },
+    {
+     "case": "EO7",
+     "expected": "refuse EXECUTION_TARGET_MISMATCH",
+     "inputs": "CO1 but R.model is model revision 2 while X.model is revision 1 (model substitution)",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "original"
+    },
+    {
+     "case": "EO8",
+     "expected": "refuse EXECUTION_TARGET_MISMATCH",
+     "inputs": "CO1 but R.result.procedure_edition T2 (code heater_off, interpretation_plan null = the T2 plan captured by FX1, so plan admission passes) while X.procedure_edition is T1",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "original"
+    },
+    {
+     "case": "EO9",
+     "expected": "refuse AUTHORITY_SCOPE_MISMATCH",
+     "inputs": "CO1 but E.scope.procedure_editions [T2] while X and R are T1",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "original"
+    },
+    {
+     "case": "EO10",
+     "expected": "refuse AUTHORITY_SCOPE_MISMATCH",
+     "inputs": "CO1 but acquisition.ended is after E.valid.to",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "original"
+    },
+    {
+     "case": "EO11",
+     "expected": "refuse EXECUTION_TARGET_MISMATCH (R passes plan admission; disagrees with X)",
+     "inputs": "PS2 inputs but X is the inherited target (selection_basis inherited, plan_change null, plan w=1/2)",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "original"
+    },
+    {
+     "case": "EO12",
+     "expected": "refuse AUTHORITY_SCOPE_MISMATCH",
+     "inputs": "PS2 but execution authority E.plan_change null (X and A correct)",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "original"
+    },
+    {
+     "case": "EO13",
+     "expected": "refuse REQUEST_PIN_MISMATCH (request pin is checked before the authority pin; execution authority is fixed transitively by the request pin)",
+     "inputs": "CO1 then E widened (valid.to later) and rehashed, R rehashed to reference the new E, A retargeted and rehashed; both external pins are those of the original R and A",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "original"
+    }
+   ],
+   "property": "acyclic execution and evaluation authority binding (CONTRACT 6.2, 6.4)",
+   "witness": "W18"
+  },
+  {
+   "cases": [
+    {
+     "case": "CL1",
+     "expected": "closure roots exactly {R, A, D}; member set equals the reachable set; D.prior_closure rebuilds to the prior manifest closure.json digest and length; verify reports prior_material_checked; replay writes a new bundle",
+     "inputs": "UN1 reassessment bundle; verify and replay given only --bundle and external pins (no --prior-bundle)",
+     "invocations": [
+      "checked-reassessment-verify",
+      "checked-reassessment-replay"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "original"
+    },
+    {
+     "case": "CL2",
+     "expected": "verify refuses UNREFERENCED_MEMBER",
+     "inputs": "harness copy of the UN1 bundle; one valid but unrelated evidence review added to closure; closure, manifest rehashed; external pins unchanged",
+     "invocations": [
+      "checked-reassessment-verify"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "original"
+    },
+    {
+     "case": "CL3",
+     "expected": "verify refuses PRIOR_BUNDLE_MISMATCH (rebuilt prior closure differs from the prior manifest entry pinned through R)",
+     "inputs": "as CL2, and the review digest also inserted into D.prior_closure.members; D, closure, manifest rehashed",
+     "invocations": [
+      "checked-reassessment-verify"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "original"
+    },
+    {
+     "case": "CL4",
+     "expected": "verify refuses REFERENCE_MISSING",
+     "inputs": "harness copy of the UN1 bundle; evaluation authority A removed from closure members (roots and invocation unchanged); rehashed",
+     "invocations": [
+      "checked-reassessment-verify"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "original"
+    },
+    {
+     "case": "CL5",
+     "expected": "verify refuses PRIOR_BUNDLE_MISMATCH (trace digest differs from the prior manifest trace.json entry)",
+     "inputs": "harness copy of the UN1 bundle; carried prior trace removed and replaced by a different schema-valid trace; D.trace updated; rehashed",
+     "invocations": [
+      "checked-reassessment-verify"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "original"
+    },
+    {
+     "case": "CL6",
+     "expected": "verify refuses PRIOR_BUNDLE_MISMATCH (D.prior_manifest differs from R.prior_selection.manifest)",
+     "inputs": "CL5 mutation plus a substitute prior manifest M2 listing the replacement trace; D.prior_manifest = M2; original manifest M kept (referenced by R.prior_selection.manifest); rehashed",
+     "invocations": [
+      "checked-reassessment-verify"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "original"
+    },
+    {
+     "case": "CL7",
+     "expected": "verify refuses AUTHORITY_PIN_MISMATCH (reachability passes; the forged root fails the external pin)",
+     "inputs": "harness copy of the UN1 bundle; A removed; a second evaluation authority A2 (target R) added; closure.roots.evaluation_authority and invocation.authority both set to A2; rehashed; external authority pin digest(A)",
+     "invocations": [
+      "checked-reassessment-verify"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "original"
+    },
+    {
+     "case": "CL8",
+     "expected": "refuse UNREFERENCED_MEMBER (only the pinned authority is a root)",
+     "inputs": "UN1 evaluate with --objects-dir also holding A2, a second valid evaluation authority targeting R that is not pinned",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "original"
+    },
+    {
+     "case": "CL9",
+     "expected": "refuse PRIOR_BUNDLE_MISMATCH (prior closure fails its own root reachability)",
+     "inputs": "harness copy of the FX1 bundle whose closure gains an unreachable member and is re-manifested; R pins that manifest digest; reassessment evaluate with it as --prior-bundle",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "original"
+    }
+   ],
+   "property": "authorized closure roots, reachability edges and prior-material carriage (CONTRACT 7.3)",
+   "witness": "W19"
+  },
+  {
+   "cases": [
+    {
+     "case": "RE1",
+     "expected": "completes as UN1",
+     "inputs": "CO1 with value-distinct T1 result evidence (admitted value 60, distinct occurrence) and scalar 60.0",
+     "invocations": [
+      "checked-reassessment-evaluate",
+      "checked-reassessment-verify",
+      "checked-reassessment-replay"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "new"
+    },
+    {
+     "case": "RE2",
+     "expected": "refuse RESULT_EVIDENCE_MISMATCH",
+     "inputs": "RE1 but observation scalar 60.2 while the evidence admits 60",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "new"
+    },
+    {
+     "case": "RE3",
+     "expected": "refuse RESULT_EVIDENCE_MISMATCH",
+     "inputs": "result public evidence is the model baseline evidence (reuse)",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "new"
+    },
+    {
+     "case": "RE4",
+     "expected": "refuse RESULT_EVIDENCE_MISMATCH",
+     "inputs": "acquisition, X and plan instrument consistently substituted by an instrument other than model.reference_instrument_id",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "new"
+    },
+    {
+     "case": "RE5",
+     "expected": "refuse RESULT_EVIDENCE_MISMATCH",
+     "inputs": "T1 result references application code evidence",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "new"
+    },
+    {
+     "case": "RE6",
+     "expected": "completes; multiple_compatible",
+     "inputs": "T2 heater_off with ct.code-evidence.v1 (indicator instrument, observed within acquisition)",
+     "invocations": [
+      "checked-reassessment-evaluate",
+      "checked-reassessment-verify",
+      "checked-reassessment-replay"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "new"
+    },
+    {
+     "case": "RE7",
+     "expected": "refuse RESULT_EVIDENCE_MISMATCH",
+     "inputs": "RE6 but evidence code heater_on",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "new"
+    },
+    {
+     "case": "RE8",
+     "expected": "refuse RESULT_EVIDENCE_MISMATCH",
+     "inputs": "RE6 but evidence instrument differs from the indicator",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "new"
+    },
+    {
+     "case": "RE9",
+     "expected": "refuse RESULT_EVIDENCE_MISMATCH",
+     "inputs": "RE6 but observed_at outside the acquisition window",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "new"
+    },
+    {
+     "case": "RE10",
+     "expected": "refuse RESULT_EVIDENCE_MISMATCH",
+     "inputs": "T2 result references temperature public evidence",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "new"
+    }
+   ],
+   "property": "result-evidence bindings (CONTRACT §12.3)",
+   "witness": "W20"
+  },
+  {
+   "cases": [
+    {
+     "case": "AP1",
+     "expected": "completes; 4 applicability rows; selection whole-set rule unchanged (DC2 still blocks)",
+     "inputs": "T1 reassessment supplying only the four T1 reassessment-phase claims",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "new"
+    }
+   ],
+   "property": "reassessment qualifies only the executed procedure (CONTRACT §12.4)",
+   "witness": "W21"
+  },
+  {
+   "cases": [
+    {
+     "case": "EC1",
+     "expected": "refuse RESOURCE_LIMIT_EXCEEDED",
+     "inputs": "authored member with a rationale longer than string_bytes",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": null,
+     "status": "new"
+    },
+    {
+     "case": "EC2",
+     "expected": "verify refuses RESOURCE_LIMIT_EXCEEDED",
+     "inputs": "retained closure.json with a non-data string longer than string_bytes",
+     "invocations": [
+      "checked-selection-verify"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "new"
+    }
+   ],
+   "property": "designated base64 carriage exception (CONTRACT §12.5)",
+   "witness": "W22"
+  },
+  {
+   "cases": [
+    {
+     "case": "WD1",
+     "expected": "completes; verify and replay complete standalone",
+     "inputs": "selection with an undeclared and unsupplied required claim core (withheld, applicability_blocked)",
+     "invocations": [
+      "checked-selection-evaluate",
+      "checked-selection-verify",
+      "checked-selection-replay"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [],
+     "prior_bundle": null,
+     "status": "new"
+    },
+    {
+     "case": "WD2",
+     "expected": "completes; carried prior recomputes equal",
+     "inputs": "reassessment over WD1",
+     "invocations": [
+      "checked-reassessment-evaluate",
+      "checked-reassessment-verify"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [],
+     "prior_bundle": "WD1",
+     "status": "new"
+    }
+   ],
+   "property": "withheld selections remain self-contained (CONTRACT §12.6)",
+   "witness": "W23"
+  },
+  {
+   "cases": [
+    {
+     "case": "AV1",
+     "expected": "refuse AUTHORITY_SCOPE_MISMATCH",
+     "inputs": "selection evaluation authority valid window excludes request.as_of",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": null,
+     "status": "new"
+    },
+    {
+     "case": "AV2",
+     "expected": "refuse AUTHORITY_SCOPE_MISMATCH",
+     "inputs": "reassessment evaluation authority valid window excludes acquisition.ended",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "new"
+    },
+    {
+     "case": "AV3",
+     "expected": "completes",
+     "inputs": "valid.to equals request.as_of (closed window)",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [],
+     "prior_bundle": null,
+     "status": "new"
+    }
+   ],
+   "property": "evaluation authority validity (CONTRACT §12.7)",
+   "witness": "W24"
+  },
+  {
+   "cases": [
+    {
+     "case": "CD1",
+     "expected": "completes; cache not used as input",
+     "inputs": "--cached-derivation equal to the fresh derivation",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [],
+     "prior_bundle": null,
+     "status": "new"
+    },
+    {
+     "case": "CD2",
+     "expected": "refuse CACHED_DERIVATION_MISMATCH",
+     "inputs": "cached derivation altered and rehashed (IN1)",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": null,
+     "status": "new"
+    },
+    {
+     "case": "CD3",
+     "expected": "refuse SCHEMA_INVALID",
+     "inputs": "cached derivation not canonical / not schema-valid",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": null,
+     "status": "new"
+    }
+   ],
+   "property": "cached derivation comparison (CONTRACT §12.8)",
+   "witness": "W25"
+  },
+  {
+   "cases": [
+    {
+     "case": "LM1",
+     "expected": "refuse RESOURCE_LIMIT_EXCEEDED",
+     "inputs": "captured object_bytes below the public evidence size",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": null,
+     "status": "new"
+    },
+    {
+     "case": "LM2",
+     "expected": "refuse RESOURCE_LIMIT_EXCEEDED",
+     "inputs": "captured string_bytes below an authored statement length",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": null,
+     "status": "new"
+    },
+    {
+     "case": "LM3",
+     "expected": "refuse RESOURCE_LIMIT_EXCEEDED",
+     "inputs": "captured json_depth below the public evidence depth",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": null,
+     "status": "new"
+    },
+    {
+     "case": "LM4",
+     "expected": "refuse RESOURCE_LIMIT_EXCEEDED",
+     "inputs": "captured json_nodes below the public evidence node count",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": null,
+     "status": "new"
+    },
+    {
+     "case": "LM5",
+     "expected": "refuse RESOURCE_LIMIT_EXCEEDED",
+     "inputs": "captured integer_digits below a rational part length",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": null,
+     "status": "new"
+    },
+    {
+     "case": "LM6",
+     "expected": "refuse RESOURCE_LIMIT_EXCEEDED",
+     "inputs": "captured trace_entries below the computed trace length",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": null,
+     "status": "new"
+    },
+    {
+     "case": "LM7",
+     "expected": "refuse RESOURCE_LIMIT_EXCEEDED",
+     "inputs": "captured rational_operations below the counted work",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": null,
+     "status": "new"
+    },
+    {
+     "case": "F12c",
+     "expected": "refuse RESOURCE_LIMIT_EXCEEDED at stage 4",
+     "inputs": "captured reviews = 10 with 11 supplied reviews",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": null,
+     "status": "new"
+    }
+   ],
+   "property": "captured limits enforced after policy discovery (CONTRACT §12.9)",
+   "witness": "W26"
+  },
+  {
+   "cases": [
+    {
+     "case": "DG1",
+     "expected": "exit 3 BUILD_IDENTITY_UNAVAILABLE; no output",
+     "inputs": "real process entry point in a tree without a clean committed executable identity",
+     "invocations": [
+      "checked-selection-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": null,
+     "status": "new"
+    },
+    {
+     "case": "DG2",
+     "expected": "exit 2 CLI_USAGE",
+     "inputs": "missing required argument",
+     "invocations": [
+      "checked-selection-verify"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": null,
+     "status": "new"
+    }
+   ],
+   "property": "diagnostics (CONTRACT §12.2)",
+   "witness": "W27"
+  }
+ ]
+}

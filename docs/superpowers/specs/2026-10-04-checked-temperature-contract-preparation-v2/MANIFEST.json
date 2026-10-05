@@ -1,0 +1,62 @@
+{
+ "checkpoint": {
+  "head": "2f0afbd368105b99f0b8548ffece107918386e3d"
+ },
+ "date": "2026-10-04",
+ "governing_commitments": {
+  "corrected_design_v2": {
+   "path": "docs/superpowers/proposals/2026-10-04-checked-derivation-and-applicability-corrected-design-v2.md",
+   "sha256": "68da70f2cc64d837e45e8534da0eba7d95d94686ab40806099c5f06a0e4a02da"
+  },
+  "focused_confirmation_v2": {
+   "path": "docs/superpowers/reports/2026-10-04-checked-derivation-and-applicability-focused-confirmation-v2.md",
+   "sha256": "f0259702892f52f3e61dda3f665bb6c31298e276f9fdd86b10cd9e685f8fcc55"
+  }
+ },
+ "members": {
+  "CONTRACT.md": {
+   "bytes": 20083,
+   "sha256": "d3d3f22ba001b907cba2c2d62cc5743cf57a569551f872aab0ee88ec03c0d962"
+  },
+  "CORRECTIONS.md": {
+   "bytes": 4452,
+   "sha256": "fe25b48abb79098cb8fddf7c03a908534398d056c7739a03eaaf0042028b8bdf"
+  },
+  "PLAN.md": {
+   "bytes": 5423,
+   "sha256": "c4094846e5c0576b28a29a4f97c470d78312f51fe1d367a6d0fa46c4607cc478"
+  },
+  "README.md": {
+   "bytes": 7098,
+   "sha256": "926c39e42793d9122cb620ddbe79268d6c0b7245c7c2978674e4d4264ded037b"
+  },
+  "RESOURCES.md": {
+   "bytes": 6432,
+   "sha256": "b7a2ae7a46746d888ec6cfbcca0021b4ad0d6fe0dbbe3a89bf790b7e9c4ef756"
+  },
+  "WITNESSES.md": {
+   "bytes": 13444,
+   "sha256": "d153a25a3ff5e05041b8e66e929a492927a0bce9fd19e3fdebfd77cdfc2f30bb"
+  },
+  "policy.json": {
+   "bytes": 13042,
+   "sha256": "d59705cde36e4a01c9b6bd4a0b3a0f5bb2aec8676c79402be8dddc1d2577568a"
+  },
+  "schemas.json": {
+   "bytes": 79344,
+   "sha256": "a455d285b7b94a098ac25897df013413312c530565b7411e3b7283b91cedd5e6"
+  },
+  "witnesses.json": {
+   "bytes": 33326,
+   "sha256": "9cf306f552c1f37c130f5061c9b8c6862b45d6c2bec28fec4573652c6336f7ad"
+  }
+ },
+ "package": "checked-temperature contract preparation v2 (successor)",
+ "predecessor": {
+  "path": "docs/superpowers/specs/2026-10-04-checked-temperature-contract-preparation/MANIFEST.json",
+  "preserved_unchanged": true,
+  "sha256": "c3de4cb9d5868454e8d666267d9dd9cf58f33d69500065c1f648005bf3da48c2"
+ },
+ "schema": "ct.preparation-manifest.v2",
+ "status": "documentation-only proposal; not executable readiness; authorizes no implementation, test or execution"
+}

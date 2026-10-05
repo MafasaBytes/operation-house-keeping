@@ -1,0 +1,111 @@
+{
+ "amends": "witnesses-c1.json (C1 MANIFEST 791b4035...)",
+ "schema": "ct.witness-matrix.c2",
+ "status": "hand-derived expected outcomes; not passing evidence",
+ "witnesses": [
+  {
+   "cases": [
+    {
+     "case": "TC5b",
+     "expected": "refuse RESULT_EVIDENCE_MISMATCH /acquisition_window",
+     "inputs": "retained-instant evidence with every finished_at copy substituted into the window (received_at unchanged, outside)",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "amended"
+    },
+    {
+     "case": "RC1",
+     "expected": "refuse RESULT_EVIDENCE_MISMATCH /acquisition_window",
+     "inputs": "received_at outside the window while finished_at is inside (TC5b construction)",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "new"
+    },
+    {
+     "case": "RC2",
+     "expected": "refuse RESULT_EVIDENCE_MISMATCH /acquisition_window",
+     "inputs": "later-chain evidence with finished_at (every copy) moved after acquisition.ended while received_at stays inside",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "new"
+    },
+    {
+     "case": "RC3a",
+     "expected": "completes",
+     "inputs": "genuine later chain (received_at = finished_at): acquisition.started = received_at and acquisition.ended = finished_at",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "new"
+    },
+    {
+     "case": "RC3b",
+     "expected": "completes",
+     "inputs": "validator-accepted evidence with finished_at moved 20 s after received_at: started = received_at, ended = finished_at",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "new"
+    },
+    {
+     "case": "RC4",
+     "expected": "refuse RESULT_EVIDENCE_MISMATCH /acquisition_window",
+     "inputs": "same evidence as RC3b with acquisition.started = finished_at (receipt precedes the start); replaces the C1 TC2a expectation for such evidence",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "adverse",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "new"
+    },
+    {
+     "case": "TC2a",
+     "expected": "completes (unchanged)",
+     "inputs": "genuine later chain with acquisition.started = finished_at (= received_at; receipt does not precede the start)",
+     "invocations": [
+      "checked-reassessment-evaluate"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "original-c1"
+    },
+    {
+     "case": "TC1",
+     "expected": "completes; verify and replay standalone",
+     "inputs": "coherent later evidence",
+     "invocations": [
+      "checked-reassessment-evaluate",
+      "checked-reassessment-verify",
+      "checked-reassessment-replay"
+     ],
+     "polarity": "positive",
+     "predecessor_ids": [],
+     "prior_bundle": "FX1",
+     "status": "original-c1"
+    }
+   ],
+   "property": "T1 receipt-time closure (amendment C2)",
+   "witness": "W29"
+  }
+ ]
+}

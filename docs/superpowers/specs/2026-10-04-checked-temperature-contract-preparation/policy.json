@@ -1,0 +1,387 @@
+{
+ "account_kinds": {
+  "high_underlying_faithful_baseline": {
+   "b_suspect": "exactly [0,0]"
+  },
+  "low_underlying_positive_offset": {
+   "b_suspect": "0 < lo <= hi <= 50"
+  }
+ },
+ "conclusive_exclusion_predicate": "validity interval entirely outside assessment window, OR declared subject/variable anchor differs exactly; null/partial/missing => pending",
+ "condition_catalogue": {
+  "indicator_fidelity": {
+   "governs": [
+    "ct.procedure.T2.v1"
+   ],
+   "proposition": "heater indicator implements the ct.procedure.T2.v1 rule for the declared target"
+  },
+  "reference_calibration": {
+   "governs": [
+    "ct.procedure.T1.v1"
+   ],
+   "proposition": "T1 reference bias lies within declared b_ref over the acquisition interval"
+  },
+  "reference_mapping": {
+   "governs": [
+    "ct.procedure.T1.v1"
+   ],
+   "proposition": "T1 reference instrument observes the declared subject entity and variable anchor"
+  },
+  "state_hold": {
+   "governs": [
+    "ct.procedure.T1.v1",
+    "ct.procedure.T2.v1"
+   ],
+   "proposition": "T_true and b_suspect unchanged from baseline as-of to end of acquisition"
+  }
+ },
+ "editions": {
+  "calculator": "ct.calculator.v1",
+  "conditions": "ct.conditions.v1",
+  "decoders": {
+   "ct.decoder.T1.v1": {
+    "regions": [
+     {
+      "id": "low",
+      "lower": null,
+      "lower_closed": false,
+      "upper": {
+       "denominator": "1",
+       "numerator": "56"
+      },
+      "upper_closed": true
+     },
+     {
+      "id": "gap",
+      "lower": {
+       "denominator": "1",
+       "numerator": "56"
+      },
+      "lower_closed": false,
+      "upper": {
+       "denominator": "1",
+       "numerator": "59"
+      },
+      "upper_closed": true
+     },
+     {
+      "id": "high",
+      "lower": {
+       "denominator": "1",
+       "numerator": "59"
+      },
+      "lower_closed": false,
+      "upper": null,
+      "upper_closed": false
+     }
+    ],
+    "unit": "degree_celsius"
+   },
+   "ct.decoder.T2.v1": {
+    "regions": [
+     {
+      "id": "heater_off"
+     },
+     {
+      "id": "heater_on"
+     }
+    ],
+    "unit": "code"
+   }
+  },
+  "interpretations": {
+   "ct.interpretation.exact-code.v1": {
+    "rule": "code must equal exactly one decoder literal"
+   },
+   "ct.interpretation.hard-interval.v1": {
+    "containment": "r within interval and admission domain",
+    "half_width": {
+     "max_inclusive": "5",
+     "min_exclusive": "0"
+    },
+    "interval": "[r-w, r+w] closed, applied once"
+   }
+  },
+  "procedures": {
+   "ct.procedure.T1.v1": {
+    "conditions": [
+     "reference_calibration",
+     "reference_mapping",
+     "state_hold"
+    ],
+    "decoder": "ct.decoder.T1.v1",
+    "interpretation": "ct.interpretation.hard-interval.v1",
+    "measurand": "T_true + b_ref",
+    "method": "reference_scalar"
+   },
+   "ct.procedure.T2.v1": {
+    "conditions": [
+     "state_hold",
+     "indicator_fidelity"
+    ],
+    "decoder": "ct.decoder.T2.v1",
+    "interpretation": "ct.interpretation.exact-code.v1",
+    "method": "nonspecific_code",
+    "rule": "heater_on iff held_suspect_baseline < target else heater_off (equality off)"
+   }
+  },
+  "template": "ct.template.two-account-temperature.v1"
+ },
+ "limits": {
+  "aggregation_review_evaluations": {
+   "basis": "analytical",
+   "note": "64 reviews x up to 4 condition keys per item",
+   "value": 256
+  },
+  "build_bytes": {
+   "basis": "engineering",
+   "note": "measured 27,479-27,632 B",
+   "value": 65536
+  },
+  "bundle_bytes": {
+   "basis": "engineering",
+   "note": "sum of file caps, rounded",
+   "value": 2097152
+  },
+  "closure_bytes": {
+   "basis": "engineering",
+   "note": "measured decoded closures 144,491 B (selection analogue) and 309,593 B (reassessment analogue)",
+   "value": 1048576
+  },
+  "condition_catalogue_entries": {
+   "basis": "analytical",
+   "note": "ct.conditions.v1",
+   "value": 4
+  },
+  "condition_declarations": {
+   "basis": "engineering",
+   "note": "allows duplicates/contradictions to be captured, then blocked",
+   "value": 32
+  },
+  "derivation_cells": {
+   "basis": "analytical",
+   "note": "2 hypotheses x (3 + 2) outcomes",
+   "value": 10
+  },
+  "diagnostic_bytes": {
+   "basis": "engineering",
+   "note": "",
+   "value": 2048
+  },
+  "evidence_items": {
+   "basis": "engineering",
+   "note": "",
+   "value": 32
+  },
+  "evidence_items_per_condition_key": {
+   "basis": "engineering",
+   "note": "",
+   "value": 8
+  },
+  "fractional_digits": {
+   "basis": "proposed_semantic",
+   "note": "denominator divides 10^6",
+   "value": 6
+  },
+  "hypotheses": {
+   "basis": "fixed_profile",
+   "note": "design \u00a72",
+   "value": 2
+  },
+  "integer_digits": {
+   "basis": "engineering",
+   "note": "new; legacy 128 not inherited",
+   "value": 32
+  },
+  "invocation_bytes": {
+   "basis": "engineering",
+   "note": "measured 511-583 B",
+   "value": 16384
+  },
+  "json_depth": {
+   "basis": "analytical",
+   "note": "deepest schema nesting 7; margin",
+   "value": 24
+  },
+  "json_nodes": {
+   "basis": "engineering",
+   "note": "",
+   "value": 65536
+  },
+  "manifest_bytes": {
+   "basis": "engineering",
+   "note": "measured 970-972 B",
+   "value": 16384
+  },
+  "object_bytes": {
+   "basis": "engineering",
+   "note": "measured largest object 86,313 B (public evidence)",
+   "value": 196608
+  },
+  "outcomes_per_procedure": {
+   "basis": "fixed_profile",
+   "note": "design \u00a72",
+   "value": 3
+  },
+  "procedures": {
+   "basis": "fixed_profile",
+   "note": "design \u00a72",
+   "value": 2
+  },
+  "rational_operations": {
+   "basis": "engineering",
+   "note": "analytical need < 200 (RESOURCES.md \u00a72); ~5x margin",
+   "value": 1024
+  },
+  "receipt_bytes": {
+   "basis": "engineering",
+   "note": "",
+   "value": 1024
+  },
+  "required_condition_keys": {
+   "basis": "analytical",
+   "note": "T1 3 + T2 2 conditions x 2 phases",
+   "value": 10
+  },
+  "result_bytes": {
+   "basis": "engineering",
+   "note": "measured 5,047-15,967 B",
+   "value": 65536
+  },
+  "reviews": {
+   "basis": "engineering",
+   "note": "",
+   "value": 64
+  },
+  "reviews_per_item": {
+   "basis": "engineering",
+   "note": "",
+   "value": 4
+  },
+  "string_bytes": {
+   "basis": "engineering",
+   "note": "longest free text field 2048",
+   "value": 4096
+  },
+  "successor_chain": {
+   "basis": "engineering",
+   "note": "immutable predecessors retained per request",
+   "value": 4
+  },
+  "trace_bytes": {
+   "basis": "engineering",
+   "note": "measured 6,298-31,134 B",
+   "value": 131072
+  },
+  "trace_entries": {
+   "basis": "analytical",
+   "note": "cells 10 + condition keys 10 + items 32 + reviews 64 + gates; margin",
+   "value": 512
+  },
+  "unique_objects": {
+   "basis": "analytical",
+   "note": "sum of per-kind maxima, RESOURCES.md \u00a72",
+   "value": 192
+  }
+ },
+ "note": "PROPOSED values for owner decision; not a deployment policy; old-profile ceilings are not inherited as capacity evidence",
+ "parameter_bounds": {
+  "b_ref": [
+   "-10",
+   "10"
+  ],
+  "b_suspect_H2_max": "50",
+  "half_width": [
+   "(0",
+   "5]"
+  ],
+  "scalar_admission_domain": [
+   "-200",
+   "1000"
+  ]
+ },
+ "permitted_builds": "populated at implementation freeze with ct.build.v1 digests; empty => verify/replay refuse BUILD_NOT_PERMITTED",
+ "profile": "bdw.checked-temperature.v1",
+ "refusal_codes": [
+  "UNIT_UNSUPPORTED",
+  "SCALAR_OUT_OF_ADMISSION_DOMAIN",
+  "RATIONAL_INVALID",
+  "EDITION_CONTENT_MISMATCH",
+  "ACCOUNT_KIND_CONSTRAINT_VIOLATED",
+  "INTERPRETATION_POINT_UNSUPPORTED",
+  "INTERPRETATION_PLAN_MISMATCH",
+  "CODE_NOT_IN_DECODER",
+  "CONDITION_UNKNOWN",
+  "REFERENCE_MISSING",
+  "REFERENCE_DIGEST_MISMATCH",
+  "REQUEST_PIN_MISMATCH",
+  "AUTHORITY_PIN_MISMATCH",
+  "AUTHORITY_SCOPE_MISMATCH",
+  "CACHED_DERIVATION_MISMATCH",
+  "DERIVATION_MISMATCH",
+  "APPLICABILITY_MISMATCH",
+  "SCORE_METADATA_INVALID",
+  "DOWNSTREAM_REPLAY_MISMATCH",
+  "BUILD_NOT_PERMITTED",
+  "HISTORICAL_BUILD_UNAVAILABLE",
+  "RESOURCE_LIMIT_EXCEEDED",
+  "OUTPUT_COLLISION",
+  "INTERPRETATION_HALF_WIDTH_OUT_OF_RANGE",
+  "SCHEMA_INVALID"
+ ],
+ "required_reviews_per_item": 1,
+ "role_rule": "record role must match record type; all attestations authenticated=false; no label-separation rule",
+ "roles": [
+  "local_model_proposer",
+  "local_evidence_reviewer",
+  "local_condition_declarer",
+  "local_evaluation_issuer",
+  "local_execution_issuer",
+  "local_adoption_decider"
+ ],
+ "schema": "ct.policy-proposal.v1",
+ "status": "proposed",
+ "unresolved_allowlist_default": [],
+ "unresolved_allowlist_synthetic_example": {
+  "entries": [
+   {
+    "condition": "reference_calibration",
+    "phase": "selection"
+   },
+   {
+    "condition": "reference_calibration",
+    "phase": "reassessment"
+   },
+   {
+    "condition": "reference_mapping",
+    "phase": "selection"
+   },
+   {
+    "condition": "reference_mapping",
+    "phase": "reassessment"
+   },
+   {
+    "condition": "state_hold",
+    "phase": "selection"
+   },
+   {
+    "condition": "state_hold",
+    "phase": "reassessment"
+   }
+  ],
+  "id": "ct.policy.synthetic-unresolved.v1",
+  "label": "SYNTHETIC EXAMPLE - owner must select; not deployment policy"
+ },
+ "withholding_reasons": [
+  "observation_interpretation_plan_missing",
+  "baseline_ineligible",
+  "baseline_unknown",
+  "derivation_unavailable",
+  "declaration_missing",
+  "conflicting_declarations",
+  "declaration_false_or_unknown",
+  "governing_state_contradicted",
+  "governing_state_conflicting",
+  "unresolved_not_permitted"
+ ]
+}

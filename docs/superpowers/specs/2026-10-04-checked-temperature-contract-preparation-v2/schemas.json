@@ -1,0 +1,3942 @@
+{
+ "$id": "bdw.checked-temperature.v1/schemas-v2",
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "canonical_bytes": "UTF-8 JSON, sorted keys, separators (',',':'), no NaN, duplicate keys refused; ct.evidence-content is opaque bytes",
+ "definitions": {
+  "attestation": {
+   "additionalProperties": false,
+   "properties": {
+    "authenticated": {
+     "const": false
+    },
+    "basis": {
+     "maxLength": 1024,
+     "type": "string"
+    },
+    "label": {
+     "maxLength": 128,
+     "minLength": 1,
+     "type": "string"
+    },
+    "role": {
+     "enum": [
+      "local_model_proposer",
+      "local_evidence_reviewer",
+      "local_condition_declarer",
+      "local_policy_owner",
+      "local_evaluation_issuer",
+      "local_execution_issuer",
+      "local_adoption_decider"
+     ]
+    }
+   },
+   "required": [
+    "role",
+    "label",
+    "authenticated",
+    "basis"
+   ],
+   "type": "object"
+  },
+  "context": {
+   "additionalProperties": false,
+   "properties": {
+    "as_of": {
+     "$ref": "#/definitions/datetime"
+    },
+    "assertion_context": {
+     "additionalProperties": false,
+     "properties": {
+      "kind": {
+       "const": "lifecycle_view"
+      },
+      "view": {
+       "const": "as_operated"
+      }
+     },
+     "required": [
+      "kind",
+      "view"
+     ],
+     "type": "object"
+    },
+    "scenario_label": {
+     "$ref": "#/definitions/id"
+    },
+    "structural_model_revision": {
+     "pattern": "^mrv_[0-9a-f]{64}$",
+     "type": "string"
+    },
+    "subject_entity_anchor_id": {
+     "pattern": "^ent_[0-9a-f]{32}$",
+     "type": "string"
+    },
+    "variable_anchor_id": {
+     "pattern": "^var_[0-9a-f]{32}$",
+     "type": "string"
+    }
+   },
+   "required": [
+    "as_of",
+    "scenario_label",
+    "assertion_context",
+    "subject_entity_anchor_id",
+    "variable_anchor_id",
+    "structural_model_revision"
+   ],
+   "type": "object"
+  },
+  "datetime": {
+   "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$",
+   "type": "string",
+   "x-semantic": "valid UTC calendar instant"
+  },
+  "decimal": {
+   "pattern": "^-?(0|[1-9][0-9]{0,3})(\\.[0-9]{1,6})?$",
+   "type": "string",
+   "x-semantic": "value in [-200, 1000]; '-0' refused"
+  },
+  "id": {
+   "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$",
+   "type": "string"
+  },
+  "instrument_id": {
+   "pattern": "^inst_[0-9a-f]{32}$",
+   "type": "string"
+  },
+  "interval": {
+   "additionalProperties": false,
+   "properties": {
+    "hi": {
+     "$ref": "#/definitions/rational"
+    },
+    "lo": {
+     "$ref": "#/definitions/rational"
+    }
+   },
+   "required": [
+    "lo",
+    "hi"
+   ],
+   "type": "object",
+   "x-semantic": "lo <= hi; both endpoints closed"
+  },
+  "limits": {
+   "additionalProperties": false,
+   "properties": {
+    "applicability_bytes": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "build_bytes": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "bundle_bytes_reassessment": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "bundle_bytes_selection": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "claims": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "condition_declarations": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "declarations_per_claim": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "derivation_bytes": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "derivation_cells": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "diagnostic_bytes": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "evidence_items": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "evidence_items_per_claim": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "fractional_digits": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "hypotheses": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "integer_digits": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "invocation_bytes": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "json_depth": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "json_nodes": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "manifest_bytes": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "object_bytes": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "outcomes_per_procedure": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "policy_bytes": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "procedures": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "rational_operations": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "reassessment_closure_decoded_bytes": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "reassessment_closure_file_bytes": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "reassessment_unique_objects": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "receipt_bytes": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "result_bytes": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "reviews": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "reviews_per_item": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "selection_closure_decoded_bytes": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "selection_closure_file_bytes": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "selection_unique_objects": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "string_bytes": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "successor_chain": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "trace_bytes": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "trace_entries": {
+     "minimum": 1,
+     "type": "integer"
+    }
+   },
+   "required": [
+    "hypotheses",
+    "procedures",
+    "outcomes_per_procedure",
+    "claims",
+    "condition_declarations",
+    "declarations_per_claim",
+    "evidence_items",
+    "evidence_items_per_claim",
+    "reviews",
+    "reviews_per_item",
+    "derivation_cells",
+    "integer_digits",
+    "fractional_digits",
+    "rational_operations",
+    "json_depth",
+    "json_nodes",
+    "string_bytes",
+    "object_bytes",
+    "selection_unique_objects",
+    "reassessment_unique_objects",
+    "selection_closure_decoded_bytes",
+    "selection_closure_file_bytes",
+    "reassessment_closure_decoded_bytes",
+    "reassessment_closure_file_bytes",
+    "invocation_bytes",
+    "derivation_bytes",
+    "applicability_bytes",
+    "result_bytes",
+    "trace_bytes",
+    "trace_entries",
+    "build_bytes",
+    "policy_bytes",
+    "manifest_bytes",
+    "bundle_bytes_selection",
+    "bundle_bytes_reassessment",
+    "receipt_bytes",
+    "diagnostic_bytes",
+    "successor_chain"
+   ],
+   "type": "object",
+   "x-semantic": "each value <= the policy edition's value (may only tighten)"
+  },
+  "open_closed_interval": {
+   "additionalProperties": false,
+   "properties": {
+    "hi": {
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "$ref": "#/definitions/rational"
+      }
+     ]
+    },
+    "hi_closed": {
+     "type": "boolean"
+    },
+    "lo": {
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "$ref": "#/definitions/rational"
+      }
+     ]
+    },
+    "lo_closed": {
+     "type": "boolean"
+    }
+   },
+   "required": [
+    "lo",
+    "lo_closed",
+    "hi",
+    "hi_closed"
+   ],
+   "type": "object",
+   "x-semantic": "null bound = unbounded with closed=false; non-empty"
+  },
+  "rational": {
+   "additionalProperties": false,
+   "properties": {
+    "denominator": {
+     "pattern": "^[1-9][0-9]{0,31}$",
+     "type": "string"
+    },
+    "numerator": {
+     "pattern": "^(0|-?[1-9][0-9]{0,31})$",
+     "type": "string"
+    }
+   },
+   "required": [
+    "numerator",
+    "denominator"
+   ],
+   "type": "object",
+   "x-semantic": "reduced; denominator divides 1000000"
+  },
+  "ref": {
+   "additionalProperties": false,
+   "properties": {
+    "kind": {
+     "enum": [
+      "ct.explanation.v1",
+      "ct.model.v1",
+      "ct.interpretation-plan.v1",
+      "ct.claim.v1",
+      "ct.condition-declaration.v1",
+      "ct.evidence-item.v1",
+      "ct.evidence-content",
+      "ct.evidence-review.v1",
+      "ct.policy.v1",
+      "ct.request.v1",
+      "ct.authority.v1",
+      "ct.adoption.v1",
+      "nm.evidence.v1",
+      "ct.derivation.v1",
+      "ct.applicability.v1",
+      "ct.selection.v1",
+      "ct.reassessment.v1",
+      "ct.retained-selection.v1",
+      "ct.build.v1",
+      "ct.invocation.v1",
+      "ct.trace.v1",
+      "ct.closure.v1",
+      "ct.bundle-manifest.v1"
+     ]
+    },
+    "sha256": {
+     "$ref": "#/definitions/sha256"
+    }
+   },
+   "required": [
+    "kind",
+    "sha256"
+   ],
+   "type": "object",
+   "x-semantic": "sha256 = SHA-256 of the target's canonical bytes (opaque bytes for ct.evidence-content); kind must be one of the field's x-target"
+  },
+  "sha256": {
+   "pattern": "^[0-9a-f]{64}$",
+   "type": "string"
+  },
+  "window": {
+   "additionalProperties": false,
+   "properties": {
+    "from": {
+     "$ref": "#/definitions/datetime"
+    },
+    "to": {
+     "$ref": "#/definitions/datetime"
+    }
+   },
+   "required": [
+    "from",
+    "to"
+   ],
+   "type": "object",
+   "x-semantic": "from <= to; closed"
+  }
+ },
+ "record_classes": {
+  "authored": "id, revision (1..4), predecessor (same kind, revision-1, same id), provenance attestation with x-allowed-roles",
+  "computed": "produced only by the application; identity = digest; caller copies are comparison artifacts",
+  "derived-canonical": "ct.claim.v1: no id/provenance; identity = digest; must equal a required claim"
+ },
+ "records": {
+  "ct.adoption.v1": {
+   "additionalProperties": false,
+   "properties": {
+    "decision": {
+     "enum": [
+      "adopted",
+      "rejected",
+      "deferred"
+     ]
+    },
+    "id": {
+     "$ref": "#/definitions/id"
+    },
+    "predecessor": {
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "$ref": "#/definitions/ref",
+       "x-target": [
+        "ct.adoption.v1"
+       ]
+      }
+     ]
+    },
+    "profile": {
+     "const": "bdw.checked-temperature.v1"
+    },
+    "provenance": {
+     "allOf": [
+      {
+       "$ref": "#/definitions/attestation"
+      }
+     ],
+     "x-allowed-roles": [
+      "local_adoption_decider"
+     ]
+    },
+    "rationale": {
+     "maxLength": 2048,
+     "type": "string"
+    },
+    "reassessment": {
+     "$ref": "#/definitions/ref",
+     "x-target": [
+      "ct.reassessment.v1"
+     ]
+    },
+    "revision": {
+     "maximum": 4,
+     "minimum": 1,
+     "type": "integer"
+    },
+    "schema": {
+     "const": "ct.adoption.v1"
+    }
+   },
+   "required": [
+    "schema",
+    "profile",
+    "id",
+    "revision",
+    "predecessor",
+    "provenance",
+    "reassessment",
+    "decision",
+    "rationale"
+   ],
+   "type": "object",
+   "x-class": "authored"
+  },
+  "ct.applicability.v1": {
+   "additionalProperties": false,
+   "properties": {
+    "assumed_conditions": {
+     "items": {
+      "$ref": "#/definitions/ref",
+      "x-target": [
+       "ct.claim.v1"
+      ]
+     },
+     "maxItems": 6,
+     "minItems": 0,
+     "type": "array"
+    },
+    "build": {
+     "$ref": "#/definitions/ref",
+     "x-target": [
+      "ct.build.v1"
+     ]
+    },
+    "claims": {
+     "items": {
+      "additionalProperties": false,
+      "properties": {
+       "block_reasons": {
+        "items": {
+         "enum": [
+          "declaration_missing",
+          "conflicting_declarations",
+          "declaration_false",
+          "declaration_unknown",
+          "governing_state_contradicted",
+          "governing_state_conflicting",
+          "unresolved_not_permitted"
+         ]
+        },
+        "maxItems": 7,
+        "minItems": 0,
+        "type": "array",
+        "uniqueItems": true
+       },
+       "claim": {
+        "$ref": "#/definitions/ref",
+        "x-target": [
+         "ct.claim.v1"
+        ]
+       },
+       "condition": {
+        "enum": [
+         "reference_calibration",
+         "reference_mapping",
+         "state_hold",
+         "indicator_fidelity",
+         "observation_error_bound"
+        ]
+       },
+       "declaration_state": {
+        "enum": [
+         "true",
+         "false",
+         "unknown",
+         "missing",
+         "conflicting"
+        ]
+       },
+       "declarations": {
+        "items": {
+         "$ref": "#/definitions/ref",
+         "x-target": [
+          "ct.condition-declaration.v1"
+         ]
+        },
+        "maxItems": 8,
+        "minItems": 0,
+        "type": "array"
+       },
+       "governing_state": {
+        "enum": [
+         "supported",
+         "unresolved",
+         "contradicted",
+         "conflicting"
+        ]
+       },
+       "inapplicable": {
+        "items": {
+         "additionalProperties": false,
+         "properties": {
+          "reason": {
+           "enum": [
+            "covers_disjoint",
+            "declaration_covers_partial"
+           ]
+          },
+          "record": {
+           "$ref": "#/definitions/ref",
+           "x-target": [
+            "ct.condition-declaration.v1",
+            "ct.evidence-review.v1"
+           ]
+          }
+         },
+         "required": [
+          "record",
+          "reason"
+         ],
+         "type": "object"
+        },
+        "maxItems": 64,
+        "minItems": 0,
+        "type": "array"
+       },
+       "items": {
+        "items": {
+         "additionalProperties": false,
+         "properties": {
+          "contributions": {
+           "items": {
+            "enum": [
+             "support",
+             "opposition"
+            ]
+           },
+           "maxItems": 2,
+           "minItems": 0,
+           "type": "array",
+           "uniqueItems": true
+          },
+          "exclusion_basis": {
+           "oneOf": [
+            {
+             "type": "null"
+            },
+            {
+             "enum": [
+              "validity_non_overlapping",
+              "anchor_mismatch",
+              "instrument_mismatch",
+              "reviewed_irrelevant_unanimous"
+             ]
+            }
+           ]
+          },
+          "item": {
+           "$ref": "#/definitions/ref",
+           "x-target": [
+            "ct.evidence-item.v1"
+           ]
+          },
+          "pending_reasons": {
+           "items": {
+            "enum": [
+             "unreviewed",
+             "incomplete_review",
+             "unresolved_relation",
+             "unresolved_relevance",
+             "disputed_relevance",
+             "irrelevant_with_unresolved",
+             "missing_required_review",
+             "partial_or_unknown_scope"
+            ]
+           },
+           "maxItems": 8,
+           "minItems": 0,
+           "type": "array",
+           "uniqueItems": true
+          },
+          "reviews": {
+           "items": {
+            "$ref": "#/definitions/ref",
+            "x-target": [
+             "ct.evidence-review.v1"
+            ]
+           },
+           "maxItems": 4,
+           "minItems": 0,
+           "type": "array"
+          },
+          "status": {
+           "enum": [
+            "contributing",
+            "pending",
+            "excluded_conclusive",
+            "excluded_reviewed"
+           ]
+          }
+         },
+         "required": [
+          "item",
+          "status",
+          "exclusion_basis",
+          "reviews",
+          "contributions",
+          "pending_reasons"
+         ],
+         "type": "object"
+        },
+        "maxItems": 8,
+        "minItems": 0,
+        "type": "array"
+       },
+       "phase": {
+        "enum": [
+         "selection",
+         "reassessment"
+        ]
+       },
+       "policy_permits_unresolved": {
+        "type": "boolean"
+       },
+       "procedure_edition": {
+        "enum": [
+         "ct.procedure.T1.v1",
+         "ct.procedure.T2.v1"
+        ]
+       },
+       "review_completeness": {
+        "enum": [
+         "complete",
+         "pending"
+        ]
+       },
+       "reviewed_relation": {
+        "enum": [
+         "support_only",
+         "opposition_only",
+         "support_and_opposition",
+         "none"
+        ]
+       },
+       "time_scope": {
+        "$ref": "#/definitions/window"
+       },
+       "use_effect": {
+        "enum": [
+         "permitted",
+         "conditional_unresolved",
+         "blocked"
+        ]
+       }
+      },
+      "required": [
+       "claim",
+       "condition",
+       "procedure_edition",
+       "phase",
+       "declarations",
+       "declaration_state",
+       "items",
+       "reviewed_relation",
+       "review_completeness",
+       "governing_state",
+       "policy_permits_unresolved",
+       "use_effect",
+       "block_reasons",
+       "time_scope",
+       "inapplicable"
+      ],
+      "type": "object"
+     },
+     "maxItems": 6,
+     "minItems": 1,
+     "type": "array"
+    },
+    "pending_items": {
+     "items": {
+      "$ref": "#/definitions/ref",
+      "x-target": [
+       "ct.evidence-item.v1"
+      ]
+     },
+     "maxItems": 32,
+     "minItems": 0,
+     "type": "array"
+    },
+    "phase": {
+     "enum": [
+      "selection",
+      "reassessment"
+     ]
+    },
+    "policy": {
+     "$ref": "#/definitions/ref",
+     "x-target": [
+      "ct.policy.v1"
+     ]
+    },
+    "profile": {
+     "const": "bdw.checked-temperature.v1"
+    },
+    "request": {
+     "$ref": "#/definitions/ref",
+     "x-target": [
+      "ct.request.v1"
+     ]
+    },
+    "schema": {
+     "const": "ct.applicability.v1"
+    },
+    "unbound": {
+     "additionalProperties": false,
+     "properties": {
+      "claims": {
+       "items": {
+        "$ref": "#/definitions/ref",
+        "x-target": [
+         "ct.claim.v1"
+        ]
+       },
+       "maxItems": 64,
+       "minItems": 0,
+       "type": "array"
+      },
+      "declarations": {
+       "items": {
+        "$ref": "#/definitions/ref",
+        "x-target": [
+         "ct.condition-declaration.v1"
+        ]
+       },
+       "maxItems": 64,
+       "minItems": 0,
+       "type": "array"
+      },
+      "evidence_items": {
+       "items": {
+        "$ref": "#/definitions/ref",
+        "x-target": [
+         "ct.evidence-item.v1"
+        ]
+       },
+       "maxItems": 64,
+       "minItems": 0,
+       "type": "array"
+      },
+      "reviews": {
+       "items": {
+        "$ref": "#/definitions/ref",
+        "x-target": [
+         "ct.evidence-review.v1"
+        ]
+       },
+       "maxItems": 64,
+       "minItems": 0,
+       "type": "array"
+      }
+     },
+     "required": [
+      "claims",
+      "declarations",
+      "evidence_items",
+      "reviews"
+     ],
+     "type": "object"
+    },
+    "use_disposition": {
+     "enum": [
+      "use_permitted",
+      "conditional_use_with_unresolved_conditions",
+      "blocked"
+     ]
+    }
+   },
+   "required": [
+    "schema",
+    "profile",
+    "request",
+    "policy",
+    "build",
+    "phase",
+    "claims",
+    "unbound",
+    "use_disposition",
+    "assumed_conditions",
+    "pending_items"
+   ],
+   "type": "object",
+   "x-class": "computed"
+  },
+  "ct.authority.v1": {
+   "additionalProperties": false,
+   "properties": {
+    "id": {
+     "$ref": "#/definitions/id"
+    },
+    "plan_change": {
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "additionalProperties": false,
+       "properties": {
+        "former_plan_sha256": {
+         "$ref": "#/definitions/sha256"
+        },
+        "new_plan_sha256": {
+         "$ref": "#/definitions/sha256"
+        }
+       },
+       "required": [
+        "former_plan_sha256",
+        "new_plan_sha256"
+       ],
+       "type": "object"
+      }
+     ]
+    },
+    "predecessor": {
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "$ref": "#/definitions/ref",
+       "x-target": [
+        "ct.authority.v1"
+       ]
+      }
+     ]
+    },
+    "profile": {
+     "const": "bdw.checked-temperature.v1"
+    },
+    "provenance": {
+     "allOf": [
+      {
+       "$ref": "#/definitions/attestation"
+      }
+     ],
+     "x-allowed-roles": [
+      "local_evaluation_issuer",
+      "local_execution_issuer"
+     ]
+    },
+    "purpose": {
+     "enum": [
+      "evaluation",
+      "execution"
+     ]
+    },
+    "revision": {
+     "maximum": 4,
+     "minimum": 1,
+     "type": "integer"
+    },
+    "schema": {
+     "const": "ct.authority.v1"
+    },
+    "scope": {
+     "additionalProperties": false,
+     "properties": {
+      "phase": {
+       "enum": [
+        "selection",
+        "reassessment"
+       ]
+      },
+      "procedure_editions": {
+       "items": {
+        "enum": [
+         "ct.procedure.T1.v1",
+         "ct.procedure.T2.v1"
+        ]
+       },
+       "maxItems": 2,
+       "minItems": 1,
+       "type": "array",
+       "uniqueItems": true
+      }
+     },
+     "required": [
+      "phase",
+      "procedure_editions"
+     ],
+     "type": "object"
+    },
+    "target_request_sha256": {
+     "$ref": "#/definitions/sha256"
+    },
+    "valid": {
+     "$ref": "#/definitions/window"
+    }
+   },
+   "required": [
+    "schema",
+    "profile",
+    "id",
+    "revision",
+    "predecessor",
+    "provenance",
+    "purpose",
+    "target_request_sha256",
+    "scope",
+    "plan_change",
+    "valid"
+   ],
+   "type": "object",
+   "x-class": "authored"
+  },
+  "ct.build.v1": {
+   "additionalProperties": false,
+   "properties": {
+    "checkpoint": {
+     "pattern": "^[0-9a-f]{40}$",
+     "type": "string"
+    },
+    "clean_application_backend": {
+     "const": true
+    },
+    "contract_editions": {
+     "additionalProperties": false,
+     "properties": {
+      "calculator": {
+       "const": "ct.calculator.v1"
+      },
+      "catalogue": {
+       "const": "ct.conditions.v2"
+      },
+      "policy_edition_sha256": {
+       "$ref": "#/definitions/sha256"
+      },
+      "schemas_sha256": {
+       "$ref": "#/definitions/sha256"
+      }
+     },
+     "required": [
+      "schemas_sha256",
+      "policy_edition_sha256",
+      "catalogue",
+      "calculator"
+     ],
+     "type": "object"
+    },
+    "environment_manifest": {
+     "additionalProperties": false,
+     "properties": {
+      "dependency_lock_sha256": {
+       "$ref": "#/definitions/sha256"
+      },
+      "distributions": {
+       "items": {
+        "additionalProperties": false,
+        "properties": {
+         "artifact_count": {
+          "minimum": 1,
+          "type": "integer"
+         },
+         "artifact_manifest_sha256": {
+          "$ref": "#/definitions/sha256"
+         },
+         "name": {
+          "maxLength": 128,
+          "type": "string"
+         },
+         "version": {
+          "maxLength": 64,
+          "type": "string"
+         }
+        },
+        "required": [
+         "name",
+         "version",
+         "artifact_count",
+         "artifact_manifest_sha256"
+        ],
+        "type": "object"
+       },
+       "maxItems": 64,
+       "minItems": 0,
+       "type": "array"
+      },
+      "platform": {
+       "additionalProperties": false,
+       "properties": {
+        "libc": {
+         "items": {
+          "maxLength": 64,
+          "type": "string"
+         },
+         "maxItems": 2,
+         "minItems": 2,
+         "type": "array"
+        },
+        "machine": {
+         "maxLength": 64,
+         "type": "string"
+        },
+        "system": {
+         "maxLength": 64,
+         "type": "string"
+        }
+       },
+       "required": [
+        "system",
+        "machine",
+        "libc"
+       ],
+       "type": "object"
+      },
+      "python": {
+       "additionalProperties": false,
+       "properties": {
+        "executable_bytes": {
+         "minimum": 1,
+         "type": "integer"
+        },
+        "executable_sha256": {
+         "$ref": "#/definitions/sha256"
+        },
+        "implementation": {
+         "const": "CPython"
+        },
+        "version": {
+         "pattern": "^3\\.13\\.[0-9]+$",
+         "type": "string"
+        }
+       },
+       "required": [
+        "implementation",
+        "version",
+        "executable_sha256",
+        "executable_bytes"
+       ],
+       "type": "object"
+      }
+     },
+     "required": [
+      "python",
+      "platform",
+      "distributions",
+      "dependency_lock_sha256"
+     ],
+     "type": "object"
+    },
+    "profile": {
+     "const": "bdw.checked-temperature.v1"
+    },
+    "schema": {
+     "const": "ct.build.v1"
+    },
+    "source_manifest": {
+     "items": {
+      "additionalProperties": false,
+      "properties": {
+       "bytes": {
+        "minimum": 0,
+        "type": "integer"
+       },
+       "path": {
+        "pattern": "^(applications|backend)/[A-Za-z0-9_./-]+$",
+        "type": "string"
+       },
+       "sha256": {
+        "$ref": "#/definitions/sha256"
+       }
+      },
+      "required": [
+       "path",
+       "sha256",
+       "bytes"
+      ],
+      "type": "object"
+     },
+     "maxItems": 1024,
+     "minItems": 1,
+     "type": "array"
+    }
+   },
+   "required": [
+    "schema",
+    "profile",
+    "checkpoint",
+    "clean_application_backend",
+    "source_manifest",
+    "environment_manifest",
+    "contract_editions"
+   ],
+   "type": "object",
+   "x-class": "computed"
+  },
+  "ct.bundle-manifest.v1": {
+   "additionalProperties": false,
+   "properties": {
+    "bundle_kind": {
+     "enum": [
+      "selection",
+      "reassessment"
+     ]
+    },
+    "created_at_utc": {
+     "type": "string",
+     "x-semantic": "typed metadata, not trusted chronology"
+    },
+    "files": {
+     "items": {
+      "additionalProperties": false,
+      "properties": {
+       "bytes": {
+        "minimum": 1,
+        "type": "integer"
+       },
+       "name": {
+        "enum": [
+         "invocation.json",
+         "closure.json",
+         "derivation.json",
+         "applicability.json",
+         "result.json",
+         "trace.json",
+         "build.json",
+         "policy.json"
+        ]
+       },
+       "role": {
+        "enum": [
+         "ct.invocation.v1",
+         "ct.closure.v1",
+         "ct.derivation.v1",
+         "ct.applicability.v1",
+         "ct.selection.v1",
+         "ct.reassessment.v1",
+         "ct.trace.v1",
+         "ct.build.v1",
+         "ct.policy.v1"
+        ]
+       },
+       "sha256": {
+        "$ref": "#/definitions/sha256"
+       }
+      },
+      "required": [
+       "name",
+       "role",
+       "sha256",
+       "bytes"
+      ],
+      "type": "object"
+     },
+     "maxItems": 8,
+     "minItems": 8,
+     "type": "array"
+    },
+    "filesystem": {
+     "enum": [
+      "ext4",
+      "xfs",
+      "unknown"
+     ]
+    },
+    "profile": {
+     "const": "bdw.checked-temperature.v1"
+    },
+    "schema": {
+     "const": "ct.bundle-manifest.v1"
+    }
+   },
+   "required": [
+    "schema",
+    "profile",
+    "bundle_kind",
+    "files",
+    "created_at_utc",
+    "filesystem"
+   ],
+   "type": "object",
+   "x-class": "computed"
+  },
+  "ct.claim.v1": {
+   "additionalProperties": false,
+   "properties": {
+    "binding": {
+     "oneOf": [
+      {
+       "additionalProperties": false,
+       "properties": {
+        "condition": {
+         "const": "reference_calibration"
+        },
+        "parameters": {
+         "additionalProperties": false,
+         "properties": {
+          "b_ref": {
+           "$ref": "#/definitions/interval"
+          },
+          "instrument_id": {
+           "$ref": "#/definitions/instrument_id"
+          }
+         },
+         "required": [
+          "instrument_id",
+          "b_ref"
+         ],
+         "type": "object"
+        }
+       },
+       "required": [
+        "condition",
+        "parameters"
+       ],
+       "type": "object"
+      },
+      {
+       "additionalProperties": false,
+       "properties": {
+        "condition": {
+         "const": "reference_mapping"
+        },
+        "parameters": {
+         "additionalProperties": false,
+         "properties": {
+          "instrument_id": {
+           "$ref": "#/definitions/instrument_id"
+          },
+          "structural_model_revision": {
+           "pattern": "^mrv_[0-9a-f]{64}$",
+           "type": "string"
+          },
+          "subject_entity_anchor_id": {
+           "pattern": "^ent_[0-9a-f]{32}$",
+           "type": "string"
+          },
+          "variable_anchor_id": {
+           "pattern": "^var_[0-9a-f]{32}$",
+           "type": "string"
+          }
+         },
+         "required": [
+          "instrument_id",
+          "structural_model_revision",
+          "subject_entity_anchor_id",
+          "variable_anchor_id"
+         ],
+         "type": "object"
+        }
+       },
+       "required": [
+        "condition",
+        "parameters"
+       ],
+       "type": "object"
+      },
+      {
+       "additionalProperties": false,
+       "properties": {
+        "condition": {
+         "const": "state_hold"
+        },
+        "parameters": {
+         "additionalProperties": false,
+         "properties": {
+          "b_suspect": {
+           "items": {
+            "additionalProperties": false,
+            "properties": {
+             "explanation": {
+              "$ref": "#/definitions/ref",
+              "x-target": [
+               "ct.explanation.v1"
+              ]
+             },
+             "interval": {
+              "$ref": "#/definitions/interval"
+             }
+            },
+            "required": [
+             "explanation",
+             "interval"
+            ],
+            "type": "object"
+           },
+           "maxItems": 2,
+           "minItems": 1,
+           "type": "array"
+          },
+          "baseline_as_of": {
+           "$ref": "#/definitions/datetime"
+          }
+         },
+         "required": [
+          "baseline_as_of",
+          "b_suspect"
+         ],
+         "type": "object"
+        }
+       },
+       "required": [
+        "condition",
+        "parameters"
+       ],
+       "type": "object"
+      },
+      {
+       "additionalProperties": false,
+       "properties": {
+        "condition": {
+         "const": "indicator_fidelity"
+        },
+        "parameters": {
+         "additionalProperties": false,
+         "properties": {
+          "instrument_id": {
+           "$ref": "#/definitions/instrument_id"
+          },
+          "target": {
+           "$ref": "#/definitions/rational"
+          }
+         },
+         "required": [
+          "instrument_id",
+          "target"
+         ],
+         "type": "object"
+        }
+       },
+       "required": [
+        "condition",
+        "parameters"
+       ],
+       "type": "object"
+      },
+      {
+       "additionalProperties": false,
+       "properties": {
+        "condition": {
+         "const": "observation_error_bound"
+        },
+        "parameters": {
+         "additionalProperties": false,
+         "properties": {
+          "half_width": {
+           "$ref": "#/definitions/rational"
+          },
+          "instrument_id": {
+           "$ref": "#/definitions/instrument_id"
+          },
+          "plan": {
+           "$ref": "#/definitions/ref",
+           "x-target": [
+            "ct.interpretation-plan.v1"
+           ]
+          }
+         },
+         "required": [
+          "instrument_id",
+          "plan",
+          "half_width"
+         ],
+         "type": "object"
+        }
+       },
+       "required": [
+        "condition",
+        "parameters"
+       ],
+       "type": "object"
+      }
+     ]
+    },
+    "catalogue": {
+     "const": "ct.conditions.v2"
+    },
+    "model": {
+     "$ref": "#/definitions/ref",
+     "x-target": [
+      "ct.model.v1"
+     ]
+    },
+    "phase": {
+     "enum": [
+      "selection",
+      "reassessment"
+     ]
+    },
+    "procedure_edition": {
+     "enum": [
+      "ct.procedure.T1.v1",
+      "ct.procedure.T2.v1"
+     ]
+    },
+    "profile": {
+     "const": "bdw.checked-temperature.v1"
+    },
+    "schema": {
+     "const": "ct.claim.v1"
+    },
+    "subject_entity_anchor_id": {
+     "pattern": "^ent_[0-9a-f]{32}$",
+     "type": "string"
+    },
+    "variable_anchor_id": {
+     "pattern": "^var_[0-9a-f]{32}$",
+     "type": "string"
+    }
+   },
+   "required": [
+    "schema",
+    "profile",
+    "catalogue",
+    "procedure_edition",
+    "phase",
+    "model",
+    "subject_entity_anchor_id",
+    "variable_anchor_id",
+    "binding"
+   ],
+   "type": "object",
+   "x-class": "derived-canonical",
+   "x-semantic": "claim core: no provenance and no time scope; identity = digest; valid only if canonically equal to a required claim core derived by the application from the request. The assessment time scope is computed per request (CONTRACT \u00a74.2) and carried in applicability rows."
+  },
+  "ct.closure.v1": {
+   "additionalProperties": false,
+   "properties": {
+    "members": {
+     "items": {
+      "additionalProperties": false,
+      "properties": {
+       "data": {
+        "type": "string"
+       },
+       "decoded_bytes": {
+        "maximum": 196608,
+        "minimum": 0,
+        "type": "integer"
+       },
+       "encoding": {
+        "const": "base64"
+       },
+       "kind": {
+        "enum": [
+         "ct.explanation.v1",
+         "ct.model.v1",
+         "ct.interpretation-plan.v1",
+         "ct.claim.v1",
+         "ct.condition-declaration.v1",
+         "ct.evidence-item.v1",
+         "ct.evidence-content",
+         "ct.evidence-review.v1",
+         "ct.policy.v1",
+         "ct.request.v1",
+         "ct.authority.v1",
+         "ct.adoption.v1",
+         "nm.evidence.v1",
+         "ct.derivation.v1",
+         "ct.applicability.v1",
+         "ct.selection.v1",
+         "ct.reassessment.v1",
+         "ct.retained-selection.v1",
+         "ct.build.v1",
+         "ct.invocation.v1",
+         "ct.trace.v1",
+         "ct.closure.v1",
+         "ct.bundle-manifest.v1"
+        ]
+       },
+       "sha256": {
+        "$ref": "#/definitions/sha256"
+       }
+      },
+      "required": [
+       "kind",
+       "sha256",
+       "decoded_bytes",
+       "encoding",
+       "data"
+      ],
+      "type": "object"
+     },
+     "maxItems": 400,
+     "minItems": 1,
+     "type": "array",
+     "x-semantic": "sorted by (kind, sha256); unique; SHA-256 of decoded data equals sha256; every required reference resolves transitively; no unreferenced member"
+    },
+    "profile": {
+     "const": "bdw.checked-temperature.v1"
+    },
+    "root": {
+     "$ref": "#/definitions/ref",
+     "x-target": [
+      "ct.request.v1"
+     ]
+    },
+    "schema": {
+     "const": "ct.closure.v1"
+    }
+   },
+   "required": [
+    "schema",
+    "profile",
+    "root",
+    "members"
+   ],
+   "type": "object",
+   "x-class": "computed"
+  },
+  "ct.condition-declaration.v1": {
+   "additionalProperties": false,
+   "properties": {
+    "claim": {
+     "$ref": "#/definitions/ref",
+     "x-target": [
+      "ct.claim.v1"
+     ]
+    },
+    "covers": {
+     "$ref": "#/definitions/window",
+     "x-semantic": "applies only to the part of the assessment time scope it covers: full cover applies; partial cover leaves the item pending (reviews) or the declaration not applicable; disjoint is not applicable"
+    },
+    "id": {
+     "$ref": "#/definitions/id"
+    },
+    "predecessor": {
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "$ref": "#/definitions/ref",
+       "x-target": [
+        "ct.condition-declaration.v1"
+       ]
+      }
+     ]
+    },
+    "profile": {
+     "const": "bdw.checked-temperature.v1"
+    },
+    "provenance": {
+     "allOf": [
+      {
+       "$ref": "#/definitions/attestation"
+      }
+     ],
+     "x-allowed-roles": [
+      "local_condition_declarer"
+     ]
+    },
+    "rationale": {
+     "maxLength": 2048,
+     "type": "string"
+    },
+    "revision": {
+     "maximum": 4,
+     "minimum": 1,
+     "type": "integer"
+    },
+    "schema": {
+     "const": "ct.condition-declaration.v1"
+    },
+    "state": {
+     "enum": [
+      "true",
+      "false",
+      "unknown"
+     ]
+    }
+   },
+   "required": [
+    "schema",
+    "profile",
+    "id",
+    "revision",
+    "predecessor",
+    "provenance",
+    "claim",
+    "state",
+    "rationale",
+    "covers"
+   ],
+   "type": "object",
+   "x-class": "authored"
+  },
+  "ct.derivation.v1": {
+   "additionalProperties": false,
+   "properties": {
+    "baseline": {
+     "items": {
+      "additionalProperties": false,
+      "properties": {
+       "eligibility": {
+        "enum": [
+         "baseline_eligible",
+         "baseline_ineligible",
+         "baseline_unknown"
+        ]
+       },
+       "hypothesis": {
+        "$ref": "#/definitions/ref",
+        "x-target": [
+         "ct.explanation.v1"
+        ]
+       },
+       "value_check": {
+        "additionalProperties": false,
+        "properties": {
+         "expected": {
+          "oneOf": [
+           {
+            "$ref": "#/definitions/rational"
+           },
+           {
+            "enum": [
+             "violated",
+             "satisfied"
+            ]
+           }
+          ]
+         },
+         "observed": {
+          "oneOf": [
+           {
+            "type": "null"
+           },
+           {
+            "$ref": "#/definitions/rational"
+           },
+           {
+            "enum": [
+             "violated",
+             "satisfied"
+            ]
+           }
+          ]
+         },
+         "result": {
+          "enum": [
+           "true",
+           "false",
+           "unknown"
+          ]
+         }
+        },
+        "required": [
+         "expected",
+         "observed",
+         "result"
+        ],
+        "type": "object"
+       },
+       "verdict_check": {
+        "additionalProperties": false,
+        "properties": {
+         "expected": {
+          "oneOf": [
+           {
+            "$ref": "#/definitions/rational"
+           },
+           {
+            "enum": [
+             "violated",
+             "satisfied"
+            ]
+           }
+          ]
+         },
+         "observed": {
+          "oneOf": [
+           {
+            "type": "null"
+           },
+           {
+            "$ref": "#/definitions/rational"
+           },
+           {
+            "enum": [
+             "violated",
+             "satisfied"
+            ]
+           }
+          ]
+         },
+         "result": {
+          "enum": [
+           "true",
+           "false",
+           "unknown"
+          ]
+         }
+        },
+        "required": [
+         "expected",
+         "observed",
+         "result"
+        ],
+        "type": "object"
+       }
+      },
+      "required": [
+       "hypothesis",
+       "value_check",
+       "verdict_check",
+       "eligibility"
+      ],
+      "type": "object"
+     },
+     "maxItems": 2,
+     "minItems": 1,
+     "type": "array"
+    },
+    "build": {
+     "$ref": "#/definitions/ref",
+     "x-target": [
+      "ct.build.v1"
+     ]
+    },
+    "calculator_edition": {
+     "const": "ct.calculator.v1"
+    },
+    "cells": {
+     "items": {
+      "additionalProperties": false,
+      "properties": {
+       "exclusion_basis": {
+        "oneOf": [
+         {
+          "type": "null"
+         },
+         {
+          "enum": [
+           "empty_intersection_complete_ideal_set",
+           "code_differs"
+          ]
+         }
+        ]
+       },
+       "hypothesis": {
+        "$ref": "#/definitions/ref",
+        "x-target": [
+         "ct.explanation.v1"
+        ]
+       },
+       "intersection": {
+        "oneOf": [
+         {
+          "type": "null"
+         },
+         {
+          "$ref": "#/definitions/open_closed_interval"
+         }
+        ]
+       },
+       "outcome": {
+        "enum": [
+         "low",
+         "gap",
+         "high",
+         "heater_off",
+         "heater_on"
+        ]
+       },
+       "procedure_edition": {
+        "enum": [
+         "ct.procedure.T1.v1",
+         "ct.procedure.T2.v1"
+        ]
+       },
+       "relation": {
+        "enum": [
+         "permit",
+         "exclude",
+         "unavailable",
+         "not_assessed_baseline"
+        ]
+       }
+      },
+      "required": [
+       "hypothesis",
+       "procedure_edition",
+       "outcome",
+       "relation",
+       "intersection",
+       "exclusion_basis"
+      ],
+      "type": "object"
+     },
+     "maxItems": 10,
+     "minItems": 1,
+     "type": "array"
+    },
+    "model": {
+     "$ref": "#/definitions/ref",
+     "x-target": [
+      "ct.model.v1"
+     ]
+    },
+    "predictions": {
+     "items": {
+      "additionalProperties": false,
+      "properties": {
+       "code": {
+        "oneOf": [
+         {
+          "type": "null"
+         },
+         {
+          "enum": [
+           "heater_off",
+           "heater_on"
+          ]
+         }
+        ]
+       },
+       "hypothesis": {
+        "$ref": "#/definitions/ref",
+        "x-target": [
+         "ct.explanation.v1"
+        ]
+       },
+       "interval": {
+        "oneOf": [
+         {
+          "type": "null"
+         },
+         {
+          "$ref": "#/definitions/interval"
+         }
+        ]
+       },
+       "procedure_edition": {
+        "enum": [
+         "ct.procedure.T1.v1",
+         "ct.procedure.T2.v1"
+        ]
+       },
+       "status": {
+        "enum": [
+         "derived",
+         "derivation_unavailable"
+        ]
+       },
+       "unavailable_reason": {
+        "oneOf": [
+         {
+          "type": "null"
+         },
+         {
+          "enum": [
+           "baseline_not_eligible",
+           "parameter_missing"
+          ]
+         }
+        ]
+       }
+      },
+      "required": [
+       "hypothesis",
+       "procedure_edition",
+       "status",
+       "interval",
+       "code",
+       "unavailable_reason"
+      ],
+      "type": "object"
+     },
+     "maxItems": 4,
+     "minItems": 1,
+     "type": "array"
+    },
+    "profile": {
+     "const": "bdw.checked-temperature.v1"
+    },
+    "request": {
+     "$ref": "#/definitions/ref",
+     "x-target": [
+      "ct.request.v1"
+     ]
+    },
+    "schema": {
+     "const": "ct.derivation.v1"
+    }
+   },
+   "required": [
+    "schema",
+    "profile",
+    "request",
+    "model",
+    "build",
+    "calculator_edition",
+    "baseline",
+    "predictions",
+    "cells"
+   ],
+   "type": "object",
+   "x-class": "computed"
+  },
+  "ct.evidence-item.v1": {
+   "additionalProperties": false,
+   "properties": {
+    "claims": {
+     "items": {
+      "$ref": "#/definitions/ref",
+      "x-target": [
+       "ct.claim.v1"
+      ]
+     },
+     "maxItems": 4,
+     "minItems": 1,
+     "type": "array",
+     "uniqueItems": true
+    },
+    "content": {
+     "$ref": "#/definitions/ref",
+     "x-target": [
+      "ct.evidence-content"
+     ]
+    },
+    "id": {
+     "$ref": "#/definitions/id"
+    },
+    "instrument_id": {
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "$ref": "#/definitions/instrument_id"
+      }
+     ]
+    },
+    "predecessor": {
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "$ref": "#/definitions/ref",
+       "x-target": [
+        "ct.evidence-item.v1"
+       ]
+      }
+     ]
+    },
+    "profile": {
+     "const": "bdw.checked-temperature.v1"
+    },
+    "provenance": {
+     "allOf": [
+      {
+       "$ref": "#/definitions/attestation"
+      }
+     ],
+     "x-allowed-roles": [
+      "local_evidence_reviewer",
+      "local_model_proposer"
+     ]
+    },
+    "revision": {
+     "maximum": 4,
+     "minimum": 1,
+     "type": "integer"
+    },
+    "schema": {
+     "const": "ct.evidence-item.v1"
+    },
+    "subject_entity_anchor_id": {
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "pattern": "^ent_[0-9a-f]{32}$",
+       "type": "string"
+      }
+     ]
+    },
+    "validity": {
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "$ref": "#/definitions/window"
+      }
+     ]
+    },
+    "variable_anchor_id": {
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "pattern": "^var_[0-9a-f]{32}$",
+       "type": "string"
+      }
+     ]
+    }
+   },
+   "required": [
+    "schema",
+    "profile",
+    "id",
+    "revision",
+    "predecessor",
+    "provenance",
+    "claims",
+    "content",
+    "validity",
+    "subject_entity_anchor_id",
+    "variable_anchor_id",
+    "instrument_id"
+   ],
+   "type": "object",
+   "x-class": "authored"
+  },
+  "ct.evidence-review.v1": {
+   "additionalProperties": false,
+   "properties": {
+    "claim": {
+     "$ref": "#/definitions/ref",
+     "x-target": [
+      "ct.claim.v1"
+     ]
+    },
+    "completion": {
+     "enum": [
+      "completed",
+      "incomplete"
+     ]
+    },
+    "covers": {
+     "$ref": "#/definitions/window",
+     "x-semantic": "applies only to the part of the assessment time scope it covers: full cover applies; partial cover leaves the item pending (reviews) or the declaration not applicable; disjoint is not applicable"
+    },
+    "id": {
+     "$ref": "#/definitions/id"
+    },
+    "item": {
+     "$ref": "#/definitions/ref",
+     "x-target": [
+      "ct.evidence-item.v1"
+     ]
+    },
+    "predecessor": {
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "$ref": "#/definitions/ref",
+       "x-target": [
+        "ct.evidence-review.v1"
+       ]
+      }
+     ]
+    },
+    "profile": {
+     "const": "bdw.checked-temperature.v1"
+    },
+    "provenance": {
+     "allOf": [
+      {
+       "$ref": "#/definitions/attestation"
+      }
+     ],
+     "x-allowed-roles": [
+      "local_evidence_reviewer"
+     ]
+    },
+    "rationale": {
+     "maxLength": 2048,
+     "type": "string"
+    },
+    "relation": {
+     "enum": [
+      "support",
+      "opposition",
+      "unresolved",
+      "not_applicable"
+     ]
+    },
+    "relevance": {
+     "enum": [
+      "relevant",
+      "irrelevant",
+      "unresolved"
+     ]
+    },
+    "revision": {
+     "maximum": 4,
+     "minimum": 1,
+     "type": "integer"
+    },
+    "schema": {
+     "const": "ct.evidence-review.v1"
+    }
+   },
+   "required": [
+    "schema",
+    "profile",
+    "id",
+    "revision",
+    "predecessor",
+    "provenance",
+    "item",
+    "claim",
+    "completion",
+    "relevance",
+    "relation",
+    "rationale",
+    "covers"
+   ],
+   "type": "object",
+   "x-class": "authored"
+  },
+  "ct.explanation.v1": {
+   "additionalProperties": false,
+   "properties": {
+    "account_kind": {
+     "enum": [
+      "high_underlying_faithful_baseline",
+      "low_underlying_positive_offset"
+     ]
+    },
+    "context": {
+     "$ref": "#/definitions/context"
+    },
+    "id": {
+     "$ref": "#/definitions/id"
+    },
+    "predecessor": {
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "$ref": "#/definitions/ref",
+       "x-target": [
+        "ct.explanation.v1"
+       ]
+      }
+     ]
+    },
+    "profile": {
+     "const": "bdw.checked-temperature.v1"
+    },
+    "provenance": {
+     "allOf": [
+      {
+       "$ref": "#/definitions/attestation"
+      }
+     ],
+     "x-allowed-roles": [
+      "local_model_proposer"
+     ]
+    },
+    "rationale": {
+     "maxLength": 2048,
+     "type": "string"
+    },
+    "revision": {
+     "maximum": 4,
+     "minimum": 1,
+     "type": "integer"
+    },
+    "schema": {
+     "const": "ct.explanation.v1"
+    },
+    "statement": {
+     "maxLength": 2048,
+     "minLength": 1,
+     "type": "string"
+    }
+   },
+   "required": [
+    "schema",
+    "profile",
+    "id",
+    "revision",
+    "predecessor",
+    "provenance",
+    "account_kind",
+    "statement",
+    "rationale",
+    "context"
+   ],
+   "type": "object",
+   "x-class": "authored"
+  },
+  "ct.interpretation-plan.v1": {
+   "additionalProperties": false,
+   "properties": {
+    "edition": {
+     "const": "ct.interpretation.hard-interval.v1"
+    },
+    "half_width": {
+     "$ref": "#/definitions/rational"
+    },
+    "id": {
+     "$ref": "#/definitions/id"
+    },
+    "instrument_id": {
+     "$ref": "#/definitions/instrument_id"
+    },
+    "predecessor": {
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "$ref": "#/definitions/ref",
+       "x-target": [
+        "ct.interpretation-plan.v1"
+       ]
+      }
+     ]
+    },
+    "profile": {
+     "const": "bdw.checked-temperature.v1"
+    },
+    "provenance": {
+     "allOf": [
+      {
+       "$ref": "#/definitions/attestation"
+      }
+     ],
+     "x-allowed-roles": [
+      "local_model_proposer"
+     ]
+    },
+    "revision": {
+     "maximum": 4,
+     "minimum": 1,
+     "type": "integer"
+    },
+    "schema": {
+     "const": "ct.interpretation-plan.v1"
+    },
+    "unit": {
+     "const": "degree_celsius"
+    }
+   },
+   "required": [
+    "schema",
+    "profile",
+    "id",
+    "revision",
+    "predecessor",
+    "provenance",
+    "edition",
+    "instrument_id",
+    "half_width",
+    "unit"
+   ],
+   "type": "object",
+   "x-class": "authored"
+  },
+  "ct.invocation.v1": {
+   "additionalProperties": false,
+   "properties": {
+    "authority": {
+     "$ref": "#/definitions/ref",
+     "x-target": [
+      "ct.authority.v1"
+     ]
+    },
+    "build": {
+     "$ref": "#/definitions/ref",
+     "x-target": [
+      "ct.build.v1"
+     ]
+    },
+    "expected_authority_pin": {
+     "$ref": "#/definitions/sha256"
+    },
+    "expected_request_pin": {
+     "$ref": "#/definitions/sha256"
+    },
+    "operation": {
+     "enum": [
+      "checked-selection-evaluate",
+      "checked-selection-replay",
+      "checked-reassessment-evaluate",
+      "checked-reassessment-replay"
+     ]
+    },
+    "profile": {
+     "const": "bdw.checked-temperature.v1"
+    },
+    "replay_of": {
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "additionalProperties": false,
+       "properties": {
+        "manifest_sha256": {
+         "$ref": "#/definitions/sha256"
+        }
+       },
+       "required": [
+        "manifest_sha256"
+       ],
+       "type": "object"
+      }
+     ]
+    },
+    "request": {
+     "$ref": "#/definitions/ref",
+     "x-target": [
+      "ct.request.v1"
+     ]
+    },
+    "schema": {
+     "const": "ct.invocation.v1"
+    }
+   },
+   "required": [
+    "schema",
+    "profile",
+    "operation",
+    "request",
+    "authority",
+    "expected_request_pin",
+    "expected_authority_pin",
+    "build",
+    "replay_of"
+   ],
+   "type": "object",
+   "x-class": "computed"
+  },
+  "ct.model.v1": {
+   "additionalProperties": false,
+   "properties": {
+    "b_ref": {
+     "$ref": "#/definitions/interval"
+    },
+    "baseline": {
+     "$ref": "#/definitions/rational"
+    },
+    "baseline_evidence": {
+     "$ref": "#/definitions/ref",
+     "x-target": [
+      "nm.evidence.v1"
+     ]
+    },
+    "baseline_verdict": {
+     "enum": [
+      "violated",
+      "satisfied"
+     ]
+    },
+    "calculator_edition": {
+     "const": "ct.calculator.v1"
+    },
+    "context": {
+     "$ref": "#/definitions/context"
+    },
+    "hypotheses": {
+     "items": {
+      "additionalProperties": false,
+      "properties": {
+       "b_suspect": {
+        "$ref": "#/definitions/interval"
+       },
+       "explanation": {
+        "$ref": "#/definitions/ref",
+        "x-target": [
+         "ct.explanation.v1"
+        ]
+       }
+      },
+      "required": [
+       "explanation",
+       "b_suspect"
+      ],
+      "type": "object"
+     },
+     "maxItems": 2,
+     "minItems": 1,
+     "type": "array"
+    },
+    "id": {
+     "$ref": "#/definitions/id"
+    },
+    "predecessor": {
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "$ref": "#/definitions/ref",
+       "x-target": [
+        "ct.model.v1"
+       ]
+      }
+     ]
+    },
+    "procedures": {
+     "items": {
+      "oneOf": [
+       {
+        "additionalProperties": false,
+        "properties": {
+         "edition": {
+          "const": "ct.procedure.T1.v1"
+         },
+         "interpretation_plan": {
+          "oneOf": [
+           {
+            "type": "null"
+           },
+           {
+            "$ref": "#/definitions/ref",
+            "x-target": [
+             "ct.interpretation-plan.v1"
+            ]
+           }
+          ]
+         }
+        },
+        "required": [
+         "edition",
+         "interpretation_plan"
+        ],
+        "type": "object"
+       },
+       {
+        "additionalProperties": false,
+        "properties": {
+         "edition": {
+          "const": "ct.procedure.T2.v1"
+         },
+         "indicator_instrument_id": {
+          "$ref": "#/definitions/instrument_id"
+         },
+         "target": {
+          "$ref": "#/definitions/rational"
+         }
+        },
+        "required": [
+         "edition",
+         "target",
+         "indicator_instrument_id"
+        ],
+        "type": "object"
+       }
+      ]
+     },
+     "maxItems": 2,
+     "minItems": 1,
+     "type": "array"
+    },
+    "profile": {
+     "const": "bdw.checked-temperature.v1"
+    },
+    "provenance": {
+     "allOf": [
+      {
+       "$ref": "#/definitions/attestation"
+      }
+     ],
+     "x-allowed-roles": [
+      "local_model_proposer"
+     ]
+    },
+    "reference_instrument_id": {
+     "$ref": "#/definitions/instrument_id"
+    },
+    "reference_mapping_provenance": {
+     "maxLength": 1024,
+     "minLength": 1,
+     "type": "string"
+    },
+    "revision": {
+     "maximum": 4,
+     "minimum": 1,
+     "type": "integer"
+    },
+    "schema": {
+     "const": "ct.model.v1"
+    },
+    "template_edition": {
+     "const": "ct.template.two-account-temperature.v1"
+    }
+   },
+   "required": [
+    "schema",
+    "profile",
+    "id",
+    "revision",
+    "predecessor",
+    "provenance",
+    "template_edition",
+    "calculator_edition",
+    "baseline",
+    "baseline_verdict",
+    "baseline_evidence",
+    "hypotheses",
+    "b_ref",
+    "reference_instrument_id",
+    "reference_mapping_provenance",
+    "procedures",
+    "context"
+   ],
+   "type": "object",
+   "x-class": "authored"
+  },
+  "ct.policy.v1": {
+   "additionalProperties": false,
+   "properties": {
+    "catalogue": {
+     "const": "ct.conditions.v2"
+    },
+    "edition": {
+     "const": "ct.policy-edition.v2"
+    },
+    "id": {
+     "$ref": "#/definitions/id"
+    },
+    "limits": {
+     "$ref": "#/definitions/limits"
+    },
+    "permitted_builds": {
+     "items": {
+      "$ref": "#/definitions/sha256"
+     },
+     "maxItems": 8,
+     "minItems": 1,
+     "type": "array",
+     "uniqueItems": true
+    },
+    "predecessor": {
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "$ref": "#/definitions/ref",
+       "x-target": [
+        "ct.policy.v1"
+       ]
+      }
+     ]
+    },
+    "profile": {
+     "const": "bdw.checked-temperature.v1"
+    },
+    "provenance": {
+     "allOf": [
+      {
+       "$ref": "#/definitions/attestation"
+      }
+     ],
+     "x-allowed-roles": [
+      "local_policy_owner"
+     ]
+    },
+    "required_reviews_per_item": {
+     "maximum": 4,
+     "minimum": 1,
+     "type": "integer"
+    },
+    "revision": {
+     "maximum": 4,
+     "minimum": 1,
+     "type": "integer"
+    },
+    "schema": {
+     "const": "ct.policy.v1"
+    },
+    "unresolved_allowlist": {
+     "items": {
+      "additionalProperties": false,
+      "properties": {
+       "condition": {
+        "enum": [
+         "reference_calibration",
+         "reference_mapping",
+         "state_hold",
+         "indicator_fidelity",
+         "observation_error_bound"
+        ]
+       },
+       "phase": {
+        "enum": [
+         "selection",
+         "reassessment"
+        ]
+       }
+      },
+      "required": [
+       "condition",
+       "phase"
+      ],
+      "type": "object"
+     },
+     "maxItems": 10,
+     "minItems": 0,
+     "type": "array",
+     "uniqueItems": true
+    }
+   },
+   "required": [
+    "schema",
+    "profile",
+    "id",
+    "revision",
+    "predecessor",
+    "provenance",
+    "edition",
+    "catalogue",
+    "unresolved_allowlist",
+    "permitted_builds",
+    "limits",
+    "required_reviews_per_item"
+   ],
+   "type": "object",
+   "x-class": "authored"
+  },
+  "ct.reassessment.v1": {
+   "additionalProperties": false,
+   "properties": {
+    "adoption": {
+     "const": "derived_not_adopted"
+    },
+    "applicability": {
+     "$ref": "#/definitions/ref",
+     "x-target": [
+      "ct.applicability.v1"
+     ]
+    },
+    "branches": {
+     "items": {
+      "additionalProperties": false,
+      "properties": {
+       "intersection": {
+        "oneOf": [
+         {
+          "type": "null"
+         },
+         {
+          "$ref": "#/definitions/open_closed_interval"
+         }
+        ]
+       },
+       "outcome": {
+        "enum": [
+         "low",
+         "gap",
+         "high",
+         "heater_off",
+         "heater_on"
+        ]
+       }
+      },
+      "required": [
+       "outcome",
+       "intersection"
+      ],
+      "type": "object"
+     },
+     "maxItems": 3,
+     "minItems": 0,
+     "type": "array"
+    },
+    "build": {
+     "$ref": "#/definitions/ref",
+     "x-target": [
+      "ct.build.v1"
+     ]
+    },
+    "contained": {
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "boolean"
+      }
+     ]
+    },
+    "derivation": {
+     "$ref": "#/definitions/ref",
+     "x-target": [
+      "ct.derivation.v1"
+     ]
+    },
+    "disposition": {
+     "enum": [
+      "one_compatible",
+      "multiple_compatible",
+      "model_prediction_mismatch",
+      "incomplete_assessment",
+      "applicability_blocked"
+     ]
+    },
+    "executed_plan": {
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "$ref": "#/definitions/ref",
+       "x-target": [
+        "ct.interpretation-plan.v1"
+       ]
+      }
+     ]
+    },
+    "former_plan": {
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "$ref": "#/definitions/ref",
+       "x-target": [
+        "ct.interpretation-plan.v1"
+       ]
+      }
+     ]
+    },
+    "hypotheses": {
+     "items": {
+      "additionalProperties": false,
+      "properties": {
+       "baseline": {
+        "enum": [
+         "baseline_eligible",
+         "baseline_ineligible",
+         "baseline_unknown"
+        ]
+       },
+       "cells": {
+        "items": {
+         "additionalProperties": false,
+         "properties": {
+          "outcome": {
+           "enum": [
+            "low",
+            "gap",
+            "high",
+            "heater_off",
+            "heater_on"
+           ]
+          },
+          "relation": {
+           "enum": [
+            "permit",
+            "exclude",
+            "unavailable"
+           ]
+          }
+         },
+         "required": [
+          "outcome",
+          "relation"
+         ],
+         "type": "object"
+        },
+        "maxItems": 3,
+        "minItems": 0,
+        "type": "array"
+       },
+       "hypothesis": {
+        "$ref": "#/definitions/ref",
+        "x-target": [
+         "ct.explanation.v1"
+        ]
+       },
+       "reasons": {
+        "items": {
+         "enum": [
+          "mixed_permit_exclude",
+          "cell_unavailable",
+          "applicability_blocked",
+          "baseline_unknown"
+         ]
+        },
+        "maxItems": 4,
+        "minItems": 0,
+        "type": "array",
+        "uniqueItems": true
+       },
+       "status": {
+        "enum": [
+         "compatible_under_declared_model",
+         "conditionally_incompatible",
+         "unresolved",
+         "baseline_ineligible",
+         "not_assessed"
+        ]
+       }
+      },
+      "required": [
+       "hypothesis",
+       "baseline",
+       "status",
+       "cells",
+       "reasons"
+      ],
+      "type": "object"
+     },
+     "maxItems": 2,
+     "minItems": 1,
+     "type": "array"
+    },
+    "interval": {
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "$ref": "#/definitions/interval"
+      }
+     ]
+    },
+    "observation": {
+     "additionalProperties": false,
+     "properties": {
+      "code": {
+       "oneOf": [
+        {
+         "type": "null"
+        },
+        {
+         "enum": [
+          "heater_off",
+          "heater_on"
+         ]
+        }
+       ]
+      },
+      "kind": {
+       "enum": [
+        "scalar",
+        "code"
+       ]
+      },
+      "procedure_edition": {
+       "enum": [
+        "ct.procedure.T1.v1",
+        "ct.procedure.T2.v1"
+       ]
+      },
+      "public_evidence": {
+       "$ref": "#/definitions/ref",
+       "x-target": [
+        "nm.evidence.v1"
+       ]
+      },
+      "scalar": {
+       "oneOf": [
+        {
+         "type": "null"
+        },
+        {
+         "$ref": "#/definitions/decimal"
+        }
+       ]
+      },
+      "unit": {
+       "oneOf": [
+        {
+         "type": "null"
+        },
+        {
+         "const": "degree_celsius"
+        }
+       ]
+      }
+     },
+     "required": [
+      "procedure_edition",
+      "kind",
+      "scalar",
+      "code",
+      "unit",
+      "public_evidence"
+     ],
+     "type": "object"
+    },
+    "original_plan_executed": {
+     "type": "boolean"
+    },
+    "plan_changed": {
+     "type": "boolean"
+    },
+    "presentation": {
+     "const": "Supplied hypotheses are assessed for compatibility under this model, these conditions and this observation interpretation; actual cause is not established."
+    },
+    "prior_selection": {
+     "$ref": "#/definitions/ref",
+     "x-target": [
+      "ct.selection.v1"
+     ]
+    },
+    "profile": {
+     "const": "bdw.checked-temperature.v1"
+    },
+    "ranking": {
+     "const": "not_reassessed"
+    },
+    "request": {
+     "$ref": "#/definitions/ref",
+     "x-target": [
+      "ct.request.v1"
+     ]
+    },
+    "schema": {
+     "const": "ct.reassessment.v1"
+    },
+    "selection_basis": {
+     "enum": [
+      "inherited",
+      "historical_reference_with_plan_change"
+     ]
+    }
+   },
+   "required": [
+    "schema",
+    "profile",
+    "request",
+    "selection_basis",
+    "prior_selection",
+    "former_plan",
+    "executed_plan",
+    "original_plan_executed",
+    "plan_changed",
+    "derivation",
+    "applicability",
+    "build",
+    "observation",
+    "interval",
+    "contained",
+    "branches",
+    "hypotheses",
+    "disposition",
+    "ranking",
+    "adoption",
+    "presentation"
+   ],
+   "type": "object",
+   "x-class": "computed"
+  },
+  "ct.request.v1": {
+   "oneOf": [
+    {
+     "additionalProperties": false,
+     "properties": {
+      "as_of": {
+       "$ref": "#/definitions/datetime"
+      },
+      "claims": {
+       "items": {
+        "$ref": "#/definitions/ref",
+        "x-target": [
+         "ct.claim.v1"
+        ]
+       },
+       "maxItems": 24,
+       "minItems": 0,
+       "type": "array",
+       "uniqueItems": true
+      },
+      "declarations": {
+       "items": {
+        "$ref": "#/definitions/ref",
+        "x-target": [
+         "ct.condition-declaration.v1"
+        ]
+       },
+       "maxItems": 32,
+       "minItems": 0,
+       "type": "array",
+       "uniqueItems": true
+      },
+      "evidence_items": {
+       "items": {
+        "$ref": "#/definitions/ref",
+        "x-target": [
+         "ct.evidence-item.v1"
+        ]
+       },
+       "maxItems": 32,
+       "minItems": 0,
+       "type": "array",
+       "uniqueItems": true
+      },
+      "id": {
+       "$ref": "#/definitions/id"
+      },
+      "model": {
+       "$ref": "#/definitions/ref",
+       "x-target": [
+        "ct.model.v1"
+       ]
+      },
+      "policy": {
+       "$ref": "#/definitions/ref",
+       "x-target": [
+        "ct.policy.v1"
+       ]
+      },
+      "predecessor": {
+       "oneOf": [
+        {
+         "type": "null"
+        },
+        {
+         "$ref": "#/definitions/ref",
+         "x-target": [
+          "ct.request.v1"
+         ]
+        }
+       ]
+      },
+      "profile": {
+       "const": "bdw.checked-temperature.v1"
+      },
+      "provenance": {
+       "allOf": [
+        {
+         "$ref": "#/definitions/attestation"
+        }
+       ],
+       "x-allowed-roles": [
+        "local_model_proposer"
+       ]
+      },
+      "purpose": {
+       "const": "selection"
+      },
+      "reviews": {
+       "items": {
+        "$ref": "#/definitions/ref",
+        "x-target": [
+         "ct.evidence-review.v1"
+        ]
+       },
+       "maxItems": 64,
+       "minItems": 0,
+       "type": "array",
+       "uniqueItems": true
+      },
+      "revision": {
+       "maximum": 4,
+       "minimum": 1,
+       "type": "integer"
+      },
+      "schema": {
+       "const": "ct.request.v1"
+      }
+     },
+     "required": [
+      "schema",
+      "profile",
+      "id",
+      "revision",
+      "predecessor",
+      "provenance",
+      "model",
+      "claims",
+      "declarations",
+      "evidence_items",
+      "reviews",
+      "policy",
+      "purpose",
+      "as_of"
+     ],
+     "type": "object"
+    },
+    {
+     "additionalProperties": false,
+     "properties": {
+      "claims": {
+       "items": {
+        "$ref": "#/definitions/ref",
+        "x-target": [
+         "ct.claim.v1"
+        ]
+       },
+       "maxItems": 24,
+       "minItems": 0,
+       "type": "array",
+       "uniqueItems": true
+      },
+      "declarations": {
+       "items": {
+        "$ref": "#/definitions/ref",
+        "x-target": [
+         "ct.condition-declaration.v1"
+        ]
+       },
+       "maxItems": 32,
+       "minItems": 0,
+       "type": "array",
+       "uniqueItems": true
+      },
+      "evidence_items": {
+       "items": {
+        "$ref": "#/definitions/ref",
+        "x-target": [
+         "ct.evidence-item.v1"
+        ]
+       },
+       "maxItems": 32,
+       "minItems": 0,
+       "type": "array",
+       "uniqueItems": true
+      },
+      "id": {
+       "$ref": "#/definitions/id"
+      },
+      "model": {
+       "$ref": "#/definitions/ref",
+       "x-target": [
+        "ct.model.v1"
+       ]
+      },
+      "plan_change": {
+       "oneOf": [
+        {
+         "type": "null"
+        },
+        {
+         "additionalProperties": false,
+         "properties": {
+          "former_plan": {
+           "$ref": "#/definitions/ref",
+           "x-target": [
+            "ct.interpretation-plan.v1"
+           ]
+          },
+          "new_plan": {
+           "$ref": "#/definitions/ref",
+           "x-target": [
+            "ct.interpretation-plan.v1"
+           ]
+          },
+          "reason": {
+           "maxLength": 1024,
+           "minLength": 1,
+           "type": "string"
+          }
+         },
+         "required": [
+          "former_plan",
+          "new_plan",
+          "reason"
+         ],
+         "type": "object"
+        }
+       ]
+      },
+      "policy": {
+       "$ref": "#/definitions/ref",
+       "x-target": [
+        "ct.policy.v1"
+       ]
+      },
+      "predecessor": {
+       "oneOf": [
+        {
+         "type": "null"
+        },
+        {
+         "$ref": "#/definitions/ref",
+         "x-target": [
+          "ct.request.v1"
+         ]
+        }
+       ]
+      },
+      "prior_selection": {
+       "additionalProperties": false,
+       "properties": {
+        "manifest_sha256": {
+         "$ref": "#/definitions/sha256"
+        },
+        "selection": {
+         "$ref": "#/definitions/ref",
+         "x-target": [
+          "ct.selection.v1"
+         ]
+        }
+       },
+       "required": [
+        "manifest_sha256",
+        "selection"
+       ],
+       "type": "object"
+      },
+      "profile": {
+       "const": "bdw.checked-temperature.v1"
+      },
+      "provenance": {
+       "allOf": [
+        {
+         "$ref": "#/definitions/attestation"
+        }
+       ],
+       "x-allowed-roles": [
+        "local_model_proposer"
+       ]
+      },
+      "purpose": {
+       "const": "reassessment"
+      },
+      "result": {
+       "additionalProperties": false,
+       "properties": {
+        "acquisition": {
+         "additionalProperties": false,
+         "properties": {
+          "ended": {
+           "$ref": "#/definitions/datetime"
+          },
+          "instrument_id": {
+           "$ref": "#/definitions/instrument_id"
+          },
+          "public_evidence": {
+           "$ref": "#/definitions/ref",
+           "x-target": [
+            "nm.evidence.v1"
+           ]
+          },
+          "started": {
+           "$ref": "#/definitions/datetime"
+          }
+         },
+         "required": [
+          "started",
+          "ended",
+          "public_evidence",
+          "instrument_id"
+         ],
+         "type": "object"
+        },
+        "execution_authority": {
+         "$ref": "#/definitions/ref",
+         "x-target": [
+          "ct.authority.v1"
+         ]
+        },
+        "interpretation_plan": {
+         "oneOf": [
+          {
+           "type": "null"
+          },
+          {
+           "$ref": "#/definitions/ref",
+           "x-target": [
+            "ct.interpretation-plan.v1"
+           ]
+          }
+         ]
+        },
+        "observation": {
+         "oneOf": [
+          {
+           "additionalProperties": false,
+           "properties": {
+            "kind": {
+             "const": "scalar"
+            },
+            "scalar": {
+             "$ref": "#/definitions/decimal"
+            },
+            "unit": {
+             "const": "degree_celsius"
+            }
+           },
+           "required": [
+            "kind",
+            "scalar",
+            "unit"
+           ],
+           "type": "object"
+          },
+          {
+           "additionalProperties": false,
+           "properties": {
+            "code": {
+             "enum": [
+              "heater_off",
+              "heater_on"
+             ]
+            },
+            "kind": {
+             "const": "code"
+            }
+           },
+           "required": [
+            "kind",
+            "code"
+           ],
+           "type": "object"
+          }
+         ]
+        },
+        "procedure_edition": {
+         "enum": [
+          "ct.procedure.T1.v1",
+          "ct.procedure.T2.v1"
+         ]
+        }
+       },
+       "required": [
+        "procedure_edition",
+        "observation",
+        "acquisition",
+        "interpretation_plan",
+        "execution_authority"
+       ],
+       "type": "object"
+      },
+      "reviews": {
+       "items": {
+        "$ref": "#/definitions/ref",
+        "x-target": [
+         "ct.evidence-review.v1"
+        ]
+       },
+       "maxItems": 64,
+       "minItems": 0,
+       "type": "array",
+       "uniqueItems": true
+      },
+      "revision": {
+       "maximum": 4,
+       "minimum": 1,
+       "type": "integer"
+      },
+      "schema": {
+       "const": "ct.request.v1"
+      },
+      "selection_basis": {
+       "enum": [
+        "inherited",
+        "historical_reference_with_plan_change"
+       ]
+      }
+     },
+     "required": [
+      "schema",
+      "profile",
+      "id",
+      "revision",
+      "predecessor",
+      "provenance",
+      "model",
+      "claims",
+      "declarations",
+      "evidence_items",
+      "reviews",
+      "policy",
+      "purpose",
+      "selection_basis",
+      "prior_selection",
+      "plan_change",
+      "result"
+     ],
+     "type": "object"
+    }
+   ],
+   "x-class": "authored"
+  },
+  "ct.retained-selection.v1": {
+   "additionalProperties": false,
+   "properties": {
+    "applicability": {
+     "$ref": "#/definitions/ref",
+     "x-target": [
+      "ct.applicability.v1"
+     ]
+    },
+    "build": {
+     "$ref": "#/definitions/ref",
+     "x-target": [
+      "ct.build.v1"
+     ]
+    },
+    "derivation": {
+     "$ref": "#/definitions/ref",
+     "x-target": [
+      "ct.derivation.v1"
+     ]
+    },
+    "files": {
+     "items": {
+      "additionalProperties": false,
+      "properties": {
+       "bytes": {
+        "minimum": 1,
+        "type": "integer"
+       },
+       "name": {
+        "enum": [
+         "invocation.json",
+         "closure.json",
+         "derivation.json",
+         "applicability.json",
+         "result.json",
+         "trace.json",
+         "build.json",
+         "policy.json",
+         "manifest.json"
+        ]
+       },
+       "sha256": {
+        "$ref": "#/definitions/sha256"
+       }
+      },
+      "required": [
+       "name",
+       "sha256",
+       "bytes"
+      ],
+      "type": "object"
+     },
+     "maxItems": 9,
+     "minItems": 9,
+     "type": "array"
+    },
+    "policy": {
+     "$ref": "#/definitions/ref",
+     "x-target": [
+      "ct.policy.v1"
+     ]
+    },
+    "prior_manifest_sha256": {
+     "$ref": "#/definitions/sha256"
+    },
+    "profile": {
+     "const": "bdw.checked-temperature.v1"
+    },
+    "request": {
+     "$ref": "#/definitions/ref",
+     "x-target": [
+      "ct.request.v1"
+     ]
+    },
+    "schema": {
+     "const": "ct.retained-selection.v1"
+    },
+    "selection": {
+     "$ref": "#/definitions/ref",
+     "x-target": [
+      "ct.selection.v1"
+     ]
+    }
+   },
+   "required": [
+    "schema",
+    "profile",
+    "prior_manifest_sha256",
+    "files",
+    "selection",
+    "derivation",
+    "applicability",
+    "build",
+    "policy",
+    "request"
+   ],
+   "type": "object",
+   "x-class": "computed"
+  },
+  "ct.selection.v1": {
+   "additionalProperties": false,
+   "properties": {
+    "applicability": {
+     "$ref": "#/definitions/ref",
+     "x-target": [
+      "ct.applicability.v1"
+     ]
+    },
+    "best": {
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "items": {
+        "enum": [
+         "ct.procedure.T1.v1",
+         "ct.procedure.T2.v1"
+        ]
+       },
+       "maxItems": 2,
+       "minItems": 1,
+       "type": "array",
+       "uniqueItems": true
+      }
+     ]
+    },
+    "build": {
+     "$ref": "#/definitions/ref",
+     "x-target": [
+      "ct.build.v1"
+     ]
+    },
+    "derivation": {
+     "$ref": "#/definitions/ref",
+     "x-target": [
+      "ct.derivation.v1"
+     ]
+    },
+    "disposition": {
+     "enum": [
+      "ranked",
+      "withheld"
+     ]
+    },
+    "observation_uncertainty_not_in_score": {
+     "items": {
+      "additionalProperties": false,
+      "properties": {
+       "half_width": {
+        "oneOf": [
+         {
+          "type": "null"
+         },
+         {
+          "$ref": "#/definitions/rational"
+         }
+        ]
+       },
+       "plan": {
+        "oneOf": [
+         {
+          "type": "null"
+         },
+         {
+          "$ref": "#/definitions/ref",
+          "x-target": [
+           "ct.interpretation-plan.v1"
+          ]
+         }
+        ]
+       },
+       "plan_claim": {
+        "oneOf": [
+         {
+          "type": "null"
+         },
+         {
+          "$ref": "#/definitions/ref",
+          "x-target": [
+           "ct.claim.v1"
+          ]
+         }
+        ]
+       },
+       "plan_state": {
+        "enum": [
+         "captured",
+         "missing"
+        ]
+       },
+       "procedure_edition": {
+        "const": "ct.procedure.T1.v1"
+       },
+       "unit": {
+        "const": "degree_celsius"
+       }
+      },
+      "required": [
+       "procedure_edition",
+       "plan",
+       "half_width",
+       "unit",
+       "plan_claim",
+       "plan_state"
+      ],
+      "type": "object"
+     },
+     "maxItems": 1,
+     "minItems": 0,
+     "type": "array"
+    },
+    "post_measurement_elimination_guaranteed": {
+     "const": false
+    },
+    "presentation": {
+     "const": "Preferred for worst-case separation of ideal modelled decoder branches among these supplied hypotheses. Measurement uncertainty can leave multiple hypotheses unresolved; this score does not guarantee elimination, a settled reassessment or the actual cause."
+    },
+    "profile": {
+     "const": "bdw.checked-temperature.v1"
+    },
+    "request": {
+     "$ref": "#/definitions/ref",
+     "x-target": [
+      "ct.request.v1"
+     ]
+    },
+    "schema": {
+     "const": "ct.selection.v1"
+    },
+    "score_domain": {
+     "const": "ideal_measurand_decoder_branches"
+    },
+    "scores": {
+     "items": {
+      "additionalProperties": false,
+      "properties": {
+       "branches": {
+        "items": {
+         "additionalProperties": false,
+         "properties": {
+          "outcome": {
+           "enum": [
+            "low",
+            "gap",
+            "high",
+            "heater_off",
+            "heater_on"
+           ]
+          },
+          "survivors": {
+           "items": {
+            "$ref": "#/definitions/ref",
+            "x-target": [
+             "ct.explanation.v1"
+            ]
+           },
+           "maxItems": 2,
+           "minItems": 0,
+           "type": "array",
+           "uniqueItems": true
+          }
+         },
+         "required": [
+          "outcome",
+          "survivors"
+         ],
+         "type": "object"
+        },
+        "maxItems": 3,
+        "minItems": 2,
+        "type": "array"
+       },
+       "procedure_edition": {
+        "enum": [
+         "ct.procedure.T1.v1",
+         "ct.procedure.T2.v1"
+        ]
+       },
+       "reduction": {
+        "maximum": 2,
+        "minimum": 0,
+        "type": "integer"
+       },
+       "worst_survivors": {
+        "maximum": 2,
+        "minimum": 0,
+        "type": "integer"
+       }
+      },
+      "required": [
+       "procedure_edition",
+       "worst_survivors",
+       "reduction",
+       "branches"
+      ],
+      "type": "object"
+     },
+     "maxItems": 2,
+     "minItems": 0,
+     "type": "array"
+    },
+    "use_disposition": {
+     "enum": [
+      "use_permitted",
+      "conditional_use_with_unresolved_conditions",
+      "blocked"
+     ]
+    },
+    "withheld_reasons": {
+     "items": {
+      "enum": [
+       "observation_interpretation_plan_missing",
+       "baseline_ineligible",
+       "baseline_unknown",
+       "derivation_unavailable",
+       "applicability_blocked"
+      ]
+     },
+     "maxItems": 5,
+     "minItems": 0,
+     "type": "array",
+     "uniqueItems": true
+    }
+   },
+   "required": [
+    "schema",
+    "profile",
+    "request",
+    "derivation",
+    "applicability",
+    "build",
+    "score_domain",
+    "post_measurement_elimination_guaranteed",
+    "disposition",
+    "withheld_reasons",
+    "scores",
+    "best",
+    "observation_uncertainty_not_in_score",
+    "use_disposition",
+    "presentation"
+   ],
+   "type": "object",
+   "x-class": "computed"
+  },
+  "ct.trace.v1": {
+   "additionalProperties": false,
+   "properties": {
+    "entries": {
+     "items": {
+      "additionalProperties": false,
+      "properties": {
+       "outcome": {
+        "maxLength": 64,
+        "type": "string"
+       },
+       "step": {
+        "enum": [
+         "admit",
+         "resolve",
+         "derive",
+         "baseline",
+         "aggregate",
+         "gate",
+         "score",
+         "interpret",
+         "compare",
+         "publish"
+        ]
+       },
+       "target": {
+        "oneOf": [
+         {
+          "type": "null"
+         },
+         {
+          "$ref": "#/definitions/ref",
+          "x-target": [
+           "ct.explanation.v1",
+           "ct.model.v1",
+           "ct.interpretation-plan.v1",
+           "ct.claim.v1",
+           "ct.condition-declaration.v1",
+           "ct.evidence-item.v1",
+           "ct.evidence-content",
+           "ct.evidence-review.v1",
+           "ct.policy.v1",
+           "ct.request.v1",
+           "ct.authority.v1",
+           "ct.adoption.v1",
+           "nm.evidence.v1",
+           "ct.derivation.v1",
+           "ct.applicability.v1",
+           "ct.selection.v1",
+           "ct.reassessment.v1",
+           "ct.retained-selection.v1",
+           "ct.build.v1",
+           "ct.invocation.v1",
+           "ct.trace.v1",
+           "ct.closure.v1",
+           "ct.bundle-manifest.v1"
+          ]
+         }
+        ]
+       }
+      },
+      "required": [
+       "step",
+       "target",
+       "outcome"
+      ],
+      "type": "object"
+     },
+     "maxItems": 512,
+     "minItems": 1,
+     "type": "array"
+    },
+    "profile": {
+     "const": "bdw.checked-temperature.v1"
+    },
+    "schema": {
+     "const": "ct.trace.v1"
+    }
+   },
+   "required": [
+    "schema",
+    "profile",
+    "entries"
+   ],
+   "type": "object",
+   "x-class": "computed"
+  }
+ },
+ "status": "proposed",
+ "title": "PROPOSED checked-temperature schemas, successor v2 (preparation; not frozen)",
+ "typed_reference_kinds": [
+  "ct.explanation.v1",
+  "ct.model.v1",
+  "ct.interpretation-plan.v1",
+  "ct.claim.v1",
+  "ct.condition-declaration.v1",
+  "ct.evidence-item.v1",
+  "ct.evidence-content",
+  "ct.evidence-review.v1",
+  "ct.policy.v1",
+  "ct.request.v1",
+  "ct.authority.v1",
+  "ct.adoption.v1",
+  "nm.evidence.v1",
+  "ct.derivation.v1",
+  "ct.applicability.v1",
+  "ct.selection.v1",
+  "ct.reassessment.v1",
+  "ct.retained-selection.v1",
+  "ct.build.v1",
+  "ct.invocation.v1",
+  "ct.trace.v1",
+  "ct.closure.v1",
+  "ct.bundle-manifest.v1"
+ ]
+}

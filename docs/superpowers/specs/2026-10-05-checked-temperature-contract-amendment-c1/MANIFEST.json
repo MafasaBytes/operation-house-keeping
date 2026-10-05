@@ -1,0 +1,23 @@
+{
+ "amends": {
+  "clause": "v4 CONTRACT \u00a712.3 \"Pending owner choice C1\"",
+  "v4_manifest_sha256": "9e0afa328c3281fd468be21911f7840a74a35cdafd616b3f79605eaebd5df529"
+ },
+ "date": "2026-10-05",
+ "members": {
+  "AMENDMENT.md": {
+   "bytes": 4557,
+   "sha256": "465da554e518181fe7fedc1ed01aed7e8184d3ac525c8b9a7b0fb2a59b6cc4e1"
+  },
+  "witnesses-c1.json": {
+   "bytes": 3895,
+   "sha256": "2da80db0203ab212c24b5e733f381cd223bad952c32863c6f24da18a171c19f1"
+  }
+ },
+ "schema": "ct.amendment-manifest.c1",
+ "status": "owner-approved C1 amendment record; implementation evidence is Gate 1 unit-test evidence; C1.5 unresolved",
+ "unchanged": {
+  "policy_sha256": "46df039bff18ab0ccb8a31262e42f1f0d40a828ede6e797953b769ecb49e8c15",
+  "schemas_sha256": "43c2af0b7bc3be137a0576e51b281be1ea53854c5e13d5d0a2c807f7611ac570"
+ }
+}
