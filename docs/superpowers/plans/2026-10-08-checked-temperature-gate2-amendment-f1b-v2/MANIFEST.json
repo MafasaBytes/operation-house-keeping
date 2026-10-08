@@ -1,0 +1,99 @@
+{
+ "amendment_id": "gate2-f1b-2026-10-08",
+ "checkpoint": {
+  "accepted_implementation": "8414f4d5f70a774b5c9cef1da82ce4ff55fc1cf8",
+  "current_build_sha256": "fa14f8eca32c75ba8a0928d3261de20a989c8f3fa1c7eceaf50c8541a30b62f2",
+  "head": "4d6ab13c46642e9771199dced7d312ac94bbbb2f"
+ },
+ "date": "2026-10-08",
+ "document_retention": {
+  "cap": {
+   "directories": 0,
+   "files": 3,
+   "logical_bytes": 1048576
+  },
+  "frozen_three_files": {
+   "files": 3,
+   "logical_bytes": 463761
+  },
+  "status": "file and directory count caps exceeded by owner instruction (9 files incl. the 3 frozen, 2 new directories, against 3 and 0); logical bytes within cap; owner may confirm or narrow at the gate; MANIFEST.json is the standard package binding file, not owner-named",
+  "total": {
+   "files": 9,
+   "logical_bytes": 545259,
+   "new_directories": 2
+  },
+  "v1": {
+   "directories": 1,
+   "files": 3,
+   "logical_bytes": 28981
+  },
+  "v2": {
+   "directories": 1,
+   "files": 3,
+   "logical_bytes": 52517
+  }
+ },
+ "governing": {
+  "c1_manifest_sha256": "791b4035807ce032f7852447df0e0b7d9324c8cb90d52bc8a1b6ebac42ab9d1a",
+  "c2_manifest_sha256": "6252a2da6058b443db070954e7bf2a2ae075aba652ce6b09cabc0eb1b323bec6",
+  "v4_manifest_sha256": "9e0afa328c3281fd468be21911f7840a74a35cdafd616b3f79605eaebd5df529"
+ },
+ "members": {
+  "AMENDMENT.md": {
+   "bytes": 20093,
+   "sha256": "b84d2b3e280a77cb2fc0b4989735e9ef563ea6e9b430022721ca4156d8b49691"
+  },
+  "inventory.json": {
+   "bytes": 28690,
+   "sha256": "071307ea6f13a2345ed31380563ad57f5e6aa1c8267d7ed44f2aa970a5a963af"
+  }
+ },
+ "owner_authorization": {
+  "label": "owner message, 2026-10-08, quoted",
+  "record_status": "dispositions A and B, the two-change limitation and separate Gate 2 acceptance are the relayed record, not verbatim",
+  "text": "One semantic/fixture L1 continuation is authorized. It counts as a top-level launch but does not consume an infrastructure-retry slot. The original failed attempt remains consumed; no refund or reset."
+ },
+ "package_revision": "v2",
+ "predecessor": {
+  "amendment_v1": {
+   "members": {
+    "AMENDMENT.md": {
+     "bytes": 10519,
+     "sha256": "8a6290560d9688170d2e6e48545f7bb7c4afaa3f5cd7a8f0becb228f592a34b6"
+    },
+    "MANIFEST.json": {
+     "bytes": 1842,
+     "sha256": "cf7a378d4d90c5d1ef84183692fb00e9c3ba5adac722a5a469ef6a3bf9eb7663"
+    },
+    "inventory.json": {
+     "bytes": 16620,
+     "sha256": "3e21bd4436db632576d6cc175f07044e98a43a74bbaf0190d9a353fc5cd0c3de"
+    }
+   },
+   "path": "docs/superpowers/plans/2026-10-08-checked-temperature-gate2-amendment-f1b/"
+  },
+  "earlier": {
+   "manifest": {
+    "path": "docs/superpowers/plans/2026-10-05-checked-temperature-gate2-manifest.json",
+    "sha256": "7f6a236f0f07cdc6c51e89830632bad8e045cdf7d52aec0c88834158a82a9d09"
+   },
+   "plan": {
+    "path": "docs/superpowers/plans/2026-10-05-checked-temperature-gate2-consolidated-plan.md",
+    "sha256": "61c4c0e806b1472da367b1cc309fa0ff6558845c3d4077f98219beec840d59b5"
+   }
+  },
+  "manifest": {
+   "bytes": 425621,
+   "path": "docs/superpowers/plans/2026-10-08-checked-temperature-gate2-manifest.json",
+   "sha256": "9b22e108b0a7cd1b38b5d9d380581c32a9491418a1bd3c756e252cefe71a17b0"
+  },
+  "plan": {
+   "bytes": 35084,
+   "path": "docs/superpowers/plans/2026-10-08-checked-temperature-gate2-consolidated-plan.md",
+   "sha256": "a5e2af15e70638b06538190490e677d3da4b0308d3d783032a82ab475672c2ac"
+  }
+ },
+ "schema": "ct.gate2.amendment-manifest.v1",
+ "status": "successor amendment implementing owner-approved dispositions A and B; package contents not separately owner-reviewed; no execution evidence; not Gate 2 acceptance",
+ "supersedes": "v1 package (retained history); see AMENDMENT.md section 0 and inventory.json supersedes_v1"
+}
