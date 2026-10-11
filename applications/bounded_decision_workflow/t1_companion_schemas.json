@@ -1,0 +1,3873 @@
+{
+  "$id": "t1-companion-schemas-v3-carriage-publication-a1",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "canonical_bytes": {
+    "carrier": "generated response bodies: the rule's carrier_serialization text (DESIGN \u00a77)",
+    "existing": "O and v4 checked records keep their owning serialization (pinned CPython json.dumps ensure_ascii=False, sort_keys=True, separators=(',',':'), allow_nan=False, UTF-8, no newline)",
+    "opaque": "ct.t1-opaque-bytes and raw evidence: raw bytes",
+    "owning": "new companion records: strict UTF-8, sorted keys (Unicode scalar order), separators ',' and ':', no trailing newline, duplicate keys refused, decimals as canonical strings, no JSON floating numbers (sole exception: carrier lexemes inside ct.t1-carrier-preset.v1 bodies); file SHA-256 = record digest"
+  },
+  "definitions": {
+    "attestation": {
+      "additionalProperties": false,
+      "properties": {
+        "authenticated": {
+          "const": false
+        },
+        "basis": {
+          "maxLength": 1024,
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 128,
+          "minLength": 1,
+          "type": "string"
+        },
+        "role": {
+          "enum": [
+            "local_model_proposer",
+            "local_evidence_reviewer",
+            "local_condition_declarer",
+            "local_policy_owner",
+            "local_evaluation_issuer",
+            "local_execution_issuer",
+            "local_adoption_decider"
+          ]
+        }
+      },
+      "required": [
+        "role",
+        "label",
+        "authenticated",
+        "basis"
+      ],
+      "type": "object"
+    },
+    "canonical_decimal": {
+      "pattern": "^(0|-?[1-9][0-9]{0,3}|-?(0|[1-9][0-9]{0,3})\\.[0-9]{0,31}[1-9])$",
+      "type": "string",
+      "x-match": "full-string",
+      "x-semantic": "canonical decimal lexeme: no '-0', no trailing fractional zeros, no exponent, integer part at most 4 digits; fractional digits structurally <= 32. The edition ceiling (6) and the captured d are enforced at order 5, not at order 0."
+    },
+    "constraint_anchor": {
+      "pattern": "^con_[0-9a-f]{32}$",
+      "type": "string",
+      "x-match": "full-string"
+    },
+    "context": {
+      "additionalProperties": false,
+      "properties": {
+        "as_of": {
+          "$ref": "#/definitions/datetime"
+        },
+        "assertion_context": {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "lifecycle_view"
+            },
+            "view": {
+              "const": "as_operated"
+            }
+          },
+          "required": [
+            "kind",
+            "view"
+          ],
+          "type": "object"
+        },
+        "scenario_label": {
+          "$ref": "#/definitions/id"
+        },
+        "structural_model_revision": {
+          "pattern": "^mrv_[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "subject_entity_anchor_id": {
+          "pattern": "^ent_[0-9a-f]{32}$",
+          "type": "string"
+        },
+        "variable_anchor_id": {
+          "pattern": "^var_[0-9a-f]{32}$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "as_of",
+        "scenario_label",
+        "assertion_context",
+        "subject_entity_anchor_id",
+        "variable_anchor_id",
+        "structural_model_revision"
+      ],
+      "type": "object"
+    },
+    "datetime": {
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$",
+      "type": "string",
+      "x-semantic": "valid UTC calendar instant"
+    },
+    "decimal": {
+      "pattern": "^-?(0|[1-9][0-9]{0,3})(\\.[0-9]{1,6})?$",
+      "type": "string",
+      "x-semantic": "value in [-200, 1000]; '-0' refused"
+    },
+    "decimal_domain": {
+      "additionalProperties": false,
+      "properties": {
+        "hi": {
+          "$ref": "#/definitions/canonical_decimal"
+        },
+        "lo": {
+          "$ref": "#/definitions/canonical_decimal"
+        }
+      },
+      "required": [
+        "lo",
+        "hi"
+      ],
+      "type": "object",
+      "x-semantic": "closed interval [lo, hi] over exact decimal rationals"
+    },
+    "entity_anchor": {
+      "pattern": "^ent_[0-9a-f]{32}$",
+      "type": "string",
+      "x-match": "full-string"
+    },
+    "id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$",
+      "type": "string"
+    },
+    "instrument_id": {
+      "pattern": "^inst_[0-9a-f]{32}$",
+      "type": "string"
+    },
+    "interval": {
+      "additionalProperties": false,
+      "properties": {
+        "hi": {
+          "$ref": "#/definitions/rational"
+        },
+        "lo": {
+          "$ref": "#/definitions/rational"
+        }
+      },
+      "required": [
+        "lo",
+        "hi"
+      ],
+      "type": "object",
+      "x-semantic": "lo <= hi; both endpoints closed"
+    },
+    "model_revision": {
+      "pattern": "^mrv_[0-9a-f]{64}$",
+      "type": "string",
+      "x-match": "full-string"
+    },
+    "owning_backend_record": {
+      "type": "object",
+      "x-owning-validator": "validated only by the named owning backend validator (F-C1); the companion schema does not re-specify backend record shapes"
+    },
+    "rational": {
+      "additionalProperties": false,
+      "properties": {
+        "denominator": {
+          "pattern": "^[1-9][0-9]{0,31}$",
+          "type": "string"
+        },
+        "numerator": {
+          "pattern": "^(0|-?[1-9][0-9]{0,31})$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "numerator",
+        "denominator"
+      ],
+      "type": "object",
+      "x-semantic": "reduced; denominator divides 1000000"
+    },
+    "ref": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "ct.explanation.v1",
+            "ct.model.v1",
+            "ct.interpretation-plan.v1",
+            "ct.claim.v1",
+            "ct.condition-declaration.v1",
+            "ct.evidence-item.v1",
+            "ct.evidence-content",
+            "ct.evidence-review.v1",
+            "ct.policy.v1",
+            "ct.request.v1",
+            "ct.authority.v1",
+            "ct.execution-target.v1",
+            "ct.code-evidence.v1",
+            "ct.adoption.v1",
+            "nm.evidence.v1",
+            "ct.derivation.v1",
+            "ct.applicability.v1",
+            "ct.selection.v1",
+            "ct.reassessment.v1",
+            "ct.retained-selection.v1",
+            "ct.build.v1",
+            "ct.invocation.v1",
+            "ct.trace.v1",
+            "ct.closure.v1",
+            "ct.bundle-manifest.v1"
+          ]
+        },
+        "sha256": {
+          "$ref": "#/definitions/sha256"
+        }
+      },
+      "required": [
+        "kind",
+        "sha256"
+      ],
+      "type": "object",
+      "x-semantic": "sha256 = SHA-256 of the target's canonical bytes (opaque bytes for ct.evidence-content); kind must be one of the field's x-target"
+    },
+    "resource_bounds": {
+      "additionalProperties": false,
+      "properties": {
+        "attempts": {
+          "maximum": 2,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "context_records": {
+          "additionalProperties": false,
+          "properties": {
+            "binding": {
+              "maximum": 16,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "interpretation": {
+              "maximum": 16,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "model": {
+              "maximum": 32,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "binding",
+            "interpretation",
+            "model"
+          ],
+          "type": "object"
+        },
+        "extracted_observations": {
+          "maximum": 16,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "monotonic_calls": {
+          "maximum": 128,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "producer_allocated_bytes": {
+          "maximum": 16777216,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "producer_directories": {
+          "maximum": 48,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "producer_files": {
+          "maximum": 256,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "producer_logical_bytes": {
+          "maximum": 8388608,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "response_bytes": {
+          "maximum": 16384,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "retries": {
+          "const": 0
+        },
+        "wall_clock_calls": {
+          "maximum": 64,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "attempts",
+        "context_records",
+        "extracted_observations",
+        "monotonic_calls",
+        "producer_allocated_bytes",
+        "producer_directories",
+        "producer_files",
+        "producer_logical_bytes",
+        "response_bytes",
+        "retries",
+        "wall_clock_calls"
+      ],
+      "type": "object",
+      "x-semantic": "maximum = edition ceiling (DESIGN \u00a79); J.resource_bounds must also be <= the admitted simulator policy resource_maxima per key (order 2, SIM_EDITION_NOT_PERMITTED); exhaustion during production refuses SIM_RESOURCE_LIMIT at /J/resource_bounds/<key>"
+    },
+    "sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "sha256_prefixed": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string",
+      "x-match": "full-string"
+    },
+    "source_locator": {
+      "additionalProperties": false,
+      "properties": {
+        "property": {
+          "$ref": "#/definitions/source_property"
+        },
+        "subject": {
+          "$ref": "#/definitions/source_subject"
+        }
+      },
+      "required": [
+        "subject",
+        "property"
+      ],
+      "type": "object"
+    },
+    "source_property": {
+      "additionalProperties": false,
+      "properties": {
+        "extraction_route": {
+          "maxLength": 128,
+          "minLength": 1,
+          "type": "string"
+        },
+        "item_key": {
+          "maxLength": 128,
+          "minLength": 1,
+          "type": "string"
+        },
+        "json_pointer": {
+          "maxLength": 256,
+          "pattern": "^(/[^/]*)+$",
+          "type": "string",
+          "x-match": "full-string"
+        }
+      },
+      "required": [
+        "extraction_route",
+        "item_key",
+        "json_pointer"
+      ],
+      "type": "object"
+    },
+    "source_subject": {
+      "additionalProperties": false,
+      "properties": {
+        "adapter_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "type": "string"
+        },
+        "source_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "type": "string"
+        },
+        "subject_identifier": {
+          "maxLength": 128,
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_id",
+        "adapter_id",
+        "subject_identifier"
+      ],
+      "type": "object"
+    },
+    "state_anchor": {
+      "pattern": "^sta_[0-9a-f]{32}$",
+      "type": "string",
+      "x-match": "full-string"
+    },
+    "t1_ref": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "ct.explanation.v1",
+            "ct.model.v1",
+            "ct.interpretation-plan.v1",
+            "ct.claim.v1",
+            "ct.condition-declaration.v1",
+            "ct.evidence-item.v1",
+            "ct.evidence-content",
+            "ct.evidence-review.v1",
+            "ct.policy.v1",
+            "ct.request.v1",
+            "ct.authority.v1",
+            "ct.execution-target.v1",
+            "ct.code-evidence.v1",
+            "ct.adoption.v1",
+            "nm.evidence.v1",
+            "ct.derivation.v1",
+            "ct.applicability.v1",
+            "ct.selection.v1",
+            "ct.reassessment.v1",
+            "ct.retained-selection.v1",
+            "ct.build.v1",
+            "ct.invocation.v1",
+            "ct.trace.v1",
+            "ct.closure.v1",
+            "ct.bundle-manifest.v1",
+            "ct.t1-world.v1",
+            "ct.t1-context.v1",
+            "ct.t1-carrier-preset.v1",
+            "ct.t1-simulator-rule.v2",
+            "ct.t1-simulator-policy.v1",
+            "ct.t1-simulation-target.v1",
+            "ct.t1-simulation-permission.v1",
+            "ct.t1-producer-receipt.v1",
+            "ct.t1-producer-manifest.v1",
+            "ct.t1-handoff.v1",
+            "ct.t1-workflow-receipt.v1",
+            "ct.t1-verification-report.v1",
+            "ct.t1-authority-template.v1",
+            "ct.t1-opaque-bytes"
+          ]
+        },
+        "sha256": {
+          "$ref": "#/definitions/sha256"
+        }
+      },
+      "required": [
+        "kind",
+        "sha256"
+      ],
+      "type": "object",
+      "x-semantic": "sha256 = SHA-256 of the target's canonical owning bytes (raw bytes for ct.t1-opaque-bytes, ct.evidence-content and nm.evidence.v1 file bytes); kind must be one of the field's x-target (otherwise SIM_REFERENCE_INVALID at order 1)"
+    },
+    "token": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "pattern": "^[a-z0-9][a-z0-9_.-]{0,63}$",
+          "type": "string",
+          "x-match": "full-string"
+        },
+        "system_edition": {
+          "pattern": "^[a-z0-9][a-z0-9_.-]{0,63}$",
+          "type": "string",
+          "x-match": "full-string"
+        },
+        "system_id": {
+          "pattern": "^[a-z0-9][a-z0-9_.-]{0,63}$",
+          "type": "string",
+          "x-match": "full-string"
+        }
+      },
+      "required": [
+        "system_id",
+        "system_edition",
+        "code"
+      ],
+      "type": "object"
+    },
+    "variable_anchor": {
+      "pattern": "^var_[0-9a-f]{32}$",
+      "type": "string",
+      "x-match": "full-string"
+    },
+    "window": {
+      "additionalProperties": false,
+      "properties": {
+        "from": {
+          "$ref": "#/definitions/datetime"
+        },
+        "to": {
+          "$ref": "#/definitions/datetime"
+        }
+      },
+      "required": [
+        "from",
+        "to"
+      ],
+      "type": "object",
+      "x-semantic": "from <= to; closed"
+    }
+  },
+  "record_classes": {
+    "authored": "ct.t1-world.v1, ct.t1-context.v1, ct.t1-carrier-preset.v1, ct.t1-simulator-rule.v2, ct.t1-simulator-policy.v1, ct.t1-simulation-target.v1, ct.t1-simulation-permission.v1: id, revision (1..4), predecessor (same kind, revision-1, same id, present), provenance attestation (authenticated false) with role from x-allowed-roles",
+    "computed": "ct.t1-producer-receipt.v1, ct.t1-producer-manifest.v1, ct.t1-handoff.v1, ct.t1-workflow-receipt.v1, ct.t1-verification-report.v1, ct.t1-authority-template.v1, ct.t1-diagnostic.v1, ct.t1-completion-record.v1: produced only by the application; identity = digest; no provenance",
+    "inherited": "the 25 v4 kinds keep their v4 classes, shapes and owning validators unchanged",
+    "opaque": "ct.t1-opaque-bytes: raw bytes identified by SHA-256 of the bytes (transcripts, raw bodies, envelopes, DB diagnostics)"
+  },
+  "records": {
+    "ct.t1-authority-template.v1": {
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "draft": {
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "$ref": "#/definitions/id"
+                },
+                "issuer_required": {
+                  "const": true
+                },
+                "plan_change": {
+                  "type": "null"
+                },
+                "predecessor": {
+                  "type": "null"
+                },
+                "profile": {
+                  "const": "bdw.checked-temperature.v1"
+                },
+                "purpose": {
+                  "const": "execution"
+                },
+                "revision": {
+                  "maximum": 4,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                "schema": {
+                  "const": "ct.authority.v1"
+                },
+                "scope": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "phase": {
+                      "const": "reassessment"
+                    },
+                    "procedure_editions": {
+                      "const": [
+                        "ct.procedure.T1.v1"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "phase",
+                    "procedure_editions"
+                  ],
+                  "type": "object"
+                },
+                "target": {
+                  "$ref": "#/definitions/t1_ref",
+                  "x-target": [
+                    "ct.execution-target.v1"
+                  ]
+                },
+                "valid": {
+                  "$ref": "#/definitions/window"
+                }
+              },
+              "required": [
+                "id",
+                "issuer_required",
+                "plan_change",
+                "predecessor",
+                "profile",
+                "purpose",
+                "revision",
+                "schema",
+                "scope",
+                "target",
+                "valid"
+              ],
+              "type": "object"
+            },
+            "profile": {
+              "const": "bdw.checked-temperature.v1"
+            },
+            "schema": {
+              "const": "ct.t1-authority-template.v1"
+            },
+            "target_sha256": {
+              "$ref": "#/definitions/sha256"
+            },
+            "template_of": {
+              "const": "ct.authority.v1"
+            },
+            "unissued": {
+              "const": true
+            }
+          },
+          "required": [
+            "schema",
+            "profile",
+            "template_of",
+            "unissued",
+            "draft",
+            "target_sha256"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "draft": {
+              "additionalProperties": false,
+              "properties": {
+                "execution_authority": {
+                  "type": "null",
+                  "x-semantic": "unknown until E is issued; the human issuer fills it with the issued E reference"
+                },
+                "grants": {
+                  "const": {
+                    "adoption": false,
+                    "evaluation": false,
+                    "physical_acquisition": false,
+                    "simulation": true
+                  }
+                },
+                "id": {
+                  "$ref": "#/definitions/id"
+                },
+                "issuer_required": {
+                  "const": true
+                },
+                "predecessor": {
+                  "type": "null"
+                },
+                "profile": {
+                  "const": "bdw.checked-temperature.v1"
+                },
+                "purpose": {
+                  "const": "simulation"
+                },
+                "revision": {
+                  "maximum": 4,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                "schema": {
+                  "const": "ct.t1-simulation-permission.v1"
+                },
+                "scope": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "captured_policy": {
+                      "$ref": "#/definitions/t1_ref",
+                      "x-target": [
+                        "ct.policy.v1"
+                      ]
+                    },
+                    "producer_build": {
+                      "$ref": "#/definitions/t1_ref",
+                      "x-target": [
+                        "ct.build.v1"
+                      ]
+                    },
+                    "rule": {
+                      "$ref": "#/definitions/t1_ref",
+                      "x-target": [
+                        "ct.t1-simulator-rule.v2"
+                      ]
+                    },
+                    "simulator_policy": {
+                      "$ref": "#/definitions/t1_ref",
+                      "x-target": [
+                        "ct.t1-simulator-policy.v1"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "captured_policy",
+                    "producer_build",
+                    "rule",
+                    "simulator_policy"
+                  ],
+                  "type": "object"
+                },
+                "target": {
+                  "$ref": "#/definitions/t1_ref",
+                  "x-target": [
+                    "ct.t1-simulation-target.v1"
+                  ]
+                },
+                "valid": {
+                  "$ref": "#/definitions/window"
+                }
+              },
+              "required": [
+                "execution_authority",
+                "grants",
+                "id",
+                "issuer_required",
+                "predecessor",
+                "profile",
+                "purpose",
+                "revision",
+                "schema",
+                "scope",
+                "target",
+                "valid"
+              ],
+              "type": "object"
+            },
+            "profile": {
+              "const": "bdw.checked-temperature.v1"
+            },
+            "schema": {
+              "const": "ct.t1-authority-template.v1"
+            },
+            "target_sha256": {
+              "$ref": "#/definitions/sha256"
+            },
+            "template_of": {
+              "const": "ct.t1-simulation-permission.v1"
+            },
+            "unissued": {
+              "const": true
+            }
+          },
+          "required": [
+            "schema",
+            "profile",
+            "template_of",
+            "unissued",
+            "draft",
+            "target_sha256"
+          ],
+          "type": "object"
+        }
+      ],
+      "x-class": "computed",
+      "x-semantic": "F-C3: the design's 'clearly unissued template' made concrete (DESIGN \u00a75). No provenance; never accepted where a permission or authority is required (order 1 SIM_REFERENCE_INVALID, kind not in x-target). target_sha256 = digest(X) for an E template, digest(J) for a G template."
+    },
+    "ct.t1-carrier-preset.v1": {
+      "additionalProperties": false,
+      "properties": {
+        "body_digests": {
+          "additionalProperties": false,
+          "properties": {
+            "printer_objects": {
+              "$ref": "#/definitions/sha256"
+            },
+            "server_info": {
+              "$ref": "#/definitions/sha256"
+            }
+          },
+          "required": [
+            "printer_objects",
+            "server_info"
+          ],
+          "type": "object",
+          "x-semantic": "SHA-256 of each body's canonical carrier bytes; must equal recomputation (order 2, SIM_EDITION_NOT_PERMITTED /preset)"
+        },
+        "dynamic_leaf": {
+          "const": "/result/status/extruder/temperature"
+        },
+        "id": {
+          "$ref": "#/definitions/id"
+        },
+        "predecessor": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/definitions/t1_ref",
+              "x-target": [
+                "ct.t1-carrier-preset.v1"
+              ]
+            }
+          ]
+        },
+        "profile": {
+          "const": "bdw.checked-temperature.v1"
+        },
+        "provenance": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/attestation"
+            }
+          ],
+          "x-allowed-roles": [
+            "local_model_proposer"
+          ]
+        },
+        "responses": {
+          "additionalProperties": false,
+          "properties": {
+            "printer_objects": {
+              "additionalProperties": false,
+              "properties": {
+                "body": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "result": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "eventtime": {
+                          "type": "number"
+                        },
+                        "status": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "extruder": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "target": {
+                                  "type": "number"
+                                },
+                                "temperature": {
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "target",
+                                "temperature"
+                              ],
+                              "type": "object"
+                            },
+                            "heater_bed": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "target": {
+                                  "type": "number"
+                                },
+                                "temperature": {
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "target",
+                                "temperature"
+                              ],
+                              "type": "object"
+                            },
+                            "print_stats": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "print_duration": {
+                                  "type": "number"
+                                },
+                                "state": {
+                                  "type": "string"
+                                },
+                                "total_duration": {
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "print_duration",
+                                "state",
+                                "total_duration"
+                              ],
+                              "type": "object"
+                            },
+                            "toolhead": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "homed_axes": {
+                                  "type": "string"
+                                },
+                                "position": {
+                                  "items": {
+                                    "type": "number"
+                                  },
+                                  "maxItems": 4,
+                                  "minItems": 4,
+                                  "type": "array"
+                                }
+                              },
+                              "required": [
+                                "homed_axes",
+                                "position"
+                              ],
+                              "type": "object"
+                            },
+                            "virtual_sdcard": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "is_active": {
+                                  "type": "boolean"
+                                },
+                                "progress": {
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "is_active",
+                                "progress"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "extruder",
+                            "heater_bed",
+                            "print_stats",
+                            "toolhead",
+                            "virtual_sdcard"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "eventtime",
+                        "status"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "result"
+                  ],
+                  "type": "object"
+                },
+                "path": {
+                  "const": "/printer/objects/query?extruder=target,temperature&heater_bed=target,temperature&print_stats=print_duration,state,total_duration&toolhead=homed_axes,position&virtual_sdcard=is_active,progress"
+                }
+              },
+              "required": [
+                "body",
+                "path"
+              ],
+              "type": "object"
+            },
+            "server_info": {
+              "additionalProperties": false,
+              "properties": {
+                "body": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "result": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "api_version": {
+                          "items": {
+                            "type": "integer"
+                          },
+                          "maxItems": 3,
+                          "minItems": 3,
+                          "type": "array"
+                        },
+                        "components": {
+                          "items": {
+                            "type": "string"
+                          },
+                          "maxItems": 16,
+                          "type": "array"
+                        },
+                        "failed_components": {
+                          "items": {
+                            "type": "string"
+                          },
+                          "maxItems": 16,
+                          "type": "array"
+                        },
+                        "klippy_connected": {
+                          "type": "boolean"
+                        },
+                        "klippy_state": {
+                          "type": "string"
+                        },
+                        "moonraker_version": {
+                          "type": "string"
+                        },
+                        "registered_directories": {
+                          "items": {
+                            "type": "string"
+                          },
+                          "maxItems": 16,
+                          "type": "array"
+                        },
+                        "warnings": {
+                          "items": {
+                            "type": "string"
+                          },
+                          "maxItems": 16,
+                          "type": "array"
+                        },
+                        "websocket_count": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "api_version",
+                        "components",
+                        "failed_components",
+                        "klippy_connected",
+                        "klippy_state",
+                        "moonraker_version",
+                        "registered_directories",
+                        "warnings",
+                        "websocket_count"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "result"
+                  ],
+                  "type": "object"
+                },
+                "path": {
+                  "const": "/server/info"
+                }
+              },
+              "required": [
+                "body",
+                "path"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "printer_objects",
+            "server_info"
+          ],
+          "type": "object"
+        },
+        "revision": {
+          "maximum": 4,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "schema": {
+          "const": "ct.t1-carrier-preset.v1"
+        }
+      },
+      "required": [
+        "schema",
+        "profile",
+        "id",
+        "revision",
+        "predecessor",
+        "provenance",
+        "responses",
+        "dynamic_leaf",
+        "body_digests"
+      ],
+      "type": "object",
+      "x-class": "authored",
+      "x-semantic": "DESIGN \u00a77: non-executable canonical pair of complete response trees; closed shapes so a user cannot insert fields; numeric leaves are carrier decimal lexemes (the only JSON numbers in a companion record); record digest must equal rule.preset and simulator_policy.preset_sha256."
+    },
+    "ct.t1-completion-record.v1": {
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "command": {
+              "enum": [
+                "t1-simulation-prepare",
+                "t1-simulation-run",
+                "t1-reassessment-prepare"
+              ]
+            },
+            "guarantee": {
+              "type": "null"
+            },
+            "limitations": {
+              "const": [
+                "a completion record lists published files; it is not evidence, permission or approval",
+                "no physical acquisition, physical truth or causal claim follows from completion"
+              ]
+            },
+            "profile": {
+              "const": "bdw.checked-temperature.v1"
+            },
+            "published": {
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "path": {
+                    "maxLength": 240,
+                    "pattern": "^(?!/)(?!.*(^|/)\\.{1,2}(/|$))[A-Za-z0-9_.-]+(/[A-Za-z0-9_.-]+)*$",
+                    "type": "string",
+                    "x-match": "full-string"
+                  },
+                  "role": {
+                    "pattern": "^[a-z][a-z0-9_]{0,63}$",
+                    "type": "string",
+                    "x-match": "full-string"
+                  },
+                  "sha256": {
+                    "$ref": "#/definitions/sha256"
+                  }
+                },
+                "required": [
+                  "path",
+                  "role",
+                  "sha256"
+                ],
+                "type": "object"
+              },
+              "maxItems": 512,
+              "minItems": 1,
+              "type": "array",
+              "x-semantic": "paths relative to --output-dir, sorted by path; every published file"
+            },
+            "schema": {
+              "const": "ct.t1-completion-record.v1"
+            }
+          },
+          "required": [
+            "schema",
+            "profile",
+            "command",
+            "published",
+            "guarantee",
+            "limitations"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "command": {
+              "enum": [
+                "t1-simulation-verify"
+              ]
+            },
+            "guarantee": {
+              "const": "simulation-verified"
+            },
+            "limitations": {
+              "const": [
+                "a completion record lists published files; it is not evidence, permission or approval",
+                "no physical acquisition, physical truth or causal claim follows from completion"
+              ]
+            },
+            "profile": {
+              "const": "bdw.checked-temperature.v1"
+            },
+            "published": {
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "path": {
+                    "maxLength": 240,
+                    "pattern": "^(?!/)(?!.*(^|/)\\.{1,2}(/|$))[A-Za-z0-9_.-]+(/[A-Za-z0-9_.-]+)*$",
+                    "type": "string",
+                    "x-match": "full-string"
+                  },
+                  "role": {
+                    "pattern": "^[a-z][a-z0-9_]{0,63}$",
+                    "type": "string",
+                    "x-match": "full-string"
+                  },
+                  "sha256": {
+                    "$ref": "#/definitions/sha256"
+                  }
+                },
+                "required": [
+                  "path",
+                  "role",
+                  "sha256"
+                ],
+                "type": "object"
+              },
+              "maxItems": 512,
+              "minItems": 1,
+              "type": "array",
+              "x-semantic": "paths relative to --output-dir, sorted by path; every published file"
+            },
+            "schema": {
+              "const": "ct.t1-completion-record.v1"
+            }
+          },
+          "required": [
+            "schema",
+            "profile",
+            "command",
+            "published",
+            "guarantee",
+            "limitations"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "command": {
+              "enum": [
+                "t1-reassessment-evaluate",
+                "t1-workflow-verify"
+              ]
+            },
+            "guarantee": {
+              "const": "producer-checked"
+            },
+            "limitations": {
+              "const": [
+                "a completion record lists published files; it is not evidence, permission or approval",
+                "no physical acquisition, physical truth or causal claim follows from completion"
+              ]
+            },
+            "profile": {
+              "const": "bdw.checked-temperature.v1"
+            },
+            "published": {
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "path": {
+                    "maxLength": 240,
+                    "pattern": "^(?!/)(?!.*(^|/)\\.{1,2}(/|$))[A-Za-z0-9_.-]+(/[A-Za-z0-9_.-]+)*$",
+                    "type": "string",
+                    "x-match": "full-string"
+                  },
+                  "role": {
+                    "pattern": "^[a-z][a-z0-9_]{0,63}$",
+                    "type": "string",
+                    "x-match": "full-string"
+                  },
+                  "sha256": {
+                    "$ref": "#/definitions/sha256"
+                  }
+                },
+                "required": [
+                  "path",
+                  "role",
+                  "sha256"
+                ],
+                "type": "object"
+              },
+              "maxItems": 512,
+              "minItems": 1,
+              "type": "array",
+              "x-semantic": "paths relative to --output-dir, sorted by path; every published file"
+            },
+            "schema": {
+              "const": "ct.t1-completion-record.v1"
+            }
+          },
+          "required": [
+            "schema",
+            "profile",
+            "command",
+            "published",
+            "guarantee",
+            "limitations"
+          ],
+          "type": "object"
+        }
+      ],
+      "x-class": "computed",
+      "x-semantic": "F-C9: guarantee keyed by command; success stdout record, written once as canonical JSON plus LF after the final file is published; nothing on stderr; never referenced"
+    },
+    "ct.t1-context.v1": {
+      "additionalProperties": false,
+      "properties": {
+        "assertion_context": {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "lifecycle_view"
+            },
+            "view": {
+              "enum": [
+                "as_designed",
+                "as_built",
+                "as_configured",
+                "as_operated",
+                "as_maintained"
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "view"
+          ],
+          "type": "object",
+          "x-semantic": "must equal {lifecycle_view, as_operated} and the selected model context (order 4, SIM_MODEL_MATERIAL_MISMATCH /C/assertion_context)"
+        },
+        "binding_set_id": {
+          "$ref": "#/definitions/id"
+        },
+        "bindings": {
+          "items": {
+            "$ref": "#/definitions/owning_backend_record",
+            "x-owning-validator": "backend.identity_binding.store.validate_record_collection"
+          },
+          "maxItems": 16,
+          "minItems": 1,
+          "type": "array"
+        },
+        "carrier_edition": {
+          "const": "ct.t1-carrier.printer-1-extruder.v1"
+        },
+        "condition_sources": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "constraint_anchor_id": {
+                "$ref": "#/definitions/constraint_anchor"
+              },
+              "source": {
+                "$ref": "#/definitions/source_locator"
+              }
+            },
+            "required": [
+              "constraint_anchor_id",
+              "source"
+            ],
+            "type": "object"
+          },
+          "maxItems": 2,
+          "minItems": 1,
+          "type": "array",
+          "x-semantic": "must equal exactly the permanent state registration's ordered two-entry set (DESIGN \u00a74); minItems 1 so that a removed entry reaches order 6 SIM_CONTEXT_MISMATCH /C/condition_sources rather than order 0"
+        },
+        "constraint_anchor_id": {
+          "$ref": "#/definitions/constraint_anchor"
+        },
+        "declared_state_label": {
+          "maxLength": 64,
+          "minLength": 1,
+          "type": "string"
+        },
+        "expected_observation_role": {
+          "$ref": "#/definitions/token"
+        },
+        "expected_quantity_kind": {
+          "$ref": "#/definitions/token"
+        },
+        "expected_unit": {
+          "$ref": "#/definitions/token"
+        },
+        "id": {
+          "$ref": "#/definitions/id"
+        },
+        "intended_subject_entity_anchor_id": {
+          "$ref": "#/definitions/entity_anchor"
+        },
+        "intended_variable_anchor_id": {
+          "$ref": "#/definitions/variable_anchor"
+        },
+        "interpretation_set_id": {
+          "$ref": "#/definitions/id"
+        },
+        "interpretations": {
+          "items": {
+            "$ref": "#/definitions/owning_backend_record",
+            "x-owning-validator": "backend.source_interpretation collection validation (package export)"
+          },
+          "maxItems": 16,
+          "minItems": 1,
+          "type": "array"
+        },
+        "material": {
+          "additionalProperties": false,
+          "properties": {
+            "records": {
+              "items": {
+                "$ref": "#/definitions/owning_backend_record",
+                "x-owning-validator": "backend.model_kernel.ModelQueryMaterial"
+              },
+              "maxItems": 32,
+              "minItems": 1,
+              "type": "array"
+            },
+            "revision": {
+              "additionalProperties": false,
+              "properties": {
+                "model_id": {
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "record_count": {
+                  "maximum": 32,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                "record_ids": {
+                  "items": {
+                    "pattern": "^[a-z]{3}_[0-9a-f]{32,64}$",
+                    "type": "string",
+                    "x-match": "full-string"
+                  },
+                  "maxItems": 32,
+                  "minItems": 1,
+                  "type": "array"
+                },
+                "revision_id": {
+                  "$ref": "#/definitions/model_revision"
+                }
+              },
+              "required": [
+                "model_id",
+                "record_count",
+                "record_ids",
+                "revision_id"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "records",
+            "revision"
+          ],
+          "type": "object",
+          "x-semantic": "complete material; revalidated by ModelQueryMaterial; revision_id and canonical complete material must equal the selected model context revision and baseline O0 material (order 4)"
+        },
+        "predecessor": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/definitions/t1_ref",
+              "x-target": [
+                "ct.t1-context.v1"
+              ]
+            }
+          ]
+        },
+        "preset": {
+          "$ref": "#/definitions/t1_ref",
+          "x-target": [
+            "ct.t1-carrier-preset.v1"
+          ]
+        },
+        "profile": {
+          "const": "bdw.checked-temperature.v1"
+        },
+        "provenance": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/attestation"
+            }
+          ],
+          "x-allowed-roles": [
+            "local_model_proposer"
+          ]
+        },
+        "reading_locator": {
+          "$ref": "#/definitions/source_locator",
+          "x-semantic": "must equal the fixed reading (DESIGN \u00a74 table); checked at order 6, not by const, so a substituted locator refuses SIM_MEASUREMENT_LOCATOR_MISMATCH"
+        },
+        "revision": {
+          "maximum": 4,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "schema": {
+          "const": "ct.t1-context.v1"
+        },
+        "source_definition": {
+          "additionalProperties": false,
+          "properties": {
+            "configuration": {
+              "additionalProperties": false,
+              "properties": {
+                "adapter": {
+                  "const": "moonraker"
+                },
+                "allow_plaintext_http": {
+                  "const": "true"
+                },
+                "base_url": {
+                  "pattern": "^http://127\\.0\\.0\\.1(:[1-9][0-9]{0,4})?$",
+                  "type": "string",
+                  "x-match": "full-string"
+                },
+                "plaintext_scope": {
+                  "const": "loopback_only"
+                }
+              },
+              "required": [
+                "adapter",
+                "allow_plaintext_http",
+                "base_url",
+                "plaintext_scope"
+              ],
+              "type": "object",
+              "x-semantic": "string values only; no secret-like keys; the resolver returns only this literal loopback address (no DNS)"
+            },
+            "connector_type": {
+              "const": "http_api"
+            },
+            "credential_reference": {
+              "type": "null"
+            },
+            "declared_content_types": {
+              "items": {
+                "const": "application/json"
+              },
+              "maxItems": 1,
+              "minItems": 1,
+              "type": "array"
+            },
+            "display_name": {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            "enabled": {
+              "const": true
+            },
+            "source_id": {
+              "const": "printer-1"
+            },
+            "source_kind": {
+              "const": "operational_api"
+            }
+          },
+          "required": [
+            "configuration",
+            "connector_type",
+            "credential_reference",
+            "declared_content_types",
+            "display_name",
+            "enabled",
+            "source_id",
+            "source_kind"
+          ],
+          "type": "object"
+        },
+        "state_anchor_id": {
+          "$ref": "#/definitions/state_anchor"
+        }
+      },
+      "required": [
+        "schema",
+        "profile",
+        "id",
+        "revision",
+        "predecessor",
+        "provenance",
+        "carrier_edition",
+        "preset",
+        "source_definition",
+        "reading_locator",
+        "intended_subject_entity_anchor_id",
+        "intended_variable_anchor_id",
+        "constraint_anchor_id",
+        "state_anchor_id",
+        "declared_state_label",
+        "assertion_context",
+        "expected_quantity_kind",
+        "expected_observation_role",
+        "expected_unit",
+        "condition_sources",
+        "material",
+        "binding_set_id",
+        "bindings",
+        "interpretation_set_id",
+        "interpretations"
+      ],
+      "type": "object",
+      "x-class": "authored",
+      "x-max-bytes": 196608,
+      "x-semantic": "DESIGN \u00a74, \u00a74.1, \u00a76: fixed carrier edition context. C cannot redefine the reading locator; fixed reading/anchors/tokens at order 6 (SIM_MEASUREMENT_LOCATOR_MISMATCH); binding/interpretation membership, selectors and window coverage at order 6 (SIM_CONTEXT_MISMATCH)."
+    },
+    "ct.t1-diagnostic.v1": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "enum": [
+            "SIM_USAGE",
+            "SIM_OUTPUT_UNSAFE",
+            "SIM_RESOURCE_LIMIT",
+            "SIM_SCHEMA_INVALID",
+            "SIM_PIN_MISMATCH",
+            "SIM_REFERENCE_MISSING",
+            "SIM_REFERENCE_INVALID",
+            "SIM_EDITION_NOT_PERMITTED",
+            "SIM_PRIOR_MISMATCH",
+            "SIM_BUILD_UNAVAILABLE",
+            "SIM_PERMISSION_TARGET_MISMATCH",
+            "SIM_PERMISSION_SCOPE_MISMATCH",
+            "SIM_EXECUTION_JOIN_MISMATCH",
+            "SIM_MODEL_MATERIAL_MISMATCH",
+            "SIM_CONTEXT_MISMATCH",
+            "SIM_WORLD_DOMAIN",
+            "SIM_PRECISION_LIMIT",
+            "SIM_MEASUREMENT_LOCATOR_MISMATCH",
+            "SIM_DERIVATION_MISMATCH",
+            "SIM_OBSERVATION_JOIN_MISMATCH",
+            "HANDOFF_AUTHORITY_JOIN_MISMATCH",
+            "HANDOFF_JOIN_MISMATCH",
+            "SIM_PUBLICATION_INCOMPLETE",
+            "SIM_TRANSPORT_MISMATCH",
+            "SIM_INTERNAL_ERROR"
+          ]
+        },
+        "exit_class": {
+          "enum": [
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ]
+        },
+        "order": {
+          "enum": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "4a",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9"
+          ]
+        },
+        "schema": {
+          "const": "ct.t1-diagnostic.v1"
+        },
+        "target": {
+          "maxLength": 256,
+          "pattern": "^/",
+          "type": "string",
+          "x-match": "full-string"
+        }
+      },
+      "required": [
+        "schema",
+        "code",
+        "order",
+        "target",
+        "exit_class"
+      ],
+      "type": "object",
+      "x-class": "computed",
+      "x-semantic": "written once to stderr as canonical JSON plus LF; nothing on stdout; exit_class equals the code's class in refusals.json; delegated order-9 refusals pass through the existing ct.diagnostic.v1 unchanged and are never wrapped in this record"
+    },
+    "ct.t1-handoff.v1": {
+      "additionalProperties": false,
+      "properties": {
+        "carriage": {
+          "additionalProperties": false,
+          "properties": {
+            "ended": {
+              "$ref": "#/definitions/datetime"
+            },
+            "instrument_id": {
+              "$ref": "#/definitions/instrument_id"
+            },
+            "interpretation_plan": {
+              "$ref": "#/definitions/t1_ref",
+              "x-target": [
+                "ct.interpretation-plan.v1"
+              ]
+            },
+            "model": {
+              "$ref": "#/definitions/t1_ref",
+              "x-target": [
+                "ct.model.v1"
+              ]
+            },
+            "plan_change": {
+              "type": "null"
+            },
+            "scalar": {
+              "$ref": "#/definitions/canonical_decimal"
+            },
+            "selection_basis": {
+              "const": "inherited"
+            },
+            "started": {
+              "$ref": "#/definitions/datetime"
+            }
+          },
+          "required": [
+            "ended",
+            "instrument_id",
+            "interpretation_plan",
+            "model",
+            "plan_change",
+            "scalar",
+            "selection_basis",
+            "started"
+          ],
+          "type": "object"
+        },
+        "execution_authority": {
+          "$ref": "#/definitions/t1_ref",
+          "x-target": [
+            "ct.authority.v1"
+          ]
+        },
+        "execution_target": {
+          "$ref": "#/definitions/t1_ref",
+          "x-target": [
+            "ct.execution-target.v1"
+          ]
+        },
+        "permission": {
+          "$ref": "#/definitions/t1_ref",
+          "x-target": [
+            "ct.t1-simulation-permission.v1"
+          ]
+        },
+        "prior": {
+          "additionalProperties": false,
+          "properties": {
+            "manifest": {
+              "$ref": "#/definitions/t1_ref",
+              "x-target": [
+                "ct.bundle-manifest.v1"
+              ]
+            },
+            "selection": {
+              "$ref": "#/definitions/t1_ref",
+              "x-target": [
+                "ct.selection.v1"
+              ]
+            }
+          },
+          "required": [
+            "manifest",
+            "selection"
+          ],
+          "type": "object"
+        },
+        "prior_pins": {
+          "additionalProperties": false,
+          "properties": {
+            "authority_sha256": {
+              "$ref": "#/definitions/sha256"
+            },
+            "request_sha256": {
+              "$ref": "#/definitions/sha256"
+            }
+          },
+          "required": [
+            "authority_sha256",
+            "request_sha256"
+          ],
+          "type": "object",
+          "x-semantic": "raw digests of the original prior request/authority external pins; not edges"
+        },
+        "producer_manifest": {
+          "$ref": "#/definitions/t1_ref",
+          "x-target": [
+            "ct.t1-producer-manifest.v1"
+          ]
+        },
+        "profile": {
+          "const": "bdw.checked-temperature.v1"
+        },
+        "public_evidence": {
+          "$ref": "#/definitions/t1_ref",
+          "x-target": [
+            "nm.evidence.v1"
+          ]
+        },
+        "request": {
+          "$ref": "#/definitions/t1_ref",
+          "x-target": [
+            "ct.request.v1"
+          ]
+        },
+        "schema": {
+          "const": "ct.t1-handoff.v1"
+        },
+        "target": {
+          "$ref": "#/definitions/t1_ref",
+          "x-target": [
+            "ct.t1-simulation-target.v1"
+          ]
+        }
+      },
+      "required": [
+        "schema",
+        "profile",
+        "request",
+        "producer_manifest",
+        "target",
+        "permission",
+        "execution_authority",
+        "execution_target",
+        "prior",
+        "prior_pins",
+        "public_evidence",
+        "carriage"
+      ],
+      "type": "object",
+      "x-class": "computed",
+      "x-max-bytes": 32768,
+      "x-semantic": "DESIGN \u00a76: handoff; no A, no F, no self reference."
+    },
+    "ct.t1-producer-manifest.v1": {
+      "additionalProperties": false,
+      "properties": {
+        "edges": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "field": {
+                "maxLength": 256,
+                "pattern": "^(/[^/]*)+$",
+                "type": "string",
+                "x-match": "full-string"
+              },
+              "from": {
+                "$ref": "#/definitions/sha256"
+              },
+              "to": {
+                "$ref": "#/definitions/sha256"
+              }
+            },
+            "required": [
+              "field",
+              "from",
+              "to"
+            ],
+            "type": "object"
+          },
+          "maxItems": 197,
+          "type": "array",
+          "x-semantic": "Exactly independently enumerated typed-reference fields of members other than the nine prior-bundle files, receipt raw_response_digests fields, and prior manifest files[i].sha256 fields. No provenance joins are reference edges. Every field is a literal source JSON pointer. Sorted by (from,field,to)."
+        },
+        "members": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "bytes": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "kind": {
+                "$ref": "#/definitions/t1_ref/properties/kind"
+              },
+              "path": {
+                "maxLength": 240,
+                "pattern": "^(?!.*(^|/)\\.{1,2}(/|$))(objects|evidence|receipt)(/[A-Za-z0-9_.-]+)+$",
+                "type": "string",
+                "x-match": "full-string"
+              },
+              "role": {
+                "enum": [
+                  "input_record",
+                  "prior_bundle_file",
+                  "baseline_evidence",
+                  "producer_receipt",
+                  "raw_body",
+                  "raw_envelope",
+                  "attempt_record",
+                  "extraction_result",
+                  "run_result",
+                  "projection_report",
+                  "logical_query_result",
+                  "transcript",
+                  "snapshot",
+                  "public_evidence",
+                  "temporal_db_diagnostic"
+                ]
+              },
+              "sha256": {
+                "$ref": "#/definitions/sha256"
+              }
+            },
+            "required": [
+              "bytes",
+              "kind",
+              "path",
+              "role",
+              "sha256"
+            ],
+            "type": "object"
+          },
+          "maxItems": 106,
+          "minItems": 1,
+          "type": "array",
+          "x-semantic": "candidate maxItems106 and edges197 are retained conservative structural limits, never a fit guarantee or largest jointly fitting population; byte cap32768 is enforcing; complete reachable closure required"
+        },
+        "profile": {
+          "const": "bdw.checked-temperature.v1"
+        },
+        "roots": {
+          "additionalProperties": false,
+          "properties": {
+            "execution_authority": {
+              "$ref": "#/definitions/t1_ref",
+              "x-target": [
+                "ct.authority.v1"
+              ]
+            },
+            "permission": {
+              "$ref": "#/definitions/t1_ref",
+              "x-target": [
+                "ct.t1-simulation-permission.v1"
+              ]
+            },
+            "receipt": {
+              "$ref": "#/definitions/t1_ref",
+              "x-target": [
+                "ct.t1-producer-receipt.v1"
+              ]
+            },
+            "target": {
+              "$ref": "#/definitions/t1_ref",
+              "x-target": [
+                "ct.t1-simulation-target.v1"
+              ]
+            }
+          },
+          "required": [
+            "execution_authority",
+            "permission",
+            "receipt",
+            "target"
+          ],
+          "type": "object"
+        },
+        "schema": {
+          "const": "ct.t1-producer-manifest.v1"
+        }
+      },
+      "required": [
+        "schema",
+        "profile",
+        "roots",
+        "members",
+        "edges"
+      ],
+      "type": "object",
+      "x-class": "computed",
+      "x-max-bytes": 32768,
+      "x-semantic": "complete closure; cap32768 unchanged; exact-fit/plus-one guards are separately specified and do not certify runtime closure fit"
+    },
+    "ct.t1-producer-receipt.v1": {
+      "additionalProperties": false,
+      "properties": {
+        "actual_measurand": {
+          "additionalProperties": false,
+          "properties": {
+            "subject_entity_anchor_id": {
+              "$ref": "#/definitions/entity_anchor"
+            },
+            "variable_anchor_id": {
+              "$ref": "#/definitions/variable_anchor"
+            }
+          },
+          "required": [
+            "subject_entity_anchor_id",
+            "variable_anchor_id"
+          ],
+          "type": "object"
+        },
+        "admitted": {
+          "additionalProperties": false,
+          "properties": {
+            "attempt_started_at": {
+              "$ref": "#/definitions/datetime"
+            },
+            "evidence_id": {
+              "pattern": "^E-t1-[0-9a-f]{59}$",
+              "type": "string",
+              "x-match": "full-string",
+              "x-semantic": "adopted candidate short representation; full256-bit references determine identity; no ID-only deduplication"
+            },
+            "finished_at": {
+              "$ref": "#/definitions/datetime"
+            },
+            "ingestion_run_id": {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            "occurrence_id": {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            "payload_checksum": {
+              "$ref": "#/definitions/sha256_prefixed"
+            },
+            "raw_record_id": {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            "received_at": {
+              "$ref": "#/definitions/datetime"
+            }
+          },
+          "required": [
+            "attempt_started_at",
+            "evidence_id",
+            "finished_at",
+            "ingestion_run_id",
+            "occurrence_id",
+            "payload_checksum",
+            "raw_record_id",
+            "received_at"
+          ],
+          "type": "object",
+          "x-semantic": "owning backend identifiers are validated by their owning contracts; payload_checksum = 'sha256:' + SHA-256 of the generated printer_objects body"
+        },
+        "captured_policy": {
+          "$ref": "#/definitions/t1_ref",
+          "x-target": [
+            "ct.policy.v1"
+          ]
+        },
+        "context": {
+          "$ref": "#/definitions/t1_ref",
+          "x-target": [
+            "ct.t1-context.v1"
+          ]
+        },
+        "d": {
+          "maximum": 6,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "diagnostics": {
+          "additionalProperties": false,
+          "properties": {
+            "observation_error_bound": {
+              "additionalProperties": false,
+              "properties": {
+                "abs_epsilon_le_w": {
+                  "type": "boolean"
+                },
+                "w": {
+                  "$ref": "#/definitions/rational"
+                }
+              },
+              "required": [
+                "abs_epsilon_le_w",
+                "w"
+              ],
+              "type": "object"
+            },
+            "reference_calibration": {
+              "additionalProperties": false,
+              "properties": {
+                "b_ref": {
+                  "$ref": "#/definitions/interval"
+                },
+                "beta_in_b_ref": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "b_ref",
+                "beta_in_b_ref"
+              ],
+              "type": "object"
+            },
+            "reference_mapping": {
+              "additionalProperties": false,
+              "properties": {
+                "subject_mapping_matches": {
+                  "type": "boolean"
+                },
+                "variable_mapping_matches": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "subject_mapping_matches",
+                "variable_mapping_matches"
+              ],
+              "type": "object"
+            },
+            "state_hold": {
+              "additionalProperties": false,
+              "properties": {
+                "delta": {
+                  "$ref": "#/definitions/canonical_decimal",
+                  "x-semantic": "delta = theta - baseline_theta, exact (F-C7)"
+                },
+                "intended_variable_hold": {
+                  "additionalProperties": false,
+                  "oneOf": [
+                    {
+                      "properties": {
+                        "basis": {
+                          "const": "same_declared_measurand"
+                        },
+                        "delta": {
+                          "type": "string"
+                        },
+                        "theta_equals_baseline_theta": {
+                          "type": "boolean"
+                        }
+                      }
+                    },
+                    {
+                      "properties": {
+                        "basis": {
+                          "const": "not_declared_for_intended_variable"
+                        },
+                        "delta": {
+                          "type": "null"
+                        },
+                        "theta_equals_baseline_theta": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  ],
+                  "properties": {
+                    "basis": {
+                      "enum": [
+                        "same_declared_measurand",
+                        "not_declared_for_intended_variable"
+                      ]
+                    },
+                    "delta": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/canonical_decimal"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "theta_equals_baseline_theta": {
+                      "type": [
+                        "boolean",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "basis",
+                    "theta_equals_baseline_theta",
+                    "delta"
+                  ],
+                  "type": "object",
+                  "x-semantic": "both mapping Booleans true: basis same_declared_measurand, copy exact actual equality/delta; otherwise basis not_declared_for_intended_variable and both values null; never a physical hold assertion"
+                },
+                "model_baseline": {
+                  "$ref": "#/definitions/rational"
+                },
+                "per_hypothesis": {
+                  "items": {
+                    "oneOf": [
+                      {
+                        "additionalProperties": false,
+                        "properties": {
+                          "explanation": {
+                            "$ref": "#/definitions/t1_ref",
+                            "x-target": [
+                              "ct.explanation.v1"
+                            ]
+                          },
+                          "interval": {
+                            "$ref": "#/definitions/interval"
+                          },
+                          "same_referent": {
+                            "const": true
+                          },
+                          "theta_in_interval": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "explanation",
+                          "interval",
+                          "theta_in_interval",
+                          "same_referent"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "additionalProperties": false,
+                        "properties": {
+                          "explanation": {
+                            "$ref": "#/definitions/t1_ref",
+                            "x-target": [
+                              "ct.explanation.v1"
+                            ]
+                          },
+                          "interval": {
+                            "$ref": "#/definitions/interval"
+                          },
+                          "same_referent": {
+                            "const": false
+                          },
+                          "theta_in_interval": {
+                            "const": null
+                          }
+                        },
+                        "required": [
+                          "explanation",
+                          "interval",
+                          "theta_in_interval",
+                          "same_referent"
+                        ],
+                        "type": "object"
+                      }
+                    ],
+                    "x-semantic": "OD-1: theta_in_interval is null exactly when same_referent is false; a null beside same_referent true (or a Boolean beside same_referent false) matches no branch and is SIM_SCHEMA_INVALID"
+                  },
+                  "maxItems": 2,
+                  "minItems": 1,
+                  "type": "array",
+                  "x-semantic": "model_baseline is selected ct.model.baseline = admitted O0 scalar 60.1; interval [model_baseline - b_suspect.hi, model_baseline - b_suspect.lo]; same_referent is the conjunction of the two mapping equalities; theta_in_interval is an exact comparison of the declared window value with the hypothesis-implied baseline true value of the intended variable under hold; it is guaranteed to coincide with hypothesis truth relative to the declared world W when same_referent is true and theta = baseline_theta (sufficiency only); it is null when same_referent is false; it is never physical truth, calibration or causal confirmation"
+                },
+                "theta_equals_baseline_theta": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "delta",
+                "per_hypothesis",
+                "theta_equals_baseline_theta",
+                "model_baseline",
+                "intended_variable_hold"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "observation_error_bound",
+            "reference_calibration",
+            "reference_mapping",
+            "state_hold"
+          ],
+          "type": "object",
+          "x-semantic": "synthetic relations recorded after generation; never a world gate, never a support judgment (DESIGN \u00a73)"
+        },
+        "evidence": {
+          "additionalProperties": false,
+          "properties": {
+            "acquisition_attempts": {
+              "items": {
+                "$ref": "#/definitions/t1_ref",
+                "x-target": [
+                  "ct.t1-opaque-bytes"
+                ]
+              },
+              "maxItems": 2,
+              "minItems": 2,
+              "type": "array",
+              "uniqueItems": true,
+              "x-semantic": "Exactly the two independently reconstructed retained artifacts, ordered by retained path; not authority for derivation."
+            },
+            "db_diagnostics": {
+              "items": {
+                "$ref": "#/definitions/t1_ref",
+                "x-target": [
+                  "ct.t1-opaque-bytes"
+                ]
+              },
+              "maxItems": 8,
+              "minItems": 0,
+              "type": "array",
+              "x-semantic": "ordered by the retained file path under evidence/db/ (ascending byte order of the path); round 6 R6-2"
+            },
+            "extraction_results": {
+              "items": {
+                "$ref": "#/definitions/t1_ref",
+                "x-target": [
+                  "ct.t1-opaque-bytes"
+                ]
+              },
+              "maxItems": 2,
+              "minItems": 2,
+              "type": "array",
+              "uniqueItems": true,
+              "x-semantic": "Exactly the two independently reconstructed retained artifacts, ordered by retained path; not authority for derivation."
+            },
+            "logical_query_results": {
+              "items": {
+                "$ref": "#/definitions/t1_ref",
+                "x-target": [
+                  "ct.t1-opaque-bytes"
+                ]
+              },
+              "maxItems": 16,
+              "minItems": 1,
+              "type": "array",
+              "x-semantic": "ordered by the retained file path under evidence/query/ (ascending byte order of the path); round 6 R6-2"
+            },
+            "projection_report": {
+              "$ref": "#/definitions/t1_ref",
+              "x-target": [
+                "ct.t1-opaque-bytes"
+              ]
+            },
+            "raw_envelopes": {
+              "items": {
+                "$ref": "#/definitions/t1_ref",
+                "x-target": [
+                  "ct.t1-opaque-bytes"
+                ]
+              },
+              "maxItems": 2,
+              "minItems": 2,
+              "type": "array",
+              "uniqueItems": true,
+              "x-semantic": "Exactly the two independently reconstructed retained artifacts, ordered by retained path; not authority for derivation."
+            },
+            "run_result": {
+              "$ref": "#/definitions/t1_ref",
+              "x-target": [
+                "ct.t1-opaque-bytes"
+              ]
+            },
+            "snapshot": {
+              "$ref": "#/definitions/t1_ref",
+              "x-target": [
+                "ct.t1-opaque-bytes"
+              ]
+            }
+          },
+          "required": [
+            "run_result",
+            "projection_report",
+            "logical_query_results",
+            "snapshot",
+            "db_diagnostics",
+            "raw_envelopes",
+            "acquisition_attempts",
+            "extraction_results"
+          ],
+          "type": "object",
+          "x-semantic": "typed references to the retained evidence files (raw bytes); they are the M edges from the receipt to those members (fields /evidence/<name> and /evidence/db_diagnostics/<i>); 7.6 requires each to equal the digest of the retained file at its evidence path (round 5 R5-A, R5-C); the temporal store is closed and the DB/WAL/SHM and query files are copied into the package and their digests taken before the receipt is written (round 6 R6-2)"
+        },
+        "execution_authority": {
+          "$ref": "#/definitions/t1_ref",
+          "x-target": [
+            "ct.authority.v1"
+          ]
+        },
+        "execution_target": {
+          "$ref": "#/definitions/t1_ref",
+          "x-target": [
+            "ct.execution-target.v1"
+          ]
+        },
+        "intended": {
+          "additionalProperties": false,
+          "properties": {
+            "subject": {
+              "$ref": "#/definitions/entity_anchor"
+            },
+            "unit": {
+              "const": "degree_celsius"
+            },
+            "variable": {
+              "$ref": "#/definitions/variable_anchor"
+            }
+          },
+          "required": [
+            "subject",
+            "unit",
+            "variable"
+          ],
+          "type": "object"
+        },
+        "limitations": {
+          "const": [
+            "synthetic world declaration, not a physical measurement",
+            "unauthenticated local provenance; no authenticated issuer, expiry or chronology",
+            "no physical, calibration, mapping or causal truth is established",
+            "same J/G reproduction is the same declared occurrence, not new evidence",
+            "additive convention r = theta + beta + epsilon is a rule premise, not an empirical law",
+            "theta is constant within the window by declaration",
+            "a single epsilon realization says nothing about repeated-error distributions or about w",
+            "no continuity between the baseline instant and the window is established",
+            "the synthetic baseline counterpart is declared, not retrospectively authenticated",
+            "instrument identity is locally declared; no device authentication",
+            "the unit is an interpretation token over a raw occurrence whose declared_unit is null",
+            "no alternative causal mechanism is represented",
+            "ancillary carrier values are fixed constants with no physical coherence with theta",
+            "its state_hold relations are synthetic declarations, not state-hold evidence",
+            "the receipt has no hypothesis-truth field; theta_in_interval is guaranteed to coincide with truth relative to W when same_referent and theta_equals_baseline_theta are both true; otherwise no coincidence is guaranteed and it must not be read as truth",
+            "actual-measurand hold never substitutes for intended-variable hold under wrong mapping",
+            "a completed workflow and compatible hypothesis do not establish hypothesis truth; per-hypothesis comparisons are exact model-relative relations",
+            "the reference reading uses the same source locator as the suspect baseline reading; independence of b_ref from b_suspect is declared, not established; under closed-loop regulation of one sensor it would not hold",
+            "compatible means every decoder region reached by [r \u2212 w, r + w] is permitted by the hypothesis's ideal set; it does not mean the interval meets that set",
+            "worlds that differ in hypothesis truth or in which premises are false can produce the same reading; the reading alone cannot separate them"
+          ]
+        },
+        "operands": {
+          "additionalProperties": false,
+          "properties": {
+            "baseline_theta": {
+              "$ref": "#/definitions/canonical_decimal"
+            },
+            "beta": {
+              "$ref": "#/definitions/canonical_decimal"
+            },
+            "epsilon": {
+              "$ref": "#/definitions/canonical_decimal"
+            },
+            "theta": {
+              "$ref": "#/definitions/canonical_decimal"
+            }
+          },
+          "required": [
+            "baseline_theta",
+            "beta",
+            "epsilon",
+            "theta"
+          ],
+          "type": "object"
+        },
+        "permission": {
+          "$ref": "#/definitions/t1_ref",
+          "x-target": [
+            "ct.t1-simulation-permission.v1"
+          ]
+        },
+        "producer_build": {
+          "$ref": "#/definitions/t1_ref",
+          "x-target": [
+            "ct.build.v1"
+          ]
+        },
+        "profile": {
+          "const": "bdw.checked-temperature.v1"
+        },
+        "public_evidence": {
+          "$ref": "#/definitions/t1_ref",
+          "x-target": [
+            "nm.evidence.v1"
+          ]
+        },
+        "r": {
+          "$ref": "#/definitions/canonical_decimal"
+        },
+        "raw_response_digests": {
+          "additionalProperties": false,
+          "properties": {
+            "printer_objects": {
+              "$ref": "#/definitions/sha256"
+            },
+            "server_info": {
+              "$ref": "#/definitions/sha256"
+            }
+          },
+          "required": [
+            "printer_objects",
+            "server_info"
+          ],
+          "type": "object"
+        },
+        "reading_locator": {
+          "$ref": "#/definitions/source_locator"
+        },
+        "rule": {
+          "$ref": "#/definitions/t1_ref",
+          "x-target": [
+            "ct.t1-simulator-rule.v2"
+          ]
+        },
+        "schema": {
+          "const": "ct.t1-producer-receipt.v1"
+        },
+        "simulator_policy": {
+          "$ref": "#/definitions/t1_ref",
+          "x-target": [
+            "ct.t1-simulator-policy.v1"
+          ]
+        },
+        "target": {
+          "$ref": "#/definitions/t1_ref",
+          "x-target": [
+            "ct.t1-simulation-target.v1"
+          ]
+        },
+        "transcripts": {
+          "additionalProperties": false,
+          "properties": {
+            "monotonic": {
+              "$ref": "#/definitions/t1_ref",
+              "x-target": [
+                "ct.t1-opaque-bytes"
+              ]
+            },
+            "transport": {
+              "$ref": "#/definitions/t1_ref",
+              "x-target": [
+                "ct.t1-opaque-bytes"
+              ]
+            },
+            "wall_clock": {
+              "$ref": "#/definitions/t1_ref",
+              "x-target": [
+                "ct.t1-opaque-bytes"
+              ]
+            }
+          },
+          "required": [
+            "monotonic",
+            "transport",
+            "wall_clock"
+          ],
+          "type": "object"
+        },
+        "world": {
+          "$ref": "#/definitions/t1_ref",
+          "x-target": [
+            "ct.t1-world.v1"
+          ]
+        }
+      },
+      "required": [
+        "schema",
+        "profile",
+        "target",
+        "permission",
+        "execution_authority",
+        "execution_target",
+        "world",
+        "context",
+        "rule",
+        "simulator_policy",
+        "captured_policy",
+        "producer_build",
+        "operands",
+        "r",
+        "d",
+        "diagnostics",
+        "intended",
+        "actual_measurand",
+        "reading_locator",
+        "admitted",
+        "public_evidence",
+        "raw_response_digests",
+        "transcripts",
+        "limitations",
+        "evidence"
+      ],
+      "type": "object",
+      "x-class": "computed",
+      "x-semantic": "DESIGN \u00a76: producer receipt; no self reference and no M reference; listed by M as a root."
+    },
+    "ct.t1-simulation-permission.v1": {
+      "additionalProperties": false,
+      "properties": {
+        "execution_authority": {
+          "$ref": "#/definitions/t1_ref",
+          "x-semantic": "purpose execution; must be exactly the externally pinned E (order 3)",
+          "x-target": [
+            "ct.authority.v1"
+          ]
+        },
+        "grants": {
+          "const": {
+            "adoption": false,
+            "evaluation": false,
+            "physical_acquisition": false,
+            "simulation": true
+          }
+        },
+        "id": {
+          "$ref": "#/definitions/id"
+        },
+        "predecessor": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/definitions/t1_ref",
+              "x-target": [
+                "ct.t1-simulation-permission.v1"
+              ]
+            }
+          ]
+        },
+        "profile": {
+          "const": "bdw.checked-temperature.v1"
+        },
+        "provenance": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/attestation"
+            }
+          ],
+          "x-allowed-roles": [
+            "local_execution_issuer"
+          ]
+        },
+        "purpose": {
+          "const": "simulation"
+        },
+        "revision": {
+          "maximum": 4,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "schema": {
+          "const": "ct.t1-simulation-permission.v1"
+        },
+        "scope": {
+          "additionalProperties": false,
+          "properties": {
+            "captured_policy": {
+              "$ref": "#/definitions/t1_ref",
+              "x-target": [
+                "ct.policy.v1"
+              ]
+            },
+            "producer_build": {
+              "$ref": "#/definitions/t1_ref",
+              "x-target": [
+                "ct.build.v1"
+              ]
+            },
+            "rule": {
+              "$ref": "#/definitions/t1_ref",
+              "x-target": [
+                "ct.t1-simulator-rule.v2"
+              ]
+            },
+            "simulator_policy": {
+              "$ref": "#/definitions/t1_ref",
+              "x-target": [
+                "ct.t1-simulator-policy.v1"
+              ]
+            }
+          },
+          "required": [
+            "captured_policy",
+            "producer_build",
+            "rule",
+            "simulator_policy"
+          ],
+          "type": "object",
+          "x-semantic": "each member must equal the same field of J (order 3, SIM_PERMISSION_SCOPE_MISMATCH /G/scope)"
+        },
+        "target": {
+          "$ref": "#/definitions/t1_ref",
+          "x-target": [
+            "ct.t1-simulation-target.v1"
+          ]
+        },
+        "valid": {
+          "$ref": "#/definitions/window",
+          "x-semantic": "closed; must contain J.window inclusive (declared-time containment, order 3 /G/valid)"
+        }
+      },
+      "required": [
+        "schema",
+        "profile",
+        "id",
+        "revision",
+        "predecessor",
+        "provenance",
+        "purpose",
+        "target",
+        "execution_authority",
+        "scope",
+        "valid",
+        "grants"
+      ],
+      "type": "object",
+      "x-class": "authored",
+      "x-max-bytes": 4096,
+      "x-semantic": "DESIGN \u00a75: simulation-only permission issued by a local human issuer (authenticated=false); grants no physical acquisition, evaluation or adoption; never output by any command."
+    },
+    "ct.t1-simulation-target.v1": {
+      "additionalProperties": false,
+      "properties": {
+        "captured_policy": {
+          "$ref": "#/definitions/t1_ref",
+          "x-target": [
+            "ct.policy.v1"
+          ]
+        },
+        "clock_rule": {
+          "const": "wall:t0+k;monotonic:k/1024"
+        },
+        "companion_schemas_sha256": {
+          "$ref": "#/definitions/sha256"
+        },
+        "context": {
+          "$ref": "#/definitions/t1_ref",
+          "x-target": [
+            "ct.t1-context.v1"
+          ]
+        },
+        "execution_target": {
+          "$ref": "#/definitions/t1_ref",
+          "x-target": [
+            "ct.execution-target.v1"
+          ]
+        },
+        "id": {
+          "$ref": "#/definitions/id"
+        },
+        "instrument_id": {
+          "$ref": "#/definitions/instrument_id"
+        },
+        "logical_run_id": {
+          "$ref": "#/definitions/id"
+        },
+        "predecessor": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/definitions/t1_ref",
+              "x-target": [
+                "ct.t1-simulation-target.v1"
+              ]
+            }
+          ]
+        },
+        "producer_build": {
+          "$ref": "#/definitions/t1_ref",
+          "x-target": [
+            "ct.build.v1"
+          ]
+        },
+        "profile": {
+          "const": "bdw.checked-temperature.v1"
+        },
+        "provenance": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/attestation"
+            }
+          ],
+          "x-allowed-roles": [
+            "local_model_proposer"
+          ]
+        },
+        "question_as_of": {
+          "$ref": "#/definitions/datetime",
+          "x-semantic": "= window.to (order 0)"
+        },
+        "resource_bounds": {
+          "$ref": "#/definitions/resource_bounds"
+        },
+        "revision": {
+          "maximum": 4,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "rule": {
+          "$ref": "#/definitions/t1_ref",
+          "x-target": [
+            "ct.t1-simulator-rule.v2"
+          ]
+        },
+        "schema": {
+          "const": "ct.t1-simulation-target.v1"
+        },
+        "simulator_policy": {
+          "$ref": "#/definitions/t1_ref",
+          "x-target": [
+            "ct.t1-simulator-policy.v1"
+          ]
+        },
+        "t0": {
+          "$ref": "#/definitions/datetime"
+        },
+        "window": {
+          "$ref": "#/definitions/window",
+          "x-semantic": "from = t0 and to = t0 + 120 s exactly (order 0 structural rule, SIM_SCHEMA_INVALID /J/window)"
+        },
+        "world": {
+          "$ref": "#/definitions/t1_ref",
+          "x-target": [
+            "ct.t1-world.v1"
+          ]
+        }
+      },
+      "required": [
+        "schema",
+        "profile",
+        "id",
+        "revision",
+        "predecessor",
+        "provenance",
+        "execution_target",
+        "world",
+        "context",
+        "rule",
+        "simulator_policy",
+        "captured_policy",
+        "producer_build",
+        "companion_schemas_sha256",
+        "logical_run_id",
+        "instrument_id",
+        "t0",
+        "clock_rule",
+        "window",
+        "question_as_of",
+        "resource_bounds"
+      ],
+      "type": "object",
+      "x-class": "authored",
+      "x-max-bytes": 16384,
+      "x-semantic": "DESIGN \u00a75: J commits exact X/W/C, rule/preset/policy/build, run ID, declared timing and finite bounds. No reference to G, O, R, A, M, H or F."
+    },
+    "ct.t1-simulator-policy.v1": {
+      "additionalProperties": false,
+      "properties": {
+        "companion_schemas_sha256": {
+          "$ref": "#/definitions/sha256"
+        },
+        "id": {
+          "$ref": "#/definitions/id"
+        },
+        "permitted_checker_builds": {
+          "items": {
+            "$ref": "#/definitions/sha256"
+          },
+          "maxItems": 8,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "permitted_producer_builds": {
+          "items": {
+            "$ref": "#/definitions/sha256"
+          },
+          "maxItems": 8,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "predecessor": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/definitions/t1_ref",
+              "x-target": [
+                "ct.t1-simulator-policy.v1"
+              ]
+            }
+          ]
+        },
+        "preset_sha256": {
+          "$ref": "#/definitions/sha256"
+        },
+        "profile": {
+          "const": "bdw.checked-temperature.v1"
+        },
+        "provenance": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/attestation"
+            }
+          ],
+          "x-allowed-roles": [
+            "local_policy_owner"
+          ]
+        },
+        "record_caps": {
+          "const": {
+            "context": 196608,
+            "handoff": 32768,
+            "permission": 4096,
+            "producer_manifest": 32768,
+            "target": 16384,
+            "workflow_receipt": 16384,
+            "world": 8192
+          },
+          "x-semantic": "edition ceilings in bytes, enforced at order 0 (SIM_RESOURCE_LIMIT); no tightening in this edition"
+        },
+        "resource_maxima": {
+          "$ref": "#/definitions/resource_bounds"
+        },
+        "revision": {
+          "maximum": 4,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "rule": {
+          "$ref": "#/definitions/t1_ref",
+          "x-target": [
+            "ct.t1-simulator-rule.v2"
+          ]
+        },
+        "schema": {
+          "const": "ct.t1-simulator-policy.v1"
+        }
+      },
+      "required": [
+        "schema",
+        "profile",
+        "id",
+        "revision",
+        "predecessor",
+        "provenance",
+        "rule",
+        "preset_sha256",
+        "companion_schemas_sha256",
+        "permitted_producer_builds",
+        "permitted_checker_builds",
+        "resource_maxima",
+        "record_caps"
+      ],
+      "type": "object",
+      "x-class": "authored",
+      "x-semantic": "F-C2: the design's simulator/producer policy made concrete (DESIGN \u00a75 order 2, \u00a79). A record that carries any member outside this closed shape (for example an x-unresolved list) is structurally inadmissible; placeholder digests are never executable authority."
+    },
+    "ct.t1-simulator-rule.v2": {
+      "additionalProperties": false,
+      "properties": {
+        "arithmetic": {
+          "const": "exact decimal rational"
+        },
+        "carrier_serialization": {
+          "const": "Strict UTF-8, no BOM, no terminal newline; compact JSON with separators ',' and ':' only; object keys sorted by Unicode scalar value; arrays in declared order; no duplicate keys; finite numbers only. Strings use JSON quoting: quote and backslash escaped, \\b \\t \\n \\f \\r short escapes, remaining U+0000-U+001F as lowercase \\u00xx, all other Unicode scalars encoded directly, no normalization, unpaired surrogates refused, '/' unescaped. Decimal numeric tokens are written in shortest exact fixed-point form: no exponent, no leading plus, no redundant leading or trailing zeros, integers without '.0', every signed zero written 0. Arithmetic rationals are reduced integer numerator over positive denominator dividing 10^d, never binary float. The serializer covers every preset numeric leaf and r, not only the substituted value."
+        },
+        "clocks": {
+          "const": {
+            "monotonic": {
+              "max_calls": 128,
+              "rule": "k/1024 seconds, k starting at 1"
+            },
+            "wall": {
+              "max_calls": 64,
+              "rule": "t0 + k seconds, k starting at 1"
+            }
+          }
+        },
+        "domains": {
+          "additionalProperties": false,
+          "properties": {
+            "baseline_theta": {
+              "additionalProperties": false,
+              "properties": {
+                "hi": {
+                  "const": "1000"
+                },
+                "lo": {
+                  "const": "-200"
+                }
+              },
+              "required": [
+                "hi",
+                "lo"
+              ],
+              "type": "object"
+            },
+            "beta": {
+              "additionalProperties": false,
+              "properties": {
+                "hi": {
+                  "const": "10"
+                },
+                "lo": {
+                  "const": "-10"
+                }
+              },
+              "required": [
+                "hi",
+                "lo"
+              ],
+              "type": "object"
+            },
+            "epsilon": {
+              "additionalProperties": false,
+              "properties": {
+                "hi": {
+                  "const": "5"
+                },
+                "lo": {
+                  "const": "-5"
+                }
+              },
+              "required": [
+                "hi",
+                "lo"
+              ],
+              "type": "object"
+            },
+            "r": {
+              "additionalProperties": false,
+              "properties": {
+                "hi": {
+                  "const": "1000"
+                },
+                "lo": {
+                  "const": "-200"
+                }
+              },
+              "required": [
+                "hi",
+                "lo"
+              ],
+              "type": "object"
+            },
+            "theta": {
+              "additionalProperties": false,
+              "properties": {
+                "hi": {
+                  "const": "1000"
+                },
+                "lo": {
+                  "const": "-200"
+                }
+              },
+              "required": [
+                "hi",
+                "lo"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "baseline_theta",
+            "beta",
+            "epsilon",
+            "r",
+            "theta"
+          ],
+          "type": "object"
+        },
+        "edition": {
+          "const": "ct.t1-simulator.v2"
+        },
+        "evidence_id_rule": {
+          "const": "E-t1- followed by the first 59 lowercase hex characters of digest(J) (64 characters; candidate representation; full digests remain identity)"
+        },
+        "formula": {
+          "const": "r = theta + beta + epsilon"
+        },
+        "fractional_digits_rule": {
+          "const": "d = min(6, captured_policy.limits.fractional_digits)"
+        },
+        "id": {
+          "$ref": "#/definitions/id"
+        },
+        "marker": {
+          "const": {
+            "fields": [
+              "logical_run_id",
+              "simulation_permission_sha256",
+              "simulation_target_sha256",
+              "world_sha256"
+            ],
+            "key": "_application_simulation",
+            "placement": "added to the root object of each of the two response bodies",
+            "values": "logical_run_id = J.logical_run_id; simulation_target_sha256 = digest(J); simulation_permission_sha256 = digest(G); world_sha256 = digest(W); digests are 64 lowercase hex characters without prefix"
+          }
+        },
+        "predecessor": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/definitions/t1_ref",
+              "x-target": [
+                "ct.t1-simulator-rule.v2"
+              ]
+            }
+          ]
+        },
+        "preset": {
+          "$ref": "#/definitions/t1_ref",
+          "x-target": [
+            "ct.t1-carrier-preset.v1"
+          ]
+        },
+        "profile": {
+          "const": "bdw.checked-temperature.v1"
+        },
+        "provenance": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/attestation"
+            }
+          ],
+          "x-allowed-roles": [
+            "local_model_proposer"
+          ]
+        },
+        "referents": {
+          "const": {
+            "baseline_theta": "latent value of that same actually sampled quantity at the baseline instant",
+            "cross_referent": "theta and baseline_theta refer to W.actual_measurand; their equality and delta describe only that declared measurand. Per-hypothesis intervals use captured model baseline of the intended variable. If either mapping equality is false, intended_variable_hold is not_declared_for_intended_variable with null equality/delta; per-hypothesis same_referent is false. No Boolean about actual hold establishes intended hold; all comparisons are synthetic exact model-relative relations, not hypothesis truth or causal confirmation.",
+            "domains": "domain and precision restrictions are engineering/profile restrictions, not evidence that model assumptions hold",
+            "theta": "window value of the quantity the instrument actually samples (W.actual_measurand)"
+          }
+        },
+        "revision": {
+          "maximum": 4,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "schema": {
+          "const": "ct.t1-simulator-rule.v2"
+        },
+        "sign_conventions": {
+          "const": {
+            "b_suspect": "hypothesized total error (systematic plus random) of the single baseline reading, baseline reading \u2212 true; enters the implied baseline true temperature with -",
+            "beta": "instrument bias = reading - true; enters r with +; compared with b_ref under the same convention",
+            "consistency": "Under (i) actual = intended measurand, (ii) theta = baseline_theta, (iii) beta in b_ref, (iv) |epsilon| <= w and (v) baseline reading - baseline_theta in b_suspect(H), the interpretation interval [r - w, r + w] meets the ideal predicted set of H (sufficient, not necessary); for b_ref = [0,0] the beta sign convention is not observable in beta_in_b_ref or the predicted set"
+          }
+        },
+        "transport": {
+          "const": {
+            "calls": 2,
+            "max_response_bytes": 16384,
+            "method": "GET",
+            "order": [
+              "/server/info",
+              "/printer/objects/query?extruder=target,temperature&heater_bed=target,temperature&print_stats=print_duration,state,total_duration&toolhead=homed_axes,position&virtual_sdcard=is_active,progress"
+            ],
+            "request_headers": {},
+            "request_timeout_seconds": 30,
+            "response_headers": [
+              "Content-Type: application/json",
+              "Date: IMF-fixdate(t0+5s)"
+            ],
+            "retries": 0,
+            "status": 200,
+            "sweep_deadline_seconds": 60
+          }
+        },
+        "unit": {
+          "const": "degree_celsius"
+        },
+        "window_seconds": {
+          "const": 120
+        }
+      },
+      "required": [
+        "schema",
+        "profile",
+        "id",
+        "revision",
+        "predecessor",
+        "provenance",
+        "edition",
+        "formula",
+        "arithmetic",
+        "domains",
+        "fractional_digits_rule",
+        "unit",
+        "preset",
+        "carrier_serialization",
+        "marker",
+        "transport",
+        "clocks",
+        "evidence_id_rule",
+        "window_seconds",
+        "referents",
+        "sign_conventions"
+      ],
+      "type": "object",
+      "x-class": "authored",
+      "x-semantic": "DESIGN \u00a73, \u00a77: fixed simulator rule edition ct.t1-simulator.v2; digest allowlisted by the simulator policy and committed by J and G.scope."
+    },
+    "ct.t1-verification-report.v1": {
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "checker_build": {
+              "$ref": "#/definitions/t1_ref",
+              "x-target": [
+                "ct.build.v1"
+              ]
+            },
+            "checks": {
+              "const": [
+                {
+                  "name": "external_roots",
+                  "result": "checked"
+                },
+                {
+                  "name": "manifest_closure",
+                  "result": "checked"
+                },
+                {
+                  "name": "editions_builds_and_prior",
+                  "result": "checked"
+                },
+                {
+                  "name": "permissions",
+                  "result": "checked"
+                },
+                {
+                  "name": "execution_and_material_joins",
+                  "result": "checked"
+                },
+                {
+                  "name": "world_intended_anchors",
+                  "result": "checked"
+                },
+                {
+                  "name": "world_domains_and_precision",
+                  "result": "checked"
+                },
+                {
+                  "name": "context_reading_and_coverage",
+                  "result": "checked"
+                },
+                {
+                  "name": "independent_carrier_and_clock_derivation",
+                  "result": "checked"
+                },
+                {
+                  "name": "public_evidence_reading_locator",
+                  "result": "checked"
+                },
+                {
+                  "name": "public_evidence_material",
+                  "result": "checked"
+                },
+                {
+                  "name": "same_occurrence_times_and_value",
+                  "result": "checked"
+                },
+                {
+                  "name": "scratch_public_reconstruction",
+                  "result": "checked"
+                },
+                {
+                  "name": "receipt_diagnostics_recomputed",
+                  "result": "checked"
+                }
+              ]
+            },
+            "guarantee": {
+              "const": "simulation-verified"
+            },
+            "limitations": {
+              "const": [
+                "the verified observation is synthetic; verification establishes consistency with locally held pins (declared, unauthenticated provenance), not physical truth",
+                "verification establishes consistency with locally held, unauthenticated pins; no authenticated provenance",
+                "a reproduction under the same J/G is the same declared occurrence, not new evidence",
+                "checker and producer share owning public validators (a disclosed common dependency)",
+                "the additive premise r = theta + beta + epsilon is shared by producer and oracle",
+                "checker/producer common dependencies are listed by their build manifests",
+                "for the first complete workflow the checker build equals the producer build; a distinct checker build requires a captured policy issued listing both digests before R exists; verification is not implementation-independent",
+                "applicability premises reach the reassessment only through supplied reviews; they are not compared with the 7.6-verified receipt diagnostics, which may record the same premise as false in W"
+              ]
+            },
+            "operation": {
+              "const": "t1-simulation-verify"
+            },
+            "profile": {
+              "const": "bdw.checked-temperature.v1"
+            },
+            "reconstruction": {
+              "additionalProperties": false,
+              "properties": {
+                "occurrence_id": {
+                  "maxLength": 256,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "public_evidence_digest_equal": {
+                  "const": true
+                },
+                "raw_digests_equal": {
+                  "const": true
+                },
+                "transcripts_equal": {
+                  "const": true
+                }
+              },
+              "required": [
+                "occurrence_id",
+                "public_evidence_digest_equal",
+                "raw_digests_equal",
+                "transcripts_equal"
+              ],
+              "type": "object"
+            },
+            "schema": {
+              "const": "ct.t1-verification-report.v1"
+            },
+            "scratch_accounting": {
+              "additionalProperties": false,
+              "properties": {
+                "allocated_bytes": {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "directories": {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "files": {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "logical_bytes": {
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "allocated_bytes",
+                "directories",
+                "files",
+                "logical_bytes"
+              ],
+              "type": "object"
+            },
+            "subject": {
+              "$ref": "#/definitions/t1_ref",
+              "x-target": [
+                "ct.t1-producer-manifest.v1"
+              ]
+            }
+          },
+          "required": [
+            "schema",
+            "profile",
+            "operation",
+            "subject",
+            "checks",
+            "reconstruction",
+            "scratch_accounting",
+            "checker_build",
+            "guarantee",
+            "limitations"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "checker_build": {
+              "$ref": "#/definitions/t1_ref",
+              "x-target": [
+                "ct.build.v1"
+              ]
+            },
+            "checks": {
+              "const": [
+                {
+                  "name": "workflow_receipt_root",
+                  "result": "checked"
+                },
+                {
+                  "name": "external_roots",
+                  "result": "checked"
+                },
+                {
+                  "name": "manifest_closure",
+                  "result": "checked"
+                },
+                {
+                  "name": "editions_builds_and_prior",
+                  "result": "checked"
+                },
+                {
+                  "name": "permissions",
+                  "result": "checked"
+                },
+                {
+                  "name": "execution_and_material_joins",
+                  "result": "checked"
+                },
+                {
+                  "name": "world_intended_anchors",
+                  "result": "checked"
+                },
+                {
+                  "name": "world_domains_and_precision",
+                  "result": "checked"
+                },
+                {
+                  "name": "context_reading_and_coverage",
+                  "result": "checked"
+                },
+                {
+                  "name": "independent_carrier_and_clock_derivation",
+                  "result": "checked"
+                },
+                {
+                  "name": "public_evidence_reading_locator",
+                  "result": "checked"
+                },
+                {
+                  "name": "public_evidence_material",
+                  "result": "checked"
+                },
+                {
+                  "name": "same_occurrence_times_and_value",
+                  "result": "checked"
+                },
+                {
+                  "name": "scratch_public_reconstruction",
+                  "result": "checked"
+                },
+                {
+                  "name": "receipt_diagnostics_recomputed",
+                  "result": "checked"
+                },
+                {
+                  "name": "handoff_execution_authority_join",
+                  "result": "checked"
+                },
+                {
+                  "name": "handoff_carriage_joins",
+                  "result": "checked"
+                },
+                {
+                  "name": "checked_output_bundle",
+                  "result": "checked"
+                },
+                {
+                  "name": "evaluation_authority",
+                  "result": "checked"
+                }
+              ]
+            },
+            "guarantee": {
+              "const": "producer-checked"
+            },
+            "limitations": {
+              "const": [
+                "the verified observation is synthetic; verification establishes consistency with locally held pins (declared, unauthenticated provenance), not physical truth",
+                "verification establishes consistency with locally held, unauthenticated pins; no authenticated provenance",
+                "a reproduction under the same J/G is the same declared occurrence, not new evidence",
+                "checker and producer share owning public validators (a disclosed common dependency)",
+                "the additive premise r = theta + beta + epsilon is shared by producer and oracle",
+                "checker/producer common dependencies are listed by their build manifests",
+                "for the first complete workflow the checker build equals the producer build; a distinct checker build requires a captured policy issued listing both digests before R exists; verification is not implementation-independent",
+                "applicability premises reach the reassessment only through supplied reviews; they are not compared with the 7.6-verified receipt diagnostics, which may record the same premise as false in W"
+              ]
+            },
+            "operation": {
+              "const": "t1-workflow-verify"
+            },
+            "profile": {
+              "const": "bdw.checked-temperature.v1"
+            },
+            "reconstruction": {
+              "additionalProperties": false,
+              "properties": {
+                "occurrence_id": {
+                  "maxLength": 256,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "public_evidence_digest_equal": {
+                  "const": true
+                },
+                "raw_digests_equal": {
+                  "const": true
+                },
+                "transcripts_equal": {
+                  "const": true
+                }
+              },
+              "required": [
+                "occurrence_id",
+                "public_evidence_digest_equal",
+                "raw_digests_equal",
+                "transcripts_equal"
+              ],
+              "type": "object"
+            },
+            "schema": {
+              "const": "ct.t1-verification-report.v1"
+            },
+            "scratch_accounting": {
+              "additionalProperties": false,
+              "properties": {
+                "allocated_bytes": {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "directories": {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "files": {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "logical_bytes": {
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "allocated_bytes",
+                "directories",
+                "files",
+                "logical_bytes"
+              ],
+              "type": "object"
+            },
+            "subject": {
+              "$ref": "#/definitions/t1_ref",
+              "x-target": [
+                "ct.t1-workflow-receipt.v1"
+              ]
+            }
+          },
+          "required": [
+            "schema",
+            "profile",
+            "operation",
+            "subject",
+            "checks",
+            "reconstruction",
+            "scratch_accounting",
+            "checker_build",
+            "guarantee",
+            "limitations"
+          ],
+          "type": "object"
+        }
+      ],
+      "x-class": "computed",
+      "x-semantic": "F-C3: the design's verifier report made concrete (DESIGN \u00a76, \u00a78). Emitted only on success; check names and order fixed (CONTRACT \u00a711.2). producer-checked only from t1-workflow-verify."
+    },
+    "ct.t1-workflow-receipt.v1": {
+      "additionalProperties": false,
+      "properties": {
+        "checker_build": {
+          "$ref": "#/definitions/t1_ref",
+          "x-target": [
+            "ct.build.v1"
+          ]
+        },
+        "evaluation_authority": {
+          "$ref": "#/definitions/t1_ref",
+          "x-target": [
+            "ct.authority.v1"
+          ]
+        },
+        "execution_authority": {
+          "$ref": "#/definitions/t1_ref",
+          "x-target": [
+            "ct.authority.v1"
+          ]
+        },
+        "guarantee": {
+          "const": "producer-checked"
+        },
+        "handoff": {
+          "$ref": "#/definitions/t1_ref",
+          "x-target": [
+            "ct.t1-handoff.v1"
+          ]
+        },
+        "limitations": {
+          "const": [
+            "producer-checked attests consistency of the companion records of a synthetic simulated acquisition with locally held pins (declared, unauthenticated provenance), not physical truth",
+            "unauthenticated local issuance; declared-time containment only; no global anti-replay",
+            "checked reassessment semantics are the unchanged v4/C1/C2 scope",
+            "no adoption, reranking or causal diagnosis",
+            "additive convention r = theta + beta + epsilon is a rule premise, not an empirical law",
+            "theta is constant within the window by declaration",
+            "a single epsilon realization says nothing about repeated-error distributions or about w",
+            "no continuity between the baseline instant and the window is established",
+            "the synthetic baseline counterpart is declared, not retrospectively authenticated",
+            "instrument identity is locally declared; no device authentication",
+            "the unit is an interpretation token over a raw occurrence whose declared_unit is null",
+            "no alternative causal mechanism is represented",
+            "ancillary carrier values are fixed constants with no physical coherence with theta",
+            "its state_hold relations are synthetic declarations, not state-hold evidence",
+            "the receipt has no hypothesis-truth field; theta_in_interval is guaranteed to coincide with truth relative to W when same_referent and theta_equals_baseline_theta are both true; otherwise no coincidence is guaranteed and it must not be read as truth",
+            "actual-measurand hold never substitutes for intended-variable hold under wrong mapping",
+            "a completed workflow and compatible hypothesis do not establish hypothesis truth; per-hypothesis comparisons are exact model-relative relations",
+            "the reference reading uses the same source locator as the suspect baseline reading; independence of b_ref from b_suspect is declared, not established; under closed-loop regulation of one sensor it would not hold",
+            "compatible means every decoder region reached by [r \u2212 w, r + w] is permitted by the hypothesis's ideal set; it does not mean the interval meets that set",
+            "worlds that differ in hypothesis truth or in which premises are false can produce the same reading; the reading alone cannot separate them",
+            "applicability premises reach the reassessment only through supplied reviews; they are not compared with the 7.6-verified receipt diagnostics, which may record the same premise as false in W"
+          ]
+        },
+        "output_manifest": {
+          "$ref": "#/definitions/t1_ref",
+          "x-target": [
+            "ct.bundle-manifest.v1"
+          ]
+        },
+        "permission": {
+          "$ref": "#/definitions/t1_ref",
+          "x-target": [
+            "ct.t1-simulation-permission.v1"
+          ]
+        },
+        "prior_pins": {
+          "additionalProperties": false,
+          "properties": {
+            "authority_sha256": {
+              "$ref": "#/definitions/sha256"
+            },
+            "request_sha256": {
+              "$ref": "#/definitions/sha256"
+            }
+          },
+          "required": [
+            "authority_sha256",
+            "request_sha256"
+          ],
+          "type": "object"
+        },
+        "producer_build": {
+          "$ref": "#/definitions/t1_ref",
+          "x-target": [
+            "ct.build.v1"
+          ]
+        },
+        "producer_manifest": {
+          "$ref": "#/definitions/t1_ref",
+          "x-target": [
+            "ct.t1-producer-manifest.v1"
+          ]
+        },
+        "profile": {
+          "const": "bdw.checked-temperature.v1"
+        },
+        "request": {
+          "$ref": "#/definitions/t1_ref",
+          "x-target": [
+            "ct.request.v1"
+          ]
+        },
+        "schema": {
+          "const": "ct.t1-workflow-receipt.v1"
+        },
+        "target": {
+          "$ref": "#/definitions/t1_ref",
+          "x-target": [
+            "ct.t1-simulation-target.v1"
+          ]
+        },
+        "world": {
+          "$ref": "#/definitions/t1_ref",
+          "x-target": [
+            "ct.t1-world.v1"
+          ]
+        }
+      },
+      "required": [
+        "schema",
+        "profile",
+        "guarantee",
+        "request",
+        "evaluation_authority",
+        "handoff",
+        "producer_manifest",
+        "target",
+        "permission",
+        "execution_authority",
+        "world",
+        "prior_pins",
+        "output_manifest",
+        "producer_build",
+        "checker_build",
+        "limitations"
+      ],
+      "type": "object",
+      "x-class": "computed",
+      "x-max-bytes": 16384,
+      "x-semantic": "DESIGN \u00a76: workflow receipt, written last, externally pinned; no self-hash; the label is conferred only by successful t1-workflow-verify against an external F pin."
+    },
+    "ct.t1-world.v1": {
+      "additionalProperties": false,
+      "properties": {
+        "actual_measurand": {
+          "additionalProperties": false,
+          "properties": {
+            "subject_entity_anchor_id": {
+              "$ref": "#/definitions/entity_anchor"
+            },
+            "variable_anchor_id": {
+              "$ref": "#/definitions/variable_anchor"
+            }
+          },
+          "required": [
+            "subject_entity_anchor_id",
+            "variable_anchor_id"
+          ],
+          "type": "object"
+        },
+        "baseline_theta": {
+          "$ref": "#/definitions/canonical_decimal"
+        },
+        "beta": {
+          "$ref": "#/definitions/canonical_decimal"
+        },
+        "epsilon": {
+          "$ref": "#/definitions/canonical_decimal"
+        },
+        "id": {
+          "$ref": "#/definitions/id"
+        },
+        "instrument_id": {
+          "$ref": "#/definitions/instrument_id"
+        },
+        "intended_subject_entity_anchor_id": {
+          "$ref": "#/definitions/entity_anchor"
+        },
+        "intended_variable_anchor_id": {
+          "$ref": "#/definitions/variable_anchor"
+        },
+        "origin": {
+          "const": "synthetic"
+        },
+        "predecessor": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/definitions/t1_ref",
+              "x-target": [
+                "ct.t1-world.v1"
+              ]
+            }
+          ]
+        },
+        "profile": {
+          "const": "bdw.checked-temperature.v1"
+        },
+        "provenance": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/attestation"
+            }
+          ],
+          "x-allowed-roles": [
+            "local_model_proposer"
+          ]
+        },
+        "revision": {
+          "maximum": 4,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "rule": {
+          "$ref": "#/definitions/t1_ref",
+          "x-target": [
+            "ct.t1-simulator-rule.v2"
+          ]
+        },
+        "schema": {
+          "const": "ct.t1-world.v1"
+        },
+        "source": {
+          "additionalProperties": false,
+          "properties": {
+            "adapter_id": {
+              "const": "moonraker"
+            },
+            "source_id": {
+              "const": "printer-1"
+            }
+          },
+          "required": [
+            "adapter_id",
+            "source_id"
+          ],
+          "type": "object"
+        },
+        "theta": {
+          "$ref": "#/definitions/canonical_decimal"
+        },
+        "unit": {
+          "const": "degree_celsius"
+        }
+      },
+      "required": [
+        "schema",
+        "profile",
+        "id",
+        "revision",
+        "predecessor",
+        "provenance",
+        "origin",
+        "rule",
+        "source",
+        "instrument_id",
+        "intended_subject_entity_anchor_id",
+        "intended_variable_anchor_id",
+        "unit",
+        "theta",
+        "beta",
+        "epsilon",
+        "baseline_theta",
+        "actual_measurand"
+      ],
+      "type": "object",
+      "x-class": "authored",
+      "x-max-bytes": 8192,
+      "x-semantic": "DESIGN \u00a73, \u00a74.1: closed synthetic world; no alias fields. Intended anchors equal the fixed baseline/model anchors (order 4a); instrument/source equal X/C/J (order 4); operand domains and precision at order 5; actual_measurand is an independent synthetic declaration and may differ. theta and baseline_theta refer to the actually sampled quantity (rule.referents, F-C8)."
+    }
+  },
+  "status": "candidate successor v3 under the 2026-10-09 OD-1..OD-12 Step 0 dispositions; documentation only; exact-package approval, implementation and execution pending",
+  "title": "Maintained T1 companion contracts v3",
+  "typed_reference_kinds": [
+    "ct.explanation.v1",
+    "ct.model.v1",
+    "ct.interpretation-plan.v1",
+    "ct.claim.v1",
+    "ct.condition-declaration.v1",
+    "ct.evidence-item.v1",
+    "ct.evidence-content",
+    "ct.evidence-review.v1",
+    "ct.policy.v1",
+    "ct.request.v1",
+    "ct.authority.v1",
+    "ct.execution-target.v1",
+    "ct.code-evidence.v1",
+    "ct.adoption.v1",
+    "nm.evidence.v1",
+    "ct.derivation.v1",
+    "ct.applicability.v1",
+    "ct.selection.v1",
+    "ct.reassessment.v1",
+    "ct.retained-selection.v1",
+    "ct.build.v1",
+    "ct.invocation.v1",
+    "ct.trace.v1",
+    "ct.closure.v1",
+    "ct.bundle-manifest.v1",
+    "ct.t1-world.v1",
+    "ct.t1-context.v1",
+    "ct.t1-carrier-preset.v1",
+    "ct.t1-simulator-rule.v2",
+    "ct.t1-simulator-policy.v1",
+    "ct.t1-simulation-target.v1",
+    "ct.t1-simulation-permission.v1",
+    "ct.t1-producer-receipt.v1",
+    "ct.t1-producer-manifest.v1",
+    "ct.t1-handoff.v1",
+    "ct.t1-workflow-receipt.v1",
+    "ct.t1-verification-report.v1",
+    "ct.t1-authority-template.v1",
+    "ct.t1-opaque-bytes"
+  ],
+  "x-pattern-matching": "full-string: every pattern in this file, including the copied v4 definitions (kept verbatim), must match the whole string (re.fullmatch or \\Z; a '$' that admits a trailing newline is not sufficient); every other pattern-bearing node carries x-match full-string",
+  "x-profile": "bdw.checked-temperature.v1",
+  "x-v4-definitions-copied": [
+    "attestation",
+    "context",
+    "datetime",
+    "decimal",
+    "id",
+    "instrument_id",
+    "interval",
+    "rational",
+    "ref",
+    "sha256",
+    "window"
+  ]
+}

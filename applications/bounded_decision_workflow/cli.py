@@ -253,6 +253,9 @@ def _prior_from_final(inspection, old, build_id):
 
 def main(argv=None, *, fault=None, observer=None):
     supplied = sys.argv[1:] if argv is None else argv
+    if supplied and supplied[0].startswith('t1-'):
+        from .t1_cli import main as t1_main
+        return t1_main(supplied)
     if supplied and supplied[0].startswith('reassessment-'):
         from .reassessment_cli import main as reassessment_main
         return reassessment_main(supplied)

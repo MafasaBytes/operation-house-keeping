@@ -262,3 +262,32 @@ bounded interpretation. Slices 1–6 and the final milestone are
 at tested implementation `23b60a42c2279fc228168967d47491b8983658fb`.
 The existing thermal/governed profiles retain their
 original semantics and historical build requirements.
+
+## T1 simulated-acquisition development
+
+The new `t1_*` companion modules use the sealed v3 schema and exact rational
+synthetic-world arithmetic. They distinguish the actual measurand from the
+intended variable and recompute receipt diagnostics from pinned inputs. These
+are maintained companion modules with a development-tested command route.
+
+The frozen carriage/publication amendment supplies the effective carriage
+representation. The dedicated memory groups were provisioned and checked. The
+bounded successor demonstrated H2, positive and no-fit synthetic observations,
+complete carriage closure (43 members; 21,252-byte manifest), pure handoff
+assembly and the owning checked reassessment/verification/replay component chain.
+Its final eight-case selection passed; an earlier carriage failure was retained
+and repaired within the same driver. Evidence uses explicitly labelled test-double
+build identities and supplied synthetic authority/applicability premises.
+The command-integration increment implements `t1-simulation-run`,
+`t1-simulation-verify`, `t1-reassessment-prepare`, `t1-reassessment-evaluate`
+and `t1-workflow-verify`. The bounded development session passed positive, H2
+and no-fit worlds through retained workflow verification and standalone replay,
+with acquisition transport forbidden during verification. It also passed focused
+permission, closure, substitution and publication-failure checks. This evidence
+uses the maintained parser/dispatcher in process with explicitly labelled test
+double builds; executable real-build command qualification is a separate gate.
+`t1-simulation-prepare` remains guarded pending pure template implementation.
+Human disposition is external: commands issue no permission, adopt no hypothesis
+and perform no automatic reranking. No real build or physical acquisition was
+qualified. The [command-integration receipt](../../docs/superpowers/reports/2026-10-11-maintained-t1-command-integration/DEVELOPMENT-RECEIPT.md)
+records the actual checks, resource accounting, limitations and next gate.
