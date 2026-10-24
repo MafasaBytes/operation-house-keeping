@@ -1,0 +1,73 @@
+{
+ "addendum_sha256": "2957475768335f09685ac910c493b78c8dac9eb9c87825b63eaecd13a5d67e5e",
+ "authority": "owner 2026-10-22: ID-1, OD-K2, revised L1 implementation only",
+ "created_directories": [
+  "tools/release"
+ ],
+ "outcome": "COMPLETE",
+ "patch_sha256": "7bf112ec71a285bc1037eca0a90f86653e1c9ab05ecabbf63b177031a8ca4d07",
+ "post_checks": {
+  "accepted_checkpoint_sources_unchanged": "pass",
+  "demonstration_gates_closed": "pass",
+  "four_post_images": "pass",
+  "no_temporary_source_file": "pass",
+  "no_unexplained_source_test_tool_change": "pass",
+  "protected_git_identities_unchanged": "pass",
+  "sealed_packages_and_records_unchanged": "pass"
+ },
+ "remaining_temporary_or_partial": [],
+ "schema": "t1-linux-ext4-l1-implementation-status.v1",
+ "steps": [
+  {
+   "action": "exclusive_create+fsync+dir_fsync (pre-image copy)",
+   "intended_sha256": "172efff48f88f6f9236259a694d623145cf95fda1b0693e458c809ba83e55d25",
+   "observed_sha256": "172efff48f88f6f9236259a694d623145cf95fda1b0693e458c809ba83e55d25",
+   "path": "docs/superpowers/reports/2026-10-22-t1-linux-ext4-l1-implementation-preserved-measurement_build.py",
+   "result": "done"
+  },
+  {
+   "action": "mkdir 0755 + parent fsync",
+   "path": "tools/release",
+   "result": "done"
+  },
+  {
+   "action": "exclusive_create+fsync+dir_fsync",
+   "intended_sha256": "2dfb4fca907ebd8dfc3c36dc22b27c93dfa0f98b5ddddffed65a69ddc2d28092",
+   "observed_bytes": 6458,
+   "observed_sha256": "2dfb4fca907ebd8dfc3c36dc22b27c93dfa0f98b5ddddffed65a69ddc2d28092",
+   "path": "applications/bounded_decision_workflow/release_identity.py",
+   "pre_sha256": "absent",
+   "result": "done"
+  },
+  {
+   "action": "exclusive_create+fsync+dir_fsync",
+   "intended_sha256": "b30a2cd8341fae2544e0f8ded48a90ab35cbe2ebf25cea73f3d08dfd9cfe6bf6",
+   "observed_bytes": 2460,
+   "observed_sha256": "b30a2cd8341fae2544e0f8ded48a90ab35cbe2ebf25cea73f3d08dfd9cfe6bf6",
+   "path": "tools/release/release_identity_record.py",
+   "pre_sha256": "absent",
+   "result": "done"
+  },
+  {
+   "action": "exclusive_create+fsync+dir_fsync",
+   "intended_sha256": "807b08edf51d4edad978623619337268ef933d89e5e7929cedf1613f4904825c",
+   "observed_bytes": 10414,
+   "observed_sha256": "807b08edf51d4edad978623619337268ef933d89e5e7929cedf1613f4904825c",
+   "path": "tests/applications/bounded_decision_workflow/test_release_identity.py",
+   "pre_sha256": "absent",
+   "result": "done"
+  },
+  {
+   "action": "reverify+write_tmp_excl+fsync+rename+dir_fsync",
+   "intended_sha256": "5c3619e4e9435bbc9ced21898bbb9806161dbab03a265f8221376ed574520267",
+   "observed_bytes": 4987,
+   "observed_mode": "0o777",
+   "observed_sha256": "5c3619e4e9435bbc9ced21898bbb9806161dbab03a265f8221376ed574520267",
+   "path": "applications/bounded_decision_workflow/measurement_build.py",
+   "pre_sha256": "172efff48f88f6f9236259a694d623145cf95fda1b0693e458c809ba83e55d25",
+   "result": "done"
+  }
+ ],
+ "stopped_at": null,
+ "written_utc": "2026-10-21T22:08:00Z"
+}

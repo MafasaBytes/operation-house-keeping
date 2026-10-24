@@ -6,7 +6,7 @@ from pathlib import Path
 import platform
 import subprocess
 import sys
-from . import build
+from . import build, release_identity
 from .measurement_contracts import PROFILE, APPROVED_POLICY_SHA, canonical_json_bytes
 from .measurement_wire import fail
 
@@ -19,14 +19,21 @@ def identity(work=None):
         return subprocess.check_output(['git','--no-optional-locks','-C',str(build.ROOT),*args],timeout=10).decode().strip()
     if platform.python_implementation()!='CPython' or platform.python_version_tuple()[:2]!=('3','13'):
         raise build.unavailable()
-    if git('status','--porcelain','--untracked-files=all','--','applications','backend'):
+    installed=release_identity.present(build.ROOT)
+    if installed:
+        # Installed release: the same checkpoint and exact-tree facts, recomputed
+        # from installed bytes; no mutable checkout and no Git child.
+        checkpoint,names=release_identity.verified_source(build.ROOT,work)
+    elif git('status','--porcelain','--untracked-files=all','--','applications','backend'):
         raise build.unavailable()
-    checkpoint=git('rev-parse','HEAD')
+    else:
+        checkpoint=git('rev-parse','HEAD')
     def digest_bytes(data):
         if work is not None:work.physical['build_hash_bytes']=work.physical.get('build_hash_bytes',0)+len(data)
         return hashlib.sha256(data).hexdigest()
-    names=subprocess.check_output(['git','--no-optional-locks','-C',str(build.ROOT),
-                                  'ls-files','applications','backend'],timeout=10).decode().splitlines()
+    if not installed:
+        names=subprocess.check_output(['git','--no-optional-locks','-C',str(build.ROOT),
+                                      'ls-files','applications','backend'],timeout=10).decode().splitlines()
     def digest_file(path):
         h=hashlib.sha256();size=0
         with path.open('rb') as stream:
