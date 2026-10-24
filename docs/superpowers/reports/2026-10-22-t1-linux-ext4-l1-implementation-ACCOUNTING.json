@@ -1,0 +1,67 @@
+{
+  "schema": "t1-linux-ext4-l1-implementation-accounting.v1",
+  "date": "2026-10-22",
+  "authority": "Owner instruction 2026-10-22: ID-1, OD-K2, and revised L1 implementation only (exact four-file successor patch). No tests, collection, imports, syntax checks, candidate execution, release generation, installation, builds, application/provider execution, K, controls, signals, Git, staging, commits or merge.",
+  "outcome": "COMPLETE",
+  "owner_decisions_recorded": {
+    "ID-1": "For nm.build.v1 and ct.build.v1, the proposed installed-release witness may establish the source-checkpoint and exact-source-tree facts with the same meaning as the maintained clean-checkout witness. The build wire remains unchanged; witness mode belongs in future deployment-admission evidence. This establishes intended semantics only: not passing tests or observed wire equality, complete runtime-environment equivalence, release provenance or authentication, cross-host behavioural equality, or installed deployment readiness.",
+    "OD-K2": "Portability work may proceed in the working tree notwithstanding the historical K-before-commits sequencing rule, suspended for portability work only. Historical K remains unexecuted; its sealed preparation stays bound to its recorded checkpoint, index and source identities. Applying L1 intentionally invalidates its current-source admission assumptions; this is not a K pass or waiver. K need not be re-prepared unless a later owner decision identifies a specific need. No commit or execution authority is granted."
+  },
+  "governing": {
+    "addendum": "docs/superpowers/reports/2026-10-21-t1-linux-ext4-l1-and-authoring-ADDENDUM.md 2957475768335f09685ac910c493b78c8dac9eb9c87825b63eaecd13a5d67e5e (75,886 B)",
+    "patch_block": "7bf112ec71a285bc1037eca0a90f86653e1c9ab05ecabbf63b177031a8ca4d07 (22,043 B)",
+    "vertical_slice_manifest": "8982738e7219103fc2e790bb25769c5c1a580c40e0c4f4c1253e31ebe720dcf6 (3/3 verified before and after)",
+    "vertical_slice_receipt": "db63c022db14aca8761287b6617a4d1b23be020cd68bd66c73e014374de071b5"
+  },
+  "admission": "all nine checks passed before the first write (addendum/patch identity; seals vertical-slice 3/3, K amendment 8/8, route-b 6/6, correction 10/10, R1 16/16, regression 14/14 and eight records; targets and accepted checkpoint; Git baseline as data; demonstration gates closed; strict in-memory reconstruction of all four post-images; symlink-free parents and absent destinations; 1,616-file baseline of applications/backend/tests/tools excluding targets; /proc check with no hits among 58 readable processes, scanner and ancestors excluded, WSL view only, nothing stopped)",
+  "writer": "one standalone /usr/bin/python3 3.12.3 process (-I -B, cwd /, script on stdin), PID 241929; imported no repository module, executed no repository or candidate code, started no subprocess; uptime 342576.51-342591.52 (writes 342583.62-342584.11)",
+  "implementation": {
+    "order": ["preserved pre-image copy", "mkdir tools/release", "release_identity.py", "release_identity_record.py", "test_release_identity.py", "measurement_build.py (temp, fsync, rename, directory fsync)"],
+    "post_images": {
+      "applications/bounded_decision_workflow/measurement_build.py": "172efff4...5d25 (4,627 B) -> 5c3619e4e9435bbc9ced21898bbb9806161dbab03a265f8221376ed574520267 (4,987 B); mode 0o777 before and after (drvfs; permission bits not meaningful)",
+      "applications/bounded_decision_workflow/release_identity.py": "2dfb4fca907ebd8dfc3c36dc22b27c93dfa0f98b5ddddffed65a69ddc2d28092 (6,458 B)",
+      "tools/release/release_identity_record.py": "b30a2cd8341fae2544e0f8ded48a90ab35cbe2ebf25cea73f3d08dfd9cfe6bf6 (2,460 B)",
+      "tests/applications/bounded_decision_workflow/test_release_identity.py": "807b08edf51d4edad978623619337268ef933d89e5e7929cedf1613f4904825c (10,414 B)"
+    },
+    "preserved_pre_image": "docs/superpowers/reports/2026-10-22-t1-linux-ext4-l1-implementation-preserved-measurement_build.py 172efff48f88f6f9236259a694d623145cf95fda1b0693e458c809ba83e55d25 (4,627 B)",
+    "created_directories": ["tools/release"],
+    "fsync_note": "all file and directory fsyncs returned without error; durability on drvfs unverified; the four-file set is not atomic",
+    "not_done": "release-record tool not executed; no RELEASE-IDENTITY.json created; the twenty proposed tests unexecuted"
+  },
+  "status_record": "docs/superpowers/reports/2026-10-22-t1-linux-ext4-l1-implementation-STATUS.json b04e72447ab88907d14845f4fdebebbeeab39ee12a965c8f9a6de196a59523be (2,952 B, 4,096 allocated), outcome COMPLETE",
+  "preservation": {
+    "four_post_images": "pass",
+    "no_temporary_source_file": "pass",
+    "no_unexplained_source_test_tool_change": "pass (1,616 baseline files outside the targets unchanged; same set)",
+    "accepted_checkpoint_sources_unchanged": "pass (record.py b790cf22, successor test f60636f5, launcher 228509f4)",
+    "sealed_packages_and_records_unchanged": "pass (incl. addendum, disposition, PARTIAL application records)",
+    "protected_git_identities_unchanged": "pass (HEAD, index 43dca87c, packed-refs 2ddf8f80, repair-branch ref and main 07055c63)",
+    "demonstration_gates_closed": "pass",
+    "scope_note": "protected Git identities are only the named items; no all-ref check was made and no automation-ref activity was observed or claimed absent",
+    "superseded_commitments": "K source manifest row for measurement_build.py (172efff4) and Route B current_sources now describe historical bytes, intentionally; their sealed manifests are not edited"
+  },
+  "capacity": {
+    "grant": {"permanent_files": 7, "conditional_failure_temp_files": 1, "directories_max": 3, "logical_bytes_max": 131072, "allocated_bytes_max": 262144, "ledger_treatment": "partitioned from the existing remaining byte allowance (13,407,398 / 28,237,824), not an additional global byte reservation; file/directory counts are this grant's own"},
+    "byte_allowance_outside_this_partition": {"logical": 13276326, "allocated": 27975680},
+    "used": [
+      ["release_identity.py (new)", 1, 6458, 8192],
+      ["release_identity_record.py (new)", 1, 2460, 4096],
+      ["test_release_identity.py (new)", 1, 10414, 12288],
+      ["measurement_build.py growth", 0, 360, 0],
+      ["preserved pre-image copy", 1, 4627, 8192],
+      ["STATUS.json", 1, 2952, 4096],
+      ["tools/release directory", 0, 0, 4096],
+      ["ACCOUNTING.json (this file)", 1, "reported in RECEIPT", "reported in RECEIPT"],
+      ["RECEIPT.md", 1, "measured outside the receipt", "measured outside the receipt"]
+    ],
+    "used_before_documents": {"files": 5, "directories": 1, "logical": 27271, "allocated": 40960},
+    "directory_measurement": "tools/release reports st_blocks 0 on drvfs; charged at the established 4,096-byte convention",
+    "unused_reserved": "2 directories; the conditional failure temporary file (not used, none retained; terms retained, not released or repurposed); remaining bytes of the partition",
+    "untouched": "the held K-amendment application reservation and its conditional failure capacity; the exhausted unreserved preparation file allowance"
+  },
+  "host_and_session_scope": "separate, not charged here, not zero: session transcript growth; no subagent was launched in this pass; no memory note or scratch file written",
+  "unknowns": "process, thread and time consumption UNKNOWN overall; observed only the writer process span above and short read-only shell commands",
+  "attribution": "R1's 141 accepted results keep their original tested-byte attribution and limitations; no acceptance migrates to L1; D-COV unenacted; handoff deferred; D-P and D-W separately scoped",
+  "not_granted": "validation (the twenty tests), commit, release generation, packaging, installation, authoring implementation and deployment remain ungranted",
+  "end_marker": "END ACCOUNTING"
+}
