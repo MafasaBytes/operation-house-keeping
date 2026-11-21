@@ -416,6 +416,12 @@ def _reassessment_records(records, a, request_ref, build_ref, plan_ref, plan, op
     derivation = checked_derivation.derive(request_ref=request_ref, model_ref=a.model_ref, build_ref=build_ref,
                                            model=a.model, observed_scalar=a.scalar, observed_verdict=a.verdict,
                                            ops=ops)
+    applicability = _reassessment_applicability(a, request_ref, build_ref, plan_ref, plan)
+    return derivation, applicability
+
+
+def _reassessment_applicability(a, request_ref, build_ref, plan_ref, plan):
+    """Existing base aggregation, usable before companion hypothesis delegation."""
     edition = a.request['result']['procedure_edition']
     plans = {T1: (plan_ref, plan)} if plan_ref is not None else {}
     required = checked_applicability.required_claims(model_ref=a.model_ref, model=a.model, phase='reassessment',
@@ -426,7 +432,7 @@ def _reassessment_records(records, a, request_ref, build_ref, plan_ref, plan, op
     applicability = checked_applicability.assess(
         request_ref=request_ref, policy_ref=a.policy_ref, build_ref=build_ref, phase='reassessment',
         scope=scope, required=required, supplied=a.supplied, policy=a.policy, limits=a.limits)
-    return derivation, applicability
+    return applicability
 
 
 # ---------------------------------------------------- reassessment checks
@@ -867,8 +873,7 @@ def _intake_prior(prior_files, request):
     return closure, pool, carried
 
 
-def evaluate_reassessment(*, request_wire, objects, prior_files, request_pin, authority_pin, build,
-                          filesystem='unknown', created_at=None, cached_derivation=None):
+def _resolve_reassessment_inputs(*, request_wire, objects, prior_files, request_pin, authority_pin):
     request = _start(request_wire, objects, request_pin, authority_pin)
     if request['purpose'] != 'reassessment':
         refuse('SCHEMA_INVALID', 2, '/request/purpose')
@@ -886,16 +891,59 @@ def evaluate_reassessment(*, request_wire, objects, prior_files, request_pin, au
     pool[descriptor_ref['sha256']] = d_bytes
     records = resolve([request_ref, authority_ref, descriptor_ref], pool, EDITION_LIMITS, CLOSURE_KINDS,
                       EDITION_LIMITS['reassessment_unique_objects'])
+    return records, request_ref, authority_ref, descriptor_ref
+
+
+def evaluate_reassessment(*, request_wire, objects, prior_files, request_pin, authority_pin, build,
+                          filesystem='unknown', created_at=None, cached_derivation=None):
+    records, request_ref, authority_ref, descriptor_ref = _resolve_reassessment_inputs(
+        request_wire=request_wire, objects=objects, prior_files=prior_files,
+        request_pin=request_pin, authority_pin=authority_pin)
     return _reassessment_bundle(records, request_ref, authority_ref, descriptor_ref, request_pin, authority_pin,
                                 build, 'checked-reassessment-evaluate', None, filesystem, created_at,
                                 cached_derivation)
 
 
-def _reassessment_compute(records, request_ref, authority_ref, descriptor_ref, build_wire):
+def _admit_reassessment(records, request_ref, authority_ref, descriptor_ref, build_wire):
     a = admit(records, request_ref, None)
     plan_ref, plan, former, executed, scalar = _reassessment_stage5(records, a, request_ref, authority_ref,
                                                                     descriptor_ref)
     _permitted_build(a.policy, build_wire, '/build')
+    return a, plan_ref, plan, former, executed, scalar
+
+
+def preflight_reassessment(*, request_wire, objects, prior_files, request_pin, authority_pin, build):
+    """Full ordinary admission and base applicability; no hypothesis computation/B.
+
+    The returned byte commitments are private call-local facts, not permission
+    tokens accepted by evaluate or by a later verification.
+    """
+    records, request_ref, authority_ref, descriptor_ref = _resolve_reassessment_inputs(
+        request_wire=request_wire, objects=objects, prior_files=prior_files,
+        request_pin=request_pin, authority_pin=authority_pin)
+    build_wire = _current_build(build)
+    a, plan_ref, plan, _former, _executed, _scalar = _admit_reassessment(
+        records, request_ref, authority_ref, descriptor_ref, build_wire)
+    build_ref = ref('ct.build.v1', sha(build_wire))
+    applicability = _reassessment_applicability(a, request_ref, build_ref, plan_ref, plan)
+    validate(applicability, 'ct.applicability.v1')
+    if len(canonical_bytes(applicability)) > a.limits['applicability_bytes']:
+        refuse('RESOURCE_LIMIT_EXCEEDED', 7, '/applicability.json')
+    roots = {'request': request_ref, 'evaluation_authority': authority_ref,
+             'retained_selection': descriptor_ref}
+    closure = closure_record(roots, records)
+    _closure_decoded_check(closure, a.limits, 'reassessment')
+    closure_wire = canonical_bytes(closure)
+    if len(closure_wire) > a.limits['reassessment_closure_file_bytes']:
+        refuse('RESOURCE_LIMIT_EXCEEDED', 1, '/closure.json')
+    return dict(admitted=a, records=records, roots=roots, build_wire=build_wire,
+                plan_ref=plan_ref, plan=plan, applicability=applicability,
+                closure_wire=closure_wire)
+
+
+def _reassessment_compute(records, request_ref, authority_ref, descriptor_ref, build_wire):
+    a, plan_ref, plan, former, executed, scalar = _admit_reassessment(
+        records, request_ref, authority_ref, descriptor_ref, build_wire)
     build_ref = ref('ct.build.v1', sha(build_wire))
     ops = Ops()
     derivation, applicability = _reassessment_records(records, a, request_ref, build_ref, plan_ref, plan, ops)

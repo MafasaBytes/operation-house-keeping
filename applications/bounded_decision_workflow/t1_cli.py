@@ -15,7 +15,7 @@ from .checked_contracts import CheckedRefusal
 from .checked_runtime import ExecutableBuild
 
 COMMANDS = ('t1-simulation-prepare', 't1-simulation-run', 't1-simulation-verify', 't1-reassessment-prepare',
-            't1-reassessment-evaluate', 't1-workflow-verify')
+            't1-reassessment-evaluate', 't1-workflow-verify', 't1-workflow-replay')
 HEX = re.compile('[0-9a-f]{64}\\Z')
 
 
@@ -39,9 +39,16 @@ def arguments(argv):
         if op == 't1-simulation-run': flags += ['objects-dir']
         else: flags += ['producer-package', 'expected-producer-manifest-pin', 'scratch-dir']
         if op in ('t1-reassessment-prepare', 't1-reassessment-evaluate'): flags += ['objects-dir']
-        if op in ('t1-reassessment-evaluate', 't1-workflow-verify'):
+        if op in ('t1-reassessment-evaluate', 't1-workflow-verify', 't1-workflow-replay'):
             flags += ['handoff-package', 'expected-handoff-pin', 'expected-request-pin', 'expected-authority-pin']
-        if op == 't1-workflow-verify': flags += ['bundle', 'expected-workflow-receipt-pin']
+        if op in ('t1-workflow-verify', 't1-workflow-replay'):
+            flags += ['expected-workflow-receipt-pin']
+        if op == 't1-workflow-verify':
+            form = child.add_mutually_exclusive_group(required=True)
+            form.add_argument('--bundle')
+            form.add_argument('--workflow-package')
+        elif op == 't1-workflow-replay':
+            flags += ['workflow-package']
         for flag in flags: child.add_argument('--' + flag, required=True)
         child.add_argument('--diagnostic-dir')
     flags = [v.split('=', 1)[0] for v in argv if v.startswith('--')]
@@ -62,12 +69,68 @@ def _objects(path):
     return files
 
 
+def _calibration_paths(args):
+    inputs = [args.producer_package, args.handoff_package, args.prior_bundle]
+    if getattr(args, 'workflow_package', None) is not None:
+        inputs.append(args.workflow_package)
+    if getattr(args, 'objects_dir', None) is not None:
+        inputs.append(args.objects_dir)
+    t1_workflow.require_disjoint_paths(inputs, [args.output_dir, args.scratch_dir, args.diagnostic_dir])
+
+
+def _execute_calibration_check(args, *, build):
+    from . import checked_cli, t1_calibration_gate as gate
+    from .t1_closure import inspect_package
+    _calibration_paths(args)
+    files = t1_workflow.read_package(args.workflow_package, target='/F', companion=True)
+    wire = files.get('workflow-receipt.json')
+    if wire is None:
+        refuse('SIM_REFERENCE_MISSING', 1, '/F')
+    if sha(wire) != args.expected_workflow_receipt_pin:
+        refuse('SIM_PIN_MISMATCH', 1, '/F')
+    gate.parse(wire, gate.OUTCOME)  # never fall back to an old guarantee
+    producer = t1_workflow.read_package(args.producer_package, target='/M')
+    if 'manifest.json' not in producer:
+        refuse('SIM_REFERENCE_MISSING', 1, '/M')
+    closure = inspect_package(producer['manifest.json'], producer,
+                              manifest_pin=args.expected_producer_manifest_pin)
+    prior = checked_cli.read_bundle_dir(args.prior_bundle)
+    if closure.prior_files != prior:
+        refuse('SIM_PRIOR_MISMATCH', 2, '/prior')
+    inputs = dict(workflow_files=files, workflow_pin=args.expected_workflow_receipt_pin,
+        producer_files=producer, manifest_pin=args.expected_producer_manifest_pin,
+        handoff_files=t1_workflow.read_package(args.handoff_package, target='/H'),
+        handoff_pin=args.expected_handoff_pin, request_pin=args.expected_request_pin,
+        authority_pin=args.expected_authority_pin,
+        pins=dict(J=args.expected_target_pin, E=args.expected_execution_authority_pin,
+                  G=args.expected_permission_pin),
+        prior_pins=dict(request_sha256=args.expected_prior_request_pin,
+                        authority_sha256=args.expected_prior_authority_pin),
+        build=build, scratch=args.scratch_dir)
+    if args.operation == 't1-workflow-replay':
+        published = t1_workflow.replay_calibration_workflow(output=args.output_dir, **inputs)
+        outcome = gate.parse(published['workflow-receipt.json'], gate.OUTCOME)
+        return gate.build_check(outcome=outcome, command=args.operation, operation_class='replay',
+                                published=published, verified=True)
+    checked = t1_workflow.verify_calibration_workflow(**inputs)
+    outcome = checked['outcome']
+    report = gate.build_check(outcome=outcome, command=args.operation, operation_class='verification',
+                              published={}, verified=True)
+    Publication(args.output_dir, final='report.json', target='/report').finish(gate.encode(report))
+    return gate.build_check(outcome=outcome, command=args.operation, operation_class='completion',
+        published=t1_workflow.read_package(args.output_dir), verified=True)
+
+
 def execute(args, *, build):
     from . import checked_cli
     from .t1_closure import inspect_package
     op = args.operation
     if op == 't1-simulation-prepare':
         refuse('SIM_INTERNAL_ERROR', 0, '/incomplete/prepare-templates', 7)
+    if op == 't1-workflow-replay' or (op == 't1-workflow-verify' and getattr(args, 'workflow_package', None) is not None):
+        return _execute_calibration_check(args, build=build)
+    if op == 't1-reassessment-evaluate':
+        _calibration_paths(args)
     if args.diagnostic_dir is not None:
         safe_new_dir(args.diagnostic_dir, '/argv/diagnostic-dir')
     workflow_entries = None
@@ -147,7 +210,11 @@ def execute(args, *, build):
             Publication(args.output_dir, final='report.json', target='/report').finish(report)
         else:
             refuse('SIM_USAGE', 0, '/argv', 2)
-    published = t1_workflow.read_package(args.output_dir)
+    published = t1_workflow.read_package(args.output_dir, companion=op == 't1-reassessment-evaluate')
+    if op == 't1-reassessment-evaluate':
+        from . import t1_calibration_gate as gate
+        outcome = gate.parse(published['workflow-receipt.json'], gate.OUTCOME)
+        return gate.build_check(outcome=outcome, command=op, operation_class='completion', published=published)
     value = dict(schema='ct.t1-completion-record.v1', profile=PROFILE, command=op,
         published=[dict(role=('producer_manifest' if p == 'manifest.json' else 'handoff' if p == 'handoff.json'
             else 'workflow_receipt' if p == 'workflow-receipt.json' else 'verification_report' if p == 'report.json' else 'member'),
