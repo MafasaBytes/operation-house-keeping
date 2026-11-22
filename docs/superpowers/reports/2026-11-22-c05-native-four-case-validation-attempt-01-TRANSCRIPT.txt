@@ -1,0 +1,44 @@
+C05 four-case native validation attempt 01 — complete captures
+Working directory: /mnt/d/operation-house-keeping
+
+Exact sealed invocation:
+/usr/bin/env -i HOME=/home/mafasa PATH=/usr/bin:/bin LC_ALL=C.UTF-8 GIT_TERMINAL_PROMPT=0 GIT_OPTIONAL_LOCKS=0 GIT_NO_LAZY_FETCH=1 GIT_NO_REPLACE_OBJECTS=1 PYTHONNOUSERSITE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout --signal=TERM --kill-after=3s 2160s /bin/bash -- /mnt/d/operation-house-keeping/docs/superpowers/reports/2026-11-22-c05-native-four-case-validation-PREPARATION/LAUNCH.sh.txt 14603130eff634863fb2f66004430fda7b85d818558137b7919a08bb22f15f46 </dev/null
+
+Complete outer output (transport CRLF normalized to LF):
+admission=0 worker=0 capture=0 finalization=0 admission_cs=2070 worker_capture_cs=9653 finalization_cs=2080
+{"record":"C05_NATIVE_CALLER","started_utc":"2026-11-22T20:31:15.8022467+00:00","ended_utc":"2026-11-22T20:33:30.6526351+00:00","elapsed_seconds":134.8429871,"observed_exit":0}
+
+Observed outer/transport exit: 0.
+
+Complete retained merged pytest capture (worker.txt):
+============================= test session starts ==============================
+platform linux -- Python 3.13.11, pytest-9.1.1, pluggy-1.6.0 -- /home/mafasa/operation-house-keeping-runtime/bounded-decision-workflow/environments/cp313-bdw001/bin/python
+rootdir: /home/mafasa/operation-house-keeping-runtime/bounded-decision-workflow/test-workspaces/c05-native-v2-src-20261120-01
+configfile: ../../../../../../dev/null
+collecting ... collected 4 items
+
+tests/t1_simulation/test_calibration_native.py::test_c01_c02_c03_c04_c10_c11_native_complete_path[false_support-blocked_calibration_counterexample-blocked] PASSED [ 25%]
+tests/t1_simulation/test_calibration_native.py::test_c01_c02_c03_c04_c10_c11_native_complete_path[false_opposition-blocked_calibration_counterexample-blocked] PASSED [ 50%]
+tests/t1_simulation/test_calibration_native.py::test_c01_c02_c03_c04_c10_c11_native_complete_path[positive_support-delegated_assessment-permitted_under_declared_conditions] PASSED [ 75%]
+tests/t1_simulation/test_calibration_native.py::test_c01_c02_c03_c04_c10_c11_native_complete_path[positive_opposition-delegated_assessment-blocked] PASSED [100%]
+
+- generated xml file: /home/mafasa/operation-house-keeping-runtime/bounded-decision-workflow/test-workspaces/c05-native-four-case-validation-20261122-attempt-01/junit.xml -
+============================== slowest durations ===============================
+28.91s call     tests/t1_simulation/test_calibration_native.py::test_c01_c02_c03_c04_c10_c11_native_complete_path[positive_support-delegated_assessment-permitted_under_declared_conditions]
+27.89s call     tests/t1_simulation/test_calibration_native.py::test_c01_c02_c03_c04_c10_c11_native_complete_path[positive_opposition-delegated_assessment-blocked]
+18.32s call     tests/t1_simulation/test_calibration_native.py::test_c01_c02_c03_c04_c10_c11_native_complete_path[false_support-blocked_calibration_counterexample-blocked]
+17.80s call     tests/t1_simulation/test_calibration_native.py::test_c01_c02_c03_c04_c10_c11_native_complete_path[false_opposition-blocked_calibration_counterexample-blocked]
+1.13s setup    tests/t1_simulation/test_calibration_native.py::test_c01_c02_c03_c04_c10_c11_native_complete_path[false_support-blocked_calibration_counterexample-blocked]
+0.00s setup    tests/t1_simulation/test_calibration_native.py::test_c01_c02_c03_c04_c10_c11_native_complete_path[positive_opposition-delegated_assessment-blocked]
+0.00s setup    tests/t1_simulation/test_calibration_native.py::test_c01_c02_c03_c04_c10_c11_native_complete_path[false_opposition-blocked_calibration_counterexample-blocked]
+0.00s setup    tests/t1_simulation/test_calibration_native.py::test_c01_c02_c03_c04_c10_c11_native_complete_path[positive_support-delegated_assessment-permitted_under_declared_conditions]
+0.00s teardown tests/t1_simulation/test_calibration_native.py::test_c01_c02_c03_c04_c10_c11_native_complete_path[positive_opposition-delegated_assessment-blocked]
+0.00s teardown tests/t1_simulation/test_calibration_native.py::test_c01_c02_c03_c04_c10_c11_native_complete_path[false_support-blocked_calibration_counterexample-blocked]
+0.00s teardown tests/t1_simulation/test_calibration_native.py::test_c01_c02_c03_c04_c10_c11_native_complete_path[false_opposition-blocked_calibration_counterexample-blocked]
+0.00s teardown tests/t1_simulation/test_calibration_native.py::test_c01_c02_c03_c04_c10_c11_native_complete_path[positive_support-delegated_assessment-permitted_under_declared_conditions]
+========================= 4 passed in 94.21s (0:01:34) =========================
+
+Complete finalization capture:
+{"after_sha256":"634662d464109bb936c66eca75a96feb409dd1d8d3cbccc5cb9e779b70328aec","decision":"native-four-case-validation-complete","inclusive_storage":{"native_and_control":[6508486,7397376,338],"retained_A7_and_FQ":{"A7":[459760,671744,74],"FQ":[54823814,75636736,6553],"free":[861147770880,65841539],"helper":[160326,184320,8]}}}
+
+No retry or repair. Native validation only; owner closure/adoption remains separate.
