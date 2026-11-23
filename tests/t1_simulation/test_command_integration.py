@@ -103,7 +103,7 @@ def test_maintained_commands_complete_synthetic_workflow(tmp_path, monkeypatch, 
     with phases('maintained_separately_authorized_reassessment'):
         completion = command(case, tmp_path, 't1-reassessment-evaluate', tmp_path / 'workflow',
             scratch_dir=tmp_path / 'evaluate-scratch', objects_dir=tmp_path / 'evaluation-input', **workflow_flags)
-    assert completion['guarantee'] == 'producer-checked'
+    assert completion['guarantee'] == 'producer-checked-primary-calibration-gated-v1'
     bundle = t1_workflow.read_package(tmp_path / 'workflow/bundle')
     result = json.loads(bundle['result.json'])
     assert result['disposition'] == disposition
@@ -118,12 +118,12 @@ def test_maintained_commands_complete_synthetic_workflow(tmp_path, monkeypatch, 
     assert result['adoption'] == 'derived_not_adopted'
     fwire = (tmp_path / 'workflow/workflow-receipt.json').read_bytes()
     f = json.loads(fwire)
-    assert f['evaluation_authority'] == ref('ct.authority.v1', authority_wire)
+    assert f['finding']['subjects']['evaluation_authority'] == ref('ct.authority.v1', authority_wire)
     with phases('maintained_workflow_verification'):
         completion = command(case, tmp_path, 't1-workflow-verify', tmp_path / 'workflow-report',
-            scratch_dir=tmp_path / 'workflow-verify-scratch', bundle=tmp_path / 'workflow/bundle',
+            scratch_dir=tmp_path / 'workflow-verify-scratch', workflow_package=tmp_path / 'workflow',
             expected_workflow_receipt_pin=sha(fwire), **workflow_flags)
-    assert completion['guarantee'] == 'producer-checked'
+    assert completion['guarantee'] == 'producer-checked-primary-calibration-gated-v1'
     with phases('owning_standalone_replay'):
         replay = checked.replay(bundle_files=bundle, request_pin=supplied.request_pin,
             authority_pin=supplied.authority_pin, build=case['build'], created_at='2026-10-05T12:00:00Z')

@@ -1,0 +1,48 @@
+{
+  "schema": "c05.native-fixture-acceptance.v1",
+  "decision": "accepted-exact-native-fixture",
+  "owner": "Product Owner",
+  "recorded_utc": "2026-11-22T20:19:39Z",
+  "fixture": {
+    "bytes": 6503,
+    "path": "/home/mafasa/operation-house-keeping-runtime/bounded-decision-workflow/test-workspaces/c05-native-v2-fixtures-20261121-01/native-manifest.json",
+    "sha256": "1c0a7307c91fbd6f801cfe0c7f15d0ed76b15bede5db5cc0071fc1d973421bdd"
+  },
+  "build_sha256": "f4f7c57ffdb673a709f1f36963515b71b7c335cb1575779a31351c76734895ef",
+  "checkpoint": "f1e054cd4d5ed3e17c7c31e3532b16960e3c090c",
+  "readback": {
+    "bytes": 8576,
+    "path": "/home/mafasa/operation-house-keeping-runtime/bounded-decision-workflow/test-workspaces/c05-native-fixture-sealing-readback-20261122-attempt-01/readback.json",
+    "sha256": "414ba5f2bdd1319a4332a031cdecda914a517bf099f589af89c8fcfb5590dcef"
+  },
+  "readback_terminal": {
+    "bytes": 32262,
+    "path": "/home/mafasa/operation-house-keeping-runtime/bounded-decision-workflow/test-workspaces/c05-native-fixture-sealing-readback-20261122-attempt-01/after.json",
+    "sha256": "fef4873ca341a5a67c24a7bbd6cc0b2b1a7f6b4435f14b1573ddcd17f8ddd14c"
+  },
+  "readback_package": {
+    "bytes": 712,
+    "path": "/mnt/d/operation-house-keeping/docs/superpowers/reports/2026-11-22-c05-native-fixture-sealing-READBACK-SUCCESSOR/MANIFEST.tsv",
+    "sha256": "b2d98892ef4b93860bbc0d71848185d3b9d08cc5cbcbcefe39f7f0ac4bcb028b"
+  },
+  "readback_receipt": {
+    "bytes": 18155,
+    "path": "/mnt/d/operation-house-keeping/docs/superpowers/reports/2026-11-22-c05-native-fixture-sealing-readback-attempt-01-RECEIPT.md",
+    "sha256": "77f54a861037d1fbb09a16dd7f26682e3c3edd1c283dc8dba14edb26f89de473"
+  },
+  "scope": "Exact four-case synthetic fixture accepted as input to preparation of bounded native validation. Existing authority issuance is preserved; this record issues no new authority.",
+  "case_order": [
+    "false_support",
+    "false_opposition",
+    "positive_support",
+    "positive_opposition"
+  ],
+  "execution_authorized": false,
+  "limits_of_acceptance": [
+    "Original fixture-sealing attempt remains stopped; the separate readback successor passed.",
+    "No native scientific outcome or C05 closure is accepted.",
+    "Companion guarantee covers carried acquisition and companion package; correction release remains disabled.",
+    "source_editions/equal means required edition, build-permission, preset and policy-reference checks admitted the graph; captured and assessment policies remain distinct.",
+    "R1/L1 and historical evidence retain their attribution; L2 and VM remain frozen."
+  ]
+}

@@ -101,6 +101,7 @@ class Publication:
             _fsync_dir(self.root)
             # PARTIAL remains until every final-file publication step succeeded.
             (self.root / 'PARTIAL').unlink()
+            _fsync_dir(self.root)
         except BaseException:
             # Marker removal plus directory-sync failure is ambiguous. Restore
             # conservative incomplete evidence; never delete retained final.
@@ -109,6 +110,7 @@ class Publication:
                 os.write(fd, b'publication incomplete\n')
                 os.fsync(fd)
                 os.close(fd)
+                _fsync_dir(self.root)
             except OSError:
                 pass
             refuse('SIM_PUBLICATION_INCOMPLETE', self.order, self.target, 5)

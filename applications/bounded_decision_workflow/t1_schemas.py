@@ -16,8 +16,8 @@ class Found:
         self.roles.extend(other.roles)
 
 
-def _resolve(pointer):
-    node = SCHEMAS
+def _resolve(pointer, schema_pack):
+    node = schema_pack
     for part in pointer[2:].split('/'):
         node = node[part]
     return node
@@ -34,13 +34,13 @@ def _same(a, b):
     return a == b
 
 
-def _check(value, node, path, found):
+def _check(value, node, path, found, schema_pack):
     def bad(target=None):
         refuse('SIM_SCHEMA_INVALID', 0, path if target is None else target)
     if '$ref' in node:
-        _check(value, _resolve(node['$ref']), path, found)
+        _check(value, _resolve(node['$ref'], schema_pack), path, found, schema_pack)
     for sub in node.get('allOf', []):
-        _check(value, sub, path, found)
+        _check(value, sub, path, found, schema_pack)
     for combinator in ('oneOf', 'anyOf'):
         if combinator not in node:
             continue
@@ -48,7 +48,7 @@ def _check(value, node, path, found):
         for sub in node[combinator]:
             local = Found()
             try:
-                _check(value, sub, path, local)
+                _check(value, sub, path, local, schema_pack)
             except SimRefusal as error:
                 if error.code != 'SIM_SCHEMA_INVALID':
                     raise
@@ -87,10 +87,10 @@ def _check(value, node, path, found):
             bad(path + '/' + extra[0])
         for key, child in props.items():
             if key in value:
-                _check(value[key], child, path + '/' + key, found)
+                _check(value[key], child, path + '/' + key, found, schema_pack)
         if isinstance(node.get('additionalProperties'), dict):
             for key in extra:
-                _check(value[key], node['additionalProperties'], path + '/' + key, found)
+                _check(value[key], node['additionalProperties'], path + '/' + key, found, schema_pack)
         if node.get('x-semantic') == 'reduced; denominator divides 1000000':
             numerator, denominator = int(value['numerator']), int(value['denominator'])
             if gcd(abs(numerator), denominator) != 1 or 1000000 % denominator:
@@ -102,16 +102,16 @@ def _check(value, node, path, found):
             bad()
         for i, item in enumerate(value):
             if 'items' in node:
-                _check(item, node['items'], f'{path}/{i}', found)
+                _check(item, node['items'], f'{path}/{i}', found, schema_pack)
     if 'x-target' in node and isinstance(value, dict):
         found.refs.append((path, value, tuple(node['x-target']), node.get('x-edge', True)))
     if 'x-allowed-roles' in node and isinstance(value, dict):
         found.roles.append((path, value, tuple(node['x-allowed-roles'])))
 
 
-def validate(value, kind, target='/'):
-    if kind not in SCHEMAS['records']:
+def validate(value, kind, target='/', *, schema_pack=SCHEMAS):
+    if kind not in schema_pack['records']:
         refuse('SIM_SCHEMA_INVALID', 0, target + '/schema')
     found = Found()
-    _check(value, SCHEMAS['records'][kind], target.rstrip('/'), found)
+    _check(value, schema_pack['records'][kind], target.rstrip('/'), found, schema_pack)
     return found
